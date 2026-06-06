@@ -23,7 +23,7 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
 
   useEffect(() => {
     if (isRunning) {
-      startTimeRef.current = performance.now() - time * 1000;
+      startTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(updateTimer);
     } else {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
@@ -31,9 +31,12 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isRunning, time]);
+  }, [isRunning]);
 
-  const handleStart = () => setIsRunning(true);
+  const handleStart = () => {
+    setTime(0);
+    setIsRunning(true);
+  };
 
   const handleCorrectAndScore = () => {
     setIsRunning(false);
