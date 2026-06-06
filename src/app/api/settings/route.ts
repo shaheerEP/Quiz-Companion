@@ -28,8 +28,9 @@ export async function GET() {
       config = await Settings.create({ key: "config", value: DEFAULT_SETTINGS });
     }
     return NextResponse.json(config.value);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Settings GET Error:", error);
+    return NextResponse.json({ error: "Failed to fetch settings", details: error.message || error.toString() }, { status: 500 });
   }
 }
 
@@ -43,7 +44,8 @@ export async function PUT(req: Request) {
       { new: true, upsert: true }
     );
     return NextResponse.json(config.value);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Settings PUT Error:", error);
+    return NextResponse.json({ error: "Failed to update settings", details: error.message || error.toString() }, { status: 500 });
   }
 }
