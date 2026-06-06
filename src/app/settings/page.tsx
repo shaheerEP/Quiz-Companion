@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { User, Gift } from "lucide-react";
+import { User, Gift, Save, Trash2, Edit2 } from "lucide-react";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -15,6 +15,8 @@ export default function SettingsPage() {
   const [withdrawStudentId, setWithdrawStudentId] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [withdrawReason, setWithdrawReason] = useState("");
+
+  const [editingStudent, setEditingStudent] = useState<any>(null);
 
   useEffect(() => {
     fetch("/api/settings").then(res => res.json()).then(setSettings);
@@ -77,6 +79,35 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteStudent = async (id: string) => {
+    if (!confirm("Are you sure you want to completely delete this student?")) return;
+    setLoading(true);
+    await fetch(`/api/students?id=${id}`, { method: "DELETE" });
+    await fetchStudents();
+    setLoading(false);
+  };
+
+  const handleUpdateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setLoading(true);
+    await fetch("/api/students", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingStudent._id,
+        name: editingStudent.name,
+        password: editingStudent.password,
+        pointsBalance: editingStudent.pointsBalance,
+        lifetimePoints: editingStudent.lifetimePoints
+      })
+    });
+    setEditingStudent(null);
+    await fetchStudents();
+    setLoading(false);
+    alert("Student updated successfully!");
+  };
+
   if (!settings) return <div className="min-h-screen bg-gray-950 text-white"><Navbar /><div className="p-10 font-bold text-xl">Loading configuration...</div></div>;
 
   return (
@@ -87,68 +118,145 @@ export default function SettingsPage() {
         
         {/* STUDENT MANAGEMENT & WITHDRAWALS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-            <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-              <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
-              Manage Students
-            </h2>
-            <form onSubmit={handleAddStudent} className="flex flex-col gap-5">
-              <div>
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
-                <input 
-                  type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} required
-                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Login Password</label>
-                <input 
-                  type="text" value={newStudentPassword} onChange={e => setNewStudentPassword(e.target.value)} required
-                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <button disabled={loading} type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 rounded-xl font-black transition-colors w-full mt-2 shadow-lg shadow-indigo-500/20">
+          
+          <div className="flex flex-col gap-8">
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
                 Create Student
-              </button>
-            </form>
+              </h2>
+              <form onSubmit={handleAddStudent} className="flex flex-col gap-5">
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
+                  <input 
+                    type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} required
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Login Password</label>
+                  <input 
+                    type="text" value={newStudentPassword} onChange={e => setNewStudentPassword(e.target.value)} required
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <button disabled={loading} type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 rounded-xl font-black transition-colors w-full mt-2 shadow-lg shadow-indigo-500/20">
+                  Create Student
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-emerald-500/20 p-2 rounded-lg"><Gift className="w-5 h-5 text-emerald-400" /></div>
+                Withdraw Points
+              </h2>
+              <form onSubmit={handleWithdraw} className="flex flex-col gap-5">
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Select Student</label>
+                  <select 
+                    value={withdrawStudentId} onChange={e => setWithdrawStudentId(e.target.value)} required
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors appearance-none"
+                  >
+                    <option value="">Select...</option>
+                    {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.pointsBalance} pts available)</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Points to Deduct</label>
+                    <input 
+                      type="number" value={withdrawAmount} onChange={e => setWithdrawAmount(Number(e.target.value))} required min={1}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Reward (Reason)</label>
+                    <input 
+                      type="text" value={withdrawReason} onChange={e => setWithdrawReason(e.target.value)} required placeholder="e.g. Stickers"
+                      className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                <button disabled={loading} type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-4 rounded-xl font-black transition-colors w-full mt-2 shadow-lg shadow-emerald-500/20">
+                  Redeem Reward
+                </button>
+              </form>
+            </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-            <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-              <div className="bg-emerald-500/20 p-2 rounded-lg"><Gift className="w-5 h-5 text-emerald-400" /></div>
-              Withdraw Points
-            </h2>
-            <form onSubmit={handleWithdraw} className="flex flex-col gap-5">
-              <div>
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Select Student</label>
-                <select 
-                  value={withdrawStudentId} onChange={e => setWithdrawStudentId(e.target.value)} required
-                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors appearance-none"
-                >
-                  <option value="">Select...</option>
-                  {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.pointsBalance} pts available)</option>)}
-                </select>
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg max-h-[850px] overflow-y-auto">
+            <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Existing Students</h2>
+            {students.length === 0 ? (
+              <p className="text-gray-500 italic text-center py-4">No students added yet.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {students.map(student => (
+                  <div key={student._id} className="bg-gray-950 border border-gray-800 p-5 rounded-2xl">
+                    {editingStudent?._id === student._id ? (
+                      <form onSubmit={handleUpdateStudent} className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs text-gray-500 font-bold mb-1 block">Name</label>
+                            <input 
+                              type="text" value={editingStudent.name} onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} required
+                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 font-bold mb-1 block">Password</label>
+                            <input 
+                              type="text" value={editingStudent.password} onChange={e => setEditingStudent({...editingStudent, password: e.target.value})} required
+                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-emerald-500 font-bold mb-1 block">Balance (pts)</label>
+                            <input 
+                              type="number" value={editingStudent.pointsBalance} onChange={e => setEditingStudent({...editingStudent, pointsBalance: e.target.value})} required
+                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-indigo-400 font-bold mb-1 block">Lifetime (pts)</label>
+                            <input 
+                              type="number" value={editingStudent.lifetimePoints} onChange={e => setEditingStudent({...editingStudent, lifetimePoints: e.target.value})} required
+                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="submit" disabled={loading} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2">
+                            <Save className="w-4 h-4" /> Save
+                          </button>
+                          <button type="button" onClick={() => setEditingStudent(null)} className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-xl">
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-lg font-black text-white">{student.name}</p>
+                          <p className="text-sm text-gray-500 font-bold">Pass: <span className="text-gray-300">{student.password}</span></p>
+                          <p className="text-sm text-gray-500 font-bold mt-1">
+                            Balance: <span className="text-emerald-400">{student.pointsBalance} pts</span> <span className="mx-1">•</span> Lifetime: <span className="text-indigo-400">{student.lifetimePoints} pts</span>
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <button onClick={() => setEditingStudent(student)} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg transition-colors" title="Edit Student">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeleteStudent(student._id)} className="bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white p-2 rounded-lg transition-colors" title="Delete Student">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Points to Deduct</label>
-                  <input 
-                    type="number" value={withdrawAmount} onChange={e => setWithdrawAmount(Number(e.target.value))} required min={1}
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Reward (Reason)</label>
-                  <input 
-                    type="text" value={withdrawReason} onChange={e => setWithdrawReason(e.target.value)} required placeholder="e.g. Stickers"
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-              <button disabled={loading} type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-4 rounded-xl font-black transition-colors w-full mt-2 shadow-lg shadow-emerald-500/20">
-                Redeem Reward
-              </button>
-            </form>
+            )}
           </div>
         </div>
 

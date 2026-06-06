@@ -24,3 +24,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create student", details: error.message }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, name, password, pointsBalance, lifetimePoints } = body;
+    if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
+
+    await connectToDatabase();
+    const student = await Student.findById(id);
+    if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+
+    if (name !== undefined) student.name = name;
+    if (password !== undefined) student.password = password;
+    if (pointsBalance !== undefined) student.pointsBalance = Number(pointsBalance);
+    if (lifetimePoints !== undefined) student.lifetimePoints = Number(lifetimePoints);
+
+    await student.save();
+    return NextResponse.json(student);
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to update student", details: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
+
+    await connectToDatabase();
+    await Student.findByIdAndDelete(id);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to delete student", details: error.message }, { status: 500 });
+  }
+}
