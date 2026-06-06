@@ -7,6 +7,8 @@ export interface ISession extends Document {
   finalScore: number;
   averageSpeed: number;
   isCompleted: boolean;
+  currentTimerStartTime?: number;
+  isTimerRunning: boolean;
 }
 
 const SessionSchema = new Schema<ISession>(
@@ -17,6 +19,8 @@ const SessionSchema = new Schema<ISession>(
     finalScore: { type: Number, default: 0 },
     averageSpeed: { type: Number, default: 0 },
     isCompleted: { type: Boolean, default: false },
+    currentTimerStartTime: { type: Number, default: null },
+    isTimerRunning: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

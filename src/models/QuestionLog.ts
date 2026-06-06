@@ -6,6 +6,7 @@ export interface IQuestionLog extends Document {
   responseTime: number;
   starsAwarded: number;
   points: number;
+  isCorrect: boolean;
 }
 
 const QuestionLogSchema = new Schema<IQuestionLog>(
@@ -15,6 +16,7 @@ const QuestionLogSchema = new Schema<IQuestionLog>(
     responseTime: { type: Number, required: true }, // in seconds
     starsAwarded: { type: Number, required: true },
     points: { type: Number, required: true },
+    isCorrect: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

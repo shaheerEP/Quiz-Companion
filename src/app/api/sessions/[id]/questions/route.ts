@@ -8,40 +8,47 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   try {
     const { id } = await context.params;
     const sessionId = id;
-    const { questionNumber, responseTime, starsAwarded, points } = await req.json();
+    const { questionNumber, responseTime, starsAwarded, points, isCorrect } = await req.json();
 
-    if (!sessionId || questionNumber === undefined || responseTime === undefined || starsAwarded === undefined || points === undefined) {
+    if (!sessionId || questionNumber === undefined || responseTime === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     await connectToDatabase();
     
-    // Log the question
     const newQuestionLog = await QuestionLog.create({
       sessionId,
       questionNumber,
       responseTime,
-      starsAwarded,
-      points
+      starsAwarded: isCorrect ? starsAwarded : 0,
+      points: isCorrect ? points : 0,
+      isCorrect
     });
 
-    // Update Session
     const session = await Session.findById(sessionId);
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
     
     const newTotalQuestions = session.totalQuestions + 1;
-    const newFinalScore = session.finalScore + points;
-    // Calculate new average speed
+    const actualPoints = isCorrect ? points : 0;
+    const newFinalScore = session.finalScore + actualPoints;
     const currentTotalTime = session.averageSpeed * session.totalQuestions;
     const newAverageSpeed = (currentTotalTime + responseTime) / newTotalQuestions;
 
     session.totalQuestions = newTotalQuestions;
     session.finalScore = newFinalScore;
     session.averageSpeed = newAverageSpeed;
+    session.isTimerRunning = false;
+    session.currentTimerStartTime = undefined;
     await session.save();
 
-    // Update Student allTimeScore
-    await Student.findByIdAndUpdate(session.studentId, { $inc: { allTimeScore: points } });
+    if (actualPoints > 0) {
+      await Student.findByIdAndUpdate(session.studentId, { 
+        $inc: { 
+          lifetimePoints: actualPoints,
+          pointsBalance: actualPoints 
+        } 
+      });
+    }
 
     return NextResponse.json(newQuestionLog, { status: 201 });
   } catch (error: any) {

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 
 interface StopwatchProps {
-  onScore: (seconds: number) => void;
+  onScore: (seconds: number, isCorrect: boolean) => void;
   isRunning: boolean;
   setIsRunning: (run: boolean) => void;
 }
@@ -35,19 +35,18 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
 
   const handleStart = () => setIsRunning(true);
 
-  const handleStopAndScore = () => {
+  const handleCorrectAndScore = () => {
     setIsRunning(false);
-    onScore(time);
+    onScore(time, true);
   };
 
-  const handleReset = () => {
+  const handleWrongAnswer = () => {
     setIsRunning(false);
-    setTime(0);
+    onScore(time, false);
   };
 
   return (
-    <div className="flex flex-col items-center gap-10 bg-gray-900/50 backdrop-blur-md p-12 rounded-[2rem] border border-gray-800 shadow-2xl relative overflow-hidden">
-      {/* Decorative gradient orb */}
+    <div className="flex flex-col items-center gap-10 bg-gray-900/50 backdrop-blur-md p-12 rounded-[2rem] border border-gray-800 shadow-2xl relative overflow-hidden w-full max-w-2xl">
       <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
       <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
 
@@ -64,19 +63,21 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
             START TIMER
           </button>
         ) : (
-          <button 
-            onClick={handleStopAndScore}
-            className="flex-1 min-w-[200px] bg-rose-500 hover:bg-rose-400 text-white font-black text-2xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)]"
-          >
-            STOP & SCORE
-          </button>
+          <>
+            <button 
+              onClick={handleCorrectAndScore}
+              className="flex-1 min-w-[150px] bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xl py-6 px-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+            >
+              CORRECT (SCORE)
+            </button>
+            <button 
+              onClick={handleWrongAnswer}
+              className="flex-1 min-w-[150px] bg-rose-500 hover:bg-rose-400 text-white font-black text-xl py-6 px-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)]"
+            >
+              WRONG ANSWER
+            </button>
+          </>
         )}
-        <button 
-          onClick={handleReset}
-          className="flex-none bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-bold text-xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 border border-gray-700"
-        >
-          RESET
-        </button>
       </div>
     </div>
   );
