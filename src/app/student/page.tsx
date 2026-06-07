@@ -95,8 +95,6 @@ export default function StudentDashboard() {
     setActiveSession({ ...activeSession, isTimerRunning: false });
   };
 
-  if (!user || user.role !== "student") return null;
-
   const bundleLimit = settings?.bundleLimit || 1000;
   const bundleItemName = settings?.bundleItemName || "🍫 Chocolate";
   const lifetimePoints = user?.student?.lifetimePoints || 0;
@@ -111,6 +109,8 @@ export default function StudentDashboard() {
     }
     setPrevBundles(bundlesEarned);
   }, [bundlesEarned, prevBundles]);
+
+  if (!user || user.role !== "student") return null;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
