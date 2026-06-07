@@ -6,10 +6,12 @@ interface StopwatchProps {
   onScore: (seconds: number, isCorrect: boolean) => void;
   isRunning: boolean;
   setIsRunning: (run: boolean) => void;
+  studentStopTime?: number | null;
 }
 
-export default function Stopwatch({ onScore, isRunning, setIsRunning }: StopwatchProps) {
+export default function Stopwatch({ onScore, isRunning, setIsRunning, studentStopTime }: StopwatchProps) {
   const [time, setTime] = useState(0);
+  const [isPendingScore, setIsPendingScore] = useState(false);
   const startTimeRef = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
 
@@ -25,6 +27,7 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
     if (isRunning) {
       startTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(updateTimer);
+      setIsPendingScore(false);
     } else {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     }
@@ -33,18 +36,32 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
     };
   }, [isRunning]);
 
+  useEffect(() => {
+    if (studentStopTime && isRunning) {
+      setTime(studentStopTime);
+      setIsRunning(false);
+      setIsPendingScore(true);
+    }
+  }, [studentStopTime, isRunning, setIsRunning]);
+
   const handleStart = () => {
     setTime(0);
+    setIsPendingScore(false);
     setIsRunning(true);
   };
 
-  const handleCorrectAndScore = () => {
+  const handleStop = () => {
     setIsRunning(false);
+    setIsPendingScore(true);
+  };
+
+  const handleCorrectAndScore = () => {
+    setIsPendingScore(false);
     onScore(time, true);
   };
 
   const handleWrongAnswer = () => {
-    setIsRunning(false);
+    setIsPendingScore(false);
     onScore(time, false);
   };
 
@@ -57,13 +74,26 @@ export default function Stopwatch({ onScore, isRunning, setIsRunning }: Stopwatc
         {time.toFixed(1)}<span className="text-4xl md:text-5xl text-gray-400">s</span>
       </div>
       
+      {studentStopTime && isPendingScore && (
+        <div className="relative z-10 bg-rose-500/20 text-rose-300 font-bold px-4 py-2 rounded-lg text-sm border border-rose-500/30">
+          Timer stopped remotely by student!
+        </div>
+      )}
+
       <div className="flex flex-wrap justify-center gap-4 w-full relative z-10">
-        {!isRunning ? (
+        {!isRunning && !isPendingScore ? (
           <button 
             onClick={handleStart}
             className="flex-1 min-w-[200px] bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-2xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.3)]"
           >
             START TIMER
+          </button>
+        ) : isRunning ? (
+          <button 
+            onClick={handleStop}
+            className="flex-1 min-w-[200px] bg-rose-500 hover:bg-rose-400 text-white font-black text-2xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)]"
+          >
+            STOP TIMER
           </button>
         ) : (
           <>

@@ -17,7 +17,10 @@ const DEFAULT_SETTINGS = {
   badgeThresholds: {
     speedThreshold: 8,
     finaleQuestionCount: 5,
-  }
+  },
+  allowStudentToStopTimer: true,
+  bundleLimit: 1000,
+  bundleItemName: "🍫 Chocolate"
 };
 
 export async function GET() {
@@ -26,6 +29,15 @@ export async function GET() {
     let config = await Settings.findOne({ key: "config" });
     if (!config) {
       config = await Settings.create({ key: "config", value: DEFAULT_SETTINGS });
+    } else {
+      let updated = false;
+      const newValue = { ...config.value };
+      if (newValue.allowStudentToStopTimer === undefined) { newValue.allowStudentToStopTimer = true; updated = true; }
+      if (newValue.bundleLimit === undefined) { newValue.bundleLimit = 1000; updated = true; }
+      if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
+      if (updated) {
+        config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
+      }
     }
     return NextResponse.json(config.value);
   } catch (error: any) {

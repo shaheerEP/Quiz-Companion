@@ -5,7 +5,8 @@ import Navbar from "@/components/Navbar";
 import Stopwatch from "@/components/Stopwatch";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
-import { User, Activity, Zap } from "lucide-react";
+import BundleAnimation from "@/components/BundleAnimation";
+import { User, Activity, Zap, PlusCircle, Package } from "lucide-react";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -16,6 +17,8 @@ export default function TeacherDashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
+  const [prevBundles, setPrevBundles] = useState<number | null>(null);
+  const [showBundleAnim, setShowBundleAnim] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings").then(res => res.json()).then(setSettings);
@@ -44,6 +47,44 @@ export default function TeacherDashboard() {
     } else {
       setActiveSession(null);
     }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRunning && activeSession && activeStudent) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
+          const sessions = await res.json();
+          if (sessions.length > 0 && !sessions[0].isCompleted) {
+            if (sessions[0].stoppedByStudent && sessions[0].studentStopTime !== null) {
+              setActiveSession(sessions[0]);
+            }
+          }
+        } catch (e) {}
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, activeSession, activeStudent]);
+
+  const handleAddBonus = async () => {
+    const amount = prompt("Enter bonus points to add:");
+    if (!amount || isNaN(Number(amount))) return;
+    
+    const newPoints = activeStudent.pointsBalance + Number(amount);
+    const newLifetime = activeStudent.lifetimePoints + Number(amount);
+    
+    await fetch("/api/students", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: activeStudent._id,
+        pointsBalance: newPoints,
+        lifetimePoints: newLifetime
+      })
+    });
+    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
+    alert(`Added ${amount} bonus points!`);
   };
 
   const handleTimerRunningState = async (run: boolean) => {
@@ -145,6 +186,15 @@ export default function TeacherDashboard() {
     }
   };
 
+  const bundlesEarned = Math.floor((activeStudent?.lifetimePoints || 0) / (settings?.bundleLimit || 1000));
+  useEffect(() => {
+    if (prevBundles !== null && bundlesEarned > prevBundles) {
+      setShowBundleAnim(true);
+      setTimeout(() => setShowBundleAnim(false), 4000);
+    }
+    setPrevBundles(bundlesEarned);
+  }, [bundlesEarned, prevBundles]);
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
       <Navbar />
@@ -180,6 +230,36 @@ export default function TeacherDashboard() {
                   <span className="text-gray-500 font-medium">Lifetime Points</span>
                   <span className="text-xl font-bold text-gray-300">{activeStudent.lifetimePoints?.toLocaleString() || 0}</span>
                 </div>
+
+                {settings && (
+                  <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold flex items-center gap-2">
+                        <Package className="w-4 h-4 text-purple-400" />
+                        {settings.bundleItemName || "🍫 Chocolate"}
+                      </span>
+                      <span className="text-2xl font-black text-purple-400">
+                        x{Math.floor((activeStudent.lifetimePoints || 0) / (settings.bundleLimit || 1000))}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min(100, Math.max(0, (((activeStudent.lifetimePoints || 0) % (settings.bundleLimit || 1000)) / (settings.bundleLimit || 1000)) * 100))}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-right text-gray-500 font-bold">
+                      {(activeStudent.lifetimePoints || 0) % (settings.bundleLimit || 1000)} / {settings.bundleLimit || 1000} to next
+                    </div>
+                  </div>
+                )}
+                
+                <button 
+                  onClick={handleAddBonus}
+                  className="mt-2 w-full flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold py-3 rounded-xl transition-colors border border-indigo-500/20"
+                >
+                  <PlusCircle className="w-5 h-5" /> Add Bonus Points
+                </button>
               </div>
             )}
           </div>
@@ -226,6 +306,7 @@ export default function TeacherDashboard() {
               isRunning={isRunning} 
               setIsRunning={handleTimerRunningState} 
               onScore={handleScore} 
+              studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
             />
           )}
         </section>
@@ -246,6 +327,10 @@ export default function TeacherDashboard() {
           gifts={settings.mysteryGifts}
           onClose={handleFinaleClose}
         />
+      )}
+
+      {showBundleAnim && settings && (
+        <BundleAnimation itemName={settings.bundleItemName || "🍫 Chocolate"} />
       )}
     </div>
   );

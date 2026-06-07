@@ -4,7 +4,7 @@ import { Session } from "@/models/Session";
 
 export async function PUT(req: Request) {
   try {
-    const { sessionId, isTimerRunning } = await req.json();
+    const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent } = await req.json();
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
@@ -14,8 +14,17 @@ export async function PUT(req: Request) {
     session.isTimerRunning = isTimerRunning;
     if (isTimerRunning) {
       session.currentTimerStartTime = Date.now();
+      session.studentStopTime = undefined;
+      session.stoppedByStudent = false;
     } else {
-      session.currentTimerStartTime = undefined;
+      if (stoppedByStudent !== undefined) {
+        session.stoppedByStudent = stoppedByStudent;
+        session.studentStopTime = studentStopTime;
+      } else {
+        session.currentTimerStartTime = undefined;
+        session.stoppedByStudent = false;
+        session.studentStopTime = undefined;
+      }
     }
 
     await session.save();
@@ -38,7 +47,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ 
       isTimerRunning: session.isTimerRunning, 
-      currentTimerStartTime: session.currentTimerStartTime 
+      currentTimerStartTime: session.currentTimerStartTime,
+      stoppedByStudent: session.stoppedByStudent,
+      studentStopTime: session.studentStopTime
     });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch timer state" }, { status: 500 });

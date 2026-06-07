@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { User, Gift, Save, Trash2, Edit2 } from "lucide-react";
+import { User, Gift, Save, Trash2, Edit2, Link as LinkIcon, Package } from "lucide-react";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -244,6 +244,14 @@ export default function SettingsPage() {
                           </p>
                         </div>
                         <div className="flex flex-col gap-2">
+                          <button onClick={() => {
+                            const token = btoa(student._id.toString());
+                            const url = `${window.location.origin}/api/auth/magic?token=${token}`;
+                            navigator.clipboard.writeText(url);
+                            alert("Magic Link Copied! Send this to the student.");
+                          }} className="bg-indigo-500/10 hover:bg-indigo-600 text-indigo-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Magic Link">
+                            <LinkIcon className="w-4 h-4" />
+                          </button>
                           <button onClick={() => setEditingStudent(student)} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg transition-colors" title="Edit Student">
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -352,6 +360,42 @@ export default function SettingsPage() {
                     onChange={e => setSettings({...settings, badgeThresholds: { ...settings.badgeThresholds, speedThreshold: Number(e.target.value) }})}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-indigo-500 transition-colors text-2xl"
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-purple-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-purple-400" /></div>
+                Point Bundles & Controls
+              </h2>
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Limit (pts)</label>
+                    <input 
+                      type="number" value={settings.bundleLimit}
+                      onChange={e => setSettings({...settings, bundleLimit: Number(e.target.value)})}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-purple-500 transition-colors text-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Item</label>
+                    <input 
+                      type="text" value={settings.bundleItemName}
+                      onChange={e => setSettings({...settings, bundleItemName: e.target.value})}
+                      placeholder="e.g. 🍫 Chocolate"
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-purple-500 transition-colors text-xl"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-700">
+                  <input 
+                    type="checkbox" checked={settings.allowStudentToStopTimer}
+                    onChange={e => setSettings({...settings, allowStudentToStopTimer: e.target.checked})}
+                    className="w-6 h-6 text-indigo-500 rounded focus:ring-indigo-500 focus:ring-2 bg-gray-900 border-gray-700 cursor-pointer"
+                  />
+                  <label className="text-sm text-gray-300 font-bold">Allow Students to Stop Timer Remotely</label>
                 </div>
               </div>
             </div>

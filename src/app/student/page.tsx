@@ -3,13 +3,17 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History } from "lucide-react";
+import { Zap, Trophy, History, Package } from "lucide-react";
+import BundleAnimation from "@/components/BundleAnimation";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [liveTime, setLiveTime] = useState(0);
+  const [settings, setSettings] = useState<any>(null);
+  const [prevBundles, setPrevBundles] = useState<number | null>(null);
+  const [showBundleAnim, setShowBundleAnim] = useState(false);
 
   const requestRef = useRef<number | null>(null);
 
@@ -29,6 +33,9 @@ export default function StudentDashboard() {
       // Fetch withdrawals
       const logsRes = await fetch(`/api/withdrawals?studentId=${user.id}`);
       setLogs(await logsRes.json());
+      
+      const setRes = await fetch("/api/settings");
+      setSettings(await setRes.json());
     };
 
     fetchDashboardData();
@@ -71,7 +78,39 @@ export default function StudentDashboard() {
     return () => clearInterval(timerInterval);
   }, [activeSession]);
 
+  const handleRemoteStop = async () => {
+    if (!activeSession) return;
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    
+    await fetch("/api/sessions/timer", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        sessionId: activeSession._id, 
+        isTimerRunning: false,
+        stoppedByStudent: true,
+        studentStopTime: liveTime
+      })
+    });
+    setActiveSession({ ...activeSession, isTimerRunning: false });
+  };
+
   if (!user || user.role !== "student") return null;
+
+  const bundleLimit = settings?.bundleLimit || 1000;
+  const bundleItemName = settings?.bundleItemName || "🍫 Chocolate";
+  const lifetimePoints = user?.student?.lifetimePoints || 0;
+  const bundlesEarned = Math.floor(lifetimePoints / bundleLimit);
+  const currentProgress = lifetimePoints % bundleLimit;
+  const progressPercent = Math.min(100, Math.max(0, (currentProgress / bundleLimit) * 100));
+
+  useEffect(() => {
+    if (prevBundles !== null && bundlesEarned > prevBundles) {
+      setShowBundleAnim(true);
+      setTimeout(() => setShowBundleAnim(false), 4000);
+    }
+    setPrevBundles(bundlesEarned);
+  }, [bundlesEarned, prevBundles]);
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -84,17 +123,44 @@ export default function StudentDashboard() {
           <div className="flex-1 bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/30 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full filter blur-3xl mix-blend-overlay"></div>
             
-            <h2 className="text-2xl font-black text-indigo-200 mb-2 uppercase tracking-widest relative z-10">Points Balance</h2>
-            <div className="text-8xl md:text-[8rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-300 drop-shadow-lg mb-8 relative z-10">
-              {user.student?.pointsBalance?.toLocaleString() || 0} <span className="text-4xl text-indigo-300">pts</span>
-            </div>
-
-            <div className="flex items-center gap-4 bg-black/30 p-5 rounded-2xl w-fit border border-white/10 backdrop-blur-md relative z-10">
-              <Trophy className="w-8 h-8 text-yellow-400" />
+            <div className="flex flex-col gap-4 relative z-10 h-full">
               <div>
-                <p className="text-sm font-bold text-indigo-200 uppercase tracking-wider">Lifetime Earnings</p>
-                <p className="text-2xl font-black text-white">{user.student?.lifetimePoints?.toLocaleString() || 0}</p>
+                <h2 className="text-2xl font-black text-indigo-200 mb-2 uppercase tracking-widest">Points Balance</h2>
+                <div className="text-8xl md:text-[8rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-300 drop-shadow-lg mb-4">
+                  {user.student?.pointsBalance?.toLocaleString() || 0} <span className="text-4xl text-indigo-300">pts</span>
+                </div>
               </div>
+
+              <div className="flex items-center gap-4 bg-black/30 p-5 rounded-2xl w-fit border border-white/10 backdrop-blur-md mb-2">
+                <Trophy className="w-8 h-8 text-yellow-400" />
+                <div>
+                  <p className="text-sm font-bold text-indigo-200 uppercase tracking-wider">Lifetime Earnings</p>
+                  <p className="text-2xl font-black text-white">{lifetimePoints.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {settings && (
+                <div className="bg-black/30 p-6 rounded-2xl border border-white/10 backdrop-blur-md mt-auto w-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-indigo-200 font-bold flex items-center gap-2">
+                      <Package className="w-5 h-5 text-purple-400" />
+                      {bundleItemName} Collected
+                    </span>
+                    <span className="text-3xl font-black text-purple-400">x{bundlesEarned}</span>
+                  </div>
+                  <div className="w-full bg-black/50 rounded-full h-4 border border-white/10 overflow-hidden mb-2 relative">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 to-fuchsia-400 h-full rounded-full transition-all duration-1000 relative overflow-hidden" 
+                      style={{ width: `${progressPercent}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 skew-x-12 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-right text-indigo-300 font-bold">
+                    {currentProgress} / {bundleLimit} points to next
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -105,9 +171,17 @@ export default function StudentDashboard() {
                   <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
                   <Zap className="w-12 h-12 text-emerald-400 mb-6 animate-bounce" />
                   <p className="text-emerald-400 font-bold uppercase tracking-widest mb-2 z-10">Live Timer Running</p>
-                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter drop-shadow-[0_0_15px_rgba(52,211,153,0.3)] mb-6">
                     {liveTime.toFixed(1)}<span className="text-3xl text-gray-500">s</span>
                   </div>
+                  {settings?.allowStudentToStopTimer && (
+                    <button 
+                      onClick={handleRemoteStop}
+                      className="z-10 w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-2xl py-6 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)] border border-rose-400/50"
+                    >
+                      STOP TIMER
+                    </button>
+                  )}
                 </>
              ) : (
                 <>
@@ -146,6 +220,8 @@ export default function StudentDashboard() {
         </div>
 
       </main>
+
+      {showBundleAnim && <BundleAnimation itemName={bundleItemName} />}
     </div>
   );
 }

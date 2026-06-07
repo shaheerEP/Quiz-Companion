@@ -9,6 +9,8 @@ export interface ISession extends Document {
   isCompleted: boolean;
   currentTimerStartTime?: number;
   isTimerRunning: boolean;
+  studentStopTime?: number;
+  stoppedByStudent: boolean;
 }
 
 const SessionSchema = new Schema<ISession>(
@@ -21,6 +23,8 @@ const SessionSchema = new Schema<ISession>(
     isCompleted: { type: Boolean, default: false },
     currentTimerStartTime: { type: Number, default: null },
     isTimerRunning: { type: Boolean, default: false },
+    studentStopTime: { type: Number, default: null },
+    stoppedByStudent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
