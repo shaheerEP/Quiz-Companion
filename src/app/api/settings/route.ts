@@ -39,7 +39,7 @@ export async function GET() {
         config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
       }
     }
-    return NextResponse.json(config.value);
+    return NextResponse.json(config?.value || DEFAULT_SETTINGS);
   } catch (error: any) {
     console.error("Settings GET Error:", error);
     return NextResponse.json({ error: "Failed to fetch settings", details: error.message || error.toString() }, { status: 500 });

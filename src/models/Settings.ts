@@ -16,6 +16,9 @@ export interface ISettingsValue {
   ratingTiers: IRatingTier[];
   mysteryGifts: string[];
   badgeThresholds: IBadgeThresholds;
+  allowStudentToStopTimer?: boolean;
+  bundleLimit?: number;
+  bundleItemName?: string;
 }
 
 export interface ISettings extends Document {
