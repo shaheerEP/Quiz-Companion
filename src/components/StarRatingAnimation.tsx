@@ -14,6 +14,41 @@ interface StarRatingProps {
 
 export default function StarRatingAnimation({ stars, compliment, points, onComplete }: StarRatingProps) {
   useEffect(() => {
+    // Play sound effect based on stars
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const playNote = (freq: number, startTime: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8);
+          osc.start(startTime);
+          osc.stop(startTime + 0.8);
+        };
+        const now = ctx.currentTime;
+        // Ascending chime based on star count
+        if (stars >= 1) playNote(523.25, now); // C5
+        if (stars >= 2) playNote(659.25, now + 0.2); // E5
+        if (stars >= 3) playNote(783.99, now + 0.4); // G5
+        // Play an extra chord for points if there are any
+        if (points > 0) {
+          setTimeout(() => {
+            playNote(523.25, ctx.currentTime);
+            playNote(659.25, ctx.currentTime);
+            playNote(783.99, ctx.currentTime);
+            playNote(1046.50, ctx.currentTime); // C6
+          }, 800);
+        }
+      }
+    } catch (e) {}
+
     const duration = 2500;
     const end = Date.now() + duration;
 
@@ -40,9 +75,12 @@ export default function StarRatingAnimation({ stars, compliment, points, onCompl
     frame();
 
     // Auto-close after 4 seconds
-    const timer = setTimeout(onComplete, 4000);
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete();
+    }, 4000);
     return () => clearTimeout(timer);
-  }, [onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/80 backdrop-blur-sm">

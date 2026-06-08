@@ -87,7 +87,7 @@ export default function TeacherDashboard() {
     alert(`Added ${amount} bonus points!`);
   };
 
-  const handleTimerRunningState = async (run: boolean, teacherStopTime?: number) => {
+  const handleTimerRunningState = async (run: boolean, teacherStopTime?: number, teacherStartTime?: number) => {
     setIsRunning(run);
     if (activeSession) {
       await fetch("/api/sessions/timer", {
@@ -96,7 +96,8 @@ export default function TeacherDashboard() {
         body: JSON.stringify({ 
           sessionId: activeSession._id, 
           isTimerRunning: run,
-          ...(teacherStopTime !== undefined && { teacherStopTime })
+          ...(teacherStopTime !== undefined && { teacherStopTime }),
+          ...(teacherStartTime !== undefined && { teacherStartTime })
         })
       });
       setActiveSession({ 

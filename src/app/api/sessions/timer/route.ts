@@ -4,7 +4,7 @@ import { Session } from "@/models/Session";
 
 export async function PUT(req: Request) {
   try {
-    const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent, cancelled, teacherStopTime } = await req.json();
+    const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent, cancelled, teacherStopTime, teacherStartTime } = await req.json();
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
@@ -13,7 +13,7 @@ export async function PUT(req: Request) {
 
     session.isTimerRunning = isTimerRunning;
     if (isTimerRunning) {
-      session.currentTimerStartTime = Date.now();
+      session.currentTimerStartTime = teacherStartTime || Date.now();
       session.studentStopTime = undefined;
       session.stoppedByStudent = false;
       session.lastQuestionResult = undefined;

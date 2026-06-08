@@ -6,6 +6,31 @@ export default function BundleAnimation({ itemName }: { itemName: string }) {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const playNote = (freq: number, startTime: number, duration: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "square";
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        };
+        const now = ctx.currentTime;
+        playNote(440, now, 1); // A4
+        playNote(554.37, now, 1); // C#5
+        playNote(659.25, now, 1); // E5
+        playNote(880, now + 0.2, 2); // A5
+      }
+    } catch (e) {}
+
     const timer = setTimeout(() => setShow(false), 3500);
     return () => clearTimeout(timer);
   }, []);

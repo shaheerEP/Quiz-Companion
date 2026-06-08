@@ -7,7 +7,7 @@ interface StopwatchProps {
   onScore: (seconds: number, isCorrect: boolean) => void;
   onCancel: () => void;
   isRunning: boolean;
-  setIsRunning: (run: boolean, time?: number) => void;
+  setIsRunning: (run: boolean, time?: number, startTime?: number) => void;
   studentStopTime?: number | null;
 }
 
@@ -55,7 +55,8 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
     setTime(0);
     setIsPendingScore(false);
     lastProcessedStopTime.current = null;
-    setIsRunning(true);
+    const now = Date.now();
+    setIsRunning(true, undefined, now);
   };
 
   const handleStop = () => {
