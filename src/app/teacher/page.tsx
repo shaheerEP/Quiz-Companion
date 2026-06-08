@@ -100,6 +100,18 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleCancel = async () => {
+    // Reset the timer state in DB — don't log any question
+    if (activeSession) {
+      await fetch("/api/sessions/timer", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: activeSession._id, isTimerRunning: false })
+      });
+      setActiveSession({ ...activeSession, isTimerRunning: false, stoppedByStudent: false, studentStopTime: null });
+    }
+  };
+
   const handleScore = async (seconds: number, isCorrect: boolean) => {
     if (!settings || !activeSession || !activeStudent) return;
 
@@ -305,7 +317,8 @@ export default function TeacherDashboard() {
             <Stopwatch 
               isRunning={isRunning} 
               setIsRunning={handleTimerRunningState} 
-              onScore={handleScore} 
+              onScore={handleScore}
+              onCancel={handleCancel}
               studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
             />
           )}

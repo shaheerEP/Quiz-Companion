@@ -11,6 +11,12 @@ export interface ISession extends Document {
   isTimerRunning: boolean;
   studentStopTime?: number;
   stoppedByStudent: boolean;
+  lastQuestionResult?: {
+    points: number;
+    responseTime: number;
+    isCorrect: boolean;
+    stars: number;
+  };
 }
 
 const SessionSchema = new Schema<ISession>(
@@ -25,6 +31,7 @@ const SessionSchema = new Schema<ISession>(
     isTimerRunning: { type: Boolean, default: false },
     studentStopTime: { type: Number, default: null },
     stoppedByStudent: { type: Boolean, default: false },
+    lastQuestionResult: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
 );

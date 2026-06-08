@@ -11,6 +11,8 @@ export default function StudentDashboard() {
   const [activeSession, setActiveSession] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [liveTime, setLiveTime] = useState(0);
+  const [frozenTime, setFrozenTime] = useState<number | null>(null);
+  const [lastResult, setLastResult] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
@@ -53,6 +55,8 @@ export default function StudentDashboard() {
         const timerData = await res.json();
         
         if (timerData.isTimerRunning && timerData.currentTimerStartTime) {
+          setFrozenTime(null);
+          setLastResult(null);
           // Sync local clock
           const updateTimer = () => {
             const msPassed = Date.now() - timerData.currentTimerStartTime;
@@ -68,6 +72,15 @@ export default function StudentDashboard() {
           if (requestRef.current) {
             cancelAnimationFrame(requestRef.current);
             requestRef.current = null;
+          }
+          // Show frozen time if student stopped it
+          if (timerData.stoppedByStudent && timerData.studentStopTime) {
+            setFrozenTime(timerData.studentStopTime);
+          }
+          // Show last question result when available
+          if (timerData.lastQuestionResult) {
+            setLastResult(timerData.lastQuestionResult);
+            setFrozenTime(timerData.lastQuestionResult.responseTime);
           }
         }
       } catch (e) {}
@@ -165,13 +178,13 @@ export default function StudentDashboard() {
           </div>
 
           {/* Live Timer Sync Card */}
-          <div className="w-full md:w-96 bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="w-full md:w-96 bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
              {activeSession?.isTimerRunning ? (
                 <>
                   <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
-                  <Zap className="w-12 h-12 text-emerald-400 mb-6 animate-bounce" />
-                  <p className="text-emerald-400 font-bold uppercase tracking-widest mb-2 z-10">Live Timer Running</p>
-                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter drop-shadow-[0_0_15px_rgba(52,211,153,0.3)] mb-6">
+                  <Zap className="w-12 h-12 text-emerald-400 mb-2 animate-bounce z-10" />
+                  <p className="text-emerald-400 font-bold uppercase tracking-widest z-10">Live Timer Running</p>
+                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter drop-shadow-[0_0_15px_rgba(52,211,153,0.3)] mb-2">
                     {liveTime.toFixed(1)}<span className="text-3xl text-gray-500">s</span>
                   </div>
                   {settings?.allowStudentToStopTimer && (
@@ -183,9 +196,41 @@ export default function StudentDashboard() {
                     </button>
                   )}
                 </>
+             ) : lastResult ? (
+                <>
+                  <div className={`absolute inset-0 ${lastResult.isCorrect ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}></div>
+                  <div className="z-10 text-center flex flex-col items-center gap-3">
+                    <div className={`text-5xl font-mono font-black tracking-tighter ${lastResult.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {(frozenTime ?? lastResult.responseTime).toFixed(1)}<span className="text-2xl text-gray-500">s</span>
+                    </div>
+                    <div className={`text-4xl font-black ${lastResult.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {lastResult.isCorrect ? '✅ Correct!' : '❌ Wrong!'}
+                    </div>
+                    {lastResult.isCorrect && lastResult.points > 0 && (
+                      <div className="bg-emerald-500/20 border border-emerald-500/40 px-6 py-3 rounded-2xl">
+                        <span className="text-2xl font-black text-emerald-400">+{lastResult.points} pts</span>
+                        <span className="ml-2 text-yellow-400">{"⭐".repeat(lastResult.stars)}</span>
+                      </div>
+                    )}
+                    {!lastResult.isCorrect && (
+                      <div className="bg-rose-500/20 border border-rose-500/30 px-6 py-3 rounded-2xl">
+                        <span className="text-lg font-bold text-rose-300">No points this round</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+             ) : frozenTime !== null ? (
+                <>
+                  <div className="absolute inset-0 bg-amber-500/10"></div>
+                  <p className="text-amber-400 font-bold uppercase tracking-widest z-10">Stopped</p>
+                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter">
+                    {frozenTime.toFixed(1)}<span className="text-3xl text-gray-500">s</span>
+                  </div>
+                  <p className="text-gray-500 text-sm font-bold z-10">Waiting for result...</p>
+                </>
              ) : (
                 <>
-                  <div className="bg-gray-800 p-6 rounded-full mb-6">
+                  <div className="bg-gray-800 p-6 rounded-full mb-2">
                     <Zap className="w-12 h-12 text-gray-600" />
                   </div>
                   <p className="text-gray-500 font-bold uppercase tracking-widest text-center">Waiting for teacher<br/>to start timer...</p>

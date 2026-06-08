@@ -16,6 +16,7 @@ export async function PUT(req: Request) {
       session.currentTimerStartTime = Date.now();
       session.studentStopTime = undefined;
       session.stoppedByStudent = false;
+      session.lastQuestionResult = undefined;
     } else {
       if (stoppedByStudent !== undefined) {
         session.stoppedByStudent = stoppedByStudent;
@@ -49,7 +50,8 @@ export async function GET(req: Request) {
       isTimerRunning: session.isTimerRunning, 
       currentTimerStartTime: session.currentTimerStartTime,
       stoppedByStudent: session.stoppedByStudent,
-      studentStopTime: session.studentStopTime
+      studentStopTime: session.studentStopTime,
+      lastQuestionResult: session.lastQuestionResult || null
     });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch timer state" }, { status: 500 });

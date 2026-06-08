@@ -39,6 +39,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     session.averageSpeed = newAverageSpeed;
     session.isTimerRunning = false;
     session.currentTimerStartTime = undefined;
+    session.stoppedByStudent = false;
+    session.studentStopTime = undefined;
+    session.lastQuestionResult = {
+      points: actualPoints,
+      responseTime,
+      isCorrect,
+      stars: isCorrect ? starsAwarded : 0
+    };
     await session.save();
 
     if (actualPoints > 0) {
