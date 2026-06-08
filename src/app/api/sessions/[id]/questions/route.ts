@@ -8,7 +8,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   try {
     const { id } = await context.params;
     const sessionId = id;
-    const { questionNumber, responseTime, starsAwarded, points, isCorrect } = await req.json();
+    const { questionNumber, responseTime, starsAwarded, points, isCorrect, compliment } = await req.json();
 
     if (!sessionId || questionNumber === undefined || responseTime === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -45,7 +45,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       points: actualPoints,
       responseTime,
       isCorrect,
-      stars: isCorrect ? starsAwarded : 0
+      stars: isCorrect ? starsAwarded : 0,
+      compliment: isCorrect ? (compliment || '') : 'Incorrect!'
     };
     await session.save();
 

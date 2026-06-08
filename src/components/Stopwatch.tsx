@@ -16,6 +16,7 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
   const [isPendingScore, setIsPendingScore] = useState(false);
   const startTimeRef = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
+  const lastProcessedStopTime = useRef<number | null>(null);
 
   const updateTimer = () => {
     if (startTimeRef.current !== null) {
@@ -39,16 +40,21 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
   }, [isRunning]);
 
   useEffect(() => {
-    if (studentStopTime && isRunning) {
+    if (studentStopTime && studentStopTime !== lastProcessedStopTime.current && isRunning) {
+      lastProcessedStopTime.current = studentStopTime;
       setTime(studentStopTime);
       setIsRunning(false);
       setIsPendingScore(true);
+    }
+    if (!studentStopTime) {
+      lastProcessedStopTime.current = null;
     }
   }, [studentStopTime, isRunning, setIsRunning]);
 
   const handleStart = () => {
     setTime(0);
     setIsPendingScore(false);
+    lastProcessedStopTime.current = null;
     setIsRunning(true);
   };
 

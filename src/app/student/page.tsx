@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Zap, Trophy, History, Package } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
+import StarRatingAnimation from "@/components/StarRatingAnimation";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -16,6 +17,8 @@ export default function StudentDashboard() {
   const [settings, setSettings] = useState<any>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
+  const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
+  const lastResultIdRef = useRef<string | null>(null);
 
   const requestRef = useRef<number | null>(null);
 
@@ -79,8 +82,23 @@ export default function StudentDashboard() {
           }
           // Show last question result when available
           if (timerData.lastQuestionResult) {
-            setLastResult(timerData.lastQuestionResult);
-            setFrozenTime(timerData.lastQuestionResult.responseTime);
+            const resultKey = JSON.stringify(timerData.lastQuestionResult);
+            if (timerData.lastQuestionResult.cancelled) {
+              setLastResult({ cancelled: true });
+              setFrozenTime(null);
+            } else {
+              setLastResult(timerData.lastQuestionResult);
+              setFrozenTime(timerData.lastQuestionResult.responseTime);
+              // Trigger star animation once per result
+              if (timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
+                lastResultIdRef.current = resultKey;
+                setShowRating({
+                  stars: timerData.lastQuestionResult.stars,
+                  compliment: timerData.lastQuestionResult.compliment || '',
+                  points: timerData.lastQuestionResult.points
+                });
+              }
+            }
           }
         }
       } catch (e) {}
@@ -196,6 +214,15 @@ export default function StudentDashboard() {
                     </button>
                   )}
                 </>
+             ) : lastResult?.cancelled ? (
+                <>
+                  <div className="absolute inset-0 bg-amber-500/10"></div>
+                  <div className="z-10 text-center flex flex-col items-center gap-3">
+                    <div className="text-5xl">🔄</div>
+                    <div className="text-2xl font-black text-amber-400">Question Cancelled</div>
+                    <p className="text-gray-400 font-bold">Teacher will ask again!</p>
+                  </div>
+                </>
              ) : lastResult ? (
                 <>
                   <div className={`absolute inset-0 ${lastResult.isCorrect ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}></div>
@@ -267,6 +294,15 @@ export default function StudentDashboard() {
       </main>
 
       {showBundleAnim && <BundleAnimation itemName={bundleItemName} />}
+
+      {showRating && (
+        <StarRatingAnimation 
+          stars={showRating.stars}
+          compliment={showRating.compliment}
+          points={showRating.points}
+          onComplete={() => setShowRating(null)}
+        />
+      )}
     </div>
   );
 }

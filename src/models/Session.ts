@@ -12,10 +12,12 @@ export interface ISession extends Document {
   studentStopTime?: number;
   stoppedByStudent: boolean;
   lastQuestionResult?: {
-    points: number;
-    responseTime: number;
-    isCorrect: boolean;
-    stars: number;
+    points?: number;
+    responseTime?: number;
+    isCorrect?: boolean;
+    stars?: number;
+    compliment?: string;
+    cancelled?: boolean;
   };
 }
 

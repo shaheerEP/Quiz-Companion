@@ -4,7 +4,7 @@ import { Session } from "@/models/Session";
 
 export async function PUT(req: Request) {
   try {
-    const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent } = await req.json();
+    const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent, cancelled } = await req.json();
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
@@ -18,7 +18,12 @@ export async function PUT(req: Request) {
       session.stoppedByStudent = false;
       session.lastQuestionResult = undefined;
     } else {
-      if (stoppedByStudent !== undefined) {
+      if (cancelled) {
+        session.stoppedByStudent = false;
+        session.studentStopTime = undefined;
+        session.currentTimerStartTime = undefined;
+        session.lastQuestionResult = { cancelled: true };
+      } else if (stoppedByStudent !== undefined) {
         session.stoppedByStudent = stoppedByStudent;
         session.studentStopTime = studentStopTime;
       } else {

@@ -95,20 +95,25 @@ export default function TeacherDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: activeSession._id, isTimerRunning: run })
       });
-      // Optionally re-fetch session to be 100% in sync locally, but not strictly needed
-      setActiveSession({ ...activeSession, isTimerRunning: run });
+      setActiveSession({ 
+        ...activeSession, 
+        isTimerRunning: run, 
+        stoppedByStudent: false, 
+        studentStopTime: null,
+        lastQuestionResult: null 
+      });
     }
   };
 
   const handleCancel = async () => {
-    // Reset the timer state in DB — don't log any question
+    // Reset the timer state in DB — don't log any question, notify student
     if (activeSession) {
       await fetch("/api/sessions/timer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: activeSession._id, isTimerRunning: false })
+        body: JSON.stringify({ sessionId: activeSession._id, isTimerRunning: false, cancelled: true })
       });
-      setActiveSession({ ...activeSession, isTimerRunning: false, stoppedByStudent: false, studentStopTime: null });
+      setActiveSession({ ...activeSession, isTimerRunning: false, stoppedByStudent: false, studentStopTime: null, lastQuestionResult: null });
     }
   };
 
@@ -143,7 +148,8 @@ export default function TeacherDashboard() {
         responseTime: seconds,
         starsAwarded: matchedTier.stars,
         points: matchedTier.points,
-        isCorrect
+        isCorrect,
+        compliment: matchedTier.name
       })
     });
     const result = await res.json();
@@ -155,7 +161,9 @@ export default function TeacherDashboard() {
       totalQuestions: prev.totalQuestions + 1,
       finalScore: prev.finalScore + actualPoints,
       averageSpeed: ((prev.averageSpeed * prev.totalQuestions) + seconds) / (prev.totalQuestions + 1),
-      isTimerRunning: false
+      isTimerRunning: false,
+      stoppedByStudent: false,
+      studentStopTime: null
     }));
     setActiveStudent((prev: any) => ({
       ...prev,
