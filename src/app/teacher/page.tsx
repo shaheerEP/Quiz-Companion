@@ -87,19 +87,23 @@ export default function TeacherDashboard() {
     alert(`Added ${amount} bonus points!`);
   };
 
-  const handleTimerRunningState = async (run: boolean) => {
+  const handleTimerRunningState = async (run: boolean, teacherStopTime?: number) => {
     setIsRunning(run);
     if (activeSession) {
       await fetch("/api/sessions/timer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: activeSession._id, isTimerRunning: run })
+        body: JSON.stringify({ 
+          sessionId: activeSession._id, 
+          isTimerRunning: run,
+          ...(teacherStopTime !== undefined && { teacherStopTime })
+        })
       });
       setActiveSession({ 
         ...activeSession, 
         isTimerRunning: run, 
         stoppedByStudent: false, 
-        studentStopTime: null,
+        studentStopTime: teacherStopTime !== undefined ? teacherStopTime : null,
         lastQuestionResult: null 
       });
     }

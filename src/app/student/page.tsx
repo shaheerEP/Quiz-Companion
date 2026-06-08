@@ -76,8 +76,8 @@ export default function StudentDashboard() {
             cancelAnimationFrame(requestRef.current);
             requestRef.current = null;
           }
-          // Show frozen time if student stopped it
-          if (timerData.stoppedByStudent && timerData.studentStopTime) {
+          // Show frozen time if stopped by anyone
+          if (timerData.studentStopTime !== undefined && timerData.studentStopTime !== null) {
             setFrozenTime(timerData.studentStopTime);
           }
           // Show last question result when available
