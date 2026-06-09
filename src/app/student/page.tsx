@@ -31,7 +31,7 @@ export default function StudentDashboard() {
     } else {
       setQuestionLogs([]);
     }
-  }, [activeSession?._id, activeSession?.totalQuestions]);
+  }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
 
   const requestRef = useRef<number | null>(null);
 

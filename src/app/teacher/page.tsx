@@ -32,7 +32,7 @@ export default function TeacherDashboard() {
     } else {
       setQuestionLogs([]);
     }
-  }, [activeSession?._id, activeSession?.totalQuestions]);
+  }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
 
   useEffect(() => {
     fetch("/api/settings").then(res => res.json()).then(setSettings);
