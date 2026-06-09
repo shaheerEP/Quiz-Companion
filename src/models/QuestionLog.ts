@@ -2,19 +2,21 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IQuestionLog extends Document {
   sessionId: mongoose.Types.ObjectId;
-  questionNumber: number;
-  responseTime: number;
-  starsAwarded: number;
+  logType?: 'question' | 'bonus' | 'deduction';
+  questionNumber?: number;
+  responseTime?: number;
+  starsAwarded?: number;
   points: number;
-  isCorrect: boolean;
+  isCorrect?: boolean;
 }
 
 const QuestionLogSchema = new Schema<IQuestionLog>(
   {
     sessionId: { type: Schema.Types.ObjectId, ref: "Session", required: true },
-    questionNumber: { type: Number, required: true },
-    responseTime: { type: Number, required: true }, // in seconds
-    starsAwarded: { type: Number, required: true },
+    logType: { type: String, enum: ['question', 'bonus', 'deduction'], default: 'question' },
+    questionNumber: { type: Number, default: 0 },
+    responseTime: { type: Number, default: 0 }, // in seconds
+    starsAwarded: { type: Number, default: 0 },
     points: { type: Number, required: true },
     isCorrect: { type: Boolean, default: true },
   },

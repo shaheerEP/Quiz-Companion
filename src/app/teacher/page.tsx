@@ -83,44 +83,41 @@ export default function TeacherDashboard() {
 
   const handleAddBonus = async () => {
     const amount = prompt("Enter bonus points to add:");
-    if (!amount || isNaN(Number(amount))) return;
+    if (!amount || isNaN(Number(amount)) || !activeSession) return;
+    
+    await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ logType: 'bonus', points: Number(amount) })
+    });
     
     const newPoints = activeStudent.pointsBalance + Number(amount);
     const newLifetime = activeStudent.lifetimePoints + Number(amount);
-    
-    await fetch("/api/students", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: activeStudent._id,
-        pointsBalance: newPoints,
-        lifetimePoints: newLifetime
-      })
-    });
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
-    alert(`Added ${amount} bonus points!`);
+    
+    // Also update session score locally and refetch logs by incrementing totalQuestions slightly to trigger effect, or better yet, fetch logs manually
+    fetch(`/api/sessions/${activeSession._id}/questions`)
+      .then(res => res.json())
+      .then(setQuestionLogs);
   };
 
   const handleDeductPoints = async () => {
     const amount = prompt("Enter points to deduct:");
-    if (!amount || isNaN(Number(amount))) return;
+    if (!amount || isNaN(Number(amount)) || !activeSession) return;
     
-    const newPoints = Math.max(0, activeStudent.pointsBalance - Number(amount));
-    // Do we deduct from lifetime points? Usually no, but to be consistent with addition, let's just deduct from balance.
-    // Wait, the prompt says "like add bonus point". We deduct from both to reverse a mistake? Let's just deduct from balance to not mess up bundles.
-    const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
-    
-    await fetch("/api/students", {
-      method: "PUT",
+    await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: activeStudent._id,
-        pointsBalance: newPoints,
-        lifetimePoints: newLifetime
-      })
+      body: JSON.stringify({ logType: 'deduction', points: Number(amount) })
     });
+
+    const newPoints = Math.max(0, activeStudent.pointsBalance - Number(amount));
+    const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
-    alert(`Deducted ${amount} points!`);
+    
+    fetch(`/api/sessions/${activeSession._id}/questions`)
+      .then(res => res.json())
+      .then(setQuestionLogs);
   };
 
   const handleTimerRunningState = async (run: boolean, teacherStopTime?: number, teacherStartTime?: number) => {
@@ -376,17 +373,41 @@ export default function TeacherDashboard() {
                 {questionLogs.map((log) => (
                   <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                        Q{log.questionNumber}
-                      </div>
+                      {log.logType === 'bonus' ? (
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
+                          <PlusCircle className="w-5 h-5" />
+                        </div>
+                      ) : log.logType === 'deduction' ? (
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400">
+                          <MinusCircle className="w-5 h-5" />
+                        </div>
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                          Q{log.questionNumber}
+                        </div>
+                      )}
                       <div>
-                        <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {log.isCorrect ? `+${log.points} pts` : 'No points'}
-                        </p>
-                        <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                        {log.logType === 'bonus' ? (
+                          <>
+                            <p className="font-bold text-indigo-400">+{log.points} pts</p>
+                            <p className="text-xs text-gray-500">Manual Bonus</p>
+                          </>
+                        ) : log.logType === 'deduction' ? (
+                          <>
+                            <p className="font-bold text-rose-400">-{log.points} pts</p>
+                            <p className="text-xs text-gray-500">Manual Deduction</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {log.isCorrect ? `+${log.points} pts` : 'No points'}
+                            </p>
+                            <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                          </>
+                        )}
                       </div>
                     </div>
-                    {log.isCorrect && (
+                    {(!log.logType || log.logType === 'question') && log.isCorrect && (
                       <div className="text-lg">
                         {"⭐".repeat(log.starsAwarded)}
                       </div>

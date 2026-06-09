@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package, ListChecks } from "lucide-react";
+import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
@@ -296,17 +296,41 @@ export default function StudentDashboard() {
               {questionLogs.map((log) => (
                 <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                      Q{log.questionNumber}
-                    </div>
+                    {log.logType === 'bonus' ? (
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
+                        <PlusCircle className="w-5 h-5" />
+                      </div>
+                    ) : log.logType === 'deduction' ? (
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400">
+                        <MinusCircle className="w-5 h-5" />
+                      </div>
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        Q{log.questionNumber}
+                      </div>
+                    )}
                     <div>
-                      <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {log.isCorrect ? `+${log.points} pts` : 'No points'}
-                      </p>
-                      <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                      {log.logType === 'bonus' ? (
+                        <>
+                          <p className="font-bold text-indigo-400">+{log.points} pts</p>
+                          <p className="text-xs text-gray-500">Manual Bonus</p>
+                        </>
+                      ) : log.logType === 'deduction' ? (
+                        <>
+                          <p className="font-bold text-rose-400">-{log.points} pts</p>
+                          <p className="text-xs text-gray-500">Manual Deduction</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {log.isCorrect ? `+${log.points} pts` : 'No points'}
+                          </p>
+                          <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                        </>
+                      )}
                     </div>
                   </div>
-                  {log.isCorrect && (
+                  {(!log.logType || log.logType === 'question') && log.isCorrect && (
                     <div className="text-lg">
                       {"⭐".repeat(log.starsAwarded)}
                     </div>
