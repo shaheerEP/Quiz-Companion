@@ -11,7 +11,7 @@ import ManualPointsAnimation from "@/components/ManualPointsAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, refreshAuth } = useAuth();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [liveTime, setLiveTime] = useState(0);
@@ -26,6 +26,7 @@ export default function StudentDashboard() {
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [completedSessions, setCompletedSessions] = useState<any[]>([]);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const lastResultIdRef = useRef<string | null>(null);
   const shownManualLogsRef = useRef<Set<string>>(new Set());
 
@@ -82,6 +83,8 @@ export default function StudentDashboard() {
       
       const setRes = await fetch("/api/settings");
       setSettings(await setRes.json());
+      
+      refreshAuth();
     };
 
     fetchDashboardData();
@@ -195,12 +198,21 @@ export default function StudentDashboard() {
   const progressPercent = Math.min(100, Math.max(0, (currentProgress / bundleLimit) * 100));
 
   useEffect(() => {
-    if (prevBundles !== null && bundlesEarned > prevBundles) {
+    if (user && !initialLoadComplete) {
+      setInitialLoadComplete(true);
+      setPrevBundles(bundlesEarned);
+    }
+  }, [user, initialLoadComplete, bundlesEarned]);
+
+  useEffect(() => {
+    if (initialLoadComplete && prevBundles !== null && bundlesEarned > prevBundles) {
       setShowBundleAnim(true);
       setTimeout(() => setShowBundleAnim(false), 4000);
     }
-    setPrevBundles(bundlesEarned);
-  }, [bundlesEarned, prevBundles]);
+    if (initialLoadComplete) {
+      setPrevBundles(bundlesEarned);
+    }
+  }, [bundlesEarned, prevBundles, initialLoadComplete]);
 
   if (!user || user.role !== "student") return null;
 
