@@ -6,7 +6,7 @@ import Stopwatch from "@/components/Stopwatch";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
-import { User, Activity, Zap, PlusCircle, Package } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks } from "lucide-react";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -19,6 +19,17 @@ export default function TeacherDashboard() {
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
+  const [questionLogs, setQuestionLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (activeSession) {
+      fetch(`/api/sessions/${activeSession._id}/questions`)
+        .then(res => res.json())
+        .then(setQuestionLogs);
+    } else {
+      setQuestionLogs([]);
+    }
+  }, [activeSession?._id, activeSession?.totalQuestions]);
 
   useEffect(() => {
     fetch("/api/settings").then(res => res.json()).then(setSettings);
@@ -85,6 +96,28 @@ export default function TeacherDashboard() {
     });
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
     alert(`Added ${amount} bonus points!`);
+  };
+
+  const handleDeductPoints = async () => {
+    const amount = prompt("Enter points to deduct:");
+    if (!amount || isNaN(Number(amount))) return;
+    
+    const newPoints = Math.max(0, activeStudent.pointsBalance - Number(amount));
+    // Do we deduct from lifetime points? Usually no, but to be consistent with addition, let's just deduct from balance.
+    // Wait, the prompt says "like add bonus point". We deduct from both to reverse a mistake? Let's just deduct from balance to not mess up bundles.
+    const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
+    
+    await fetch("/api/students", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: activeStudent._id,
+        pointsBalance: newPoints,
+        lifetimePoints: newLifetime
+      })
+    });
+    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
+    alert(`Deducted ${amount} points!`);
   };
 
   const handleTimerRunningState = async (run: boolean, teacherStopTime?: number, teacherStartTime?: number) => {
@@ -279,12 +312,20 @@ export default function TeacherDashboard() {
                   </div>
                 )}
                 
-                <button 
-                  onClick={handleAddBonus}
-                  className="mt-2 w-full flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold py-3 rounded-xl transition-colors border border-indigo-500/20"
-                >
-                  <PlusCircle className="w-5 h-5" /> Add Bonus Points
-                </button>
+                <div className="flex gap-2 w-full mt-2">
+                  <button 
+                    onClick={handleAddBonus}
+                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold py-3 rounded-xl transition-colors border border-indigo-500/20"
+                  >
+                    <PlusCircle className="w-5 h-5" /> Add Points
+                  </button>
+                  <button 
+                    onClick={handleDeductPoints}
+                    className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold py-3 rounded-xl transition-colors border border-rose-500/20"
+                  >
+                    <MinusCircle className="w-5 h-5" /> Deduct
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -311,6 +352,43 @@ export default function TeacherDashboard() {
                     {activeSession.averageSpeed.toFixed(1)}s
                   </p>
                 </div>
+                {activeSession.isCompleted && (
+                <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
+                  <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
+                  <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
+                </div>
+              )}
+              </div>
+            </div>
+          )}
+
+          {activeSession && questionLogs.length > 0 && (
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg flex-1 mt-8 md:mt-0 xl:mt-8 md:col-span-1 xl:col-span-1">
+              <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
+                <div className="bg-indigo-500/20 p-2 rounded-lg"><ListChecks className="w-5 h-5 text-indigo-400" /></div>
+                Question Results
+              </h2>
+              <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {questionLogs.map((log) => (
+                  <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        Q{log.questionNumber}
+                      </div>
+                      <div>
+                        <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {log.isCorrect ? `+${log.points} pts` : 'No points'}
+                        </p>
+                        <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                      </div>
+                    </div>
+                    {log.isCorrect && (
+                      <div className="text-lg">
+                        {"⭐".repeat(log.starsAwarded)}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}

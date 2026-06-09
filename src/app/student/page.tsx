@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package } from "lucide-react";
+import { Zap, Trophy, History, Package, ListChecks } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 
@@ -18,7 +18,18 @@ export default function StudentDashboard() {
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
+  const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const lastResultIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (activeSession) {
+      fetch(`/api/sessions/${activeSession._id}/questions`)
+        .then(res => res.json())
+        .then(setQuestionLogs);
+    } else {
+      setQuestionLogs([]);
+    }
+  }, [activeSession?._id, activeSession?.totalQuestions]);
 
   const requestRef = useRef<number | null>(null);
 
@@ -265,6 +276,38 @@ export default function StudentDashboard() {
              )}
           </div>
         </div>
+
+        {/* Question Logs */}
+        {activeSession && questionLogs.length > 0 && (
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mb-8">
+            <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
+              <div className="bg-indigo-500/20 p-2 rounded-lg"><ListChecks className="w-5 h-5 text-indigo-400" /></div>
+              Question Results
+            </h2>
+            <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {questionLogs.map((log) => (
+                <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                      Q{log.questionNumber}
+                    </div>
+                    <div>
+                      <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {log.isCorrect ? `+${log.points} pts` : 'No points'}
+                      </p>
+                      <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                    </div>
+                  </div>
+                  {log.isCorrect && (
+                    <div className="text-lg">
+                      {"⭐".repeat(log.starsAwarded)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Withdrawal History */}
         <div className="bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl">

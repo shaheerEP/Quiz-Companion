@@ -65,3 +65,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     return NextResponse.json({ error: "Failed to log question", details: error.message }, { status: 500 });
   }
 }
+
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await context.params;
+    await connectToDatabase();
+    const questions = await QuestionLog.find({ sessionId: id }).sort({ questionNumber: 1 });
+    return NextResponse.json(questions);
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to fetch questions", details: error.message }, { status: 500 });
+  }
+}
