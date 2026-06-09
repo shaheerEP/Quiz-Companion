@@ -8,7 +8,7 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History } from "lucide-react";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -24,6 +24,7 @@ export default function TeacherDashboard() {
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
+  const [completedSessions, setCompletedSessions] = useState<any[]>([]);
   const [resetTimerKey, setResetTimerKey] = useState(0);
 
   useEffect(() => {
@@ -72,10 +73,18 @@ export default function TeacherDashboard() {
         try {
           const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
           const sessions = await res.json();
-          if (sessions.length > 0 && !sessions[0].isCompleted) {
-            if (sessions[0].stoppedByStudent && sessions[0].studentStopTime !== null) {
-              setActiveSession(sessions[0]);
+        
+          const active = sessions.find((s: any) => !s.isCompleted);
+          const completed = sessions.filter((s: any) => s.isCompleted);
+          
+          setCompletedSessions(completed);
+          
+          if (active) {
+            if (active.stoppedByStudent && active.studentStopTime !== null) {
+              setActiveSession(active);
             }
+          } else {
+            setActiveSession(null);
           }
         } catch (e) {}
       }, 1000);
@@ -99,7 +108,6 @@ export default function TeacherDashboard() {
     
     setManualAnim({ type: 'bonus', amount: Number(amount) });
 
-    // Also update session score locally and refetch logs by incrementing totalQuestions slightly to trigger effect, or better yet, fetch logs manually
     fetch(`/api/sessions/${activeSession._id}/questions`)
       .then(res => res.json())
       .then(setQuestionLogs);
@@ -154,7 +162,6 @@ export default function TeacherDashboard() {
   };
 
   const handleCancel = async () => {
-    // Reset the timer state in DB — don't log any question, notify student
     if (activeSession) {
       await fetch("/api/sessions/timer", {
         method: "PUT",
@@ -171,7 +178,7 @@ export default function TeacherDashboard() {
     let matchedTier = { name: "Incorrect!", stars: 0, points: 0, maxSeconds: 999 };
     if (isCorrect) {
       const sortedTiers = [...settings.ratingTiers].sort((a: any, b: any) => a.maxSeconds - b.maxSeconds);
-      matchedTier = sortedTiers[sortedTiers.length - 1]; // default to longest time
+      matchedTier = sortedTiers[sortedTiers.length - 1]; 
       for (const tier of sortedTiers) {
         if (seconds <= tier.maxSeconds) {
           matchedTier = tier;
@@ -228,10 +235,6 @@ export default function TeacherDashboard() {
     setShowRating(null);
     setResetTimerKey(prev => prev + 1);
     if (activeSession && settings) {
-      const updatedTotal = activeSession.totalQuestions + 1; // +1 because state might be lagging one tick behind if called synchronously
-      // Wait, we updated state before calling this in handleScore. But setActiveSession is async. 
-      // Let's rely on activeSession.totalQuestions + 1 if we're calling it from handleScore, but wait, handleRatingComplete is called *after* animation.
-      // So activeSession state should be updated by now.
       if (activeSession.totalQuestions >= settings.badgeThresholds.finaleQuestionCount) {
         if (activeSession.averageSpeed <= settings.badgeThresholds.speedThreshold) {
           setShowFinale("Master Mind Champion 🏆");
@@ -269,7 +272,6 @@ export default function TeacherDashboard() {
       <Navbar />
 
       <main className="flex-1 flex flex-col md:flex-row p-6 gap-6 max-w-7xl mx-auto w-full">
-        {/* Sidebar */}
         <aside className="w-full md:w-80 flex flex-col gap-6">
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
@@ -323,20 +325,50 @@ export default function TeacherDashboard() {
                   </div>
                 )}
                 
-                <div className="flex gap-2 w-full mt-2">
-                  <button 
-                    onClick={handleAddBonus}
-                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold py-3 rounded-xl transition-colors border border-indigo-500/20"
-                  >
-                    <PlusCircle className="w-5 h-5" /> Add Points
-                  </button>
-                  <button 
-                    onClick={handleDeductPoints}
-                    className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold py-3 rounded-xl transition-colors border border-rose-500/20"
-                  >
-                    <MinusCircle className="w-5 h-5" /> Deduct
-                  </button>
-                </div>
+                {activeSession && (
+                  <div className="flex gap-4 w-full">
+                    <button 
+                      onClick={handleAddBonus}
+                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-3 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
+                    >
+                      <PlusCircle className="w-5 h-5" /> Add Points
+                    </button>
+                    <button 
+                      onClick={handleDeductPoints}
+                      className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-3 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
+                    >
+                      <MinusCircle className="w-5 h-5" /> Deduct
+                    </button>
+                  </div>
+                )}
+            
+                {completedSessions.length > 0 && (
+                  <div className="mt-8 bg-black/30 p-6 rounded-3xl border border-white/5 shadow-inner">
+                    <h3 className="text-xl font-black text-white mb-4 flex items-center gap-2">
+                      <History className="w-6 h-6 text-indigo-400" />
+                      Past Quizzes
+                    </h3>
+                    <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                      {completedSessions.map(session => (
+                        <div key={session._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50">
+                          <div>
+                            <p className="font-bold text-gray-200">
+                              {new Date(session.date).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {session.totalQuestions} questions asked
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-emerald-400">
+                              {session.finalScore} pts
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

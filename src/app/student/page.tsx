@@ -23,6 +23,7 @@ export default function StudentDashboard() {
   const [showWrong, setShowWrong] = useState(false);
   const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
+  const [completedSessions, setCompletedSessions] = useState<any[]>([]);
   const lastResultIdRef = useRef<string | null>(null);
   const shownManualLogsRef = useRef<Set<string>>(new Set());
 
@@ -60,9 +61,15 @@ export default function StudentDashboard() {
     const fetchDashboardData = async () => {
       // Find active session
       const res = await fetch(`/api/sessions?studentId=${user.id}`);
-      const sessions = await res.json();
-      if (sessions.length > 0 && !sessions[0].isCompleted) {
-        setActiveSession(sessions[0]);
+        const sessions = await res.json();
+        
+        const active = sessions.find((s: any) => !s.isCompleted);
+        const completed = sessions.filter((s: any) => s.isCompleted);
+        
+        setCompletedSessions(completed);
+
+        if (active) {
+          setActiveSession(active);
       } else {
         setActiveSession(null);
       }
@@ -185,9 +192,11 @@ export default function StudentDashboard() {
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
         
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Main Stats Card */}
-          <div className="flex-1 bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/30 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full filter blur-3xl mix-blend-overlay"></div>
+          
+          <div className="flex-1 flex flex-col gap-8">
+            {/* Main Stats Card */}
+            <div className="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/30 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full filter blur-3xl mix-blend-overlay"></div>
             
             <div className="flex flex-col gap-4 relative z-10 h-full">
               <div>
@@ -229,10 +238,42 @@ export default function StudentDashboard() {
               )}
             </div>
           </div>
+            
+          {/* Past Quizzes embedded inside the same column but underneath */}
+          {completedSessions.length > 0 && (
+              <div className="bg-black/40 p-8 rounded-3xl border border-white/5 shadow-inner">
+                <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
+                  <History className="w-6 h-6 text-indigo-400" />
+                  Past Quizzes
+                </h3>
+                <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                  {completedSessions.map(session => (
+                    <div key={session._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                      <div>
+                        <p className="font-bold text-gray-200 text-lg">
+                          {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        <p className="text-sm text-gray-500 font-medium">
+                          {session.totalQuestions} questions
+                        </p>
+                      </div>
+                      <div className="text-right flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-emerald-500 opacity-70" />
+                        <p className="font-black text-emerald-400 text-xl">
+                          {session.finalScore}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Live Timer Sync Card */}
-          <div className="w-full md:w-96 bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-             {activeSession?.isTimerRunning ? (
+          <div className="w-full md:w-96 flex flex-col gap-8">
+            <div className="bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+               {activeSession?.isTimerRunning ? (
                 <>
                   <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
                   <Zap className="w-12 h-12 text-emerald-400 mb-2 animate-bounce z-10" />
@@ -301,6 +342,7 @@ export default function StudentDashboard() {
                   <p className="text-gray-500 font-bold uppercase tracking-widest text-center">Ready for next question!</p>
                 </>
              )}
+            </div>
           </div>
         </div>
 
