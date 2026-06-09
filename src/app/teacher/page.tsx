@@ -412,7 +412,7 @@ export default function TeacherDashboard() {
                             <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {log.isCorrect ? `+${log.points} pts` : 'No points'}
                             </p>
-                            <p className="text-xs text-gray-500">{log.responseTime}s response</p>
+                            <p className="text-xs text-gray-500">{Number(log.responseTime).toFixed(1)}s response</p>
                           </>
                         )}
                       </div>
