@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Zap, Trophy, History, Package, ListChecks } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
+import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function StudentDashboard() {
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
+  const [showWrong, setShowWrong] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const lastResultIdRef = useRef<string | null>(null);
 
@@ -108,6 +110,9 @@ export default function StudentDashboard() {
                   compliment: timerData.lastQuestionResult.compliment || '',
                   points: timerData.lastQuestionResult.points
                 });
+              } else if (!timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
+                lastResultIdRef.current = resultKey;
+                setShowWrong(true);
               }
             }
           }
@@ -271,7 +276,10 @@ export default function StudentDashboard() {
                   <div className="bg-gray-800 p-6 rounded-full mb-2">
                     <Zap className="w-12 h-12 text-gray-600" />
                   </div>
-                  <p className="text-gray-500 font-bold uppercase tracking-widest text-center">Waiting for teacher<br/>to start timer...</p>
+                  <div className="text-6xl font-mono font-black text-gray-600 z-10 tracking-tighter mb-2">
+                    0.0<span className="text-3xl text-gray-700">s</span>
+                  </div>
+                  <p className="text-gray-500 font-bold uppercase tracking-widest text-center">Ready for next question!</p>
                 </>
              )}
           </div>
@@ -343,7 +351,21 @@ export default function StudentDashboard() {
           stars={showRating.stars}
           compliment={showRating.compliment}
           points={showRating.points}
-          onComplete={() => setShowRating(null)}
+          onComplete={() => {
+            setShowRating(null);
+            setLastResult(null);
+            setFrozenTime(null);
+          }}
+        />
+      )}
+
+      {showWrong && (
+        <WrongAnswerAnimation 
+          onComplete={() => {
+            setShowWrong(false);
+            setLastResult(null);
+            setFrozenTime(null);
+          }}
         />
       )}
     </div>

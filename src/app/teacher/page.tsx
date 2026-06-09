@@ -6,6 +6,7 @@ import Stopwatch from "@/components/Stopwatch";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
+import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks } from "lucide-react";
 
 export default function TeacherDashboard() {
@@ -16,10 +17,12 @@ export default function TeacherDashboard() {
   
   const [isRunning, setIsRunning] = useState(false);
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
+  const [showWrong, setShowWrong] = useState(false);
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
+  const [resetTimerKey, setResetTimerKey] = useState(0);
 
   useEffect(() => {
     if (activeSession) {
@@ -210,12 +213,13 @@ export default function TeacherDashboard() {
     }));
 
     if (!isCorrect) {
-      handleRatingComplete(); // trigger finale check without animation wait
+      setShowWrong(true);
     }
   };
 
   const handleRatingComplete = () => {
     setShowRating(null);
+    setResetTimerKey(prev => prev + 1);
     if (activeSession && settings) {
       const updatedTotal = activeSession.totalQuestions + 1; // +1 because state might be lagging one tick behind if called synchronously
       // Wait, we updated state before calling this in handleScore. But setActiveSession is async. 
@@ -406,6 +410,7 @@ export default function TeacherDashboard() {
             </div>
           ) : (
             <Stopwatch 
+              key={resetTimerKey}
               isRunning={isRunning} 
               setIsRunning={handleTimerRunningState} 
               onScore={handleScore}
@@ -422,6 +427,15 @@ export default function TeacherDashboard() {
           compliment={showRating.compliment}
           points={showRating.points}
           onComplete={handleRatingComplete}
+        />
+      )}
+
+      {showWrong && (
+        <WrongAnswerAnimation 
+          onComplete={() => {
+            setShowWrong(false);
+            handleRatingComplete();
+          }}
         />
       )}
 
