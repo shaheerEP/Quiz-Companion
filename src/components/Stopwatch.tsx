@@ -17,8 +17,10 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
   const startTimeRef = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
   const lastProcessedStopTime = useRef<number | null>(null);
+  const isStoppedRef = useRef<boolean>(false);
 
   const updateTimer = () => {
+    if (isStoppedRef.current) return;
     if (startTimeRef.current !== null) {
       const currentTime = performance.now();
       setTime((currentTime - startTimeRef.current) / 1000);
@@ -41,6 +43,8 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
 
   useEffect(() => {
     if (studentStopTime && studentStopTime !== lastProcessedStopTime.current && isRunning) {
+      isStoppedRef.current = true;
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
       lastProcessedStopTime.current = studentStopTime;
       setTime(studentStopTime);
       setIsRunning(false);
@@ -52,6 +56,7 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
   }, [studentStopTime, isRunning, setIsRunning]);
 
   const handleStart = () => {
+    isStoppedRef.current = false;
     setTime(0);
     setIsPendingScore(false);
     lastProcessedStopTime.current = null;
@@ -60,6 +65,8 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
   };
 
   const handleStop = () => {
+    isStoppedRef.current = true;
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
     setIsRunning(false, time);
     setIsPendingScore(true);
   };

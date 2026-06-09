@@ -139,12 +139,16 @@ export default function TeacherDashboard() {
           ...(teacherStartTime !== undefined && { teacherStartTime })
         })
       });
+      
+      const newStudentStopTime = teacherStopTime !== undefined ? teacherStopTime : (run ? null : activeSession.studentStopTime);
+      const newStoppedByStudent = teacherStopTime !== undefined ? false : (run ? false : activeSession.stoppedByStudent);
+      
       setActiveSession({ 
         ...activeSession, 
         isTimerRunning: run, 
-        stoppedByStudent: false, 
-        studentStopTime: teacherStopTime !== undefined ? teacherStopTime : null,
-        lastQuestionResult: null 
+        stoppedByStudent: newStoppedByStudent, 
+        studentStopTime: newStudentStopTime,
+        lastQuestionResult: run ? null : activeSession.lastQuestionResult 
       });
     }
   };
