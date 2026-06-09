@@ -472,14 +472,24 @@ export default function TeacherDashboard() {
               <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
             </div>
           ) : (
-            <Stopwatch 
-              key={resetTimerKey}
-              isRunning={isRunning} 
-              setIsRunning={handleTimerRunningState} 
-              onScore={handleScore}
-              onCancel={handleCancel}
-              studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
-            />
+            <>
+              <div className="absolute top-8 left-8 z-10 hidden md:block">
+                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Active Student</p>
+                <h1 className="text-5xl lg:text-6xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
+              </div>
+              <div className="md:hidden absolute top-6 w-full text-center z-10 px-4">
+                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-xs">Active Student</p>
+                <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
+              </div>
+              <Stopwatch 
+                key={resetTimerKey}
+                isRunning={isRunning} 
+                setIsRunning={handleTimerRunningState} 
+                onScore={handleScore}
+                onCancel={handleCancel}
+                studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
+              />
+            </>
           )}
         </section>
       </main>

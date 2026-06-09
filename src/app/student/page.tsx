@@ -222,6 +222,11 @@ export default function StudentDashboard() {
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
         
+        <div className="mb-2">
+          <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Welcome back,</p>
+          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight capitalize">{user.name}</h1>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-8">
           
           <div className="flex-1 flex flex-col gap-8">
