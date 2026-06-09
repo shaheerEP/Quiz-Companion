@@ -8,6 +8,7 @@ import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
+import MysteryGiftModal from "@/components/MysteryGiftModal";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function StudentDashboard() {
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
   const [showWrong, setShowWrong] = useState(false);
   const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
+  const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [completedSessions, setCompletedSessions] = useState<any[]>([]);
   const lastResultIdRef = useRef<string | null>(null);
@@ -150,6 +152,23 @@ export default function StudentDashboard() {
     const timerInterval = setInterval(syncTimer, 1000);
     return () => clearInterval(timerInterval);
   }, [activeSession]);
+
+  const handleAnimationComplete = () => {
+    setShowRating(null);
+    setShowWrong(false);
+    setLastResult(null);
+    setFrozenTime(null);
+    
+    if (activeSession && settings) {
+      if (activeSession.totalQuestions >= settings.badgeThresholds.finaleQuestionCount) {
+        if (activeSession.averageSpeed <= settings.badgeThresholds.speedThreshold) {
+          setShowFinale("Master Mind Champion 🏆");
+        } else {
+          setShowFinale("Super Solver 🥇");
+        }
+      }
+    }
+  };
 
   const handleRemoteStop = async () => {
     if (!activeSession) return;
@@ -436,21 +455,13 @@ export default function StudentDashboard() {
           stars={showRating.stars}
           compliment={showRating.compliment}
           points={showRating.points}
-          onComplete={() => {
-            setShowRating(null);
-            setLastResult(null);
-            setFrozenTime(null);
-          }}
+          onComplete={handleAnimationComplete}
         />
       )}
 
       {showWrong && (
         <WrongAnswerAnimation 
-          onComplete={() => {
-            setShowWrong(false);
-            setLastResult(null);
-            setFrozenTime(null);
-          }}
+          onComplete={handleAnimationComplete}
         />
       )}
 
@@ -459,6 +470,14 @@ export default function StudentDashboard() {
           type={manualAnim.type}
           amount={manualAnim.amount}
           onComplete={() => setManualAnim(null)}
+        />
+      )}
+
+      {showFinale && settings && (
+        <MysteryGiftModal
+          badgeType={showFinale}
+          gifts={settings.mysteryGifts}
+          onClose={() => setShowFinale(null)}
         />
       )}
     </div>
