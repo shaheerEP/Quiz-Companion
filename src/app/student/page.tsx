@@ -7,6 +7,7 @@ import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle } fr
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
+import ManualPointsAnimation from "@/components/ManualPointsAnimation";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -20,14 +21,32 @@ export default function StudentDashboard() {
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
   const [showWrong, setShowWrong] = useState(false);
+  const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const lastResultIdRef = useRef<string | null>(null);
+  const shownManualLogsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (activeSession) {
       fetch(`/api/sessions/${activeSession._id}/questions`)
         .then(res => res.json())
-        .then(setQuestionLogs);
+        .then(data => {
+          setQuestionLogs(data);
+          if (data && data.length > 0) {
+            // Find the most recent manual log that hasn't been shown
+            const unseenManuals = data.filter((l: any) => 
+              (l.logType === 'bonus' || l.logType === 'deduction') && !shownManualLogsRef.current.has(l._id)
+            );
+            if (unseenManuals.length > 0) {
+              const latest = unseenManuals[unseenManuals.length - 1]; // Assume last is newest
+              shownManualLogsRef.current.add(latest._id);
+              setManualAnim({ type: latest.logType, amount: latest.points });
+              
+              // Also add all others to the shown set so we don't queue them forever
+              unseenManuals.forEach((l: any) => shownManualLogsRef.current.add(l._id));
+            }
+          }
+        });
     } else {
       setQuestionLogs([]);
     }
@@ -390,6 +409,14 @@ export default function StudentDashboard() {
             setLastResult(null);
             setFrozenTime(null);
           }}
+        />
+      )}
+
+      {manualAnim && (
+        <ManualPointsAnimation 
+          type={manualAnim.type}
+          amount={manualAnim.amount}
+          onComplete={() => setManualAnim(null)}
         />
       )}
     </div>

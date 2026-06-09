@@ -7,6 +7,7 @@ import StarRatingAnimation from "@/components/StarRatingAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
+import ManualPointsAnimation from "@/components/ManualPointsAnimation";
 import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks } from "lucide-react";
 
 export default function TeacherDashboard() {
@@ -19,6 +20,7 @@ export default function TeacherDashboard() {
   const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
   const [showWrong, setShowWrong] = useState(false);
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
+  const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
@@ -95,6 +97,8 @@ export default function TeacherDashboard() {
     const newLifetime = activeStudent.lifetimePoints + Number(amount);
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
     
+    setManualAnim({ type: 'bonus', amount: Number(amount) });
+
     // Also update session score locally and refetch logs by incrementing totalQuestions slightly to trigger effect, or better yet, fetch logs manually
     fetch(`/api/sessions/${activeSession._id}/questions`)
       .then(res => res.json())
@@ -115,6 +119,8 @@ export default function TeacherDashboard() {
     const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
     
+    setManualAnim({ type: 'deduction', amount: Number(amount) });
+
     fetch(`/api/sessions/${activeSession._id}/questions`)
       .then(res => res.json())
       .then(setQuestionLogs);
@@ -457,6 +463,14 @@ export default function TeacherDashboard() {
             setShowWrong(false);
             handleRatingComplete();
           }}
+        />
+      )}
+
+      {manualAnim && (
+        <ManualPointsAnimation 
+          type={manualAnim.type}
+          amount={manualAnim.amount}
+          onComplete={() => setManualAnim(null)}
         />
       )}
 
