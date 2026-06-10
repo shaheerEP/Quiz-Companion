@@ -291,7 +291,7 @@ export default function TeacherDashboard() {
       <Navbar />
 
       <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 max-w-[1600px] mx-auto w-full">
-        <aside className="w-full xl:w-80 flex flex-col gap-6 shrink-0 h-fit">
+        <aside className="w-full xl:w-96 flex flex-col gap-6 shrink-0 h-fit">
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
               <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
@@ -436,7 +436,7 @@ export default function TeacherDashboard() {
         </section>
         {/* Right Sidebar */}
         {activeSession && (
-          <aside className="w-full xl:w-80 flex flex-col gap-6 shrink-0 h-fit">
+          <aside className="w-full xl:w-96 flex flex-col gap-6 shrink-0 h-fit">
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
                 <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
