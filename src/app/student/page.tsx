@@ -25,7 +25,7 @@ export default function StudentDashboard() {
   const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
-  const [completedSessions, setCompletedSessions] = useState<any[]>([]);
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const lastResultIdRef = useRef<string | null>(null);
   const shownManualLogsRef = useRef<Set<string>>(new Set());
@@ -67,9 +67,9 @@ export default function StudentDashboard() {
         const sessions = await res.json();
         
         const active = sessions.find((s: any) => !s.isCompleted);
-        const completed = sessions.filter((s: any) => s.isCompleted);
         
-        setCompletedSessions(completed);
+        const historyRes = await fetch(`/api/history?studentId=${user.id}`);
+        setHistoryItems(await historyRes.json());
 
         if (active) {
           setActiveSession(active);
@@ -214,6 +214,21 @@ export default function StudentDashboard() {
     }
   }, [bundlesEarned, prevBundles, initialLoadComplete]);
 
+  const groupedHistory = historyItems.reduce((acc: any, item: any) => {
+    const dateObj = new Date(item.date);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    let dayString = dateObj.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    if (dateObj.toDateString() === today.toDateString()) dayString = "Today";
+    else if (dateObj.toDateString() === yesterday.toDateString()) dayString = "Yesterday";
+    
+    if (!acc[dayString]) acc[dayString] = [];
+    acc[dayString].push(item);
+    return acc;
+  }, {});
+
   if (!user || user.role !== "student") return null;
 
   return (
@@ -275,29 +290,36 @@ export default function StudentDashboard() {
             </div>
           </div>
             
-            {/* Past Quizzes embedded inside the same column but underneath */}
-            {completedSessions.length > 0 && (
+            {/* Daily History embedded inside the same column but underneath */}
+            {Object.keys(groupedHistory).length > 0 && (
               <div className="bg-black/40 p-8 rounded-3xl border border-white/5 shadow-inner">
-                <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
+                <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
                   <History className="w-6 h-6 text-indigo-400" />
-                  Past Quizzes
+                  Daily History
                 </h3>
-                <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                  {completedSessions.map(session => (
-                    <div key={session._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                      <div>
-                        <p className="font-bold text-gray-200 text-lg">
-                          {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </p>
-                        <p className="text-sm text-gray-500 font-medium">
-                          {session.totalQuestions} questions
-                        </p>
-                      </div>
-                      <div className="text-right flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-emerald-500 opacity-70" />
-                        <p className="font-black text-emerald-400 text-xl">
-                          {session.finalScore}
-                        </p>
+                <div className="flex flex-col gap-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                  {Object.keys(groupedHistory).map(day => (
+                    <div key={day} className="flex flex-col gap-3">
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-indigo-500/50">{day}</p>
+                      <div className="flex flex-col gap-2">
+                        {groupedHistory[day].map((item: any) => (
+                          <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                            <div className="flex items-center gap-4">
+                              {item.type === 'quiz' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
+                              {item.type === 'bonus' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
+                              {item.type === 'deduction' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                              <div>
+                                <p className="font-bold text-gray-200 text-lg">{item.title}</p>
+                                {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                {item.type === 'deduction' ? '-' : '+'}{item.points}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
