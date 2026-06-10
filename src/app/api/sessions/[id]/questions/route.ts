@@ -48,6 +48,15 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       stars: isCorrect ? starsAwarded : 0,
       compliment: isCorrect ? (compliment || '') : 'Incorrect!'
     };
+
+    // Check if the session has reached the finale question count threshold to mark it completed
+    const { Settings } = await import("@/models/Settings");
+    const config = await Settings.findOne({ key: "config" });
+    const finaleQuestionCount = config?.value?.badgeThresholds?.finaleQuestionCount || 5;
+    if (newTotalQuestions >= finaleQuestionCount) {
+      session.isCompleted = true;
+    }
+
     await session.save();
 
     if (actualPoints > 0) {

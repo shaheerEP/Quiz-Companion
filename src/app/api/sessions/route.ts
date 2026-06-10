@@ -24,6 +24,12 @@ export async function POST(req: Request) {
 
     await connectToDatabase();
     
+    // Mark previous incomplete sessions as completed
+    await Session.updateMany(
+      { studentId, isCompleted: false },
+      { $set: { isCompleted: true } }
+    );
+
     const newSession = await Session.create({ studentId });
     
     // Increment totalSessions for the student
