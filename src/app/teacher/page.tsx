@@ -290,8 +290,8 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 flex flex-col md:flex-row p-6 gap-6 max-w-7xl mx-auto w-full">
-        <aside className="w-full md:w-80 flex flex-col gap-6">
+      <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 max-w-[1600px] mx-auto w-full">
+        <aside className="w-full xl:w-80 flex flex-col gap-6 shrink-0 h-fit">
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
               <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
@@ -400,92 +400,7 @@ export default function TeacherDashboard() {
             )}
           </div>
 
-          {activeSession && (
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg flex-1">
-              <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
-                Live Session
-              </h2>
-              
-              <div className="flex flex-col gap-4">
-                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Progress</p>
-                  <p className="text-4xl font-black text-white">
-                    Q: {activeSession.totalQuestions} <span className="text-2xl text-gray-600 font-bold">/ {settings?.badgeThresholds.finaleQuestionCount || 5}</span>
-                  </p>
-                </div>
 
-                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Avg. Speed</p>
-                  <p className="text-4xl font-black text-indigo-400 flex items-center gap-2">
-                    <Zap className="w-7 h-7 text-indigo-500" />
-                    {activeSession.averageSpeed.toFixed(1)}s
-                  </p>
-                </div>
-                {activeSession.isCompleted && (
-                <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
-                  <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
-                  <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
-                </div>
-              )}
-              </div>
-            </div>
-          )}
-
-          {activeSession && questionLogs.length > 0 && (
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg flex-1 mt-8 md:mt-0 xl:mt-8 md:col-span-1 xl:col-span-1">
-              <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <div className="bg-indigo-500/20 p-2 rounded-lg"><ListChecks className="w-5 h-5 text-indigo-400" /></div>
-                Question Results
-              </h2>
-              <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {questionLogs.map((log) => (
-                  <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
-                    <div className="flex items-center gap-4">
-                      {log.logType === 'bonus' ? (
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
-                          <PlusCircle className="w-5 h-5" />
-                        </div>
-                      ) : log.logType === 'deduction' ? (
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400">
-                          <MinusCircle className="w-5 h-5" />
-                        </div>
-                      ) : (
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                          Q{log.questionNumber}
-                        </div>
-                      )}
-                      <div>
-                        {log.logType === 'bonus' ? (
-                          <>
-                            <p className="font-bold text-indigo-400">+{log.points} pts</p>
-                            <p className="text-xs text-gray-500">Manual Bonus</p>
-                          </>
-                        ) : log.logType === 'deduction' ? (
-                          <>
-                            <p className="font-bold text-rose-400">-{log.points} pts</p>
-                            <p className="text-xs text-gray-500">Manual Deduction</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {log.isCorrect ? `+${log.points} pts` : 'No points'}
-                            </p>
-                            <p className="text-xs text-gray-500">{Number(log.responseTime).toFixed(1)}s response</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {(!log.logType || log.logType === 'question') && log.isCorrect && (
-                      <div className="text-lg">
-                        {"⭐".repeat(log.starsAwarded)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </aside>
 
         {/* Main Interaction Area */}
@@ -519,6 +434,95 @@ export default function TeacherDashboard() {
             </>
           )}
         </section>
+        {/* Right Sidebar */}
+        {activeSession && (
+          <aside className="w-full xl:w-80 flex flex-col gap-6 shrink-0 h-fit">
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
+              <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
+                <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
+                Live Session
+              </h2>
+              
+              <div className="flex flex-col gap-4">
+                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
+                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Progress</p>
+                  <p className="text-4xl font-black text-white">
+                    Q: {activeSession.totalQuestions} <span className="text-2xl text-gray-600 font-bold">/ {settings?.badgeThresholds.finaleQuestionCount || 5}</span>
+                  </p>
+                </div>
+
+                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
+                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Avg. Speed</p>
+                  <p className="text-4xl font-black text-indigo-400 flex items-center gap-2">
+                    <Zap className="w-7 h-7 text-indigo-500" />
+                    {activeSession.averageSpeed.toFixed(1)}s
+                  </p>
+                </div>
+                {activeSession.isCompleted && (
+                <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
+                  <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
+                  <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
+                </div>
+              )}
+              </div>
+            </div>
+
+            {questionLogs.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg flex-1">
+                <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
+                  <div className="bg-indigo-500/20 p-2 rounded-lg"><ListChecks className="w-5 h-5 text-indigo-400" /></div>
+                  Question Results
+                </h2>
+                <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {questionLogs.map((log) => (
+                    <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
+                      <div className="flex items-center gap-4">
+                        {log.logType === 'bonus' ? (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
+                            <PlusCircle className="w-5 h-5" />
+                          </div>
+                        ) : log.logType === 'deduction' ? (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400">
+                            <MinusCircle className="w-5 h-5" />
+                          </div>
+                        ) : (
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                            Q{log.questionNumber}
+                          </div>
+                        )}
+                        <div>
+                          {log.logType === 'bonus' ? (
+                            <>
+                              <p className="font-bold text-indigo-400">+{log.points} pts</p>
+                              <p className="text-xs text-gray-500">Manual Bonus</p>
+                            </>
+                          ) : log.logType === 'deduction' ? (
+                            <>
+                              <p className="font-bold text-rose-400">-{log.points} pts</p>
+                              <p className="text-xs text-gray-500">Manual Deduction</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {log.isCorrect ? `+${log.points} pts` : 'No points'}
+                              </p>
+                              <p className="text-xs text-gray-500">{Number(log.responseTime).toFixed(1)}s response</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {(!log.logType || log.logType === 'question') && log.isCorrect && (
+                        <div className="text-lg">
+                          {"⭐".repeat(log.starsAwarded)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
       </main>
 
       {showRating && (
