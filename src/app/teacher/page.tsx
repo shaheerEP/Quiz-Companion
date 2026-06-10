@@ -50,6 +50,10 @@ export default function TeacherDashboard() {
     if (student) {
       const res = await fetch(`/api/sessions?studentId=${studentId}`);
       const sessions = await res.json();
+      
+      const completed = sessions.filter((s: any) => s.isCompleted);
+      setCompletedSessions(completed);
+      
       if (sessions.length > 0 && !sessions[0].isCompleted) {
         setActiveSession(sessions[0]);
       } else {

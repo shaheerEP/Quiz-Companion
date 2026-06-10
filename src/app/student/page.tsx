@@ -275,8 +275,8 @@ export default function StudentDashboard() {
             </div>
           </div>
             
-          {/* Past Quizzes embedded inside the same column but underneath */}
-          {completedSessions.length > 0 && (
+            {/* Past Quizzes embedded inside the same column but underneath */}
+            {completedSessions.length > 0 && (
               <div className="bg-black/40 p-8 rounded-3xl border border-white/5 shadow-inner">
                 <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
                   <History className="w-6 h-6 text-indigo-400" />
