@@ -61,10 +61,10 @@ export default function Navbar() {
               My Dashboard
             </Link>
             <Link 
-              href="/student/pet" 
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/student/pet' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+              href={user.student?.assignedGame === 'builder' ? '/student/builder' : '/student/pet'}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname.includes(user.student?.assignedGame === 'builder' ? '/builder' : '/pet') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
             >
-              My Pet
+              {user.student?.assignedGame === 'builder' ? 'World Builder' : 'My Pet'}
             </Link>
           </>
         )}

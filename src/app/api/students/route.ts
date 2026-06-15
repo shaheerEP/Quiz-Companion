@@ -41,6 +41,8 @@ export async function PUT(req: Request) {
     if (lifetimePoints !== undefined) student.lifetimePoints = Number(lifetimePoints);
     if (body.pet !== undefined) student.pet = body.pet;
     if (body.inventory !== undefined) student.inventory = body.inventory;
+    if (body.assignedGame !== undefined) student.assignedGame = body.assignedGame;
+    if (body.worldBlocks !== undefined) student.worldBlocks = body.worldBlocks;
 
     await student.save();
     return NextResponse.json(student);

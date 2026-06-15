@@ -320,6 +320,28 @@ export default function TeacherDashboard() {
                   <span className="text-gray-500 font-medium">Lifetime Points</span>
                   <span className="text-xl font-bold text-gray-300">{activeStudent.lifetimePoints?.toLocaleString() || 0}</span>
                 </div>
+                
+                <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50 mt-2">
+                  <span className="text-gray-400 font-bold">Assigned Game</span>
+                  <select 
+                    className="bg-gray-900 border border-gray-700 text-white font-bold rounded-lg px-3 py-1 outline-none focus:border-indigo-500 cursor-pointer"
+                    value={activeStudent.assignedGame || 'pet'}
+                    onChange={async (e) => {
+                      const newGame = e.target.value;
+                      await fetch("/api/students", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: activeStudent._id, assignedGame: newGame })
+                      });
+                      setActiveStudent({ ...activeStudent, assignedGame: newGame });
+                      // Also update the students list
+                      setStudents(students.map(s => s._id === activeStudent._id ? { ...s, assignedGame: newGame } : s));
+                    }}
+                  >
+                    <option value="pet">Virtual Pet</option>
+                    <option value="builder">World Builder</option>
+                  </select>
+                </div>
 
                 {settings && (
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
