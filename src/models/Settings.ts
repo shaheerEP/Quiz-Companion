@@ -20,7 +20,7 @@ export interface ISettingsValue {
   bundleLimit?: number;
   bundleItemName?: string;
   builderBlockCost?: number;
-  builderColors?: { id: string; color: string; name: string; cost: number }[];
+  customColorCost?: number;
   builderBlockRefund?: number;
   builderItems?: { id: string; name: string; emoji: string; cost: number; refundOnErase: number; width: number; height: number; depth: number }[];
 }

@@ -14,13 +14,14 @@ export interface IStudent extends Document {
     equippedEnvironment?: string;
   };
   inventory: string[];
+  customColors: string[];
   assignedGame?: 'pet' | 'builder';
   worldBlocks: Array<{
     x: number;
     y: number;
     z: number;
     color: string;
-    type?: 'block' | 'item';
+    type?: 'block' | 'item' | 'roof';
     itemId?: string;
   }>;
 }
@@ -42,6 +43,7 @@ const StudentSchema = new Schema<IStudent>(
       equippedEnvironment: String,
     },
     inventory: { type: [String], default: [] },
+    customColors: { type: [String], default: [] },
     assignedGame: { type: String, enum: ['pet', 'builder'], default: 'pet' },
     worldBlocks: {
       type: [

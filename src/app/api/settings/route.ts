@@ -22,12 +22,7 @@ const DEFAULT_SETTINGS = {
   bundleLimit: 1000,
   bundleItemName: "🍫 Chocolate",
   builderBlockCost: 50,
-  builderColors: [
-    { id: "wood", color: "#8B5A2B", name: "Wood", cost: 0 },
-    { id: "stone", color: "#808080", name: "Stone", cost: 0 },
-    { id: "brick", color: "#B22222", name: "Brick", cost: 100 },
-    { id: "glass", color: "#ADD8E6", name: "Glass", cost: 200 },
-  ],
+  customColorCost: 100,
   builderBlockRefund: 0,
   builderItems: [
     { id: "tree", name: "Tree", emoji: "🌲", cost: 100, refundOnErase: 50, width: 1, height: 2.5, depth: 1 },
@@ -51,7 +46,7 @@ export async function GET() {
       if (newValue.bundleLimit === undefined) { newValue.bundleLimit = 1000; updated = true; }
       if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
       if (newValue.builderBlockCost === undefined) { newValue.builderBlockCost = 50; updated = true; }
-      if (newValue.builderColors === undefined) { newValue.builderColors = DEFAULT_SETTINGS.builderColors; updated = true; }
+      if (newValue.customColorCost === undefined) { newValue.customColorCost = DEFAULT_SETTINGS.customColorCost; updated = true; }
       if (newValue.builderBlockRefund === undefined) { newValue.builderBlockRefund = 0; updated = true; }
       if (newValue.builderItems === undefined) { newValue.builderItems = DEFAULT_SETTINGS.builderItems; updated = true; }
       if (updated) {

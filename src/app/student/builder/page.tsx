@@ -1,29 +1,39 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle } from "lucide-react";
 import { motion } from "framer-motion";
+
+// Returns true if the pointer moved enough to be considered a drag
+const DRAG_THRESHOLD = 5; // px
 
 type PlacedObject = {
   x: number; y: number; z: number;
   color: string;
-  type?: 'block' | 'item';
+  type?: 'block' | 'item' | 'roof';
   itemId?: string;
 };
 
-type ToolMode = 'build' | 'items' | 'eraser';
+type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
+
+const BASE_COLORS = [
+  { id: "wood", color: "#8B5A2B", name: "Wood" },
+  { id: "stone", color: "#808080", name: "Stone" },
+  { id: "brick", color: "#B22222", name: "Brick" },
+  { id: "glass", color: "#ADD8E6", name: "Glass" },
+];
 
 /* ─── 3D Components ─── */
 
-function Ground({ onClick }: { onClick: (x: number, y: number, z: number) => void }) {
+function Ground({ onClick, isDragging }: { onClick: (x: number, y: number, z: number) => void, isDragging: () => boolean }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow
-      onClick={(e) => { e.stopPropagation(); const p = e.point; onClick(Math.round(p.x), 0, Math.round(p.z)); }}>
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); const p = e.point; onClick(Math.round(p.x), 0, Math.round(p.z)); }}>
       <planeGeometry args={[100, 100]} />
       <meshStandardMaterial color="#4ade80" />
       <gridHelper args={[100, 100, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
@@ -31,32 +41,168 @@ function Ground({ onClick }: { onClick: (x: number, y: number, z: number) => voi
   );
 }
 
-function Block({ data, onClick }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void }) {
+function Block({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void, isDragging: () => boolean }) {
   return (
     <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
-      onClick={(e) => { e.stopPropagation(); onClick(data, e.face?.normal); }}>
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal); }}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
     </mesh>
   );
 }
 
-function ItemObject({ data, itemDef, onClick }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void }) {
+function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void, isDragging: () => boolean }) {
+  return (
+    <mesh position={[data.x, data.y, data.z]} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal); }}>
+      <coneGeometry args={[0.71, 1, 4]} />
+      <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
+    </mesh>
+  );
+}
+
+function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean }) {
   const w = itemDef?.width ?? 1;
   const h = itemDef?.height ?? 1;
   const d = itemDef?.depth ?? 1;
   // Position the item so its base sits on the ground (y=0 means bottom of item is at y=-0.5)
   const yPos = data.y + (h / 2) - 0.5;
 
-  // Pick a color based on item type for the 3D box representation
-  const itemColors: Record<string, string> = {
-    tree: "#2d6a4f", flower: "#e76f51", car: "#457b9d", lamp: "#e9c46a", fence: "#8d6346",
+  const handleClick = (e: any) => {
+    if (isDragging()) return;
+    e.stopPropagation();
+    onClick(data);
   };
-  const boxColor = itemColors[data.itemId || ""] || "#9ca3af";
+
+  const itemId = data.itemId || "";
+
+  // Helper to wrap custom geometry
+  const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
+    <group position={[data.x, data.y - 0.5, data.z]} onClick={handleClick}>
+      {children}
+    </group>
+  );
+
+  if (itemId === "tree") {
+    return (
+      <ModelWrapper>
+        {/* Trunk */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
+          <meshStandardMaterial color="#5C4033" />
+        </mesh>
+        {/* Leaves */}
+        <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+          <coneGeometry args={[0.8, 1.5, 8]} />
+          <meshStandardMaterial color="#2d6a4f" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "flower") {
+    return (
+      <ModelWrapper>
+        {/* Stem */}
+        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.05, 0.05, 0.5, 8]} />
+          <meshStandardMaterial color="#22c55e" />
+        </mesh>
+        {/* Center */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.1, 16, 16]} />
+          <meshStandardMaterial color="#facc15" />
+        </mesh>
+        {/* Petals */}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const angle = (i / 5) * Math.PI * 2;
+          return (
+            <mesh key={i} position={[Math.cos(angle) * 0.15, 0.5, Math.sin(angle) * 0.15]} castShadow receiveShadow>
+              <sphereGeometry args={[0.1, 16, 16]} />
+              <meshStandardMaterial color="#f472b6" />
+            </mesh>
+          );
+        })}
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "car") {
+    return (
+      <ModelWrapper>
+        {/* Body */}
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.5, 0.4, 0.8]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+        {/* Cabin */}
+        <mesh position={[-0.1, 0.8, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 0.4, 0.7]} />
+          <meshStandardMaterial color="#3b82f6" transparent opacity={0.8} />
+        </mesh>
+        {/* Wheels */}
+        {[[-0.5, 0.2, 0.4], [0.5, 0.2, 0.4], [-0.5, 0.2, -0.4], [0.5, 0.2, -0.4]].map((pos, i) => (
+          <mesh key={i} position={pos as [number, number, number]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
+            <meshStandardMaterial color="#1f2937" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "lamp") {
+    return (
+      <ModelWrapper>
+        {/* Post */}
+        <mesh position={[0, 1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.05, 0.1, 2, 8]} />
+          <meshStandardMaterial color="#9ca3af" />
+        </mesh>
+        {/* Light */}
+        <mesh position={[0, 2.1, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial color="#fef08a" emissive="#fef08a" emissiveIntensity={0.5} />
+        </mesh>
+        {/* Cap */}
+        <mesh position={[0, 2.3, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.25, 0.25, 0.05, 8]} />
+          <meshStandardMaterial color="#4b5563" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "fence") {
+    return (
+      <ModelWrapper>
+        {/* Posts */}
+        <mesh position={[-0.6, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0.6, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Rails */}
+        <mesh position={[0, 0.6, 0.06]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.1, 0.05]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0, 0.3, 0.06]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.1, 0.05]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  // Fallback for custom teacher items: box with emoji
+  const boxColor = "#9ca3af";
 
   return (
-    <group position={[data.x, yPos, data.z]}
-      onClick={(e) => { e.stopPropagation(); onClick(data); }}>
+    <group position={[data.x, yPos, data.z]} onClick={handleClick}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={boxColor} />
@@ -85,9 +231,16 @@ export default function VoxelBuilder() {
   const [undosRemaining, setUndosRemaining] = useState(3);
   const [sessionPlaced, setSessionPlaced] = useState<PlacedObject[]>([]);
   const isSavingRef = useRef(false);
+  const pointerDownPos = useRef<{x: number; y: number} | null>(null);
+
+  // Stable ref-based isDragging check used by 3D components
+  const draggedRef = useRef(false);
+  const isDraggingFn = useCallback(() => draggedRef.current, []);
 
   const [toolMode, setToolMode] = useState<ToolMode>('build');
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [newColorInput, setNewColorInput] = useState<string>("#ffffff");
+  const [isAddingColor, setIsAddingColor] = useState(false);
 
   /* ─── Data Fetching ─── */
 
@@ -102,9 +255,8 @@ export default function VoxelBuilder() {
       if (currentStudent && !isSavingRef.current) {
         setStudentData(currentStudent);
         setObjects(currentStudent.worldBlocks || []);
-        if (config?.builderColors?.length > 0 && !activeColor) {
-          const first = config.builderColors.find((c: any) => c.cost === 0 || currentStudent.inventory?.includes(c.id));
-          if (first) setActiveColor(first.color);
+        if (!activeColor) {
+          setActiveColor(BASE_COLORS[0].color);
         }
       }
     } catch (e) {} finally { if (!isSavingRef.current) setLoading(false); }
@@ -118,7 +270,6 @@ export default function VoxelBuilder() {
 
   const blockCost = settings?.builderBlockCost ?? 50;
   const blockRefund = settings?.builderBlockRefund ?? 0;
-  const shopColors = settings?.builderColors ?? [];
   const shopItems: any[] = settings?.builderItems ?? [];
 
   /* ─── Save helper ─── */
@@ -144,36 +295,48 @@ export default function VoxelBuilder() {
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
-    if (toolMode === 'eraser') return; // nothing to erase on ground
-    if (toolMode === 'build') placeBlock(x, y, z);
+    if (toolMode === 'eraser' || toolMode === 'paint') return;
+    if (toolMode === 'build') placeBlock(x, y, z, 'block');
+    if (toolMode === 'roof') placeBlock(x, y, z, 'roof');
     if (toolMode === 'items') placeItem(x, y, z);
+  };
+
+  const paintObject = (obj: PlacedObject) => {
+    if (obj.type === 'item') return;
+    if (obj.color === activeColor) return;
+    const newObjects = objects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor } : o);
+    setObjects(newObjects);
+    saveObjects(newObjects, studentData.pointsBalance, `Painted block/roof`, 0);
   };
 
   const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3) => {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
+    if (toolMode === 'paint') { paintObject(obj); return; }
     if (!faceNormal) return;
     const nx = obj.x + faceNormal.x;
     const ny = obj.y + faceNormal.y;
     const nz = obj.z + faceNormal.z;
-    if (toolMode === 'build') placeBlock(nx, ny, nz);
+    if (toolMode === 'build') placeBlock(nx, ny, nz, 'block');
+    if (toolMode === 'roof') placeBlock(nx, ny, nz, 'roof');
     if (toolMode === 'items') placeItem(nx, ny, nz);
   };
 
   const handleItemClick = (obj: PlacedObject) => {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
-    // If clicking an item in non-eraser mode, place adjacent on ground level
-    if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z);
+    if (toolMode === 'paint') return; // Cannot paint items
+    if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z, 'block');
+    if (toolMode === 'roof') placeBlock(obj.x + 1, 0, obj.z, 'roof');
     if (toolMode === 'items') placeItem(obj.x + 1, 0, obj.z);
   };
 
   /* ─── Place Block ─── */
 
-  const placeBlock = (x: number, y: number, z: number) => {
+  const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
     if (!studentData) return;
     if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
     if (studentData.pointsBalance < blockCost) { showMessage(`Need ${blockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type: 'block' };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - blockCost;
     setObjects(newObjects);
@@ -246,19 +409,25 @@ export default function VoxelBuilder() {
 
   /* ─── Buy Color ─── */
 
-  const handleBuyColor = async (colorObj: any) => {
-    if (studentData.pointsBalance < colorObj.cost) { showMessage(`Need ${colorObj.cost} pts!`, "error"); return; }
+  const handleBuyColor = async (hexColor: string) => {
+    const cost = settings?.customColorCost ?? 100;
+    if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
+    if (studentData.customColors?.includes(hexColor) || BASE_COLORS.some(c => c.color.toLowerCase() === hexColor.toLowerCase())) {
+      showMessage("You already have this color!", "error"); return;
+    }
+    
     isSavingRef.current = true;
-    const newBalance = studentData.pointsBalance - colorObj.cost;
-    const newInventory = [...(studentData.inventory || []), colorObj.id];
-    setStudentData({ ...studentData, pointsBalance: newBalance, inventory: newInventory });
-    setActiveColor(colorObj.color);
-    showMessage(`Unlocked ${colorObj.name}!`, "success");
+    const newBalance = studentData.pointsBalance - cost;
+    const newCustomColors = [...(studentData.customColors || []), hexColor];
+    setStudentData({ ...studentData, pointsBalance: newBalance, customColors: newCustomColors });
+    setActiveColor(hexColor);
+    setIsAddingColor(false);
+    showMessage(`Unlocked color!`, "success");
     try {
       await fetch("/api/students", { method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, inventory: newInventory }) });
+        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, customColors: newCustomColors }) });
       await fetch("/api/withdrawals", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId: user?.id, pointsDeducted: colorObj.cost, rewardDescription: `Unlocked Builder Color: ${colorObj.name}` }) });
+        body: JSON.stringify({ studentId: user?.id, pointsDeducted: cost, rewardDescription: `Unlocked Custom Color: ${hexColor}` }) });
       setTimeout(() => { isSavingRef.current = false; }, 500);
     } catch (e) { isSavingRef.current = false; showMessage("Failed to unlock.", "error"); fetchData(); }
   };
@@ -292,9 +461,17 @@ export default function VoxelBuilder() {
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors ${toolMode === 'build' ? 'bg-sky-500 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
             <Hammer className="w-4 h-4" /> Build
           </button>
+          <button onClick={() => { setToolMode('roof'); setActiveItemId(null); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'roof' ? 'bg-sky-600 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
+            <Triangle className="w-4 h-4" /> Roof
+          </button>
           <button onClick={() => setToolMode('items')}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'items' ? 'bg-amber-500 text-white' : 'text-amber-700 hover:bg-amber-50'}`}>
             <TreePine className="w-4 h-4" /> Items
+          </button>
+          <button onClick={() => { setToolMode('paint'); setActiveItemId(null); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'paint' ? 'bg-indigo-500 text-white' : 'text-indigo-600 hover:bg-indigo-50'}`}>
+            <PaintBucket className="w-4 h-4" /> Paint
           </button>
           <button onClick={() => { setToolMode('eraser'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'eraser' ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50'}`}>
@@ -323,32 +500,50 @@ export default function VoxelBuilder() {
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
-        {toolMode === 'build' && (
+        {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (
           <>
             <div className="flex items-center gap-2 pr-3 border-r border-sky-200">
               <Pickaxe className="w-4 h-4 text-sky-600" />
               <div className="flex flex-col leading-tight">
-                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">Block</span>
-                <span className="text-xs font-black text-amber-500">-{blockCost} pts</span>
+                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">{toolMode === 'paint' ? 'Color' : 'Block'}</span>
+                <span className="text-xs font-black text-amber-500">{toolMode === 'paint' ? 'Free' : `-${blockCost} pts`}</span>
               </div>
             </div>
-            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1">
-              {shopColors.map((b: any) => {
-                const isUnlocked = b.cost === 0 || studentData?.inventory?.includes(b.id);
-                return (
-                  <button key={b.id}
-                    onClick={() => { if (isUnlocked) setActiveColor(b.color); else handleBuyColor(b); }}
-                    className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-80'}`}
-                    style={{ backgroundColor: b.color }} title={isUnlocked ? b.name : `${b.name} - ${b.cost} pts`}>
-                    {!isUnlocked && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
-                        <Lock className="w-3 h-3 text-white mb-0.5" />
-                        <span className="text-[8px] font-black text-white leading-none">{b.cost}</span>
-                      </div>
-                    )}
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
+              {BASE_COLORS.map((b) => (
+                <button key={b.id}
+                  onClick={() => setActiveColor(b.color)}
+                  className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: b.color }} title={b.name}
+                />
+              ))}
+              
+              {studentData?.customColors?.map((color: string, idx: number) => (
+                <button key={`custom-${idx}`}
+                  onClick={() => setActiveColor(color)}
+                  className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: color }} title={color}
+                />
+              ))}
+
+              {isAddingColor ? (
+                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-sky-200">
+                  <input type="color" value={newColorInput} onChange={e => setNewColorInput(e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                  <button onClick={() => handleBuyColor(newColorInput)}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-2 py-1.5 rounded-lg flex flex-col leading-none items-center shadow-sm">
+                    <span>BUY</span>
+                    <span>{settings?.customColorCost ?? 100} pts</span>
                   </button>
-                );
-              })}
+                  <button onClick={() => setIsAddingColor(false)} className="text-gray-400 hover:text-rose-500 px-1">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => setIsAddingColor(true)}
+                  className="relative shrink-0 w-10 h-10 rounded-xl border-[3px] border-dashed border-sky-300 hover:border-sky-500 text-sky-400 hover:text-sky-500 flex items-center justify-center transition-colors bg-sky-50/50"
+                  title="Add Custom Color">
+                  <span className="text-xl font-bold">+</span>
+                </button>
+              )}
             </div>
           </>
         )}
@@ -386,20 +581,36 @@ export default function VoxelBuilder() {
       </div>
 
       {/* ─── 3D Canvas ─── */}
-      <main className={`flex-1 w-full h-full ${cursorClass}`}>
+      <main className={`flex-1 w-full h-full ${cursorClass}`}
+        onPointerDown={(e) => {
+          pointerDownPos.current = { x: e.clientX, y: e.clientY };
+          draggedRef.current = false;
+        }}
+        onPointerMove={(e) => {
+          if (!pointerDownPos.current) return;
+          const dx = e.clientX - pointerDownPos.current.x;
+          const dy = e.clientY - pointerDownPos.current.y;
+          if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+            draggedRef.current = true;
+          }
+        }}
+      >
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
           
-          <Ground onClick={handleGroundClick} />
+          <Ground onClick={handleGroundClick} isDragging={isDraggingFn} />
           
           {objects.map((obj, idx) => {
             if (obj.type === 'item') {
               const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} />;
+              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} />;
             }
-            return <Block key={idx} data={obj} onClick={handleBlockClick} />;
+            if (obj.type === 'roof') {
+              return <RoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
+            }
+            return <Block key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
           })}
 
           <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
