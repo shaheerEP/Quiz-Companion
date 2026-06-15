@@ -3,29 +3,27 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Canvas, useThree } from "@react-three/fiber";
-import { Sky, MapControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Sky, MapControls, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { Cuboid, AlertCircle, Pickaxe, Undo2, Lock, Unlock } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine } from "lucide-react";
 import { motion } from "framer-motion";
 
-type BlockData = { x: number; y: number; z: number; color: string };
+type PlacedObject = {
+  x: number; y: number; z: number;
+  color: string;
+  type?: 'block' | 'item';
+  itemId?: string;
+};
 
-function Ground({ onPlaceBlock }: { onPlaceBlock: (x: number, y: number, z: number) => void }) {
+type ToolMode = 'build' | 'items' | 'eraser';
+
+/* ─── 3D Components ─── */
+
+function Ground({ onClick }: { onClick: (x: number, y: number, z: number) => void }) {
   return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, -0.5, 0]}
-      receiveShadow
-      onClick={(e) => {
-        e.stopPropagation();
-        const { point } = e;
-        const x = Math.round(point.x);
-        const y = Math.round(point.y + 0.5); // Place on top
-        const z = Math.round(point.z);
-        onPlaceBlock(x, y, z);
-      }}
-    >
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow
+      onClick={(e) => { e.stopPropagation(); const p = e.point; onClick(Math.round(p.x), 0, Math.round(p.z)); }}>
       <planeGeometry args={[100, 100]} />
       <meshStandardMaterial color="#4ade80" />
       <gridHelper args={[100, 100, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
@@ -33,29 +31,48 @@ function Ground({ onPlaceBlock }: { onPlaceBlock: (x: number, y: number, z: numb
   );
 }
 
-function Block({ position, color, onPlaceBlock }: { position: [number, number, number], color: string, onPlaceBlock: (x: number, y: number, z: number) => void }) {
+function Block({ data, onClick }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void }) {
   return (
-    <mesh
-      position={position}
-      castShadow
-      receiveShadow
-      onClick={(e) => {
-        e.stopPropagation();
-        const faceIndex = e.face?.normal;
-        if (!faceIndex) return;
-        
-        // Calculate new block position based on face normal
-        const x = position[0] + faceIndex.x;
-        const y = position[1] + faceIndex.y;
-        const z = position[2] + faceIndex.z;
-        onPlaceBlock(x, y, z);
-      }}
-    >
+    <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
+      onClick={(e) => { e.stopPropagation(); onClick(data, e.face?.normal); }}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={color} transparent={color === "#ADD8E6"} opacity={color === "#ADD8E6" ? 0.6 : 1} />
+      <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
     </mesh>
   );
 }
+
+function ItemObject({ data, itemDef, onClick }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void }) {
+  const w = itemDef?.width ?? 1;
+  const h = itemDef?.height ?? 1;
+  const d = itemDef?.depth ?? 1;
+  // Position the item so its base sits on the ground (y=0 means bottom of item is at y=-0.5)
+  const yPos = data.y + (h / 2) - 0.5;
+
+  // Pick a color based on item type for the 3D box representation
+  const itemColors: Record<string, string> = {
+    tree: "#2d6a4f", flower: "#e76f51", car: "#457b9d", lamp: "#e9c46a", fence: "#8d6346",
+  };
+  const boxColor = itemColors[data.itemId || ""] || "#9ca3af";
+
+  return (
+    <group position={[data.x, yPos, data.z]}
+      onClick={(e) => { e.stopPropagation(); onClick(data); }}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color={boxColor} />
+      </mesh>
+      {/* Emoji label floating above the item */}
+      <Html position={[0, h / 2 + 0.3, 0]} center distanceFactor={8}
+        style={{ pointerEvents: 'none', userSelect: 'none' }}>
+        <div style={{ fontSize: '24px', textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+          {itemDef?.emoji || "📦"}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+/* ─── Main Component ─── */
 
 export default function VoxelBuilder() {
   const { user } = useAuth();
@@ -63,302 +80,327 @@ export default function VoxelBuilder() {
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeColor, setActiveColor] = useState<string>("#8B5A2B");
-  const [blocks, setBlocks] = useState<BlockData[]>([]);
+  const [objects, setObjects] = useState<PlacedObject[]>([]);
   const [actionMessage, setActionMessage] = useState<{text: string, type: 'error'|'success'} | null>(null);
   const [undosRemaining, setUndosRemaining] = useState(3);
-  const [sessionPlacedBlocks, setSessionPlacedBlocks] = useState<BlockData[]>([]);
+  const [sessionPlaced, setSessionPlaced] = useState<PlacedObject[]>([]);
   const isSavingRef = useRef(false);
+
+  const [toolMode, setToolMode] = useState<ToolMode>('build');
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+
+  /* ─── Data Fetching ─── */
 
   const fetchData = async () => {
     if (!user) return;
     try {
-      const [studentRes, settingsRes] = await Promise.all([
-        fetch("/api/students"),
-        fetch("/api/settings")
-      ]);
+      const [studentRes, settingsRes] = await Promise.all([fetch("/api/students"), fetch("/api/settings")]);
       const students = await studentRes.json();
       const currentStudent = students.find((s: any) => s._id === user.id);
-      
       const config = await settingsRes.json();
       setSettings(config);
-
       if (currentStudent && !isSavingRef.current) {
         setStudentData(currentStudent);
-        setBlocks(currentStudent.worldBlocks || []);
-        
-        // Set default active color if none selected and config is loaded
-        if (config?.builderColors?.length > 0) {
-           const firstUnlocked = config.builderColors.find((c: any) => c.cost === 0 || currentStudent.inventory?.includes(c.id));
-           if (firstUnlocked && !activeColor) {
-             setActiveColor(firstUnlocked.color);
-           }
+        setObjects(currentStudent.worldBlocks || []);
+        if (config?.builderColors?.length > 0 && !activeColor) {
+          const first = config.builderColors.find((c: any) => c.cost === 0 || currentStudent.inventory?.includes(c.id));
+          if (first) setActiveColor(first.color);
         }
       }
-    } catch (e) {} finally {
-      if (!isSavingRef.current) {
-        setLoading(false);
-      }
-    }
+    } catch (e) {} finally { if (!isSavingRef.current) setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, [user]);
+  useEffect(() => { fetchData(); const i = setInterval(fetchData, 5000); return () => clearInterval(i); }, [user]);
 
   const showMessage = (text: string, type: 'error'|'success') => {
-    setActionMessage({ text, type });
-    setTimeout(() => setActionMessage(null), 3000);
+    setActionMessage({ text, type }); setTimeout(() => setActionMessage(null), 3000);
   };
 
   const blockCost = settings?.builderBlockCost ?? 50;
+  const blockRefund = settings?.builderBlockRefund ?? 0;
   const shopColors = settings?.builderColors ?? [];
+  const shopItems: any[] = settings?.builderItems ?? [];
 
-  const handlePlaceBlock = async (x: number, y: number, z: number) => {
-    if (!studentData) return;
-    
-    // Check if block already exists there
-    if (blocks.some(b => b.x === x && b.y === y && b.z === z)) return;
+  /* ─── Save helper ─── */
 
-    if (studentData.pointsBalance < blockCost) {
-      showMessage(`Not enough points! Need ${blockCost} pts.`, "error");
-      return;
-    }
-
+  const saveObjects = async (newObjects: PlacedObject[], newBalance: number, desc: string, pointsDeducted: number) => {
     isSavingRef.current = true;
-
-    const newBlock = { x, y, z, color: activeColor };
-    const newBlocks = [...blocks, newBlock];
-    const newBalance = studentData.pointsBalance - blockCost;
-
-    // Optimistic update
-    setBlocks(newBlocks);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
-    
-    // Keep max 3 blocks in the undo stack and reset counter to 3
-    const newSessionBlocks = [...sessionPlacedBlocks, newBlock].slice(-3);
-    setSessionPlacedBlocks(newSessionBlocks);
-    setUndosRemaining(newSessionBlocks.length);
-
     try {
       const res = await fetch("/api/students", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: user?.id,
-          pointsBalance: newBalance,
-          worldBlocks: newBlocks
-        })
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, worldBlocks: newObjects })
       });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      await fetch("/api/withdrawals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: user?.id,
-          pointsDeducted: blockCost,
-          rewardDescription: "Placed a block in World Builder"
-        })
-      });
-
+      if (!res.ok) throw new Error("Save failed");
+      if (pointsDeducted > 0) {
+        await fetch("/api/withdrawals", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: user?.id, pointsDeducted, rewardDescription: desc })
+        });
+      }
       setTimeout(() => { isSavingRef.current = false; }, 500);
-
-    } catch (e) {
-      isSavingRef.current = false;
-      showMessage("Failed to place block. Check connection.", "error");
-      fetchData();
-    }
+    } catch (e) { isSavingRef.current = false; showMessage("Failed to save. Check connection.", "error"); fetchData(); }
   };
 
-  const handleUndo = async () => {
-    if (undosRemaining <= 0 || sessionPlacedBlocks.length === 0) {
-      showMessage("No undos available.", "error");
-      return;
-    }
+  /* ─── Click Handlers ─── */
 
-    isSavingRef.current = true;
+  const handleGroundClick = (x: number, y: number, z: number) => {
+    if (toolMode === 'eraser') return; // nothing to erase on ground
+    if (toolMode === 'build') placeBlock(x, y, z);
+    if (toolMode === 'items') placeItem(x, y, z);
+  };
 
-    const lastBlock = sessionPlacedBlocks[sessionPlacedBlocks.length - 1];
-    const newBlocks = blocks.filter(b => b.x !== lastBlock.x || b.y !== lastBlock.y || b.z !== lastBlock.z);
-    const newSessionBlocks = sessionPlacedBlocks.slice(0, -1);
-    const newBalance = studentData.pointsBalance + blockCost;
-    
-    setBlocks(newBlocks);
-    setSessionPlacedBlocks(newSessionBlocks);
+  const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3) => {
+    if (toolMode === 'eraser') { eraseObject(obj); return; }
+    if (!faceNormal) return;
+    const nx = obj.x + faceNormal.x;
+    const ny = obj.y + faceNormal.y;
+    const nz = obj.z + faceNormal.z;
+    if (toolMode === 'build') placeBlock(nx, ny, nz);
+    if (toolMode === 'items') placeItem(nx, ny, nz);
+  };
+
+  const handleItemClick = (obj: PlacedObject) => {
+    if (toolMode === 'eraser') { eraseObject(obj); return; }
+    // If clicking an item in non-eraser mode, place adjacent on ground level
+    if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z);
+    if (toolMode === 'items') placeItem(obj.x + 1, 0, obj.z);
+  };
+
+  /* ─── Place Block ─── */
+
+  const placeBlock = (x: number, y: number, z: number) => {
+    if (!studentData) return;
+    if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
+    if (studentData.pointsBalance < blockCost) { showMessage(`Need ${blockCost} pts!`, "error"); return; }
+
+    const obj: PlacedObject = { x, y, z, color: activeColor, type: 'block' };
+    const newObjects = [...objects, obj];
+    const newBalance = studentData.pointsBalance - blockCost;
+    setObjects(newObjects);
     setStudentData({ ...studentData, pointsBalance: newBalance });
-    setUndosRemaining(prev => prev - 1);
-    showMessage("Block undone! Points refunded.", "success");
-
-    try {
-      await fetch("/api/students", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: user?.id,
-          pointsBalance: newBalance,
-          worldBlocks: newBlocks
-        })
-      });
-      setTimeout(() => { isSavingRef.current = false; }, 500);
-    } catch (e) {
-      isSavingRef.current = false;
-      showMessage("Failed to sync undo. Check connection.", "error");
-      fetchData();
-    }
+    const newSession = [...sessionPlaced, obj].slice(-3);
+    setSessionPlaced(newSession);
+    setUndosRemaining(newSession.length);
+    saveObjects(newObjects, newBalance, "Placed a block in World Builder", blockCost);
   };
+
+  /* ─── Place Item ─── */
+
+  const placeItem = (x: number, y: number, z: number) => {
+    if (!studentData || !activeItemId) { showMessage("Select an item first!", "error"); return; }
+    const itemDef = shopItems.find((i: any) => i.id === activeItemId);
+    if (!itemDef) return;
+    if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
+    if (studentData.pointsBalance < itemDef.cost) { showMessage(`Need ${itemDef.cost} pts for ${itemDef.name}!`, "error"); return; }
+
+    const obj: PlacedObject = { x, y, z, color: '', type: 'item', itemId: activeItemId };
+    const newObjects = [...objects, obj];
+    const newBalance = studentData.pointsBalance - itemDef.cost;
+    setObjects(newObjects);
+    setStudentData({ ...studentData, pointsBalance: newBalance });
+    const newSession = [...sessionPlaced, obj].slice(-3);
+    setSessionPlaced(newSession);
+    setUndosRemaining(newSession.length);
+    saveObjects(newObjects, newBalance, `Placed ${itemDef.name} in World Builder`, itemDef.cost);
+  };
+
+  /* ─── Erase ─── */
+
+  const eraseObject = (obj: PlacedObject) => {
+    if (!studentData) return;
+    const newObjects = objects.filter(o => o.x !== obj.x || o.y !== obj.y || o.z !== obj.z);
+    let refund = 0;
+    if (obj.type === 'item' && obj.itemId) {
+      const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+      refund = itemDef?.refundOnErase ?? 0;
+    } else {
+      refund = blockRefund;
+    }
+    const newBalance = studentData.pointsBalance + refund;
+    setObjects(newObjects);
+    setStudentData({ ...studentData, pointsBalance: newBalance });
+    showMessage(refund > 0 ? `Erased! +${refund} pts refunded.` : "Erased!", "success");
+    saveObjects(newObjects, newBalance, refund > 0 ? `Erased object, refunded ${refund} pts` : "Erased object", 0);
+  };
+
+  /* ─── Undo ─── */
+
+  const handleUndo = () => {
+    if (undosRemaining <= 0 || sessionPlaced.length === 0) { showMessage("No undos available.", "error"); return; }
+    const last = sessionPlaced[sessionPlaced.length - 1];
+    const newObjects = objects.filter(o => o.x !== last.x || o.y !== last.y || o.z !== last.z);
+    let refund = blockCost;
+    if (last.type === 'item' && last.itemId) {
+      const itemDef = shopItems.find((i: any) => i.id === last.itemId);
+      refund = itemDef?.cost ?? 0;
+    }
+    const newBalance = studentData.pointsBalance + refund;
+    const newSession = sessionPlaced.slice(0, -1);
+    setObjects(newObjects);
+    setStudentData({ ...studentData, pointsBalance: newBalance });
+    setSessionPlaced(newSession);
+    setUndosRemaining(prev => prev - 1);
+    showMessage(`Undone! +${refund} pts refunded.`, "success");
+    saveObjects(newObjects, newBalance, `Undo: refunded ${refund} pts`, 0);
+  };
+
+  /* ─── Buy Color ─── */
 
   const handleBuyColor = async (colorObj: any) => {
-    if (studentData.pointsBalance < colorObj.cost) {
-      showMessage(`Need ${colorObj.cost} pts to unlock this color!`, "error");
-      return;
-    }
-
+    if (studentData.pointsBalance < colorObj.cost) { showMessage(`Need ${colorObj.cost} pts!`, "error"); return; }
     isSavingRef.current = true;
-
     const newBalance = studentData.pointsBalance - colorObj.cost;
     const newInventory = [...(studentData.inventory || []), colorObj.id];
-
     setStudentData({ ...studentData, pointsBalance: newBalance, inventory: newInventory });
     setActiveColor(colorObj.color);
     showMessage(`Unlocked ${colorObj.name}!`, "success");
-
     try {
-      await fetch("/api/students", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: user?.id,
-          pointsBalance: newBalance,
-          inventory: newInventory
-        })
-      });
-
-      await fetch("/api/withdrawals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: user?.id,
-          pointsDeducted: colorObj.cost,
-          rewardDescription: `Unlocked Builder Color: ${colorObj.name}`
-        })
-      });
+      await fetch("/api/students", { method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, inventory: newInventory }) });
+      await fetch("/api/withdrawals", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: user?.id, pointsDeducted: colorObj.cost, rewardDescription: `Unlocked Builder Color: ${colorObj.name}` }) });
       setTimeout(() => { isSavingRef.current = false; }, 500);
-    } catch (e) {
-      isSavingRef.current = false;
-      showMessage("Failed to unlock. Check connection.", "error");
-      fetchData();
-    }
+    } catch (e) { isSavingRef.current = false; showMessage("Failed to unlock.", "error"); fetchData(); }
   };
 
-  if (!user || user.role !== "student") return null;
+  /* ─── Render Guards ─── */
 
-  if (loading && !studentData) {
-    return (
-      <div className="min-h-screen bg-sky-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-      </div>
-    );
-  }
+  if (!user || user.role !== "student") return null;
+  if (loading && !studentData) return (
+    <div className="min-h-screen bg-sky-100 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+    </div>
+  );
+
+  const cursorClass = toolMode === 'eraser' ? 'cursor-pointer' : 'cursor-crosshair';
 
   return (
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 z-50">
-        <Navbar />
-      </div>
+      <div className="absolute top-0 left-0 right-0 z-50"><Navbar /></div>
 
-      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-4 pointer-events-none">
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white flex flex-col gap-1 pointer-events-auto">
-          <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points Balance</p>
-          <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0} pts</p>
+      {/* ─── Left Panel: Points, Tools, Undo ─── */}
+      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none">
+        {/* Points */}
+        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
+          <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
+          <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0}</p>
         </div>
 
-        <button 
-          onClick={handleUndo}
-          disabled={undosRemaining <= 0 || sessionPlacedBlocks.length === 0}
+        {/* Tool Selector */}
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col overflow-hidden">
+          <button onClick={() => { setToolMode('build'); setActiveItemId(null); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors ${toolMode === 'build' ? 'bg-sky-500 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
+            <Hammer className="w-4 h-4" /> Build
+          </button>
+          <button onClick={() => setToolMode('items')}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'items' ? 'bg-amber-500 text-white' : 'text-amber-700 hover:bg-amber-50'}`}>
+            <TreePine className="w-4 h-4" /> Items
+          </button>
+          <button onClick={() => { setToolMode('eraser'); setActiveItemId(null); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'eraser' ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50'}`}>
+            <Eraser className="w-4 h-4" /> Eraser
+          </button>
+        </div>
+
+        {/* Undo */}
+        <button onClick={handleUndo} disabled={undosRemaining <= 0 || sessionPlaced.length === 0}
           className={`p-3 rounded-xl font-bold flex items-center justify-center gap-2 pointer-events-auto transition-colors shadow-lg border border-white
-            ${(undosRemaining <= 0 || sessionPlacedBlocks.length === 0) 
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-              : 'bg-white/80 hover:bg-white text-sky-700 backdrop-blur-md'}`}
-        >
-          <Undo2 className="w-5 h-5" />
-          <span>Undo Block</span>
-          <span className="text-xs font-black bg-sky-100 text-sky-600 px-2 py-1 rounded-md">{undosRemaining} left</span>
+            ${(undosRemaining <= 0 || sessionPlaced.length === 0) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white/80 hover:bg-white text-sky-700 backdrop-blur-md'}`}>
+          <Undo2 className="w-4 h-4" />
+          <span className="text-sm">Undo</span>
+          <span className="text-[10px] font-black bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded">{undosRemaining}</span>
         </button>
 
+        {/* Action Message */}
         {actionMessage && (
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className={`p-3 rounded-xl font-bold flex items-center gap-2 pointer-events-auto ${actionMessage.type === 'error' ? 'bg-rose-500/90 text-white shadow-lg' : 'bg-emerald-500/90 text-white shadow-lg'}`}
-          >
-            <AlertCircle className="w-5 h-5" />
-            {actionMessage.text}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+            className={`p-3 rounded-xl font-bold flex items-center gap-2 pointer-events-auto text-sm ${actionMessage.type === 'error' ? 'bg-rose-500/90 text-white shadow-lg' : 'bg-emerald-500/90 text-white shadow-lg'}`}>
+            <AlertCircle className="w-4 h-4" /> {actionMessage.text}
           </motion.div>
         )}
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto max-w-2xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
-        <div className="flex items-center gap-2 pr-4 border-r border-sky-200">
-          <Pickaxe className="w-5 h-5 text-sky-600" />
-          <div className="flex flex-col leading-tight">
-            <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Build Cost</span>
-            <span className="text-sm font-black text-amber-500">-{blockCost} pts</span>
-          </div>
-        </div>
+      {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
-        <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-1 px-1">
-          {shopColors.map((b: any) => {
-            const isUnlocked = b.cost === 0 || studentData?.inventory?.includes(b.id);
-            return (
-              <button 
-                key={b.id}
-                onClick={() => {
-                  if (isUnlocked) setActiveColor(b.color);
-                  else handleBuyColor(b);
-                }}
-                className={`relative shrink-0 w-12 h-12 rounded-xl border-4 transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-80'}`}
-                style={{ backgroundColor: b.color }}
-                title={isUnlocked ? b.name : `${b.name} - ${b.cost} pts`}
-              >
-                {!isUnlocked && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
-                    <Lock className="w-3 h-3 text-white mb-0.5" />
-                    <span className="text-[9px] font-black text-white leading-none">{b.cost}</span>
-                  </div>
-                )}
+        {toolMode === 'build' && (
+          <>
+            <div className="flex items-center gap-2 pr-3 border-r border-sky-200">
+              <Pickaxe className="w-4 h-4 text-sky-600" />
+              <div className="flex flex-col leading-tight">
+                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">Block</span>
+                <span className="text-xs font-black text-amber-500">-{blockCost} pts</span>
+              </div>
+            </div>
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1">
+              {shopColors.map((b: any) => {
+                const isUnlocked = b.cost === 0 || studentData?.inventory?.includes(b.id);
+                return (
+                  <button key={b.id}
+                    onClick={() => { if (isUnlocked) setActiveColor(b.color); else handleBuyColor(b); }}
+                    className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-80'}`}
+                    style={{ backgroundColor: b.color }} title={isUnlocked ? b.name : `${b.name} - ${b.cost} pts`}>
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                        <Lock className="w-3 h-3 text-white mb-0.5" />
+                        <span className="text-[8px] font-black text-white leading-none">{b.cost}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {toolMode === 'items' && (
+          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1">
+            {shopItems.map((item: any) => (
+              <button key={item.id}
+                onClick={() => setActiveItemId(item.id)}
+                className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
+                title={`${item.name} — ${item.cost} pts`}>
+                <span className="text-2xl leading-none">{item.emoji}</span>
+                <span className="text-[10px] font-black text-gray-600">{item.name}</span>
+                <span className="text-[9px] font-black text-amber-500">-{item.cost}</span>
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {toolMode === 'eraser' && (
+          <div className="flex items-center gap-3 text-rose-600 font-bold text-sm px-2">
+            <Eraser className="w-5 h-5" />
+            <span>Click any block or item to erase it</span>
+            {blockRefund > 0 && <span className="text-emerald-500 text-xs font-black">(blocks: +{blockRefund} pts)</span>}
+          </div>
+        )}
       </div>
 
+      {/* ─── Instructions (Desktop only) ─── */}
       <div className="hidden md:block absolute top-24 right-6 z-10 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[200px] pointer-events-auto">
         <p className="mb-2">🖱️ Left Click + Drag to pan</p>
         <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
         <p className="mb-2">🖱️ Scroll to zoom at cursor</p>
-        <p>🖱️ Click grid or block to build</p>
+        <p>🖱️ Click grid or object to {toolMode === 'eraser' ? 'erase' : 'place'}</p>
       </div>
 
-      <main className="flex-1 w-full h-full cursor-crosshair">
+      {/* ─── 3D Canvas ─── */}
+      <main className={`flex-1 w-full h-full ${cursorClass}`}>
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
           
-          <Ground onPlaceBlock={handlePlaceBlock} />
+          <Ground onClick={handleGroundClick} />
           
-          {blocks.map((block, idx) => (
-            <Block 
-              key={idx} 
-              position={[block.x, block.y, block.z]} 
-              color={block.color} 
-              onPlaceBlock={handlePlaceBlock} 
-            />
-          ))}
+          {objects.map((obj, idx) => {
+            if (obj.type === 'item') {
+              const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} />;
+            }
+            return <Block key={idx} data={obj} onClick={handleBlockClick} />;
+          })}
 
           <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
         </Canvas>

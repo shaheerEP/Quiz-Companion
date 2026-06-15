@@ -27,6 +27,14 @@ const DEFAULT_SETTINGS = {
     { id: "stone", color: "#808080", name: "Stone", cost: 0 },
     { id: "brick", color: "#B22222", name: "Brick", cost: 100 },
     { id: "glass", color: "#ADD8E6", name: "Glass", cost: 200 },
+  ],
+  builderBlockRefund: 0,
+  builderItems: [
+    { id: "tree", name: "Tree", emoji: "🌲", cost: 100, refundOnErase: 50, width: 1, height: 2.5, depth: 1 },
+    { id: "flower", name: "Flower", emoji: "🌸", cost: 50, refundOnErase: 25, width: 0.5, height: 0.6, depth: 0.5 },
+    { id: "car", name: "Car", emoji: "🚗", cost: 200, refundOnErase: 100, width: 2.5, height: 1, depth: 1.2 },
+    { id: "lamp", name: "Lamp Post", emoji: "🏮", cost: 75, refundOnErase: 35, width: 0.4, height: 2.5, depth: 0.4 },
+    { id: "fence", name: "Fence", emoji: "🏗️", cost: 30, refundOnErase: 15, width: 1.5, height: 0.8, depth: 0.15 },
   ]
 };
 
@@ -44,6 +52,8 @@ export async function GET() {
       if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
       if (newValue.builderBlockCost === undefined) { newValue.builderBlockCost = 50; updated = true; }
       if (newValue.builderColors === undefined) { newValue.builderColors = DEFAULT_SETTINGS.builderColors; updated = true; }
+      if (newValue.builderBlockRefund === undefined) { newValue.builderBlockRefund = 0; updated = true; }
+      if (newValue.builderItems === undefined) { newValue.builderItems = DEFAULT_SETTINGS.builderItems; updated = true; }
       if (updated) {
         config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
       }

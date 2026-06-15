@@ -472,6 +472,108 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-amber-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-amber-400" /></div>
+                Decorative Items & Eraser
+              </h2>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Erase Refund (pts returned when erasing a block)</label>
+                  <input 
+                    type="number" value={settings.builderBlockRefund ?? 0}
+                    onChange={e => setSettings({...settings, builderBlockRefund: Number(e.target.value)})}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-amber-500 transition-colors text-xl"
+                  />
+                </div>
+
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-gray-300">Placeable Items</h3>
+                    <button 
+                      onClick={() => setSettings({...settings, builderItems: [...(settings.builderItems || []), { id: `item-${Date.now()}`, name: "New Item", emoji: "📦", cost: 100, refundOnErase: 50, width: 1, height: 1, depth: 1 }]})}
+                      className="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    {settings.builderItems?.map((item: any, index: number) => (
+                      <div key={index} className="bg-gray-950 p-4 rounded-xl border border-gray-800">
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <input 
+                            type="text" value={item.emoji} placeholder="Emoji"
+                            onChange={e => {
+                              const items = [...settings.builderItems];
+                              items[index].emoji = e.target.value;
+                              setSettings({...settings, builderItems: items});
+                            }}
+                            className="w-14 bg-gray-900 border border-gray-700 rounded-lg px-2 py-2 text-white text-center text-xl outline-none focus:border-amber-500"
+                          />
+                          <input 
+                            type="text" value={item.name} placeholder="Item Name"
+                            onChange={e => {
+                              const items = [...settings.builderItems];
+                              items[index].name = e.target.value;
+                              setSettings({...settings, builderItems: items});
+                            }}
+                            className="flex-1 min-w-[100px] bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-amber-500"
+                          />
+                          <button 
+                            onClick={() => {
+                              const items = settings.builderItems.filter((_: any, i: number) => i !== index);
+                              setSettings({...settings, builderItems: items});
+                            }}
+                            className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Cost</label>
+                            <input type="number" value={item.cost}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].cost = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-emerald-400 text-sm font-bold outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Erase Refund</label>
+                            <input type="number" value={item.refundOnErase}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].refundOnErase = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-amber-400 text-sm font-bold outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Width</label>
+                            <input type="number" step="0.1" value={item.width}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].width = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Height</label>
+                            <input type="number" step="0.1" value={item.height}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].height = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Depth</label>
+                            <input type="number" step="0.1" value={item.depth}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].depth = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>

@@ -20,6 +20,8 @@ export interface IStudent extends Document {
     y: number;
     z: number;
     color: string;
+    type?: 'block' | 'item';
+    itemId?: string;
   }>;
 }
 
@@ -48,6 +50,8 @@ const StudentSchema = new Schema<IStudent>(
           y: Number,
           z: Number,
           color: String,
+          type: { type: String, default: 'block' },
+          itemId: String,
         }
       ],
       default: []
