@@ -67,6 +67,7 @@ export default function VoxelBuilder() {
   const [actionMessage, setActionMessage] = useState<{text: string, type: 'error'|'success'} | null>(null);
   const [undosRemaining, setUndosRemaining] = useState(3);
   const [sessionPlacedBlocks, setSessionPlacedBlocks] = useState<BlockData[]>([]);
+  const isSavingRef = useRef(false);
 
   const fetchData = async () => {
     if (!user) return;
@@ -81,7 +82,7 @@ export default function VoxelBuilder() {
       const config = await settingsRes.json();
       setSettings(config);
 
-      if (currentStudent) {
+      if (currentStudent && !isSavingRef.current) {
         setStudentData(currentStudent);
         setBlocks(currentStudent.worldBlocks || []);
         
@@ -94,7 +95,9 @@ export default function VoxelBuilder() {
         }
       }
     } catch (e) {} finally {
-      setLoading(false);
+      if (!isSavingRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -123,6 +126,8 @@ export default function VoxelBuilder() {
       return;
     }
 
+    isSavingRef.current = true;
+
     const newBlock = { x, y, z, color: activeColor };
     const newBlocks = [...blocks, newBlock];
     const newBalance = studentData.pointsBalance - blockCost;
@@ -130,7 +135,11 @@ export default function VoxelBuilder() {
     // Optimistic update
     setBlocks(newBlocks);
     setStudentData({ ...studentData, pointsBalance: newBalance });
-    setSessionPlacedBlocks([...sessionPlacedBlocks, newBlock]);
+    
+    // Keep max 3 blocks in the undo stack and reset counter to 3
+    const newSessionBlocks = [...sessionPlacedBlocks, newBlock].slice(-3);
+    setSessionPlacedBlocks(newSessionBlocks);
+    setUndosRemaining(newSessionBlocks.length);
 
     try {
       const res = await fetch("/api/students", {
@@ -155,7 +164,10 @@ export default function VoxelBuilder() {
         })
       });
 
+      setTimeout(() => { isSavingRef.current = false; }, 500);
+
     } catch (e) {
+      isSavingRef.current = false;
       showMessage("Failed to place block. Check connection.", "error");
       fetchData();
     }
@@ -166,6 +178,8 @@ export default function VoxelBuilder() {
       showMessage("No undos available.", "error");
       return;
     }
+
+    isSavingRef.current = true;
 
     const lastBlock = sessionPlacedBlocks[sessionPlacedBlocks.length - 1];
     const newBlocks = blocks.filter(b => b.x !== lastBlock.x || b.y !== lastBlock.y || b.z !== lastBlock.z);
@@ -188,8 +202,9 @@ export default function VoxelBuilder() {
           worldBlocks: newBlocks
         })
       });
-      // We could log a refund history event here if we wanted
+      setTimeout(() => { isSavingRef.current = false; }, 500);
     } catch (e) {
+      isSavingRef.current = false;
       showMessage("Failed to sync undo. Check connection.", "error");
       fetchData();
     }
@@ -200,6 +215,8 @@ export default function VoxelBuilder() {
       showMessage(`Need ${colorObj.cost} pts to unlock this color!`, "error");
       return;
     }
+
+    isSavingRef.current = true;
 
     const newBalance = studentData.pointsBalance - colorObj.cost;
     const newInventory = [...(studentData.inventory || []), colorObj.id];
@@ -228,7 +245,9 @@ export default function VoxelBuilder() {
           rewardDescription: `Unlocked Builder Color: ${colorObj.name}`
         })
       });
+      setTimeout(() => { isSavingRef.current = false; }, 500);
     } catch (e) {
+      isSavingRef.current = false;
       showMessage("Failed to unlock. Check connection.", "error");
       fetchData();
     }
