@@ -39,6 +39,8 @@ export async function PUT(req: Request) {
     if (password !== undefined) student.password = password;
     if (pointsBalance !== undefined) student.pointsBalance = Number(pointsBalance);
     if (lifetimePoints !== undefined) student.lifetimePoints = Number(lifetimePoints);
+    if (body.pet !== undefined) student.pet = body.pet;
+    if (body.inventory !== undefined) student.inventory = body.inventory;
 
     await student.save();
     return NextResponse.json(student);

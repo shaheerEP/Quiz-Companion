@@ -6,6 +6,14 @@ export interface IStudent extends Document {
   totalSessions: number;
   lifetimePoints: number;
   pointsBalance: number;
+  pet?: {
+    type: string;
+    name: string;
+    level: number;
+    equippedHat?: string;
+    equippedEnvironment?: string;
+  };
+  inventory: string[];
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -15,6 +23,16 @@ const StudentSchema = new Schema<IStudent>(
     totalSessions: { type: Number, default: 0 },
     lifetimePoints: { type: Number, default: 0 },
     pointsBalance: { type: Number, default: 0 },
+    pet: {
+      type: {
+        type: String, // e.g. 'dragon', 'robot', 'alien'
+      },
+      name: String,
+      level: { type: Number, default: 1 },
+      equippedHat: String,
+      equippedEnvironment: String,
+    },
+    inventory: { type: [String], default: [] },
   },
   { timestamps: true }
 );

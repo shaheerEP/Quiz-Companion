@@ -53,12 +53,20 @@ export default function Navbar() {
           </>
         )}
         {user.role === "student" && (
-          <Link 
-            href="/student" 
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/student' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
-          >
-            My Dashboard
-          </Link>
+          <>
+            <Link 
+              href="/student" 
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/student' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+            >
+              My Dashboard
+            </Link>
+            <Link 
+              href="/student/pet" 
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/student/pet' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+            >
+              My Pet
+            </Link>
+          </>
         )}
         <button 
           onClick={logout}
