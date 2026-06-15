@@ -399,6 +399,79 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-cyan-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-cyan-400" /></div>
+                World Builder Settings
+              </h2>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Placement Cost (pts)</label>
+                  <input 
+                    type="number" value={settings.builderBlockCost}
+                    onChange={e => setSettings({...settings, builderBlockCost: Number(e.target.value)})}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
+                  />
+                </div>
+                
+                <div className="mt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-gray-300">Shop Colors</h3>
+                    <button 
+                      onClick={() => setSettings({...settings, builderColors: [...(settings.builderColors || []), { id: `color-${Date.now()}`, color: "#ffffff", name: "New Color", cost: 100 }]})}
+                      className="bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    {settings.builderColors?.map((colorObj: any, index: number) => (
+                      <div key={index} className="flex flex-wrap items-center gap-3 bg-gray-950 p-3 rounded-xl border border-gray-800">
+                        <input 
+                          type="color" value={colorObj.color}
+                          onChange={e => {
+                            const newColors = [...settings.builderColors];
+                            newColors[index].color = e.target.value;
+                            setSettings({...settings, builderColors: newColors});
+                          }}
+                          className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent"
+                        />
+                        <input 
+                          type="text" value={colorObj.name} placeholder="Color Name"
+                          onChange={e => {
+                            const newColors = [...settings.builderColors];
+                            newColors[index].name = e.target.value;
+                            setSettings({...settings, builderColors: newColors});
+                          }}
+                          className="flex-1 min-w-[120px] bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-cyan-500"
+                        />
+                        <input 
+                          type="number" value={colorObj.cost} placeholder="Cost" title="Cost to unlock"
+                          onChange={e => {
+                            const newColors = [...settings.builderColors];
+                            newColors[index].cost = Number(e.target.value);
+                            setSettings({...settings, builderColors: newColors});
+                          }}
+                          className="w-24 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-emerald-400 text-sm font-bold outline-none focus:border-cyan-500"
+                        />
+                        <button 
+                          onClick={() => {
+                            const newColors = settings.builderColors.filter((_: any, i: number) => i !== index);
+                            setSettings({...settings, builderColors: newColors});
+                          }}
+                          className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>

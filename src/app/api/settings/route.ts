@@ -20,7 +20,14 @@ const DEFAULT_SETTINGS = {
   },
   allowStudentToStopTimer: true,
   bundleLimit: 1000,
-  bundleItemName: "🍫 Chocolate"
+  bundleItemName: "🍫 Chocolate",
+  builderBlockCost: 50,
+  builderColors: [
+    { id: "wood", color: "#8B5A2B", name: "Wood", cost: 0 },
+    { id: "stone", color: "#808080", name: "Stone", cost: 0 },
+    { id: "brick", color: "#B22222", name: "Brick", cost: 100 },
+    { id: "glass", color: "#ADD8E6", name: "Glass", cost: 200 },
+  ]
 };
 
 export async function GET() {
@@ -35,6 +42,8 @@ export async function GET() {
       if (newValue.allowStudentToStopTimer === undefined) { newValue.allowStudentToStopTimer = true; updated = true; }
       if (newValue.bundleLimit === undefined) { newValue.bundleLimit = 1000; updated = true; }
       if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
+      if (newValue.builderBlockCost === undefined) { newValue.builderBlockCost = 50; updated = true; }
+      if (newValue.builderColors === undefined) { newValue.builderColors = DEFAULT_SETTINGS.builderColors; updated = true; }
       if (updated) {
         config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
       }

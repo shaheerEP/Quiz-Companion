@@ -6,17 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Sky, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { Cuboid, AlertCircle, Pickaxe } from "lucide-react";
+import { Cuboid, AlertCircle, Pickaxe, Undo2, Lock, Unlock } from "lucide-react";
 import { motion } from "framer-motion";
-
-const BLOCK_COLORS = [
-  { id: "wood", color: "#8B5A2B", name: "Wood" },
-  { id: "stone", color: "#808080", name: "Stone" },
-  { id: "brick", color: "#B22222", name: "Brick" },
-  { id: "glass", color: "#ADD8E6", name: "Glass" },
-];
-
-const BLOCK_COST = 50;
 
 type BlockData = { x: number; y: number; z: number; color: string };
 
@@ -69,20 +60,38 @@ function Block({ position, color, onPlaceBlock }: { position: [number, number, n
 export default function VoxelBuilder() {
   const { user } = useAuth();
   const [studentData, setStudentData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeColor, setActiveColor] = useState(BLOCK_COLORS[0].color);
+  const [activeColor, setActiveColor] = useState<string>("#8B5A2B");
   const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [actionMessage, setActionMessage] = useState<{text: string, type: 'error'|'success'} | null>(null);
+  const [undosRemaining, setUndosRemaining] = useState(3);
+  const [sessionPlacedBlocks, setSessionPlacedBlocks] = useState<BlockData[]>([]);
 
-  const fetchStudentData = async () => {
+  const fetchData = async () => {
     if (!user) return;
     try {
-      const res = await fetch("/api/students");
-      const students = await res.json();
+      const [studentRes, settingsRes] = await Promise.all([
+        fetch("/api/students"),
+        fetch("/api/settings")
+      ]);
+      const students = await studentRes.json();
       const currentStudent = students.find((s: any) => s._id === user.id);
+      
+      const config = await settingsRes.json();
+      setSettings(config);
+
       if (currentStudent) {
         setStudentData(currentStudent);
         setBlocks(currentStudent.worldBlocks || []);
+        
+        // Set default active color if none selected and config is loaded
+        if (config?.builderColors?.length > 0) {
+           const firstUnlocked = config.builderColors.find((c: any) => c.cost === 0 || currentStudent.inventory?.includes(c.id));
+           if (firstUnlocked && !activeColor) {
+             setActiveColor(firstUnlocked.color);
+           }
+        }
       }
     } catch (e) {} finally {
       setLoading(false);
@@ -90,8 +99,8 @@ export default function VoxelBuilder() {
   };
 
   useEffect(() => {
-    fetchStudentData();
-    const interval = setInterval(fetchStudentData, 5000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -100,24 +109,28 @@ export default function VoxelBuilder() {
     setTimeout(() => setActionMessage(null), 3000);
   };
 
+  const blockCost = settings?.builderBlockCost ?? 50;
+  const shopColors = settings?.builderColors ?? [];
+
   const handlePlaceBlock = async (x: number, y: number, z: number) => {
     if (!studentData) return;
     
     // Check if block already exists there
     if (blocks.some(b => b.x === x && b.y === y && b.z === z)) return;
 
-    if (studentData.pointsBalance < BLOCK_COST) {
-      showMessage(`Not enough points! Need ${BLOCK_COST} pts.`, "error");
+    if (studentData.pointsBalance < blockCost) {
+      showMessage(`Not enough points! Need ${blockCost} pts.`, "error");
       return;
     }
 
     const newBlock = { x, y, z, color: activeColor };
     const newBlocks = [...blocks, newBlock];
-    const newBalance = studentData.pointsBalance - BLOCK_COST;
+    const newBalance = studentData.pointsBalance - blockCost;
 
     // Optimistic update
     setBlocks(newBlocks);
     setStudentData({ ...studentData, pointsBalance: newBalance });
+    setSessionPlacedBlocks([...sessionPlacedBlocks, newBlock]);
 
     try {
       const res = await fetch("/api/students", {
@@ -130,25 +143,94 @@ export default function VoxelBuilder() {
         })
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to save");
-      }
+      if (!res.ok) throw new Error("Failed to save");
 
-      // Log withdrawal implicitly or explicitly if needed
       await fetch("/api/withdrawals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentId: user?.id,
-          pointsDeducted: BLOCK_COST,
+          pointsDeducted: blockCost,
           rewardDescription: "Placed a block in World Builder"
         })
       });
 
     } catch (e) {
       showMessage("Failed to place block. Check connection.", "error");
-      // Revert optimistic update
-      fetchStudentData();
+      fetchData();
+    }
+  };
+
+  const handleUndo = async () => {
+    if (undosRemaining <= 0 || sessionPlacedBlocks.length === 0) {
+      showMessage("No undos available.", "error");
+      return;
+    }
+
+    const lastBlock = sessionPlacedBlocks[sessionPlacedBlocks.length - 1];
+    const newBlocks = blocks.filter(b => b.x !== lastBlock.x || b.y !== lastBlock.y || b.z !== lastBlock.z);
+    const newSessionBlocks = sessionPlacedBlocks.slice(0, -1);
+    const newBalance = studentData.pointsBalance + blockCost;
+    
+    setBlocks(newBlocks);
+    setSessionPlacedBlocks(newSessionBlocks);
+    setStudentData({ ...studentData, pointsBalance: newBalance });
+    setUndosRemaining(prev => prev - 1);
+    showMessage("Block undone! Points refunded.", "success");
+
+    try {
+      await fetch("/api/students", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: user?.id,
+          pointsBalance: newBalance,
+          worldBlocks: newBlocks
+        })
+      });
+      // We could log a refund history event here if we wanted
+    } catch (e) {
+      showMessage("Failed to sync undo. Check connection.", "error");
+      fetchData();
+    }
+  };
+
+  const handleBuyColor = async (colorObj: any) => {
+    if (studentData.pointsBalance < colorObj.cost) {
+      showMessage(`Need ${colorObj.cost} pts to unlock this color!`, "error");
+      return;
+    }
+
+    const newBalance = studentData.pointsBalance - colorObj.cost;
+    const newInventory = [...(studentData.inventory || []), colorObj.id];
+
+    setStudentData({ ...studentData, pointsBalance: newBalance, inventory: newInventory });
+    setActiveColor(colorObj.color);
+    showMessage(`Unlocked ${colorObj.name}!`, "success");
+
+    try {
+      await fetch("/api/students", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: user?.id,
+          pointsBalance: newBalance,
+          inventory: newInventory
+        })
+      });
+
+      await fetch("/api/withdrawals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: user?.id,
+          pointsDeducted: colorObj.cost,
+          rewardDescription: `Unlocked Builder Color: ${colorObj.name}`
+        })
+      });
+    } catch (e) {
+      showMessage("Failed to unlock. Check connection.", "error");
+      fetchData();
     }
   };
 
@@ -168,11 +250,24 @@ export default function VoxelBuilder() {
         <Navbar />
       </div>
 
-      <div className="absolute top-24 left-6 z-10 flex flex-col gap-4 pointer-events-none">
+      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-4 pointer-events-none">
         <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white flex flex-col gap-1 pointer-events-auto">
           <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points Balance</p>
           <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0} pts</p>
         </div>
+
+        <button 
+          onClick={handleUndo}
+          disabled={undosRemaining <= 0 || sessionPlacedBlocks.length === 0}
+          className={`p-3 rounded-xl font-bold flex items-center justify-center gap-2 pointer-events-auto transition-colors shadow-lg border border-white
+            ${(undosRemaining <= 0 || sessionPlacedBlocks.length === 0) 
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+              : 'bg-white/80 hover:bg-white text-sky-700 backdrop-blur-md'}`}
+        >
+          <Undo2 className="w-5 h-5" />
+          <span>Undo Block</span>
+          <span className="text-xs font-black bg-sky-100 text-sky-600 px-2 py-1 rounded-md">{undosRemaining} left</span>
+        </button>
 
         {actionMessage && (
           <motion.div 
@@ -187,26 +282,41 @@ export default function VoxelBuilder() {
         )}
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex gap-3 pointer-events-auto">
-        <div className="flex items-center gap-2 pr-4 border-r border-sky-100">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto max-w-2xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
+        <div className="flex items-center gap-2 pr-4 border-r border-sky-200">
           <Pickaxe className="w-5 h-5 text-sky-600" />
           <div className="flex flex-col leading-tight">
             <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Build Cost</span>
-            <span className="text-sm font-black text-amber-500">-{BLOCK_COST} pts</span>
+            <span className="text-sm font-black text-amber-500">-{blockCost} pts</span>
           </div>
         </div>
-        {BLOCK_COLORS.map(b => (
-          <button 
-            key={b.id}
-            onClick={() => setActiveColor(b.color)}
-            className={`w-12 h-12 rounded-xl border-4 transition-transform hover:scale-110 shadow-sm ${activeColor === b.color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
-            style={{ backgroundColor: b.color }}
-            title={b.name}
-          />
-        ))}
+        
+        <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-1 px-1">
+          {shopColors.map((b: any) => {
+            const isUnlocked = b.cost === 0 || studentData?.inventory?.includes(b.id);
+            return (
+              <button 
+                key={b.id}
+                onClick={() => {
+                  if (isUnlocked) setActiveColor(b.color);
+                  else handleBuyColor(b);
+                }}
+                className={`relative shrink-0 w-12 h-12 rounded-xl border-4 transition-transform hover:scale-110 shadow-sm ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-60 grayscale'}`}
+                style={{ backgroundColor: b.color }}
+                title={isUnlocked ? b.name : `${b.name} - ${b.cost} pts`}
+              >
+                {!isUnlocked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="absolute top-24 right-6 z-10 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[200px] pointer-events-auto">
+      <div className="hidden md:block absolute top-24 right-6 z-10 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[200px] pointer-events-auto">
         <p className="mb-2">🖱️ Left Click + Drag to rotate camera</p>
         <p className="mb-2">🖱️ Right Click + Drag to pan</p>
         <p>🖱️ Click grid or block to build</p>

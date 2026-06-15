@@ -19,6 +19,8 @@ export interface ISettingsValue {
   allowStudentToStopTimer?: boolean;
   bundleLimit?: number;
   bundleItemName?: string;
+  builderBlockCost?: number;
+  builderColors?: { id: string; color: string; name: string; cost: number }[];
 }
 
 export interface ISettings extends Document {
