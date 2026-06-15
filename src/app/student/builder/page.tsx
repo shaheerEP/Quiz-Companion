@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Sky, OrbitControls } from "@react-three/drei";
+import { Sky, MapControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Cuboid, AlertCircle, Pickaxe, Undo2, Lock, Unlock } from "lucide-react";
 import { motion } from "framer-motion";
@@ -301,13 +301,14 @@ export default function VoxelBuilder() {
                   if (isUnlocked) setActiveColor(b.color);
                   else handleBuyColor(b);
                 }}
-                className={`relative shrink-0 w-12 h-12 rounded-xl border-4 transition-transform hover:scale-110 shadow-sm ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-60 grayscale'}`}
+                className={`relative shrink-0 w-12 h-12 rounded-xl border-4 transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color && isUnlocked ? 'border-sky-500 scale-110' : 'border-transparent'} ${!isUnlocked && 'opacity-80'}`}
                 style={{ backgroundColor: b.color }}
                 title={isUnlocked ? b.name : `${b.name} - ${b.cost} pts`}
               >
                 {!isUnlocked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
-                    <Lock className="w-5 h-5 text-white" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                    <Lock className="w-3 h-3 text-white mb-0.5" />
+                    <span className="text-[9px] font-black text-white leading-none">{b.cost}</span>
                   </div>
                 )}
               </button>
@@ -317,8 +318,9 @@ export default function VoxelBuilder() {
       </div>
 
       <div className="hidden md:block absolute top-24 right-6 z-10 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[200px] pointer-events-auto">
-        <p className="mb-2">🖱️ Left Click + Drag to rotate camera</p>
-        <p className="mb-2">🖱️ Right Click + Drag to pan</p>
+        <p className="mb-2">🖱️ Left Click + Drag to pan</p>
+        <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
+        <p className="mb-2">🖱️ Scroll to zoom at cursor</p>
         <p>🖱️ Click grid or block to build</p>
       </div>
 
@@ -339,7 +341,7 @@ export default function VoxelBuilder() {
             />
           ))}
 
-          <OrbitControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
+          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
         </Canvas>
       </main>
     </div>
