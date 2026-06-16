@@ -21,8 +21,11 @@ export interface IStudent extends Document {
     y: number;
     z: number;
     color: string;
-    type?: 'block' | 'item' | 'roof';
+    type?: 'block' | 'item' | 'roof' | 'large-roof';
     itemId?: string;
+    w?: number;
+    d?: number;
+    h?: number;
   }>;
 }
 
@@ -54,6 +57,9 @@ const StudentSchema = new Schema<IStudent>(
           color: String,
           type: { type: String, default: 'block' },
           itemId: String,
+          w: Number,
+          d: Number,
+          h: Number,
         }
       ],
       default: []

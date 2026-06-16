@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle } from "lucide-react";
-import { motion } from "framer-motion";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
@@ -15,8 +15,9 @@ const DRAG_THRESHOLD = 5; // px
 type PlacedObject = {
   x: number; y: number; z: number;
   color: string;
-  type?: 'block' | 'item' | 'roof';
+  type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
+  w?: number; d?: number; h?: number;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
@@ -51,11 +52,32 @@ function Block({ data, onClick, isDragging }: { data: PlacedObject, onClick: (ob
   );
 }
 
-function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void, isDragging: () => boolean }) {
+function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
   return (
     <mesh position={[data.x, data.y, data.z]} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow
-      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal); }}>
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal, e.point); }}>
       <coneGeometry args={[0.71, 1, 4]} />
+      <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
+    </mesh>
+  );
+}
+
+import { useMemo } from "react";
+
+function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
+  const { w = 1, h = 1, d = 1 } = data;
+  
+  const geometry = useMemo(() => {
+    const geo = new THREE.ConeGeometry(Math.sqrt(0.5), h, 4);
+    geo.rotateY(Math.PI / 4);
+    geo.scale(w, 1, d);
+    return geo;
+  }, [w, h, d]);
+
+  return (
+    <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal, e.point); }}>
+      <primitive object={geometry} attach="geometry" />
       <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
     </mesh>
   );
@@ -241,6 +263,8 @@ export default function VoxelBuilder() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [newColorInput, setNewColorInput] = useState<string>("#ffffff");
   const [isAddingColor, setIsAddingColor] = useState(false);
+  const [selectedRoofCorners, setSelectedRoofCorners] = useState<PlacedObject[]>([]);
+  const [showDirections, setShowDirections] = useState(false);
 
   /* ─── Data Fetching ─── */
 
@@ -295,9 +319,8 @@ export default function VoxelBuilder() {
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
-    if (toolMode === 'eraser' || toolMode === 'paint') return;
+    if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'roof') return;
     if (toolMode === 'build') placeBlock(x, y, z, 'block');
-    if (toolMode === 'roof') placeBlock(x, y, z, 'roof');
     if (toolMode === 'items') placeItem(x, y, z);
   };
 
@@ -309,27 +332,81 @@ export default function VoxelBuilder() {
     saveObjects(newObjects, studentData.pointsBalance, `Painted block/roof`, 0);
   };
 
-  const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3) => {
+  const handleRoofSelection = (obj: PlacedObject) => {
+    if (selectedRoofCorners.some(c => c.x === obj.x && c.y === obj.y && c.z === obj.z)) return;
+    
+    const newSelection = [...selectedRoofCorners, obj];
+    if (newSelection.length < 4) {
+      setSelectedRoofCorners(newSelection);
+    } else {
+      const xs = newSelection.map(o => o.x);
+      const zs = newSelection.map(o => o.z);
+      const ys = newSelection.map(o => o.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minZ = Math.min(...zs);
+      const maxZ = Math.max(...zs);
+      const maxY = Math.max(...ys);
+
+      const width = maxX - minX + 1;
+      const depth = maxZ - minZ + 1;
+      const height = Math.max(width, depth) / 2;
+      const cx = minX + (width - 1) / 2;
+      const cz = minZ + (depth - 1) / 2;
+      const cy = maxY + height / 2 + 0.5;
+
+      placeLargeRoof(cx, cy, cz, width, depth, height);
+      setSelectedRoofCorners([]);
+    }
+  };
+
+  const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') { paintObject(obj); return; }
+    if (toolMode === 'roof') { handleRoofSelection(obj); return; }
+    
     if (!faceNormal) return;
-    const nx = obj.x + faceNormal.x;
-    const ny = obj.y + faceNormal.y;
-    const nz = obj.z + faceNormal.z;
+    
+    // For large angled roofs, use the exact intersection point instead of just face normal
+    let nx = obj.x + faceNormal.x;
+    let ny = obj.y + faceNormal.y;
+    let nz = obj.z + faceNormal.z;
+    
+    if (obj.type === 'large-roof' && point) {
+      nx = Math.round(point.x);
+      ny = Math.round(point.y + 0.5);
+      nz = Math.round(point.z);
+    }
+
     if (toolMode === 'build') placeBlock(nx, ny, nz, 'block');
-    if (toolMode === 'roof') placeBlock(nx, ny, nz, 'roof');
     if (toolMode === 'items') placeItem(nx, ny, nz);
   };
 
   const handleItemClick = (obj: PlacedObject) => {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') return; // Cannot paint items
+    if (toolMode === 'roof') return; // Cannot use items as roof corners
     if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z, 'block');
-    if (toolMode === 'roof') placeBlock(obj.x + 1, 0, obj.z, 'roof');
     if (toolMode === 'items') placeItem(obj.x + 1, 0, obj.z);
   };
 
   /* ─── Place Block ─── */
+
+  const placeLargeRoof = (x: number, y: number, z: number, w: number, d: number, h: number) => {
+    if (!studentData) return;
+    const cost = settings?.builderRoofCost ?? 100;
+    if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
+
+    const obj: PlacedObject = { x, y, z, color: activeColor, type: 'large-roof', w, d, h };
+    const newObjects = [...objects, obj];
+    const newBalance = studentData.pointsBalance - cost;
+    setObjects(newObjects);
+    setStudentData({ ...studentData, pointsBalance: newBalance });
+    const newSession = [...sessionPlaced, obj].slice(-3);
+    setSessionPlaced(newSession);
+    setUndosRemaining(newSession.length);
+    saveObjects(newObjects, newBalance, "Placed a large roof", cost);
+  };
 
   const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
     if (!studentData) return;
@@ -446,6 +523,15 @@ export default function VoxelBuilder() {
   return (
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-50"><Navbar /></div>
+
+      {toolMode === 'roof' && selectedRoofCorners.length > 0 && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-sky-600/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg border border-sky-400 flex items-center gap-4">
+          <span className="font-bold">Select 4 corners: {selectedRoofCorners.length}/4</span>
+          <button onClick={() => setSelectedRoofCorners([])} className="bg-rose-500 hover:bg-rose-600 px-3 py-1 rounded-lg text-sm font-black transition-colors">
+            Cancel
+          </button>
+        </div>
+      )}
 
       {/* ─── Left Panel: Points, Tools, Undo ─── */}
       <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none">
@@ -573,11 +659,22 @@ export default function VoxelBuilder() {
       </div>
 
       {/* ─── Instructions (Desktop only) ─── */}
-      <div className="hidden md:block absolute top-24 right-6 z-10 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[200px] pointer-events-auto">
-        <p className="mb-2">🖱️ Left Click + Drag to pan</p>
-        <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
-        <p className="mb-2">🖱️ Scroll to zoom at cursor</p>
-        <p>🖱️ Click grid or object to {toolMode === 'eraser' ? 'erase' : 'place'}</p>
+      <div className="hidden md:flex absolute top-24 right-6 z-10 flex-col items-end gap-2">
+        <button onClick={() => setShowDirections(!showDirections)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-sky-600 hover:text-sky-800 transition-colors pointer-events-auto">
+          <Info className="w-5 h-5" />
+        </button>
+        <AnimatePresence>
+          {showDirections && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[220px] pointer-events-auto">
+              <p className="mb-2">🖱️ Left Click + Drag to pan</p>
+              <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
+              <p className="mb-2">🖱️ Scroll to zoom at cursor</p>
+              <p className="mb-2">🖱️ Click grid or object to {toolMode === 'eraser' ? 'erase' : 'place'}</p>
+              <p className="text-xs text-amber-600">Tip: For large roofs, click 4 corner blocks.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ─── 3D Canvas ─── */}
@@ -610,8 +707,18 @@ export default function VoxelBuilder() {
             if (obj.type === 'roof') {
               return <RoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
             }
+            if (obj.type === 'large-roof') {
+              return <LargeRoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
+            }
             return <Block key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
           })}
+
+          {selectedRoofCorners.map((corner, idx) => (
+            <mesh key={`corner-${idx}`} position={[corner.x, corner.y, corner.z]}>
+              <boxGeometry args={[1.1, 1.1, 1.1]} />
+              <meshBasicMaterial color="#ef4444" wireframe />
+            </mesh>
+          ))}
 
           <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
         </Canvas>

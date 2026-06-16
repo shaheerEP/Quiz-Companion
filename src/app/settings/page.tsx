@@ -414,6 +414,16 @@ export default function SettingsPage() {
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
+
+                <div className="mt-4">
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Large Roof Cost (pts)</label>
+                  <p className="text-xs text-gray-400 mb-2">Points required for a student to build a large roof.</p>
+                  <input 
+                    type="number" value={settings.builderRoofCost ?? 100}
+                    onChange={e => setSettings({...settings, builderRoofCost: Number(e.target.value)})}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
+                  />
+                </div>
                 
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Custom Color Cost (pts)</label>

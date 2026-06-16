@@ -21,6 +21,7 @@ export interface ISettingsValue {
   bundleItemName?: string;
   builderBlockCost?: number;
   customColorCost?: number;
+  builderRoofCost?: number;
   builderBlockRefund?: number;
   builderItems?: { id: string; name: string; emoji: string; cost: number; refundOnErase: number; width: number; height: number; depth: number }[];
 }
