@@ -218,6 +218,50 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
+  if (isMatch("door", "door", "🚪")) {
+    return (
+      <ModelWrapper>
+        {/* Door Frame */}
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 1.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Door Knob */}
+        <mesh position={[0.3, 0.9, 0.08]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("window", "window", "🪟")) {
+    return (
+      <ModelWrapper>
+        {/* Frame Outer */}
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 0.8, 0.1]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+        {/* Glass Center */}
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.7, 0.7, 0.12]} />
+          <meshStandardMaterial color="#93c5fd" transparent opacity={0.6} />
+        </mesh>
+        {/* Crossbar Vertical */}
+        <mesh position={[0, 0.4, 0.02]} castShadow receiveShadow>
+          <boxGeometry args={[0.05, 0.8, 0.15]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+        {/* Crossbar Horizontal */}
+        <mesh position={[0, 0.4, 0.02]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 0.05, 0.15]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("bed", "bed", "🛏️")) {
     return (
       <ModelWrapper>
