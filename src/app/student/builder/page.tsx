@@ -66,18 +66,11 @@ import { useMemo } from "react";
 
 function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
   const { w = 1, h = 1, d = 1 } = data;
-  
-  const geometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(Math.sqrt(0.5), h, 4);
-    geo.rotateY(Math.PI / 4);
-    geo.scale(w, 1, d);
-    return geo;
-  }, [w, h, d]);
 
   return (
     <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
       onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal, e.point); }}>
-      <primitive object={geometry} attach="geometry" />
+      <boxGeometry args={[w, h, d]} />
       <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
     </mesh>
   );
@@ -151,14 +144,18 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   };
 
-  if (itemId === "cat") return renderAnimal("#f59e0b", [0.3, 0.3, 0.6], "#f59e0b", [0.25, 0.25, 0.25], [0, 0.45, 0.42], "#d97706", [0.08, 0.2, 0.08]);
-  if (itemId === "horse") return renderAnimal("#8B4513", [0.8, 0.8, 1.6], "#8B4513", [0.4, 0.5, 0.6], [0, 1.8, 0.9], "#5C4033", [0.2, 1.0, 0.2]);
-  if (itemId === "cow") return renderAnimal("#f3f4f6", [1.0, 0.8, 1.6], "#1f2937", [0.5, 0.5, 0.6], [0, 1.4, 0.9], "#1f2937", [0.2, 0.8, 0.2], true);
-  if (itemId === "goat") return renderAnimal("#e5e7eb", [0.6, 0.6, 1.0], "#d1d5db", [0.3, 0.3, 0.4], [0, 1.0, 0.6], "#9ca3af", [0.15, 0.6, 0.15], true, "#4b5563");
-  if (itemId === "pig") return renderAnimal("#fbcfe8", [0.8, 0.7, 1.2], "#fbcfe8", [0.5, 0.5, 0.5], [0, 0.7, 0.7], "#f9a8d4", [0.2, 0.4, 0.2]);
-  if (itemId === "dog") return renderAnimal("#a16207", [0.4, 0.4, 0.8], "#a16207", [0.3, 0.3, 0.4], [0, 0.6, 0.5], "#854d0e", [0.1, 0.4, 0.1]);
+  const name = itemDef?.name?.toLowerCase() || "";
+  const emoji = itemDef?.emoji || "";
+  const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
 
-  if (itemId === "chicken") {
+  if (isMatch("cat", "cat", "🐈")) return renderAnimal("#f59e0b", [0.3, 0.3, 0.6], "#f59e0b", [0.25, 0.25, 0.25], [0, 0.45, 0.42], "#d97706", [0.08, 0.2, 0.08]);
+  if (isMatch("horse", "horse", "🐎")) return renderAnimal("#8B4513", [0.8, 0.8, 1.6], "#8B4513", [0.4, 0.5, 0.6], [0, 1.8, 0.9], "#5C4033", [0.2, 1.0, 0.2]);
+  if (isMatch("cow", "cow", "🐄")) return renderAnimal("#f3f4f6", [1.0, 0.8, 1.6], "#1f2937", [0.5, 0.5, 0.6], [0, 1.4, 0.9], "#1f2937", [0.2, 0.8, 0.2], true);
+  if (isMatch("goat", "goat", "🐐")) return renderAnimal("#e5e7eb", [0.6, 0.6, 1.0], "#d1d5db", [0.3, 0.3, 0.4], [0, 1.0, 0.6], "#9ca3af", [0.15, 0.6, 0.15], true, "#4b5563");
+  if (isMatch("pig", "pig", "🐖")) return renderAnimal("#fbcfe8", [0.8, 0.7, 1.2], "#fbcfe8", [0.5, 0.5, 0.5], [0, 0.7, 0.7], "#f9a8d4", [0.2, 0.4, 0.2]);
+  if (isMatch("dog", "dog", "🐕")) return renderAnimal("#a16207", [0.4, 0.4, 0.8], "#a16207", [0.3, 0.3, 0.4], [0, 0.6, 0.5], "#854d0e", [0.1, 0.4, 0.1]);
+
+  if (isMatch("chicken", "chicken", "🐓")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
@@ -183,7 +180,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "bench") {
+  if (isMatch("bench", "bench", "")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -204,7 +201,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "table") {
+  if (isMatch("table", "table", "🪑")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -221,7 +218,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "bed") {
+  if (isMatch("bed", "bed", "🛏️")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
@@ -244,7 +241,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "bush") {
+  if (isMatch("bush", "bush", "🌿")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
@@ -255,7 +252,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "rock") {
+  if (isMatch("rock", "rock", "🪨")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -266,7 +263,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "tree") {
+  if (isMatch("tree", "tree", "🌲")) {
     return (
       <ModelWrapper>
         {/* Trunk */}
@@ -283,7 +280,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "flower") {
+  if (isMatch("flower", "flower", "🌸")) {
     return (
       <ModelWrapper>
         {/* Stem */}
@@ -310,7 +307,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "car") {
+  if (isMatch("car", "car", "🚗")) {
     return (
       <ModelWrapper>
         {/* Body */}
@@ -334,7 +331,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "lamp") {
+  if (isMatch("lamp", "lamp", "🏮")) {
     return (
       <ModelWrapper>
         {/* Post */}
@@ -356,7 +353,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     );
   }
 
-  if (itemId === "fence") {
+  if (isMatch("fence", "fence", "🏗️")) {
     return (
       <ModelWrapper>
         {/* Posts */}
@@ -511,10 +508,10 @@ export default function VoxelBuilder() {
 
       const width = maxX - minX + 1;
       const depth = maxZ - minZ + 1;
-      const height = Math.max(width, depth) / 2;
+      const height = 1;
       const cx = minX + (width - 1) / 2;
       const cz = minZ + (depth - 1) / 2;
-      const cy = maxY + height / 2 + 0.5;
+      const cy = maxY + 1;
 
       placeLargeRoof(cx, cy, cz, width, depth, height);
       setSelectedRoofCorners([]);
@@ -528,15 +525,15 @@ export default function VoxelBuilder() {
     
     if (!faceNormal) return;
     
-    // For large angled roofs, use the exact intersection point instead of just face normal
+    // For large flat roofs, calculate adjacent block center accurately using point and normal
     let nx = obj.x + faceNormal.x;
     let ny = obj.y + faceNormal.y;
     let nz = obj.z + faceNormal.z;
     
-    if (obj.type === 'large-roof' && point) {
-      nx = Math.round(point.x);
-      ny = Math.round(point.y + 0.5);
-      nz = Math.round(point.z);
+    if (obj.type === 'large-roof' && point && faceNormal) {
+      nx = Math.round(point.x + faceNormal.x * 0.5);
+      ny = Math.round(point.y + faceNormal.y * 0.5);
+      nz = Math.round(point.z + faceNormal.z * 0.5);
     }
 
     if (toolMode === 'build') placeBlock(nx, ny, nz, 'block');
