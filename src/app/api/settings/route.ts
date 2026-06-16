@@ -62,7 +62,18 @@ export async function GET() {
       if (newValue.builderRoofCost === undefined) { newValue.builderRoofCost = 100; updated = true; }
       if (newValue.customColorCost === undefined) { newValue.customColorCost = DEFAULT_SETTINGS.customColorCost; updated = true; }
       if (newValue.builderBlockRefund === undefined) { newValue.builderBlockRefund = 0; updated = true; }
-      if (newValue.builderItems === undefined) { newValue.builderItems = DEFAULT_SETTINGS.builderItems; updated = true; }
+      if (newValue.builderItems === undefined) { 
+        newValue.builderItems = DEFAULT_SETTINGS.builderItems; 
+        updated = true; 
+      } else {
+        // Add any new default items that are missing from existing config
+        for (const defaultItem of DEFAULT_SETTINGS.builderItems) {
+          if (!newValue.builderItems.some((i: any) => i.id === defaultItem.id)) {
+            newValue.builderItems.push(defaultItem);
+            updated = true;
+          }
+        }
+      }
       if (updated) {
         config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
       }

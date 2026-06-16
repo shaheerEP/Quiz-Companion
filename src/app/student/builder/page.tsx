@@ -105,6 +105,167 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
     </group>
   );
 
+  const renderAnimal = (bodyColor: string, bodyArgs: [number,number,number], headColor: string, headArgs: [number,number,number], headPos: [number,number,number], legColor: string, legArgs: [number,number,number], hasHorns?: boolean, hornColor?: string) => {
+    const [bw, bh, bd] = bodyArgs;
+    const [lw, lh, ld] = legArgs;
+    const legX = bw/2 - lw/2;
+    const legZ = bd/2 - ld/2;
+    const bodyY = lh + bh/2;
+    
+    return (
+      <ModelWrapper>
+        {/* Body */}
+        <mesh position={[0, bodyY, 0]} castShadow receiveShadow>
+          <boxGeometry args={bodyArgs} />
+          <meshStandardMaterial color={bodyColor} />
+        </mesh>
+        {/* Head */}
+        <mesh position={headPos} castShadow receiveShadow>
+          <boxGeometry args={headArgs} />
+          <meshStandardMaterial color={headColor} />
+        </mesh>
+        {/* Legs */}
+        {[
+          [-legX, lh/2, legZ], [legX, lh/2, legZ],
+          [-legX, lh/2, -legZ], [legX, lh/2, -legZ]
+        ].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={legArgs} />
+            <meshStandardMaterial color={legColor} />
+          </mesh>
+        ))}
+        {/* Horns */}
+        {hasHorns && (
+          <>
+            <mesh position={[headPos[0] - 0.2, headPos[1] + headArgs[1]/2 + 0.1, headPos[2]]} castShadow receiveShadow>
+              <coneGeometry args={[0.05, 0.3, 4]} />
+              <meshStandardMaterial color={hornColor || "#e5e7eb"} />
+            </mesh>
+            <mesh position={[headPos[0] + 0.2, headPos[1] + headArgs[1]/2 + 0.1, headPos[2]]} castShadow receiveShadow>
+              <coneGeometry args={[0.05, 0.3, 4]} />
+              <meshStandardMaterial color={hornColor || "#e5e7eb"} />
+            </mesh>
+          </>
+        )}
+      </ModelWrapper>
+    );
+  };
+
+  if (itemId === "cat") return renderAnimal("#f59e0b", [0.3, 0.3, 0.6], "#f59e0b", [0.25, 0.25, 0.25], [0, 0.45, 0.42], "#d97706", [0.08, 0.2, 0.08]);
+  if (itemId === "horse") return renderAnimal("#8B4513", [0.8, 0.8, 1.6], "#8B4513", [0.4, 0.5, 0.6], [0, 1.8, 0.9], "#5C4033", [0.2, 1.0, 0.2]);
+  if (itemId === "cow") return renderAnimal("#f3f4f6", [1.0, 0.8, 1.6], "#1f2937", [0.5, 0.5, 0.6], [0, 1.4, 0.9], "#1f2937", [0.2, 0.8, 0.2], true);
+  if (itemId === "goat") return renderAnimal("#e5e7eb", [0.6, 0.6, 1.0], "#d1d5db", [0.3, 0.3, 0.4], [0, 1.0, 0.6], "#9ca3af", [0.15, 0.6, 0.15], true, "#4b5563");
+  if (itemId === "pig") return renderAnimal("#fbcfe8", [0.8, 0.7, 1.2], "#fbcfe8", [0.5, 0.5, 0.5], [0, 0.7, 0.7], "#f9a8d4", [0.2, 0.4, 0.2]);
+  if (itemId === "dog") return renderAnimal("#a16207", [0.4, 0.4, 0.8], "#a16207", [0.3, 0.3, 0.4], [0, 0.6, 0.5], "#854d0e", [0.1, 0.4, 0.1]);
+
+  if (itemId === "chicken") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.3, 0.3, 0.4]} />
+          <meshStandardMaterial color="#fef2f2" />
+        </mesh>
+        <mesh position={[0, 0.5, 0.2]} castShadow receiveShadow>
+          <boxGeometry args={[0.15, 0.2, 0.15]} />
+          <meshStandardMaterial color="#fef2f2" />
+        </mesh>
+        <mesh position={[0, 0.65, 0.2]} castShadow receiveShadow>
+          <boxGeometry args={[0.05, 0.1, 0.1]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+        {[[-0.1, 0.1, 0], [0.1, 0.1, 0]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.02, 0.02, 0.2, 4]} />
+            <meshStandardMaterial color="#fbbf24" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "bench") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.1, 0.8]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0, 0.8, -0.35]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.4, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {[[-0.9, 0.2, -0.3], [0.9, 0.2, -0.3], [-0.9, 0.2, 0.3], [0.9, 0.2, 0.3]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={[0.1, 0.4, 0.1]} />
+            <meshStandardMaterial color="#4b5563" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "table") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.1, 2.0]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {[[-0.9, 0.45, -0.9], [0.9, 0.45, -0.9], [-0.9, 0.45, 0.9], [0.9, 0.45, 0.9]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={[0.1, 0.9, 0.1]} />
+            <meshStandardMaterial color="#8B5A2B" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "bed") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.2, 1.9]} />
+          <meshStandardMaterial color="#eff6ff" />
+        </mesh>
+        <mesh position={[0, 0.15, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.5, 0.3, 2.0]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0, 0.6, -0.95]} castShadow receiveShadow>
+          <boxGeometry args={[1.5, 0.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0, 0.45, -0.6]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 0.1, 0.4]} />
+          <meshStandardMaterial color="#ffffff" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "bush") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <dodecahedronGeometry args={[0.5, 1]} />
+          <meshStandardMaterial color="#22c55e" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (itemId === "rock") {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <dodecahedronGeometry args={[0.5, 0]} />
+          <meshStandardMaterial color="#6b7280" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (itemId === "tree") {
     return (
       <ModelWrapper>
