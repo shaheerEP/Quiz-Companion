@@ -140,8 +140,97 @@ function generatePark(): PlacedObject[] {
   return objects;
 }
 
+function generateMansion(): PlacedObject[] {
+  const objects: PlacedObject[] = [];
+  const stone = "#D1D5DB"; // Light gray concrete
+  const glass = "#ADD8E6"; // Glass
+  const darkStone = "#4B5563"; // Dark gray
+  
+  // Base footprint (12x12)
+  for (let x = -6; x <= 6; x++) {
+    for (let z = -6; z <= 6; z++) {
+      objects.push({ x, y: 0, z, color: stone, type: "block" });
+    }
+  }
+
+  // 1st Floor Walls (Lots of glass)
+  for (let y = 1; y <= 3; y++) {
+    for (let x = -5; x <= 5; x++) {
+      if (x === 0 && y <= 2) continue; // Door
+      // Front (mostly glass)
+      objects.push({ x, y, z: 5, color: y === 1 || y === 3 ? darkStone : glass, type: "block" });
+      // Back
+      objects.push({ x, y, z: -5, color: darkStone, type: "block" });
+    }
+    for (let z = -4; z <= 4; z++) {
+      // Left side glass
+      objects.push({ x: -5, y, z, color: glass, type: "block" });
+      // Right side solid
+      objects.push({ x: 5, y, z, color: darkStone, type: "block" });
+    }
+  }
+
+  // 1st Floor ceiling
+  objects.push({ x: 0, y: 4, z: 0, color: stone, type: "large-roof", w: 11, d: 11, h: 1 });
+
+  // 2nd Floor (Smaller footprint)
+  for (let y = 5; y <= 7; y++) {
+    for (let x = -3; x <= 5; x++) {
+      objects.push({ x, y, z: 3, color: glass, type: "block" }); // Front balcony
+      objects.push({ x, y, z: -5, color: darkStone, type: "block" }); // Back wall
+    }
+    for (let z = -4; z <= 2; z++) {
+      objects.push({ x: -3, y, z, color: darkStone, type: "block" }); // Left wall
+      objects.push({ x: 5, y, z, color: glass, type: "block" }); // Right wall
+    }
+  }
+
+  // 2nd Floor roof
+  objects.push({ x: 1, y: 8, z: -1, color: darkStone, type: "large-roof", w: 9, d: 9, h: 1 });
+
+  // Balcony pool
+  objects.push({ x: -2, y: 5, z: 4, color: "#3b82f6", type: "block" });
+  objects.push({ x: -1, y: 5, z: 4, color: "#3b82f6", type: "block" });
+
+  // Garden (Left Side)
+  objects.push({ x: -8, y: 0, z: 2, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -8, y: 0, z: -2, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -7, y: 0, z: 0, color: "", type: "item", itemId: "bush" });
+  objects.push({ x: -9, y: 0, z: 4, color: "", type: "item", itemId: "bench" });
+  objects.push({ x: -8, y: 0, z: 5, color: "", type: "item", itemId: "cat" });
+
+  // Farm (Right Side)
+  for (let z = -4; z <= 4; z += 2) {
+    objects.push({ x: 8, y: 0, z, color: "", type: "item", itemId: "fence" });
+    objects.push({ x: 12, y: 0, z, color: "", type: "item", itemId: "fence" });
+  }
+  for (let x = 8; x <= 12; x += 2) {
+    objects.push({ x, y: 0, z: -4, color: "", type: "item", itemId: "fence" });
+    objects.push({ x, y: 0, z: 4, color: "", type: "item", itemId: "fence" });
+  }
+  objects.push({ x: 10, y: 0, z: 0, color: "", type: "item", itemId: "cow" });
+  objects.push({ x: 9, y: 0, z: 2, color: "", type: "item", itemId: "horse" });
+  objects.push({ x: 11, y: 0, z: -2, color: "", type: "item", itemId: "pig" });
+
+  // Front pathway
+  for (let z = 6; z <= 10; z++) {
+    objects.push({ x: 0, y: 0, z, color: darkStone, type: "block" });
+  }
+
+  // Interior 1st floor
+  objects.push({ x: -3, y: 1, z: 0, color: "", type: "item", itemId: "table" });
+  objects.push({ x: 3, y: 1, z: 2, color: "", type: "item", itemId: "lamp" });
+
+  // Interior 2nd floor
+  objects.push({ x: 1, y: 5, z: 0, color: "", type: "item", itemId: "bed" });
+  objects.push({ x: 3, y: 5, z: -3, color: "", type: "item", itemId: "chest" });
+
+  return objects;
+}
+
 export const EXAMPLE_WORLDS = [
   { id: 'house', name: 'Cozy House', emoji: '🏠', objects: generateHouse() },
   { id: 'farm', name: 'Farm & Zoo', emoji: '🐄', objects: generateFarm() },
   { id: 'park', name: 'City Park', emoji: '🌳', objects: generatePark() },
+  { id: 'mansion', name: 'Modern Mansion', emoji: '🏰', objects: generateMansion() },
 ];

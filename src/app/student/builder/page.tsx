@@ -525,6 +525,7 @@ export default function VoxelBuilder() {
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
+    if (settings?.isClassTime) return;
     if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'roof') return;
     if (toolMode === 'build') placeBlock(x, y, z, 'block');
     if (toolMode === 'items') placeItem(x, y, z);
@@ -567,6 +568,7 @@ export default function VoxelBuilder() {
   };
 
   const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => {
+    if (settings?.isClassTime) return;
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') { paintObject(obj); return; }
     if (toolMode === 'roof') { handleRoofSelection(obj); return; }
@@ -589,6 +591,7 @@ export default function VoxelBuilder() {
   };
 
   const handleItemClick = (obj: PlacedObject) => {
+    if (settings?.isClassTime) return;
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') return; // Cannot paint items
     if (toolMode === 'roof') return; // Cannot use items as roof corners
@@ -736,7 +739,7 @@ export default function VoxelBuilder() {
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-50"><Navbar /></div>
 
-      {toolMode === 'roof' && selectedRoofCorners.length > 0 && (
+      {toolMode === 'roof' && selectedRoofCorners.length > 0 && !settings?.isClassTime && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-sky-600/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg border border-sky-400 flex items-center gap-4">
           <span className="font-bold">Select 4 corners: {selectedRoofCorners.length}/4</span>
           <button onClick={() => setSelectedRoofCorners([])} className="bg-rose-500 hover:bg-rose-600 px-3 py-1 rounded-lg text-sm font-black transition-colors">
@@ -745,8 +748,15 @@ export default function VoxelBuilder() {
         </div>
       )}
 
+      {settings?.isClassTime && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-rose-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg font-black tracking-widest uppercase border border-rose-400">
+          Class Time Active - Explore Mode
+        </div>
+      )}
+
       {/* ─── Left Panel: Points, Tools, Undo ─── */}
-      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none">
+      {!settings?.isClassTime && (
+        <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none">
         {/* Points */}
         <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
           <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
@@ -794,9 +804,11 @@ export default function VoxelBuilder() {
           </motion.div>
         )}
       </div>
+      )}
 
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
+      {!settings?.isClassTime && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
         {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (
           <>
@@ -869,6 +881,7 @@ export default function VoxelBuilder() {
           </div>
         )}
       </div>
+      )}
 
       {/* ─── Instructions (Desktop only) ─── */}
       <div className="hidden md:flex absolute top-24 right-6 z-10 flex-col items-end gap-2">
