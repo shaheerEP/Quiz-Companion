@@ -32,6 +32,7 @@ const DEFAULT_SETTINGS = {
     { id: "car", name: "Car", emoji: "🚗", cost: 200, refundOnErase: 100, width: 2.5, height: 1, depth: 1.2 },
     { id: "lamp", name: "Lamp Post", emoji: "🏮", cost: 75, refundOnErase: 35, width: 0.4, height: 2.5, depth: 0.4 },
     { id: "fence", name: "Fence", emoji: "🏗️", cost: 30, refundOnErase: 15, width: 1.5, height: 0.8, depth: 0.15 },
+    { id: "fence-side", name: "Fence (Side)", emoji: "🚧", cost: 30, refundOnErase: 15, width: 0.15, height: 0.8, depth: 1.5 },
     { id: "cat", name: "Cat", emoji: "🐈", cost: 100, refundOnErase: 50, width: 0.5, height: 0.6, depth: 0.8 },
     { id: "horse", name: "Horse", emoji: "🐎", cost: 300, refundOnErase: 150, width: 1.0, height: 2.0, depth: 2.2 },
     { id: "cow", name: "Cow", emoji: "🐄", cost: 250, refundOnErase: 125, width: 1.2, height: 1.8, depth: 2.0 },

@@ -15,6 +15,7 @@ export interface IStudent extends Document {
   };
   inventory: string[];
   customColors: string[];
+  isClassTime?: boolean;
   assignedGame?: 'pet' | 'builder';
   worldBlocks: Array<{
     x: number;
@@ -47,6 +48,7 @@ const StudentSchema = new Schema<IStudent>(
     },
     inventory: { type: [String], default: [] },
     customColors: { type: [String], default: [] },
+    isClassTime: { type: Boolean, default: false },
     assignedGame: { type: String, enum: ['pet', 'builder'], default: 'pet' },
     worldBlocks: {
       type: [

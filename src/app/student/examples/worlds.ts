@@ -61,8 +61,8 @@ function generateFarm(): PlacedObject[] {
     objects.push({ x, y: 0, z: 6, color: "", type: "item", itemId: "fence" });
   }
   for (let z = -4; z <= 4; z += 2) {
-    objects.push({ x: -6, y: 0, z, color: "", type: "item", itemId: "fence" });
-    objects.push({ x: 6, y: 0, z, color: "", type: "item", itemId: "fence" });
+    objects.push({ x: -6, y: 0, z, color: "", type: "item", itemId: "fence-side" });
+    objects.push({ x: 6, y: 0, z, color: "", type: "item", itemId: "fence-side" });
   }
 
   // Small Barn structure
@@ -201,8 +201,8 @@ function generateMansion(): PlacedObject[] {
 
   // Farm (Right Side)
   for (let z = -4; z <= 4; z += 2) {
-    objects.push({ x: 8, y: 0, z, color: "", type: "item", itemId: "fence" });
-    objects.push({ x: 12, y: 0, z, color: "", type: "item", itemId: "fence" });
+    objects.push({ x: 8, y: 0, z, color: "", type: "item", itemId: "fence-side" });
+    objects.push({ x: 12, y: 0, z, color: "", type: "item", itemId: "fence-side" });
   }
   for (let x = 8; x <= 12; x += 2) {
     objects.push({ x, y: 0, z: -4, color: "", type: "item", itemId: "fence" });
@@ -213,8 +213,10 @@ function generateMansion(): PlacedObject[] {
   objects.push({ x: 11, y: 0, z: -2, color: "", type: "item", itemId: "pig" });
 
   // Front pathway
-  for (let z = 6; z <= 10; z++) {
+  for (let z = 7; z <= 10; z++) {
     objects.push({ x: 0, y: 0, z, color: darkStone, type: "block" });
+    objects.push({ x: -1, y: 0, z, color: darkStone, type: "block" });
+    objects.push({ x: 1, y: 0, z, color: darkStone, type: "block" });
   }
 
   // Interior 1st floor
@@ -224,6 +226,85 @@ function generateMansion(): PlacedObject[] {
   // Interior 2nd floor
   objects.push({ x: 1, y: 5, z: 0, color: "", type: "item", itemId: "bed" });
   objects.push({ x: 3, y: 5, z: -3, color: "", type: "item", itemId: "chest" });
+
+  // --- CITY EXPANSION --- //
+
+  // Main Road (z: 11 to 14)
+  const asphalt = "#1f2937";
+  const roadLine = "#facc15";
+  for (let x = -15; x <= 15; x++) {
+    for (let z = 11; z <= 14; z++) {
+      let c = asphalt;
+      if (z === 12 && x % 3 === 0) c = roadLine; // dashed yellow line
+      objects.push({ x, y: 0, z, color: c, type: "block" });
+    }
+  }
+
+  // Driveway & Parked Car
+  for (let z = 7; z <= 10; z++) {
+    for (let x = -5; x <= -3; x++) {
+      objects.push({ x, y: 0, z, color: stone, type: "block" });
+    }
+  }
+  // Car (Red blocks with glass windows)
+  const carColor = "#ef4444";
+  objects.push({ x: -4, y: 1, z: 8, color: carColor, type: "block" });
+  objects.push({ x: -4, y: 1, z: 9, color: carColor, type: "block" });
+  objects.push({ x: -4, y: 2, z: 8, color: glass, type: "block" });
+
+  // Streetlights
+  const lightColors = [stone, stone, "#fef08a"];
+  [-12, -4, 4, 12].forEach(lx => {
+    lightColors.forEach((color, i) => {
+      objects.push({ x: lx, y: i+1, z: 10, color, type: "block" });
+    });
+  });
+
+  // Fountain in Garden
+  objects.push({ x: -12, y: 0, z: 0, color: stone, type: "block" });
+  objects.push({ x: -13, y: 0, z: 0, color: stone, type: "block" });
+  objects.push({ x: -11, y: 0, z: 0, color: stone, type: "block" });
+  objects.push({ x: -12, y: 0, z: -1, color: stone, type: "block" });
+  objects.push({ x: -12, y: 0, z: 1, color: stone, type: "block" });
+  objects.push({ x: -12, y: 1, z: 0, color: "#3b82f6", type: "block" }); // water
+  objects.push({ x: -12, y: 2, z: 0, color: "#3b82f6", type: "block" });
+
+  // Forest behind the mansion (z: -15 to -8)
+  for (let i = 0; i < 15; i++) {
+    objects.push({ 
+      x: Math.floor(Math.random() * 30) - 15, 
+      y: 0, 
+      z: Math.floor(Math.random() * 7) - 15, 
+      color: "", type: "item", itemId: "tree" 
+    });
+  }
+  
+  for (let i = 0; i < 10; i++) {
+    objects.push({ 
+      x: Math.floor(Math.random() * 30) - 15, 
+      y: 0, 
+      z: Math.floor(Math.random() * 7) - 15, 
+      color: "", type: "item", itemId: "bush" 
+    });
+  }
+
+  // Neighboring Modern Art Gallery (x: -15 to -10, z: 5 to 9)
+  const galleryWall = "#f3f4f6";
+  for(let x=-15; x<=-10; x++) {
+    for(let z=5; z<=9; z++) {
+      objects.push({ x, y: 0, z, color: galleryWall, type: "block" });
+    }
+  }
+  objects.push({ x: -12.5, y: 4, z: 7, color: "#eab308", type: "large-roof", w: 6, d: 5, h: 1 });
+  for(let y=1; y<=3; y++) {
+    objects.push({ x: -12, y, z: 7, color: glass, type: "block" });
+    objects.push({ x: -13, y, z: 7, color: glass, type: "block" });
+  }
+
+  // More animals around
+  objects.push({ x: -2, y: 0, z: 12, color: "", type: "item", itemId: "dog" }); // Dog crossing road
+  objects.push({ x: 14, y: 0, z: 8, color: "", type: "item", itemId: "cat" });
+  objects.push({ x: -14, y: 0, z: -2, color: "", type: "item", itemId: "horse" });
 
   return objects;
 }

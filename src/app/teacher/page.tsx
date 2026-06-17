@@ -43,14 +43,17 @@ export default function TeacherDashboard() {
   }, []);
 
   const handleToggleClassTime = async () => {
-    if (!settings) return;
-    const newSettings = { ...settings, isClassTime: !settings.isClassTime };
-    setSettings(newSettings);
-    await fetch("/api/settings", {
+    if (!activeStudent) return;
+    const newIsClassTime = !activeStudent.isClassTime;
+    
+    await fetch("/api/students", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newSettings)
+      body: JSON.stringify({ id: activeStudent._id, isClassTime: newIsClassTime })
     });
+    
+    setActiveStudent({ ...activeStudent, isClassTime: newIsClassTime });
+    setStudents(students.map(s => s._id === activeStudent._id ? { ...s, isClassTime: newIsClassTime } : s));
   };
 
   const handleStudentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -303,22 +306,7 @@ export default function TeacherDashboard() {
 
       <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 max-w-[1600px] mx-auto w-full">
         <aside className="w-full xl:w-96 flex flex-col gap-6 shrink-0 h-fit">
-          {settings && (
-            <div className="bg-gray-900 border border-gray-800 p-6 rounded-[2rem] shadow-lg flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <span className="text-xl">👩‍🏫</span> Class Time
-                </h2>
-                <p className="text-xs font-bold text-gray-500 mt-1">Locks builders to read-only</p>
-              </div>
-              <button 
-                onClick={handleToggleClassTime}
-                className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${settings.isClassTime ? 'bg-emerald-500' : 'bg-gray-700'}`}
-              >
-                <div className={`w-6 h-6 bg-white rounded-full transition-transform shadow-md ${settings.isClassTime ? 'translate-x-6' : 'translate-x-0'}`}></div>
-              </button>
-            </div>
-          )}
+
 
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
@@ -350,6 +338,16 @@ export default function TeacherDashboard() {
                 </div>
                 
                 <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50 mt-2">
+                  <span className="text-gray-400 font-bold">Class Time (Read-Only)</span>
+                  <button 
+                    onClick={handleToggleClassTime}
+                    className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-gray-700'}`}
+                  >
+                    <div className={`w-6 h-6 bg-white rounded-full transition-transform shadow-md ${activeStudent.isClassTime ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50">
                   <span className="text-gray-400 font-bold">Assigned Game</span>
                   <select 
                     className="bg-gray-900 border border-gray-700 text-white font-bold rounded-lg px-3 py-1 outline-none focus:border-indigo-500 cursor-pointer"
