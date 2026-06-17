@@ -24,6 +24,7 @@ export interface IStudent extends Document {
     color: string;
     type?: 'block' | 'item' | 'roof' | 'large-roof';
     itemId?: string;
+    rotationY?: number;
     w?: number;
     d?: number;
     h?: number;
@@ -59,6 +60,7 @@ const StudentSchema = new Schema<IStudent>(
           color: String,
           type: { type: String, default: 'block' },
           itemId: String,
+          rotationY: { type: Number, default: 0 },
           w: Number,
           d: Number,
           h: Number,

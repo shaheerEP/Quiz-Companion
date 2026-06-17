@@ -6,8 +6,9 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMemo } from "react";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
@@ -17,10 +18,11 @@ export type PlacedObject = {
   color: string;
   type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
+  rotationY?: number;
   w?: number; d?: number; h?: number;
 };
 
-type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
+type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate';
 
 const BASE_COLORS = [
   { id: "wood", color: "#8B5A2B", name: "Wood" },
@@ -93,7 +95,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 
   // Helper to wrap custom geometry
   const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
-    <group position={[data.x, data.y - 0.5, data.z]} onClick={handleClick}>
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       {children}
     </group>
   );
@@ -451,7 +453,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   const boxColor = "#9ca3af";
 
   return (
-    <group position={[data.x, yPos, data.z]} onClick={handleClick}>
+    <group position={[data.x, yPos, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={boxColor} />
@@ -564,6 +566,20 @@ export default function VoxelBuilder() {
     saveObjects(newObjects, studentData.pointsBalance, `Painted block/roof`, 0);
   };
 
+  const rotateObject = (obj: PlacedObject) => {
+    const newObjects = objects.map(o => {
+      if (o.x === obj.x && o.y === obj.y && o.z === obj.z) {
+        if (o.type === 'large-roof') {
+          return { ...o, w: o.d, d: o.w, rotationY: ((o.rotationY || 0) + Math.PI / 2) % (Math.PI * 2) };
+        }
+        return { ...o, rotationY: ((o.rotationY || 0) + Math.PI / 2) % (Math.PI * 2) };
+      }
+      return o;
+    });
+    setObjects(newObjects);
+    saveObjects(newObjects, studentData.pointsBalance, `Rotated object`, 0);
+  };
+
   const handleRoofSelection = (obj: PlacedObject) => {
     if (selectedRoofCorners.some(c => c.x === obj.x && c.y === obj.y && c.z === obj.z)) return;
     
@@ -597,6 +613,7 @@ export default function VoxelBuilder() {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') { paintObject(obj); return; }
     if (toolMode === 'roof') { handleRoofSelection(obj); return; }
+    if (toolMode === 'rotate') { rotateObject(obj); return; }
     
     if (!faceNormal) return;
     
@@ -620,6 +637,7 @@ export default function VoxelBuilder() {
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') return; // Cannot paint items
     if (toolMode === 'roof') return; // Cannot use items as roof corners
+    if (toolMode === 'rotate') { rotateObject(obj); return; }
     if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z, 'block');
     if (toolMode === 'items') placeItem(obj.x + 1, 0, obj.z);
   };
@@ -808,7 +826,11 @@ export default function VoxelBuilder() {
           </button>
           <button onClick={() => { setToolMode('eraser'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'eraser' ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50'}`}>
-            <Eraser className="w-4 h-4" /> Eraser
+            <Eraser className="w-5 h-5" /> Erase
+          </button>
+          <button onClick={() => setToolMode('rotate')}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 rounded-b-2xl ${toolMode === 'rotate' ? 'bg-purple-500 text-white' : 'text-purple-600 hover:bg-purple-50'}`}>
+            <RotateCw className="w-5 h-5" /> Rotate
           </button>
         </div>
 
@@ -898,7 +920,7 @@ export default function VoxelBuilder() {
           </div>
         )}
 
-        {toolMode === 'eraser' && (
+        {(toolMode === 'eraser' || toolMode === 'rotate') && (
           <div className="flex items-center gap-3 text-rose-600 font-bold text-sm px-2">
             <Eraser className="w-5 h-5" />
             <span>Click any block or item to erase it</span>
@@ -920,7 +942,7 @@ export default function VoxelBuilder() {
               <p className="mb-2">🖱️ Left Click + Drag to pan</p>
               <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
               <p className="mb-2">🖱️ Scroll to zoom at cursor</p>
-              <p className="mb-2">🖱️ Click grid or object to {toolMode === 'eraser' ? 'erase' : 'place'}</p>
+              <p className="mb-2">🖱️ Click grid or object to {toolMode === 'eraser' ? 'erase' : toolMode === 'rotate' ? 'rotate' : 'place'}</p>
               <p className="text-xs text-amber-600">Tip: For large roofs, click 4 corner blocks.</p>
             </motion.div>
           )}

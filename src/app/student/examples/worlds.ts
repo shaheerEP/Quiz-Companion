@@ -37,7 +37,7 @@ function generateHouse(): PlacedObject[] {
   objects.push({ x: 0, y: 4, z: 0, color: "#1f2937", type: "large-roof", w: 9, d: 9, h: 1 });
 
   // Interior Items
-  objects.push({ x: -1, y: 1, z: 1, color: "", type: "item", itemId: "bed" });
+  objects.push({ x: -1, y: 1, z: 1, color: "", type: "item", itemId: "bed", rotationY: Math.PI / 2 });
   objects.push({ x: 1, y: 1, z: -1, color: "", type: "item", itemId: "table" });
   objects.push({ x: 2, y: 1, z: -2, color: "", type: "item", itemId: "lamp" });
   objects.push({ x: -2, y: 1, z: -2, color: "", type: "item", itemId: "chest" });
@@ -61,8 +61,8 @@ function generateFarm(): PlacedObject[] {
     objects.push({ x, y: 0, z: 6, color: "", type: "item", itemId: "fence" });
   }
   for (let z = -4; z <= 4; z += 2) {
-    objects.push({ x: -6, y: 0, z, color: "", type: "item", itemId: "fence-side" });
-    objects.push({ x: 6, y: 0, z, color: "", type: "item", itemId: "fence-side" });
+    objects.push({ x: -6, y: 0, z, color: "", type: "item", itemId: "fence", rotationY: Math.PI / 2 });
+    objects.push({ x: 6, y: 0, z, color: "", type: "item", itemId: "fence", rotationY: Math.PI / 2 });
   }
 
   // Small Barn structure
@@ -78,12 +78,12 @@ function generateFarm(): PlacedObject[] {
   objects.push({ x: 0, y: 3, z: -3.5, color: "#ef4444", type: "large-roof", w: 7, d: 6, h: 1 });
 
   // Animals inside fence
-  objects.push({ x: -4, y: 0, z: 2, color: "", type: "item", itemId: "cow" });
-  objects.push({ x: 0, y: 0, z: 1, color: "", type: "item", itemId: "horse" });
-  objects.push({ x: 3, y: 0, z: 4, color: "", type: "item", itemId: "pig" });
-  objects.push({ x: 2, y: 0, z: 0, color: "", type: "item", itemId: "goat" });
-  objects.push({ x: -2, y: 0, z: 3, color: "", type: "item", itemId: "chicken" });
-  objects.push({ x: 4, y: 0, z: 2, color: "", type: "item", itemId: "chicken" });
+  objects.push({ x: -4, y: 0, z: 2, color: "", type: "item", itemId: "cow", rotationY: Math.PI / 4 });
+  objects.push({ x: 0, y: 0, z: 1, color: "", type: "item", itemId: "horse", rotationY: -Math.PI / 6 });
+  objects.push({ x: 3, y: 0, z: 4, color: "", type: "item", itemId: "pig", rotationY: Math.PI / 2 });
+  objects.push({ x: 2, y: 0, z: 0, color: "", type: "item", itemId: "goat", rotationY: Math.PI });
+  objects.push({ x: -2, y: 0, z: 3, color: "", type: "item", itemId: "chicken", rotationY: -Math.PI / 2 });
+  objects.push({ x: 4, y: 0, z: 2, color: "", type: "item", itemId: "chicken", rotationY: Math.PI / 3 });
 
   // Water trough
   objects.push({ x: -4, y: 0, z: -2, color: "#ADD8E6", type: "block" });
@@ -121,8 +121,8 @@ function generatePark(): PlacedObject[] {
   }
 
   // Benches along the path
-  objects.push({ x: -2, y: 0, z: -2, color: "", type: "item", itemId: "bench" });
-  objects.push({ x: 2, y: 0, z: 2, color: "", type: "item", itemId: "bench" });
+  objects.push({ x: -2, y: 0, z: -2, color: "", type: "item", itemId: "bench", rotationY: Math.PI / 2 });
+  objects.push({ x: 2, y: 0, z: 2, color: "", type: "item", itemId: "bench", rotationY: -Math.PI / 2 });
 
   // Rocks
   objects.push({ x: -5, y: 0, z: -6, color: "", type: "item", itemId: "rock" });
@@ -201,16 +201,16 @@ function generateMansion(): PlacedObject[] {
 
   // Farm (Right Side)
   for (let z = -4; z <= 4; z += 2) {
-    objects.push({ x: 8, y: 0, z, color: "", type: "item", itemId: "fence-side" });
-    objects.push({ x: 12, y: 0, z, color: "", type: "item", itemId: "fence-side" });
+    objects.push({ x: 8, y: 0, z, color: "", type: "item", itemId: "fence", rotationY: Math.PI / 2 });
+    objects.push({ x: 12, y: 0, z, color: "", type: "item", itemId: "fence", rotationY: Math.PI / 2 });
   }
   for (let x = 8; x <= 12; x += 2) {
     objects.push({ x, y: 0, z: -4, color: "", type: "item", itemId: "fence" });
     objects.push({ x, y: 0, z: 4, color: "", type: "item", itemId: "fence" });
   }
-  objects.push({ x: 10, y: 0, z: 0, color: "", type: "item", itemId: "cow" });
-  objects.push({ x: 9, y: 0, z: 2, color: "", type: "item", itemId: "horse" });
-  objects.push({ x: 11, y: 0, z: -2, color: "", type: "item", itemId: "pig" });
+  objects.push({ x: 10, y: 0, z: 0, color: "", type: "item", itemId: "cow", rotationY: Math.PI / 4 });
+  objects.push({ x: 9, y: 0, z: 2, color: "", type: "item", itemId: "horse", rotationY: -Math.PI / 3 });
+  objects.push({ x: 11, y: 0, z: -2, color: "", type: "item", itemId: "pig", rotationY: Math.PI / 6 });
 
   // Front pathway
   for (let z = 7; z <= 10; z++) {
@@ -224,7 +224,7 @@ function generateMansion(): PlacedObject[] {
   objects.push({ x: 3, y: 1, z: 2, color: "", type: "item", itemId: "lamp" });
 
   // Interior 2nd floor
-  objects.push({ x: 1, y: 5, z: 0, color: "", type: "item", itemId: "bed" });
+  objects.push({ x: 1, y: 5, z: 0, color: "", type: "item", itemId: "bed", rotationY: Math.PI / 2 });
   objects.push({ x: 3, y: 5, z: -3, color: "", type: "item", itemId: "chest" });
 
   // --- CITY EXPANSION --- //
