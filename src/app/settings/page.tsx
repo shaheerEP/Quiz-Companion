@@ -20,7 +20,10 @@ export default function SettingsPage() {
   const [editingStudent, setEditingStudent] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(data => { setSettings(data); setOriginalSettings(data); });
+    fetch("/api/settings").then(res => res.json()).then(data => { 
+      setSettings(data); 
+      setOriginalSettings(JSON.parse(JSON.stringify(data))); 
+    });
     fetchStudents();
   }, []);
 
@@ -35,7 +38,7 @@ export default function SettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings)
     });
-    setOriginalSettings(settings);
+    setOriginalSettings(JSON.parse(JSON.stringify(settings)));
     setLoading(false);
     alert("Settings saved successfully!");
   };
