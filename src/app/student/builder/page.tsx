@@ -64,7 +64,6 @@ function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick:
   );
 }
 
-import { useMemo } from "react";
 
 function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
   const { w = 1, h = 1, d = 1 } = data;
