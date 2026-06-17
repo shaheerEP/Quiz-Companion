@@ -498,6 +498,10 @@ export default function VoxelBuilder() {
   const blockRefund = settings?.builderBlockRefund ?? 0;
   const shopItems: any[] = settings?.builderItems ?? [];
 
+  const isCustomColor = studentData?.customColors?.includes(activeColor);
+  const actualBlockCost = isCustomColor ? 0 : blockCost;
+  const actualRoofCost = isCustomColor ? 0 : (settings?.builderRoofCost ?? 100);
+
   /* ─── Save helper ─── */
 
   const saveObjects = async (newObjects: PlacedObject[], newBalance: number, desc: string, pointsDeducted: number) => {
@@ -596,7 +600,7 @@ export default function VoxelBuilder() {
 
   const placeLargeRoof = (x: number, y: number, z: number, w: number, d: number, h: number) => {
     if (!studentData) return;
-    const cost = settings?.builderRoofCost ?? 100;
+    const cost = actualRoofCost;
     if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: activeColor, type: 'large-roof', w, d, h };
@@ -613,17 +617,17 @@ export default function VoxelBuilder() {
   const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
     if (!studentData) return;
     if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
-    if (studentData.pointsBalance < blockCost) { showMessage(`Need ${blockCost} pts!`, "error"); return; }
+    if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: activeColor, type };
     const newObjects = [...objects, obj];
-    const newBalance = studentData.pointsBalance - blockCost;
+    const newBalance = studentData.pointsBalance - actualBlockCost;
     setObjects(newObjects);
     setStudentData({ ...studentData, pointsBalance: newBalance });
     const newSession = [...sessionPlaced, obj].slice(-3);
     setSessionPlaced(newSession);
     setUndosRemaining(newSession.length);
-    saveObjects(newObjects, newBalance, "Placed a block in World Builder", blockCost);
+    saveObjects(newObjects, newBalance, "Placed a block in World Builder", actualBlockCost);
   };
 
   /* ─── Place Item ─── */
@@ -671,11 +675,17 @@ export default function VoxelBuilder() {
     if (undosRemaining <= 0 || sessionPlaced.length === 0) { showMessage("No undos available.", "error"); return; }
     const last = sessionPlaced[sessionPlaced.length - 1];
     const newObjects = objects.filter(o => o.x !== last.x || o.y !== last.y || o.z !== last.z);
-    let refund = blockCost;
+    
+    let refund = 0;
     if (last.type === 'item' && last.itemId) {
       const itemDef = shopItems.find((i: any) => i.id === last.itemId);
       refund = itemDef?.cost ?? 0;
+    } else if (last.type === 'large-roof') {
+      refund = studentData.customColors?.includes(last.color) ? 0 : (settings?.builderRoofCost ?? 100);
+    } else {
+      refund = studentData.customColors?.includes(last.color) ? 0 : blockCost;
     }
+    
     const newBalance = studentData.pointsBalance + refund;
     const newSession = sessionPlaced.slice(0, -1);
     setObjects(newObjects);
@@ -793,8 +803,8 @@ export default function VoxelBuilder() {
             <div className="flex items-center gap-2 pr-3 border-r border-sky-200">
               <Pickaxe className="w-4 h-4 text-sky-600" />
               <div className="flex flex-col leading-tight">
-                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">{toolMode === 'paint' ? 'Color' : 'Block'}</span>
-                <span className="text-xs font-black text-amber-500">{toolMode === 'paint' ? 'Free' : `-${blockCost} pts`}</span>
+                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">{toolMode === 'paint' ? 'Color' : toolMode === 'roof' ? 'Roof' : 'Block'}</span>
+                <span className="text-xs font-black text-amber-500">{toolMode === 'paint' || isCustomColor ? 'Free' : `-${toolMode === 'roof' ? actualRoofCost : actualBlockCost} pts`}</span>
               </div>
             </div>
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
