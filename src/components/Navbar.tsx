@@ -66,6 +66,14 @@ export default function Navbar() {
             >
               {user.student?.assignedGame === 'builder' ? 'World Builder' : 'My Pet'}
             </Link>
+            {user.student?.assignedGame === 'builder' && (
+              <Link 
+                href="/student/examples"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname.includes('/examples') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+              >
+                Example Worlds
+              </Link>
+            )}
           </>
         )}
         <button 

@@ -6,6 +6,7 @@ import { User, Gift, Save, Trash2, Edit2, Link as LinkIcon, Package } from "luci
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
+  const [originalSettings, setOriginalSettings] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function SettingsPage() {
   const [editingStudent, setEditingStudent] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(setSettings);
+    fetch("/api/settings").then(res => res.json()).then(data => { setSettings(data); setOriginalSettings(data); });
     fetchStudents();
   }, []);
 
@@ -34,9 +35,12 @@ export default function SettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings)
     });
+    setOriginalSettings(settings);
     setLoading(false);
     alert("Settings saved successfully!");
   };
+
+  const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +115,18 @@ export default function SettingsPage() {
   if (!settings) return <div className="min-h-screen bg-gray-950 text-white"><Navbar /><div className="p-10 font-bold text-xl">Loading configuration...</div></div>;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col relative">
       <Navbar />
+
+      {hasChanges && (
+        <button 
+          onClick={handleSave} disabled={loading}
+          className="fixed top-24 right-10 z-50 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full font-black transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border-2 border-emerald-400 flex items-center gap-2"
+        >
+          <Save className="w-5 h-5" />
+          {loading ? "Saving..." : "Save App Settings"}
+        </button>
+      )}
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
         
@@ -271,12 +285,6 @@ export default function SettingsPage() {
         {/* EXISTING CONFIGURATION SETTINGS */}
         <div className="flex items-center justify-between bg-gray-900 border border-gray-800 p-6 rounded-[2rem] shadow-lg mt-4">
           <h1 className="text-3xl font-black text-white ml-2">App Configuration</h1>
-          <button 
-            onClick={handleSave} disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl font-black transition-colors shadow-lg shadow-indigo-500/20"
-          >
-            {loading ? "Saving..." : "Save App Settings"}
-          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

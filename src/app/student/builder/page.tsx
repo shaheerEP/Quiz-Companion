@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
 
-type PlacedObject = {
+export type PlacedObject = {
   x: number; y: number; z: number;
   color: string;
   type?: 'block' | 'item' | 'roof' | 'large-roof';
