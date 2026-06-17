@@ -799,7 +799,7 @@ export default function VoxelBuilder() {
 
       {/* ─── Left Panel: Points, Tools, Undo ─── */}
       {!studentData?.isClassTime && (
-        <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none">
+        <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none max-h-[calc(100vh-7rem)] overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden">
         {/* Points */}
         <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
           <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
