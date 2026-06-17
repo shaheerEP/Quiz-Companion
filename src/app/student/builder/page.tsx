@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
-import { Sky, MapControls, Html } from "@react-three/drei";
+import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -899,6 +899,21 @@ export default function VoxelBuilder() {
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
           
+          {settings?.builderQuote && (
+            <Text
+              position={[0, 15, -60]}
+              fontSize={8}
+              color="#fbbf24"
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.2}
+              outlineColor="#b45309"
+              castShadow
+            >
+              {settings.builderQuote}
+            </Text>
+          )}
+
           <Ground onClick={handleGroundClick} isDragging={isDraggingFn} />
           
           {objects.map((obj, idx) => {

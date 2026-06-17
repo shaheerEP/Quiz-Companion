@@ -434,6 +434,17 @@ export default function SettingsPage() {
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
+
+                <div className="mt-4">
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Motivational Quote</label>
+                  <p className="text-xs text-gray-400 mb-2">A 3D text displayed near the builder scene (e.g. 'Build for your beloved Mom').</p>
+                  <input 
+                    type="text" value={settings.builderQuote || ''}
+                    onChange={e => setSettings({...settings, builderQuote: e.target.value})}
+                    placeholder="e.g. Build for your beloved Mom"
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-cyan-500 transition-colors text-xl"
+                  />
+                </div>
               </div>
             </div>
 
