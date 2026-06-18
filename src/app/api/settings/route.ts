@@ -46,6 +46,7 @@ const DEFAULT_SETTINGS = {
     { id: "table", name: "Table", emoji: "🪑", cost: 120, refundOnErase: 60, width: 2.0, height: 1.0, depth: 2.0 },
     { id: "door", name: "Door", emoji: "🚪", cost: 50, refundOnErase: 25, width: 0.8, height: 1.8, depth: 0.2 },
     { id: "window", name: "Window", emoji: "🪟", cost: 40, refundOnErase: 20, width: 0.8, height: 0.8, depth: 0.1 },
+    { id: "lemborgini", name: "Lemborgini", emoji: "🏎️", cost: 500, refundOnErase: 250, width: 3.0, height: 1.0, depth: 1.5 },
   ]
 };
 
