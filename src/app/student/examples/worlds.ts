@@ -377,6 +377,177 @@ function generateMansion(): PlacedObject[] {
   objects.push({ x: 9, y: 0, z: 16, color: "", type: "item", itemId: "bush" });
   objects.push({ x: 6, y: 0, z: 16, color: "", type: "item", itemId: "bush" });
 
+  
+  // --- BIG CITY EXPANSION 2 --- //
+
+  // Extend Main Road left and right
+  for (let x = -30; x <= 30; x++) {
+    for (let z = 11; z <= 14; z++) {
+      if (x < -15 || x > 15) {
+        let c = asphalt;
+        if (z === 12 && x % 3 === 0) c = roadLine;
+        objects.push({ x, y: 0, z, color: c, type: "block" });
+      }
+    }
+  }
+
+  // Cross Street (x: 18 to 21)
+  for (let x = 18; x <= 21; x++) {
+    for (let z = -20; z <= 30; z++) {
+      if (z < 11 || z > 14) {
+        let c = asphalt;
+        if (x === 19 && z % 3 === 0) c = roadLine;
+        objects.push({ x, y: 0, z, color: c, type: "block" });
+      }
+    }
+  }
+
+  // Cross Street 2 (x: -21 to -18)
+  for (let x = -21; x <= -18; x++) {
+    for (let z = -20; z <= 30; z++) {
+      if (z < 11 || z > 14) {
+        let c = asphalt;
+        if (x === -20 && z % 3 === 0) c = roadLine;
+        objects.push({ x, y: 0, z, color: c, type: "block" });
+      }
+    }
+  }
+
+  // Downtown Skyscrapers (Top Left quadrant, past cross street)
+  const downtownZ = 16;
+  const colors = ["#10b981", "#8b5cf6", "#f43f5e", "#0ea5e9", "#f59e0b"];
+  let bIdx = 0;
+  for (let sx = -30; sx <= -24; sx += 6) {
+    for (let sz = 16; sz <= 28; sz += 6) {
+      const height = Math.floor(Math.random() * 10) + 10;
+      const bColor = colors[bIdx % colors.length];
+      bIdx++;
+      
+      // Building footprint
+      for (let x = sx; x < sx + 4; x++) {
+        for (let z = sz; z < sz + 4; z++) {
+          objects.push({ x, y: 0, z, color: plazaStone, type: "block" });
+        }
+      }
+
+      for (let y = 1; y <= height; y++) {
+        for (let x = sx; x < sx + 4; x++) {
+          for (let z = sz; z < sz + 4; z++) {
+            if (x === sx || x === sx + 3 || z === sz || z === sz + 3) {
+              // Windows on every other floor
+              const isWindow = (y % 2 !== 0 && (x > sx && x < sx+3 || z > sz && z < sz+3));
+              objects.push({ x, y, z, color: isWindow ? skyGlass : bColor, type: "block" });
+            }
+          }
+        }
+      }
+      // Roof
+      objects.push({ x: sx + 1.5, y: height + 1, z: sz + 1.5, color: "#1f2937", type: "large-roof", w: 4, d: 4, h: 1 });
+    }
+  }
+
+  // Giant Parking Lot (Bottom right quadrant)
+  for (let x = 23; x <= 30; x++) {
+    for (let z = 16; z <= 28; z++) {
+      objects.push({ x, y: 0, z, color: "#374151", type: "block" });
+    }
+  }
+  // Parked vehicles
+  const vehicles = ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'];
+  for(let x=24; x<=29; x+=2) {
+    for(let z=17; z<=27; z+=3) {
+      if (Math.random() > 0.3) {
+        const v = vehicles[Math.floor(Math.random() * vehicles.length)];
+        objects.push({ x, y: 0, z, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
+      }
+    }
+  }
+
+  // Suburban Neighborhood (Top Right quadrant)
+  for (let z = -15; z <= 8; z += 6) {
+    const sx = 23;
+    const sz = z;
+    // Lawn
+    for(let lx=sx-1; lx<=sx+5; lx++) {
+      for(let lz=sz-1; lz<=sz+4; lz++) {
+        objects.push({ x: lx, y: 0, z: lz, color: "", type: "item", itemId: "grass_field" });
+      }
+    }
+    // House
+    for(let y=1; y<=2; y++) {
+      for(let x=sx; x<=sx+3; x++) {
+        for(let hz=sz; hz<=sz+3; hz++) {
+          if (x===sx || x===sx+3 || hz===sz || hz===sz+3) {
+            objects.push({ x, y, z: hz, color: "#d97706", type: "block" });
+          }
+        }
+      }
+    }
+    objects.push({ x: sx + 1.5, y: 3, z: sz + 1.5, color: "#b91c1c", type: "large-roof", w: 4, d: 4, h: 1 });
+    // Car
+    objects.push({ x: sx - 2, y: 0, z: sz + 1, color: "", type: "item", itemId: "jeep", rotationY: Math.PI });
+    // Tree
+    objects.push({ x: sx + 4, y: 0, z: sz + 4, color: "", type: "item", itemId: "tree" });
+  }
+
+  // Central City Park (x: -17 to -2, z: -15 to -8)
+  for (let x = -17; x <= -2; x++) {
+    for (let z = -15; z <= -8; z++) {
+      objects.push({ x, y: 0, z, color: "", type: "item", itemId: "grass_field" });
+      if (Math.random() > 0.8) objects.push({ x, y: 0, z, color: "", type: "item", itemId: "tree" });
+      else if (Math.random() > 0.9) objects.push({ x, y: 0, z, color: "", type: "item", itemId: "bench", rotationY: Math.random() * Math.PI });
+      else if (Math.random() > 0.95) objects.push({ x, y: 0, z, color: "", type: "item", itemId: "dog" });
+    }
+  }
+
+
+  
+  // --- CITY TRAFFIC --- //
+  const trafficVehicles = ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'];
+  
+  // Main Road Traffic
+  for (let tx = -28; tx <= 28; tx += 8) {
+    if (Math.random() > 0.4 && (tx < -21 || tx > -18) && (tx < 18 || tx > 21)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Lane 1 (driving left, facing -x)
+      objects.push({ x: tx, y: 0, z: 11, color: "", type: "item", itemId: v, rotationY: -Math.PI / 2 });
+    }
+    if (Math.random() > 0.4 && (tx+4 < -21 || tx+4 > -18) && (tx+4 < 18 || tx+4 > 21)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Lane 2 (driving right, facing +x)
+      objects.push({ x: tx+4, y: 0, z: 13.5, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
+    }
+  }
+
+  // Cross Street 1 Traffic (x=18 to 21)
+  for (let tz = -15; tz <= 25; tz += 10) {
+    if (Math.random() > 0.3 && (tz < 11 || tz > 14)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Driving down (+z), right side (x=20)
+      objects.push({ x: 20, y: 0, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
+    }
+    if (Math.random() > 0.3 && (tz+5 < 11 || tz+5 > 14)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Driving up (-z), left side (x=18.5)
+      objects.push({ x: 18.5, y: 0, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
+    }
+  }
+
+  // Cross Street 2 Traffic (x=-21 to -18)
+  for (let tz = -15; tz <= 25; tz += 10) {
+    if (Math.random() > 0.3 && (tz < 11 || tz > 14)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Driving down (+z), right side (x=-19)
+      objects.push({ x: -19, y: 0, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
+    }
+    if (Math.random() > 0.3 && (tz+5 < 11 || tz+5 > 14)) {
+      const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
+      // Driving up (-z), left side (x=-20.5)
+      objects.push({ x: -20.5, y: 0, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
+    }
+  }
+
+
   // More animals around
   objects.push({ x: -2, y: 0, z: 12, color: "", type: "item", itemId: "dog" }); // Dog crossing road
   objects.push({ x: 14, y: 0, z: 8, color: "", type: "item", itemId: "cat" });
@@ -389,5 +560,5 @@ export const EXAMPLE_WORLDS = [
   { id: 'house', name: 'Cozy House', emoji: '🏠', objects: generateHouse() },
   { id: 'farm', name: 'Farm & Zoo', emoji: '🐄', objects: generateFarm() },
   { id: 'park', name: 'City Park', emoji: '🌳', objects: generatePark() },
-  { id: 'mansion', name: 'Modern Mansion', emoji: '🏰', objects: generateMansion() },
+  { id: 'mansion', name: 'Modern Metropolis', emoji: '🏰', objects: generateMansion() },
 ];

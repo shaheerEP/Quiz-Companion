@@ -26,9 +26,10 @@ export default function StudentDashboard() {
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const lastResultIdRef = useRef<string | null>(null);
   const shownManualLogsRef = useRef<Set<string>>(new Set());
+  const initialLogsFetchedRef = useRef(false);
+  const initialLoadCompleteRef = useRef(false);
 
   useEffect(() => {
     if (activeSession) {
@@ -42,17 +43,20 @@ export default function StudentDashboard() {
               (l.logType === 'bonus' || l.logType === 'deduction') && !shownManualLogsRef.current.has(l._id)
             );
             if (unseenManuals.length > 0) {
-              const latest = unseenManuals[unseenManuals.length - 1]; // Assume last is newest
-              shownManualLogsRef.current.add(latest._id);
-              setManualAnim({ type: latest.logType, amount: latest.points });
+              if (initialLogsFetchedRef.current) {
+                const latest = unseenManuals[unseenManuals.length - 1]; // Assume last is newest
+                setManualAnim({ type: latest.logType, amount: latest.points });
+              }
               
               // Also add all others to the shown set so we don't queue them forever
               unseenManuals.forEach((l: any) => shownManualLogsRef.current.add(l._id));
             }
           }
+          initialLogsFetchedRef.current = true;
         });
     } else {
       setQuestionLogs([]);
+      initialLogsFetchedRef.current = false;
     }
   }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
 
@@ -199,21 +203,21 @@ export default function StudentDashboard() {
   const progressPercent = Math.min(100, Math.max(0, (currentProgress / bundleLimit) * 100));
 
   useEffect(() => {
-    if (user && !initialLoadComplete) {
-      setInitialLoadComplete(true);
-      setPrevBundles(bundlesEarned);
-    }
-  }, [user, initialLoadComplete, bundlesEarned]);
+    if (!user || !settings) return;
+    
+    const bundles = Math.floor((user.student?.lifetimePoints || 0) / (settings.bundleLimit || 1000));
 
-  useEffect(() => {
-    if (initialLoadComplete && prevBundles !== null && bundlesEarned > prevBundles) {
+    if (!initialLoadCompleteRef.current) {
+      setPrevBundles(bundles);
+      initialLoadCompleteRef.current = true;
+    } else if (prevBundles !== null && bundles > prevBundles) {
       setShowBundleAnim(true);
       setTimeout(() => setShowBundleAnim(false), 4000);
+      setPrevBundles(bundles);
+    } else if (prevBundles !== bundles) {
+      setPrevBundles(bundles);
     }
-    if (initialLoadComplete) {
-      setPrevBundles(bundlesEarned);
-    }
-  }, [bundlesEarned, prevBundles, initialLoadComplete]);
+  }, [user?.student?.lifetimePoints, settings?.bundleLimit, prevBundles, user]);
 
   const groupedHistory = historyItems.reduce((acc: any, item: any) => {
     const dateObj = new Date(item.date);

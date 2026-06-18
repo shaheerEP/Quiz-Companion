@@ -276,14 +276,28 @@ export default function TeacherDashboard() {
     }
   };
 
-  const bundlesEarned = Math.floor((activeStudent?.lifetimePoints || 0) / (settings?.bundleLimit || 1000));
+  const prevActiveStudentIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (prevBundles !== null && bundlesEarned > prevBundles) {
+    if (!activeStudent || !settings) {
+      prevActiveStudentIdRef.current = null;
+      setPrevBundles(null);
+      return;
+    }
+
+    const bundles = Math.floor((activeStudent.lifetimePoints || 0) / (settings.bundleLimit || 1000));
+
+    if (prevActiveStudentIdRef.current !== activeStudent._id) {
+      setPrevBundles(bundles);
+      prevActiveStudentIdRef.current = activeStudent._id;
+    } else if (prevBundles !== null && bundles > prevBundles) {
       setShowBundleAnim(true);
       setTimeout(() => setShowBundleAnim(false), 4000);
+      setPrevBundles(bundles);
+    } else if (prevBundles !== bundles) {
+      setPrevBundles(bundles);
     }
-    setPrevBundles(bundlesEarned);
-  }, [bundlesEarned, prevBundles]);
+  }, [activeStudent?._id, activeStudent?.lifetimePoints, settings?.bundleLimit, prevBundles]);
 
   const groupedHistory = historyItems.reduce((acc: any, item: any) => {
     const dateObj = new Date(item.date);

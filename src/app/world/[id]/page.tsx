@@ -81,7 +81,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
       <ModelWrapper>
         {/* Scattered small grass blades */}
         {[
-          [-0.3, 0, -0.3], [0.2, 0, -0.4], [-0.4, 0, 0.2], 
+          [-0.3, 0, -0.3], [0.2, 0, -0.4], [-0.4, 0, 0.2],
           [0.3, 0, 0.3], [0, 0, 0], [0.4, 0, -0.1], [-0.1, 0, 0.4]
         ].map((pos, i) => (
           <group key={i} position={pos as [number, number, number]} rotation={[0, (i * Math.PI) / 3, 0]}>
@@ -138,7 +138,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.1, 0.1, 0.2], [0.1, 0.1, 0.2],
           [-0.1, 0.1, -0.2], [0.1, 0.1, -0.2]
         ].map((pos, i) => (
-          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+          <mesh key={i} position={pos as [number, number, number]} castShadow receiveShadow>
             <boxGeometry args={[0.08, 0.2, 0.08]} />
             <meshStandardMaterial color="#d97706" />
           </mesh>
@@ -204,7 +204,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.3, 0.4, 0.6], [0.3, 0.4, 0.6],
           [-0.3, 0.4, -0.6], [0.3, 0.4, -0.6]
         ].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]}>
+          <group key={i} position={pos as [number, number, number]}>
             <mesh castShadow receiveShadow>
               <boxGeometry args={[0.2, 0.8, 0.2]} />
               <meshStandardMaterial color="#8B4513" />
@@ -240,7 +240,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[0.4, 0.02, 0.6]} />
           <meshStandardMaterial color="#1f2937" />
         </mesh>
-        
+
         {/* Udder */}
         <mesh position={[0, 0.75, -0.2]} castShadow receiveShadow>
           <boxGeometry args={[0.4, 0.15, 0.4]} />
@@ -304,7 +304,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.4, 0.4, 0.6], [0.4, 0.4, 0.6],
           [-0.4, 0.4, -0.6], [0.4, 0.4, -0.6]
         ].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]}>
+          <group key={i} position={pos as [number, number, number]}>
             <mesh castShadow receiveShadow>
               <boxGeometry args={[0.2, 0.8, 0.2]} />
               <meshStandardMaterial color="#f3f4f6" />
@@ -381,7 +381,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.15, 0.25, 0.4], [0.15, 0.25, 0.4],
           [-0.15, 0.25, -0.4], [0.15, 0.25, -0.4]
         ].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]}>
+          <group key={i} position={pos as [number, number, number]}>
             <mesh castShadow receiveShadow>
               <boxGeometry args={[0.12, 0.5, 0.12]} />
               <meshStandardMaterial color="#d1d5db" />
@@ -439,7 +439,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.2, 0.15, 0.4], [0.2, 0.15, 0.4],
           [-0.2, 0.15, -0.4], [0.2, 0.15, -0.4]
         ].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]}>
+          <group key={i} position={pos as [number, number, number]}>
             <mesh castShadow receiveShadow>
               <boxGeometry args={[0.18, 0.3, 0.18]} />
               <meshStandardMaterial color="#fbcfe8" />
@@ -507,7 +507,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.1, 0.15, 0.25], [0.1, 0.15, 0.25],
           [-0.1, 0.15, -0.25], [0.1, 0.15, -0.25]
         ].map((pos, i) => (
-          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+          <mesh key={i} position={pos as [number, number, number]} castShadow receiveShadow>
             <boxGeometry args={[0.08, 0.3, 0.08]} />
             <meshStandardMaterial color="#854d0e" />
           </mesh>
@@ -535,7 +535,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <meshStandardMaterial color="#ef4444" />
         </mesh>
         {/* Beak */}
-        <group position={[0, 0.55, 0.25]} rotation={[Math.PI/2, 0, 0]}>
+        <group position={[0, 0.55, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
           <mesh castShadow receiveShadow>
             <coneGeometry args={[0.04, 0.1, 4]} />
             <meshStandardMaterial color="#fbbf24" />
@@ -564,7 +564,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
         </mesh>
         {/* Legs */}
         {[[-0.08, 0.1, 0], [0.08, 0.1, 0]].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]}>
+          <group key={i} position={pos as [number, number, number]}>
             {/* Leg */}
             <mesh castShadow receiveShadow>
               <cylinderGeometry args={[0.015, 0.015, 0.2, 4]} />
@@ -594,7 +594,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.2, 0.3, 0.2], [0.2, 0.3, 0.2],
           [-0.2, 0.3, -0.2], [0.2, 0.3, -0.2]
         ].map((pos, i) => (
-          <group key={i} position={pos as [number,number,number]} rotation={[pos[0] * 0.2, 0, pos[2] * -0.2]}>
+          <group key={i} position={pos as [number, number, number]} rotation={[pos[0] * 0.2, 0, pos[2] * -0.2]}>
             <mesh castShadow receiveShadow>
               <cylinderGeometry args={[0.03, 0.02, 0.6, 8]} />
               <meshStandardMaterial color="#451a03" />
@@ -641,7 +641,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           [-0.9, 0.1, 0.3], [0.9, 0.1, 0.3],
           [-0.9, 0.1, -0.3], [0.9, 0.1, -0.3]
         ].map((pos, i) => (
-          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+          <mesh key={i} position={pos as [number, number, number]} castShadow receiveShadow>
             <boxGeometry args={[0.1, 0.2, 0.1]} />
             <meshStandardMaterial color="#1f2937" />
           </mesh>
@@ -662,7 +662,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <meshStandardMaterial color="#8B5A2B" />
         </mesh>
         {[[-0.9, 0.2, -0.3], [0.9, 0.2, -0.3], [-0.9, 0.2, 0.3], [0.9, 0.2, 0.3]].map((pos, i) => (
-          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+          <mesh key={i} position={pos as [number, number, number]} castShadow receiveShadow>
             <boxGeometry args={[0.1, 0.4, 0.1]} />
             <meshStandardMaterial color="#4b5563" />
           </mesh>
@@ -679,7 +679,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <meshStandardMaterial color="#8B5A2B" />
         </mesh>
         {[[-0.9, 0.45, -0.9], [0.9, 0.45, -0.9], [-0.9, 0.45, 0.9], [0.9, 0.45, 0.9]].map((pos, i) => (
-          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+          <mesh key={i} position={pos as [number, number, number]} castShadow receiveShadow>
             <boxGeometry args={[0.1, 0.9, 0.1]} />
             <meshStandardMaterial color="#8B5A2B" />
           </mesh>
@@ -839,7 +839,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[2.8, 0.2, 1.4]} />
           <meshStandardMaterial color="#06b6d4" />
         </mesh>
-        
+
         {/* Front slope (Hood) */}
         <mesh position={[-0.8, 0.4, 0]} rotation={[0, 0, 0.15]} castShadow receiveShadow>
           <boxGeometry args={[1.2, 0.2, 1.3]} />
@@ -857,7 +857,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[1.0, 0.25, 1.0]} />
           <meshStandardMaterial color="#1e293b" />
         </mesh>
-        
+
         {/* Windshield */}
         <mesh position={[-0.6, 0.6, 0]} rotation={[0, 0, 0.4]} castShadow receiveShadow>
           <boxGeometry args={[0.6, 0.25, 1.0]} />
@@ -940,7 +940,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[2.6, 0.6, 1.4]} />
           <meshStandardMaterial color="#475569" />
         </mesh>
-        
+
         {/* Front Hood */}
         <mesh position={[-0.8, 0.85, 0]} castShadow receiveShadow>
           <boxGeometry args={[1.0, 0.1, 1.35]} />
@@ -952,7 +952,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[1.6, 0.6, 1.35]} />
           <meshStandardMaterial color="#0f172a" />
         </mesh>
-        
+
         {/* Windows / Glass */}
         {/* Windshield */}
         <mesh position={[-0.51, 1.0, 0]} rotation={[0, 0, 0.1]} castShadow receiveShadow>
@@ -979,7 +979,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <boxGeometry args={[1.6, 0.05, 1.35]} />
           <meshStandardMaterial color="#475569" />
         </mesh>
-        
+
         {/* Roof Rails */}
         <mesh position={[0.3, 1.36, 0.5]} castShadow receiveShadow>
           <boxGeometry args={[1.4, 0.05, 0.05]} />
@@ -1225,32 +1225,6 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-50"><Navbar /></div>
 
-      {/* ─── Top Left: Creator Info ─── */}
-      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-auto">
-        <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white">
-          <h1 className="text-2xl font-black text-sky-800 tracking-tight">
-            {worldData.name}&apos;s World
-          </h1>
-          <p className="text-sm text-sky-600 font-bold mt-1">Explore this built world!</p>
-          
-          <button 
-            onClick={handleCopyLink}
-            className="mt-4 flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl font-bold transition-colors text-sm bg-sky-50 text-sky-700 hover:bg-sky-100"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copied Link!" : "Copy Link"}
-          </button>
-        </div>
-      </div>
-
-      {/* ─── Bottom Right: Instructions ─── */}
-      <div className="absolute bottom-6 right-6 z-10 pointer-events-none">
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white text-sm font-bold text-sky-800 max-w-[220px]">
-          <p className="mb-2">🖱️ Left Click + Drag to pan</p>
-          <p className="mb-2">🖱️ Right Click + Drag to rotate</p>
-          <p>🖱️ Scroll to zoom</p>
-        </div>
-      </div>
 
       {/* Top Right Actions */}
       <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
@@ -1268,7 +1242,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
-          
+
           {worldData.builderQuote && (
             <Text
               position={[0, 15, -60]}
@@ -1285,7 +1259,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
           )}
 
           <Ground />
-          
+
           {objects.map((obj, idx) => {
             if (obj.type === 'item') {
               const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
