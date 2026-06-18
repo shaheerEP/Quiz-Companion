@@ -79,7 +79,8 @@ export default function StudentDashboard() {
       
       // Fetch withdrawals
       const logsRes = await fetch(`/api/withdrawals?studentId=${user.id}`);
-      setLogs(await logsRes.json());
+      const logsData = await logsRes.json();
+      setLogs(logsData.filter((log: any) => !log.rewardDescription?.includes("in World Builder")));
       
       const setRes = await fetch("/api/settings");
       setSettings(await setRes.json());
