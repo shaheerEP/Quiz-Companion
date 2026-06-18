@@ -101,8 +101,8 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
       <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
 
       {/* Timer display */}
-      <div className={`relative z-10 text-8xl md:text-9xl font-mono font-black text-white tracking-tighter transition-all duration-300 ${glowColor}`}>
-        {time.toFixed(1)}<span className="text-4xl md:text-5xl text-gray-400">s</span>
+      <div className={`relative z-10 text-7xl sm:text-8xl md:text-9xl font-mono font-black text-white tracking-tighter transition-all duration-300 ${glowColor}`}>
+        {time.toFixed(1)}<span className="text-4xl sm:text-5xl md:text-5xl text-gray-400">s</span>
       </div>
 
       {/* Status badge */}

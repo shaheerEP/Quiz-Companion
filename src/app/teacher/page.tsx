@@ -304,8 +304,8 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 max-w-[1600px] mx-auto w-full">
-        <aside className="w-full xl:w-96 flex flex-col gap-6 shrink-0 h-fit">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 p-4 md:p-6 gap-4 md:gap-6 max-w-[1600px] mx-auto w-full pb-28 md:pb-6">
+        <aside className={`w-full md:col-span-1 lg:col-span-4 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit ${activeStudent ? 'order-2' : 'order-1'} md:order-1`}>
 
 
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
@@ -452,7 +452,7 @@ export default function TeacherDashboard() {
         </aside>
 
         {/* Main Interaction Area */}
-        <section className="flex-1 flex items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 relative overflow-hidden min-h-[600px] xl:min-h-[700px]">
+        <section className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 relative overflow-hidden min-h-[400px] md:min-h-[500px] xl:min-h-[700px] ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
           {!activeStudent ? (
             <div className="text-center text-gray-500 flex flex-col items-center max-w-sm">
               <div className="w-32 h-32 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-gray-700/50">
@@ -484,7 +484,7 @@ export default function TeacherDashboard() {
         </section>
         {/* Right Sidebar */}
         {activeSession && (
-          <aside className="w-full xl:w-96 flex flex-col gap-6 shrink-0 h-fit">
+          <aside className="w-full md:col-span-2 lg:col-span-12 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit order-3">
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
                 <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
@@ -572,6 +572,24 @@ export default function TeacherDashboard() {
           </aside>
         )}
       </main>
+
+      {/* Mobile Action Bar */}
+      {activeSession && activeStudent && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-gray-950 border-t border-gray-800 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+          <button 
+            onClick={handleAddBonus}
+            className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-4 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
+          >
+            <PlusCircle className="w-6 h-6" /> Add Points
+          </button>
+          <button 
+            onClick={handleDeductPoints}
+            className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-4 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
+          >
+            <MinusCircle className="w-6 h-6" /> Deduct
+          </button>
+        </div>
+      )}
 
       {showRating && (
         <StarRatingAnimation 

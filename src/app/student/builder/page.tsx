@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 
@@ -772,6 +772,16 @@ export default function VoxelBuilder() {
     } catch (e) { isSavingRef.current = false; showMessage("Failed to unlock.", "error"); fetchData(); }
   };
 
+  /* ─── Share ─── */
+
+  const handleShare = () => {
+    if (!user) return;
+    const shareUrl = `${window.location.origin}/world/${user.id}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => showMessage("Share link copied to clipboard!", "success"))
+      .catch(() => showMessage("Failed to copy link", "error"));
+  };
+
   /* ─── Render Guards ─── */
 
   if (!user || user.role !== "student") return null;
@@ -942,9 +952,12 @@ export default function VoxelBuilder() {
       </div>
       )}
 
-      {/* ─── Instructions (Desktop only) ─── */}
-      <div className="hidden md:flex absolute top-24 right-6 z-10 flex-col items-end gap-2">
-        <button onClick={() => setShowDirections(!showDirections)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-sky-600 hover:text-sky-800 transition-colors pointer-events-auto">
+      {/* ─── Top Right Actions ─── */}
+      <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
+        <button onClick={handleShare} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-emerald-600 hover:text-emerald-800 transition-colors pointer-events-auto flex items-center justify-center" title="Share World">
+          <Share2 className="w-5 h-5" />
+        </button>
+        <button onClick={() => setShowDirections(!showDirections)} className="hidden md:flex bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-sky-600 hover:text-sky-800 transition-colors pointer-events-auto">
           <Info className="w-5 h-5" />
         </button>
         <AnimatePresence>
