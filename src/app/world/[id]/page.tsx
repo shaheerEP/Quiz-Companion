@@ -318,12 +318,10 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
         ))}
 
         {/* Headlights */}
-        <mesh position={[-1.22, 0.75, 0.45]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 16]} rotation={[0, 0, Math.PI / 2]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
         </mesh>
-        <mesh position={[-1.22, 0.75, -0.45]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 16]} rotation={[0, 0, Math.PI / 2]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
         </mesh>
 
@@ -372,12 +370,10 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
 
         {/* Roll Cage */}
         {/* Top Side Rails */}
-        <mesh position={[0.4, 1.35, 0.55]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.03, 0.03, 1.5, 8]} rotation={[0, 0, Math.PI / 2]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#171717" />
         </mesh>
-        <mesh position={[0.4, 1.35, -0.55]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.03, 0.03, 1.5, 8]} rotation={[0, 0, Math.PI / 2]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#171717" />
         </mesh>
         {/* Rear Vertical Posts */}
@@ -399,12 +395,10 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
           <meshStandardMaterial color="#171717" />
         </mesh>
         {/* Top Crossbars */}
-        <mesh position={[1.1, 1.35, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.03, 0.03, 1.1, 8]} rotation={[Math.PI / 2, 0, 0]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#171717" />
         </mesh>
-        <mesh position={[0.2, 1.35, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.03, 0.03, 1.1, 8]} rotation={[Math.PI / 2, 0, 0]} />
+        <mesh >\n          <cylinderGeometry  />
           <meshStandardMaterial color="#171717" />
         </mesh>
 
