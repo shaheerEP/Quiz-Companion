@@ -102,6 +102,34 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   const emoji = itemDef?.emoji || "";
   const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
 
+  if (isMatch("grass_field", "grass field", "🌿")) {
+    return (
+      <ModelWrapper>
+        {/* Scattered small grass blades */}
+        {[
+          [-0.3, 0, -0.3], [0.2, 0, -0.4], [-0.4, 0, 0.2], 
+          [0.3, 0, 0.3], [0, 0, 0], [0.4, 0, -0.1], [-0.1, 0, 0.4]
+        ].map((pos, i) => (
+          <group key={i} position={pos as [number, number, number]} rotation={[0, (i * Math.PI) / 3, 0]}>
+            <mesh position={[-0.05, 0.05, 0]} rotation={[0, 0, 0.2]} castShadow>
+              <coneGeometry args={[0.02, 0.1, 4]} />
+              <meshStandardMaterial color="#22c55e" />
+            </mesh>
+            <mesh position={[0.05, 0.075, 0]} rotation={[0, 0, -0.1]} castShadow>
+              <coneGeometry args={[0.03, 0.15, 4]} />
+              <meshStandardMaterial color="#16a34a" />
+            </mesh>
+            <mesh position={[0, 0.05, 0.05]} rotation={[0.2, 0, 0]} castShadow>
+              <coneGeometry args={[0.02, 0.1, 4]} />
+              <meshStandardMaterial color="#15803d" />
+            </mesh>
+          </group>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+
   if (isMatch("cat", "cat", "🐈")) {
     return (
       <ModelWrapper>
@@ -1754,7 +1782,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 /* ─── Main Component ─── */
 
 import { EXAMPLE_WORLDS } from "./worlds";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
 export default function ExampleWorldsViewer() {
@@ -1762,6 +1790,7 @@ export default function ExampleWorldsViewer() {
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeWorldId, setActiveWorldId] = useState(EXAMPLE_WORLDS[0].id);
+  const [isListOpen, setIsListOpen] = useState(true);
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
@@ -1785,32 +1814,56 @@ export default function ExampleWorldsViewer() {
       <div className="absolute top-0 left-0 right-0 z-50"><Navbar /></div>
 
       {/* Navigation & Selector */}
-      <div className="absolute top-24 left-6 z-10 flex flex-col gap-4 pointer-events-none">
+      <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-4 pointer-events-none max-w-[280px] md:max-w-xs">
         <Link href="/student/builder" className="bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white pointer-events-auto flex items-center gap-2 text-sky-700 font-bold hover:bg-white transition-colors w-fit">
           <ArrowLeft className="w-5 h-5" /> Back to My World
         </Link>
         
         <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col gap-3">
-          <h2 className="text-sky-800 font-black text-lg uppercase tracking-wider mb-1">Example Worlds</h2>
-          {EXAMPLE_WORLDS.map(world => (
-            <button key={world.id}
-              onClick={() => setActiveWorldId(world.id)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${activeWorldId === world.id ? 'bg-sky-500 text-white shadow-md' : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-100'}`}
+          <div 
+            className="flex justify-between items-center cursor-pointer select-none" 
+            onClick={() => setIsListOpen(!isListOpen)}
+          >
+            <h2 className="text-sky-800 font-black text-lg uppercase tracking-wider mb-1">Example Worlds</h2>
+            {isListOpen ? <ChevronUp className="w-5 h-5 text-sky-800" /> : <ChevronDown className="w-5 h-5 text-sky-800" />}
+          </div>
+
+          {isListOpen ? (
+            <>
+              {EXAMPLE_WORLDS.map(world => (
+                <button key={world.id}
+                  onClick={() => { setActiveWorldId(world.id); setIsListOpen(false); }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${activeWorldId === world.id ? 'bg-sky-500 text-white shadow-md' : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-100'}`}
+                >
+                  <span className="text-xl">{world.emoji}</span>
+                  {world.name}
+                </button>
+              ))}
+            </>
+          ) : (
+            <button 
+              onClick={() => setIsListOpen(true)} 
+              className="flex items-center justify-between px-4 py-3 bg-sky-100 text-sky-700 hover:bg-sky-200 border border-sky-200 rounded-xl font-bold transition-colors"
             >
-              <span className="text-xl">{world.emoji}</span>
-              {world.name}
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{activeWorld.emoji}</span>
+                <span>{activeWorld.name}</span>
+              </div>
+              <span className="text-sm font-normal underline decoration-sky-400">Change</span>
             </button>
-          ))}
+          )}
         </div>
 
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto max-w-xs">
-          <p className="text-sm font-bold text-sky-800">
-            Explore these worlds to see what you can build! <br/><br/>
-            🖱️ Left Click + Drag to pan<br/>
-            🖱️ Right Click + Drag to rotate<br/>
-            🖱️ Scroll to zoom
-          </p>
-        </div>
+        {isListOpen && (
+          <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
+            <p className="text-sm font-bold text-sky-800">
+              Explore these worlds to see what you can build! <br/><br/>
+              🖱️ Left Click + Drag to pan<br/>
+              🖱️ Right Click + Drag to rotate<br/>
+              🖱️ Scroll to zoom
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 3D Canvas */}

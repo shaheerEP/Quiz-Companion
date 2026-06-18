@@ -302,6 +302,34 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   const emoji = itemDef?.emoji || "";
   const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
 
+  if (isMatch("grass_field", "grass field", "🌿")) {
+    return (
+      <ModelWrapper>
+        {/* Scattered small grass blades */}
+        {[
+          [-0.3, 0, -0.3], [0.2, 0, -0.4], [-0.4, 0, 0.2], 
+          [0.3, 0, 0.3], [0, 0, 0], [0.4, 0, -0.1], [-0.1, 0, 0.4]
+        ].map((pos, i) => (
+          <group key={i} position={pos as [number, number, number]} rotation={[0, (i * Math.PI) / 3, 0]}>
+            <mesh position={[-0.05, 0.05, 0]} rotation={[0, 0, 0.2]} castShadow>
+              <coneGeometry args={[0.02, 0.1, 4]} />
+              <meshStandardMaterial color="#22c55e" />
+            </mesh>
+            <mesh position={[0.05, 0.075, 0]} rotation={[0, 0, -0.1]} castShadow>
+              <coneGeometry args={[0.03, 0.15, 4]} />
+              <meshStandardMaterial color="#16a34a" />
+            </mesh>
+            <mesh position={[0, 0.05, 0.05]} rotation={[0.2, 0, 0]} castShadow>
+              <coneGeometry args={[0.02, 0.1, 4]} />
+              <meshStandardMaterial color="#15803d" />
+            </mesh>
+          </group>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+
   if (isMatch("cat", "cat", "🐈")) {
     return (
       <ModelWrapper>
@@ -2209,7 +2237,8 @@ export default function VoxelBuilder() {
 
   const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
     if (!studentData) return;
-    if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
+    const overlaps = objects.filter(o => o.x === x && o.y === y && o.z === z);
+    if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: activeColor, type };
@@ -2229,7 +2258,17 @@ export default function VoxelBuilder() {
     if (!studentData || !activeItemId) { showMessage("Select an item first!", "error"); return; }
     const itemDef = shopItems.find((i: any) => i.id === activeItemId);
     if (!itemDef) return;
-    if (objects.some(o => o.x === x && o.y === y && o.z === z)) return;
+    const overlaps = objects.filter(o => o.x === x && o.y === y && o.z === z);
+    if (overlaps.length >= 2) return;
+    if (overlaps.length === 1) {
+      if (activeItemId === 'grass_field' && overlaps[0].itemId !== 'grass_field') {
+        // Allow
+      } else if (activeItemId !== 'grass_field' && overlaps[0].itemId === 'grass_field') {
+        // Allow
+      } else {
+        return;
+      }
+    }
     if (studentData.pointsBalance < itemDef.cost) { showMessage(`Need ${itemDef.cost} pts for ${itemDef.name}!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: '', type: 'item', itemId: activeItemId };
@@ -2247,7 +2286,7 @@ export default function VoxelBuilder() {
 
   const eraseObject = (obj: PlacedObject) => {
     if (!studentData) return;
-    const newObjects = objects.filter(o => o.x !== obj.x || o.y !== obj.y || o.z !== obj.z);
+    const newObjects = objects.filter(o => o !== obj);
     let refund = 0;
     if (obj.type === 'item' && obj.itemId) {
       const itemDef = shopItems.find((i: any) => i.id === obj.itemId);

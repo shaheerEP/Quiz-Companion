@@ -39,6 +39,7 @@ const DEFAULT_SETTINGS = {
     { id: "pig", name: "Pig", emoji: "🐖", cost: 150, refundOnErase: 75, width: 0.8, height: 1.0, depth: 1.5 },
     { id: "chicken", name: "Chicken", emoji: "🐓", cost: 80, refundOnErase: 40, width: 0.4, height: 0.5, depth: 0.5 },
     { id: "bench", name: "Bench", emoji: "🪑", cost: 80, refundOnErase: 40, width: 2.0, height: 0.8, depth: 0.8 },
+    { id: "grass_field", name: "Grass Field", emoji: "🌿", cost: 10, refundOnErase: 5, width: 1.0, height: 0.1, depth: 1.0 },
     { id: "bush", name: "Bush", emoji: "🌿", cost: 60, refundOnErase: 30, width: 1.0, height: 1.0, depth: 1.0 },
     { id: "rock", name: "Rock", emoji: "🪨", cost: 50, refundOnErase: 25, width: 1.0, height: 0.8, depth: 1.0 },
     { id: "bed", name: "Bed", emoji: "🛏️", cost: 150, refundOnErase: 75, width: 1.5, height: 0.5, depth: 2.0 },

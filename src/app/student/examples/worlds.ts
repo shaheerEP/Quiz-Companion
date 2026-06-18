@@ -193,6 +193,13 @@ function generateMansion(): PlacedObject[] {
   objects.push({ x: -1, y: 5, z: 4, color: "#3b82f6", type: "block" });
 
   // Garden (Left Side)
+  for (let x = -11; x <= -5; x++) {
+    for (let z = -4; z <= 6; z++) {
+      if (Math.random() > 0.3) {
+        objects.push({ x, y: 0, z, color: "", type: "item", itemId: "grass_field" });
+      }
+    }
+  }
   objects.push({ x: -8, y: 0, z: 2, color: "", type: "item", itemId: "tree" });
   objects.push({ x: -8, y: 0, z: -2, color: "", type: "item", itemId: "tree" });
   objects.push({ x: -7, y: 0, z: 0, color: "", type: "item", itemId: "bush" });
@@ -221,7 +228,10 @@ function generateMansion(): PlacedObject[] {
 
   // Interior 1st floor
   objects.push({ x: -3, y: 1, z: 0, color: "", type: "item", itemId: "table" });
+  objects.push({ x: -3, y: 1, z: -1, color: "", type: "item", itemId: "stool" });
+  objects.push({ x: -3, y: 1, z: 1, color: "", type: "item", itemId: "stool" });
   objects.push({ x: 3, y: 1, z: 2, color: "", type: "item", itemId: "lamp" });
+  objects.push({ x: 2, y: 1, z: -1, color: "", type: "item", itemId: "sofa", rotationY: -Math.PI / 2 });
 
   // Interior 2nd floor
   objects.push({ x: 1, y: 5, z: 0, color: "", type: "item", itemId: "bed", rotationY: Math.PI / 2 });
