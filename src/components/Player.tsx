@@ -1,0 +1,285 @@
+"use client";
+
+import React, { useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+
+export const controlsRef = { forward: false, backward: false, left: false, right: false };
+
+export function usePlayerKeyboardControls() {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'ArrowUp': case 'KeyW': controlsRef.forward = true; break;
+        case 'ArrowDown': case 'KeyS': controlsRef.backward = true; break;
+        case 'ArrowLeft': case 'KeyA': controlsRef.left = true; break;
+        case 'ArrowRight': case 'KeyD': controlsRef.right = true; break;
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'ArrowUp': case 'KeyW': controlsRef.forward = false; break;
+        case 'ArrowDown': case 'KeyS': controlsRef.backward = false; break;
+        case 'ArrowLeft': case 'KeyA': controlsRef.left = false; break;
+        case 'ArrowRight': case 'KeyD': controlsRef.right = false; break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+}
+
+export function MobileDPad() {
+  return (
+    <div className="absolute bottom-6 right-6 flex flex-col items-center gap-2 pointer-events-auto" style={{ zIndex: 50 }}>
+      {/* Up Button */}
+      <button 
+        className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.forward = true; }}
+        onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.forward = false; }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+      </button>
+      
+      {/* Middle Row: Left and Right */}
+      <div className="flex gap-10">
+        <button 
+          className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
+          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.left = true; }}
+          onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.left = false; }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button 
+          className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
+          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.right = true; }}
+          onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.right = false; }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+
+      {/* Down Button */}
+      <button 
+        className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.backward = true; }}
+        onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.backward = false; }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+    </div>
+  );
+}
+
+export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], activeAvatar?: string }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const leftLegRef = useRef<THREE.Group>(null);
+  const rightLegRef = useRef<THREE.Group>(null);
+  const leftArmRef = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
+
+  const pos = useRef(new THREE.Vector3(0, 0, 0));
+  const velocity = useRef(new THREE.Vector3(0, 0, 0));
+  const targetRotation = useRef(0);
+  const speed = 6;
+  const walkTime = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+
+    let dirX = 0;
+    let dirZ = 0;
+    if (controlsRef.forward) dirZ -= 1;
+    if (controlsRef.backward) dirZ += 1;
+    if (controlsRef.left) dirX -= 1;
+    if (controlsRef.right) dirX += 1;
+
+    const moving = dirX !== 0 || dirZ !== 0;
+
+    if (moving) {
+      const inputAngle = Math.atan2(dirX, dirZ);
+      const camVec = new THREE.Vector3();
+      state.camera.getWorldDirection(camVec);
+      const camAngle = Math.atan2(-camVec.x, -camVec.z);
+      targetRotation.current = camAngle + inputAngle;
+      
+      velocity.current.x = Math.sin(targetRotation.current) * speed;
+      velocity.current.z = Math.cos(targetRotation.current) * speed;
+      walkTime.current += delta * 15;
+    } else {
+      velocity.current.set(0, 0, 0);
+      walkTime.current = 0;
+    }
+
+    pos.current.x += velocity.current.x * delta;
+    pos.current.z += velocity.current.z * delta;
+
+    const rx = Math.round(pos.current.x);
+    const rz = Math.round(pos.current.z);
+    
+    let highestY = 0;
+    objects.forEach(o => {
+      if (o.type === 'item') return;
+      const hw = (o.w || 1) / 2;
+      const hd = (o.d || 1) / 2;
+      if (rx >= o.x - hw && rx <= o.x + hw && rz >= o.z - hd && rz <= o.z + hd) {
+        const topY = o.y + (o.h || 1);
+        if (topY > highestY) highestY = topY;
+      }
+    });
+
+    pos.current.y = THREE.MathUtils.lerp(pos.current.y, highestY, delta * 10);
+
+    const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
+    const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
+    groupRef.current.rotation.y += wrappedDiff * delta * 10;
+
+    groupRef.current.position.copy(pos.current);
+
+    if (leftLegRef.current && rightLegRef.current && leftArmRef.current && rightArmRef.current) {
+      const swing = Math.sin(walkTime.current) * 0.5;
+      leftLegRef.current.rotation.x = swing;
+      rightLegRef.current.rotation.x = -swing;
+      leftArmRef.current.rotation.x = -swing;
+      rightArmRef.current.rotation.x = swing;
+    }
+
+    if (state.controls) {
+      const controls = state.controls as any;
+      const targetLook = new THREE.Vector3(pos.current.x, pos.current.y + 0.5, pos.current.z);
+      const deltaPos = new THREE.Vector3().subVectors(targetLook, controls.target);
+      controls.target.copy(targetLook);
+      state.camera.position.add(deltaPos);
+    }
+  });
+
+  return (
+    <group ref={groupRef} scale={[0.5, 0.5, 0.5]}>
+      {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+      {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+      {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+    </group>
+  );
+}
+
+// Sub-components for models
+
+function BoyModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) {
+  return (
+    <>
+      <group position={[0, 1.4, 0]}>
+        <mesh castShadow><boxGeometry args={[0.5, 0.5, 0.5]} /><meshStandardMaterial color="#fcd34d" /></mesh>
+        <mesh position={[0, 0.28, 0]} castShadow><boxGeometry args={[0.55, 0.15, 0.55]} /><meshStandardMaterial color="#3e2723" /></mesh>
+        <mesh position={[-0.1, 0.05, 0.26]} castShadow><boxGeometry args={[0.08, 0.08, 0.05]} /><meshStandardMaterial color="#111827" /></mesh>
+        <mesh position={[0.1, 0.05, 0.26]} castShadow><boxGeometry args={[0.08, 0.08, 0.05]} /><meshStandardMaterial color="#111827" /></mesh>
+      </group>
+      <mesh position={[0, 0.85, 0]} castShadow><boxGeometry args={[0.6, 0.6, 0.3]} /><meshStandardMaterial color="#3b82f6" /></mesh>
+      <group ref={leftArmRef} position={[-0.4, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow><boxGeometry args={[0.2, 0.6, 0.2]} /><meshStandardMaterial color="#fcd34d" /></mesh>
+      </group>
+      <group ref={rightArmRef} position={[0.4, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow><boxGeometry args={[0.2, 0.6, 0.2]} /><meshStandardMaterial color="#fcd34d" /></mesh>
+      </group>
+      <group ref={leftLegRef} position={[-0.15, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><boxGeometry args={[0.25, 0.5, 0.25]} /><meshStandardMaterial color="#1e3a8a" /></mesh>
+      </group>
+      <group ref={rightLegRef} position={[0.15, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><boxGeometry args={[0.25, 0.5, 0.25]} /><meshStandardMaterial color="#1e3a8a" /></mesh>
+      </group>
+    </>
+  );
+}
+
+function KnightModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) {
+  return (
+    <>
+      <group position={[0, 1.4, 0]}>
+        {/* Helmet */}
+        <mesh castShadow><boxGeometry args={[0.55, 0.55, 0.55]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} /></mesh>
+        {/* Visor slit */}
+        <mesh position={[0, 0.05, 0.28]} castShadow><boxGeometry args={[0.4, 0.1, 0.05]} /><meshStandardMaterial color="#1e293b" /></mesh>
+        {/* Plume */}
+        <mesh position={[0, 0.35, -0.1]} castShadow><boxGeometry args={[0.1, 0.4, 0.3]} /><meshStandardMaterial color="#dc2626" /></mesh>
+      </group>
+      {/* Armor Body */}
+      <mesh position={[0, 0.85, 0]} castShadow><boxGeometry args={[0.65, 0.65, 0.35]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>
+      {/* Belt */}
+      <mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.66, 0.1, 0.36]} /><meshStandardMaterial color="#78350f" /></mesh>
+      
+      {/* Left Arm with Shield */}
+      <group ref={leftArmRef} position={[-0.45, 1.15, 0]}>
+        {/* Shoulder pad */}
+        <mesh position={[0, 0.1, 0]} castShadow><boxGeometry args={[0.3, 0.2, 0.3]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} /></mesh>
+        <mesh position={[0, -0.2, 0]} castShadow><boxGeometry args={[0.2, 0.6, 0.2]} /><meshStandardMaterial color="#64748b" metalness={0.6} /></mesh>
+        {/* Shield */}
+        <mesh position={[-0.15, -0.2, 0.1]} castShadow><boxGeometry args={[0.1, 0.6, 0.5]} /><meshStandardMaterial color="#b91c1c" metalness={0.4} /></mesh>
+      </group>
+      
+      {/* Right Arm with Sword */}
+      <group ref={rightArmRef} position={[0.45, 1.15, 0]}>
+        <mesh position={[0, 0.1, 0]} castShadow><boxGeometry args={[0.3, 0.2, 0.3]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} /></mesh>
+        <mesh position={[0, -0.2, 0]} castShadow><boxGeometry args={[0.2, 0.6, 0.2]} /><meshStandardMaterial color="#64748b" metalness={0.6} /></mesh>
+        {/* Sword */}
+        <mesh position={[0, -0.5, 0.2]} rotation={[Math.PI / 4, 0, 0]} castShadow><boxGeometry args={[0.05, 0.8, 0.1]} /><meshStandardMaterial color="#f8fafc" metalness={1} roughness={0.1} /></mesh>
+      </group>
+
+      <group ref={leftLegRef} position={[-0.2, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><boxGeometry args={[0.28, 0.5, 0.28]} /><meshStandardMaterial color="#475569" metalness={0.5} /></mesh>
+      </group>
+      <group ref={rightLegRef} position={[0.2, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><boxGeometry args={[0.28, 0.5, 0.28]} /><meshStandardMaterial color="#475569" metalness={0.5} /></mesh>
+      </group>
+    </>
+  );
+}
+
+function RobotModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) {
+  return (
+    <>
+      <group position={[0, 1.5, 0]}>
+        {/* Head */}
+        <mesh castShadow><boxGeometry args={[0.6, 0.4, 0.5]} /><meshStandardMaterial color="#e2e8f0" metalness={0.6} roughness={0.4} /></mesh>
+        {/* Glowing Eyes */}
+        <mesh position={[-0.15, 0.05, 0.26]} castShadow><boxGeometry args={[0.15, 0.08, 0.05]} /><meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={2} /></mesh>
+        <mesh position={[0.15, 0.05, 0.26]} castShadow><boxGeometry args={[0.15, 0.08, 0.05]} /><meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={2} /></mesh>
+        {/* Antennas */}
+        <mesh position={[-0.2, 0.3, 0]} castShadow><cylinderGeometry args={[0.02, 0.02, 0.2]} /><meshStandardMaterial color="#94a3b8" /></mesh>
+        <mesh position={[-0.2, 0.4, 0]} castShadow><sphereGeometry args={[0.06]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} /></mesh>
+        <mesh position={[0.2, 0.3, 0]} castShadow><cylinderGeometry args={[0.02, 0.02, 0.2]} /><meshStandardMaterial color="#94a3b8" /></mesh>
+        <mesh position={[0.2, 0.4, 0]} castShadow><sphereGeometry args={[0.06]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} /></mesh>
+      </group>
+      
+      {/* Body */}
+      <mesh position={[0, 0.85, 0]} castShadow><cylinderGeometry args={[0.35, 0.3, 0.7, 8]} /><meshStandardMaterial color="#cbd5e1" metalness={0.5} roughness={0.5} /></mesh>
+      {/* Body Screen/Meter */}
+      <mesh position={[0, 0.9, 0.32]} castShadow><boxGeometry args={[0.4, 0.2, 0.05]} /><meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} /></mesh>
+
+      <group ref={leftArmRef} position={[-0.45, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow><cylinderGeometry args={[0.08, 0.08, 0.6]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} /></mesh>
+        {/* Claw */}
+        <mesh position={[0, -0.55, 0]} castShadow><boxGeometry args={[0.15, 0.15, 0.15]} /><meshStandardMaterial color="#ef4444" /></mesh>
+      </group>
+      
+      <group ref={rightArmRef} position={[0.45, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow><cylinderGeometry args={[0.08, 0.08, 0.6]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} /></mesh>
+        {/* Claw */}
+        <mesh position={[0, -0.55, 0]} castShadow><boxGeometry args={[0.15, 0.15, 0.15]} /><meshStandardMaterial color="#ef4444" /></mesh>
+      </group>
+
+      <group ref={leftLegRef} position={[-0.2, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><cylinderGeometry args={[0.1, 0.1, 0.5]} /><meshStandardMaterial color="#64748b" metalness={0.7} /></mesh>
+        {/* Foot */}
+        <mesh position={[0, -0.55, 0.05]} castShadow><boxGeometry args={[0.2, 0.1, 0.3]} /><meshStandardMaterial color="#334155" /></mesh>
+      </group>
+      <group ref={rightLegRef} position={[0.2, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow><cylinderGeometry args={[0.1, 0.1, 0.5]} /><meshStandardMaterial color="#64748b" metalness={0.7} /></mesh>
+        {/* Foot */}
+        <mesh position={[0, -0.55, 0.05]} castShadow><boxGeometry args={[0.2, 0.1, 0.3]} /><meshStandardMaterial color="#334155" /></mesh>
+      </group>
+    </>
+  );
+}

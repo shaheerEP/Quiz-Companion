@@ -5,8 +5,9 @@ import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Gamepad2, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -1170,12 +1171,17 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
 
 /* ─── Main Component ─── */
 
-export default function WorldViewer({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function WorldViewer({ params }: { params: { id: string } }) {
+  const unwrappedParams = use(params as any) as { id: string };
+  const id = unwrappedParams.id;
+
   const [worldData, setWorldData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isExploreMode, setIsExploreMode] = useState(false);
+
+  usePlayerKeyboardControls();
 
   useEffect(() => {
     const fetchWorld = async () => {
@@ -1246,6 +1252,16 @@ export default function WorldViewer({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
+      {/* Top Right Actions */}
+      <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
+        <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
+          {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile D-Pad (Explore Mode) */}
+      {isExploreMode && <MobileDPad />}
+
       {/* ─── 3D Canvas ─── */}
       <main className="flex-1 w-full h-full cursor-move">
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
@@ -1284,7 +1300,9 @@ export default function WorldViewer({ params }: { params: Promise<{ id: string }
             return <Block key={idx} data={obj} />;
           })}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
+          {isExploreMode && <Player objects={objects} activeAvatar={worldData.activeAvatar || 'boy'} />}
+
+          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enabled={!isExploreMode} />
         </Canvas>
       </main>
     </div>

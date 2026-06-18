@@ -44,6 +44,8 @@ export async function PUT(req: Request) {
     if (body.assignedGame !== undefined) student.assignedGame = body.assignedGame;
     if (body.isClassTime !== undefined) student.isClassTime = body.isClassTime;
     if (body.worldBlocks !== undefined) student.worldBlocks = body.worldBlocks;
+    if (body.activeAvatar !== undefined) student.activeAvatar = body.activeAvatar;
+    if (body.unlockedAvatars !== undefined) student.unlockedAvatars = body.unlockedAvatars;
 
     await student.save();
     return NextResponse.json(student);

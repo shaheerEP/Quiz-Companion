@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
+import { Player, usePlayerKeyboardControls, MobileDPad } from '@/components/Player';
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -31,158 +32,13 @@ const BASE_COLORS = [
   { id: "glass", color: "#ADD8E6", name: "Glass" },
 ];
 
-/* ─── Explore Mode Logic ─── */
+const AVAILABLE_AVATARS = [
+  { id: 'boy', name: 'Boy', cost: 0, icon: '👦' },
+  { id: 'knight', name: 'Knight', cost: 500, icon: '🛡️' },
+  { id: 'robot', name: 'Robot', cost: 500, icon: '🤖' },
+];
 
-const controlsRef = {
-  forward: false,
-  backward: false,
-  left: false,
-  right: false
-};
-
-function Player({ objects }: { objects: PlacedObject[] }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const leftLegRef = useRef<THREE.Group>(null);
-  const rightLegRef = useRef<THREE.Group>(null);
-  const leftArmRef = useRef<THREE.Group>(null);
-  const rightArmRef = useRef<THREE.Group>(null);
-
-  const pos = useRef(new THREE.Vector3(0, 0, 0));
-  const velocity = useRef(new THREE.Vector3(0, 0, 0));
-  const targetRotation = useRef(0);
-  const speed = 6;
-  const walkTime = useRef(0);
-
-  useFrame((state, delta) => {
-    if (!groupRef.current) return;
-
-    let dirX = 0;
-    let dirZ = 0;
-    if (controlsRef.forward) dirZ -= 1;
-    if (controlsRef.backward) dirZ += 1;
-    if (controlsRef.left) dirX -= 1;
-    if (controlsRef.right) dirX += 1;
-
-    const moving = dirX !== 0 || dirZ !== 0;
-
-    if (moving) {
-      const inputAngle = Math.atan2(dirX, dirZ);
-      
-      const camVec = new THREE.Vector3();
-      state.camera.getWorldDirection(camVec);
-      const camAngle = Math.atan2(-camVec.x, -camVec.z);
-
-      targetRotation.current = camAngle + inputAngle;
-      
-      velocity.current.x = Math.sin(targetRotation.current) * speed;
-      velocity.current.z = Math.cos(targetRotation.current) * speed;
-      
-      walkTime.current += delta * 15;
-    } else {
-      velocity.current.set(0, 0, 0);
-      walkTime.current = 0;
-    }
-
-    pos.current.x += velocity.current.x * delta;
-    pos.current.z += velocity.current.z * delta;
-
-    const rx = Math.round(pos.current.x);
-    const rz = Math.round(pos.current.z);
-    
-    let highestY = 0;
-    objects.forEach(o => {
-      if (o.type === 'item') return;
-      const hw = (o.w || 1) / 2;
-      const hd = (o.d || 1) / 2;
-      if (rx >= o.x - hw && rx <= o.x + hw && rz >= o.z - hd && rz <= o.z + hd) {
-        const topY = o.y + (o.h || 1);
-        if (topY > highestY) highestY = topY;
-      }
-    });
-
-    pos.current.y = THREE.MathUtils.lerp(pos.current.y, highestY, delta * 10);
-
-    const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
-    const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
-    groupRef.current.rotation.y += wrappedDiff * delta * 10;
-
-    groupRef.current.position.copy(pos.current);
-
-    if (leftLegRef.current && rightLegRef.current && leftArmRef.current && rightArmRef.current) {
-      const swing = Math.sin(walkTime.current) * 0.5;
-      leftLegRef.current.rotation.x = swing;
-      rightLegRef.current.rotation.x = -swing;
-      leftArmRef.current.rotation.x = -swing;
-      rightArmRef.current.rotation.x = swing;
-    }
-
-    if (state.controls) {
-      const controls = state.controls as any;
-      const deltaPos = new THREE.Vector3().subVectors(pos.current, controls.target);
-      controls.target.copy(pos.current);
-      state.camera.position.add(deltaPos);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <group position={[0, 1.4, 0]}>
-        {/* Head Base */}
-        <mesh castShadow>
-          <boxGeometry args={[0.5, 0.5, 0.5]} />
-          <meshStandardMaterial color="#fcd34d" />
-        </mesh>
-        {/* Hair */}
-        <mesh position={[0, 0.28, 0]} castShadow>
-          <boxGeometry args={[0.55, 0.15, 0.55]} />
-          <meshStandardMaterial color="#3e2723" />
-        </mesh>
-        {/* Eyes */}
-        <mesh position={[-0.1, 0.05, 0.26]} castShadow>
-          <boxGeometry args={[0.08, 0.08, 0.05]} />
-          <meshStandardMaterial color="#111827" />
-        </mesh>
-        <mesh position={[0.1, 0.05, 0.26]} castShadow>
-          <boxGeometry args={[0.08, 0.08, 0.05]} />
-          <meshStandardMaterial color="#111827" />
-        </mesh>
-      </group>
-      {/* Body */}
-      <mesh position={[0, 0.85, 0]} castShadow>
-        <boxGeometry args={[0.6, 0.6, 0.3]} />
-        <meshStandardMaterial color="#3b82f6" />
-      </mesh>
-      {/* Left Arm */}
-      <group ref={leftArmRef} position={[-0.4, 1.15, 0]}>
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.6, 0.2]} />
-          <meshStandardMaterial color="#fcd34d" />
-        </mesh>
-      </group>
-      {/* Right Arm */}
-      <group ref={rightArmRef} position={[0.4, 1.15, 0]}>
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.6, 0.2]} />
-          <meshStandardMaterial color="#fcd34d" />
-        </mesh>
-      </group>
-      {/* Left Leg */}
-      <group ref={leftLegRef} position={[-0.15, 0.55, 0]}>
-        <mesh position={[0, -0.25, 0]} castShadow>
-          <boxGeometry args={[0.25, 0.5, 0.25]} />
-          <meshStandardMaterial color="#1e3a8a" />
-        </mesh>
-      </group>
-      {/* Right Leg */}
-      <group ref={rightLegRef} position={[0.15, 0.55, 0]}>
-        <mesh position={[0, -0.25, 0]} castShadow>
-          <boxGeometry args={[0.25, 0.5, 0.25]} />
-          <meshStandardMaterial color="#1e3a8a" />
-        </mesh>
-      </group>
-    </group>
-  );
-}
+/* ─── 3D Components ─── */
 
 /* ─── 3D Components ─── */
 
@@ -2036,33 +1892,11 @@ export default function VoxelBuilder() {
   const [showDirections, setShowDirections] = useState(false);
   const [showVehiclesDropdown, setShowVehiclesDropdown] = useState(false);
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
+  const [showAvatars, setShowAvatars] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
 
   /* ─── Keyboard Listeners ─── */
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.code) {
-        case 'ArrowUp': case 'KeyW': controlsRef.forward = true; break;
-        case 'ArrowDown': case 'KeyS': controlsRef.backward = true; break;
-        case 'ArrowLeft': case 'KeyA': controlsRef.left = true; break;
-        case 'ArrowRight': case 'KeyD': controlsRef.right = true; break;
-      }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      switch (e.code) {
-        case 'ArrowUp': case 'KeyW': controlsRef.forward = false; break;
-        case 'ArrowDown': case 'KeyS': controlsRef.backward = false; break;
-        case 'ArrowLeft': case 'KeyA': controlsRef.left = false; break;
-        case 'ArrowRight': case 'KeyD': controlsRef.right = false; break;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
+  usePlayerKeyboardControls();
 
   useEffect(() => {
     if (studentData?.isClassTime) {
@@ -2103,6 +1937,49 @@ export default function VoxelBuilder() {
   const isCustomColor = studentData?.customColors?.includes(activeColor);
   const actualBlockCost = isCustomColor ? 0 : blockCost;
   const actualRoofCost = isCustomColor ? 0 : (settings?.builderRoofCost ?? 100);
+
+  const handleAvatarPurchase = async (avatarId: string, cost: number) => {
+    if (!studentData) return;
+    if (studentData.pointsBalance < cost) {
+      showMessage("Not enough points!", "error");
+      return;
+    }
+    const newUnlocked = [...(studentData.unlockedAvatars || ['boy']), avatarId];
+    const newBalance = studentData.pointsBalance - cost;
+    
+    setStudentData({ ...studentData, pointsBalance: newBalance, unlockedAvatars: newUnlocked, activeAvatar: avatarId });
+    
+    try {
+      const res = await fetch("/api/students", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, unlockedAvatars: newUnlocked, activeAvatar: avatarId })
+      });
+      if (!res.ok) throw new Error("Save failed");
+      
+      if (cost > 0) {
+        await fetch("/api/withdrawals", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: user?.id, pointsDeducted: cost, rewardDescription: `Bought Avatar: ${avatarId}` })
+        });
+      }
+      showMessage("Avatar purchased!", "success");
+    } catch (e) {
+      showMessage("Failed to buy avatar", "error");
+    }
+  };
+
+  const handleAvatarEquip = async (avatarId: string) => {
+    if (!studentData) return;
+    setStudentData({ ...studentData, activeAvatar: avatarId });
+    try {
+      await fetch("/api/students", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, activeAvatar: avatarId })
+      });
+    } catch (e) {
+      showMessage("Failed to equip avatar", "error");
+    }
+  };
 
   /* ─── Save helper ─── */
 
@@ -2606,9 +2483,14 @@ export default function VoxelBuilder() {
       {/* ─── Top Right Actions ─── */}
       <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
         {!studentData?.isClassTime && (
-          <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
-            {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
-          </button>
+          <>
+            <button onClick={() => setShowAvatars(!showAvatars)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-fuchsia-600 hover:text-fuchsia-800 transition-colors pointer-events-auto flex items-center justify-center" title="Avatar Shop">
+              <span className="text-xl leading-none">👤</span>
+            </button>
+            <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
+              {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
+            </button>
+          </>
         )}
         <button onClick={handleShare} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-emerald-600 hover:text-emerald-800 transition-colors pointer-events-auto flex items-center justify-center" title="Share World">
           <Share2 className="w-5 h-5" />
@@ -2630,37 +2512,53 @@ export default function VoxelBuilder() {
         </AnimatePresence>
       </div>
 
+      {/* ─── Avatar Shop Overlay ─── */}
+      <AnimatePresence>
+        {showAvatars && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute top-24 right-20 z-40 bg-white/95 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-fuchsia-200 pointer-events-auto max-w-[300px]">
+            <h3 className="font-black text-fuchsia-800 mb-3 text-center flex items-center justify-center gap-2">
+              <span>Avatar Shop</span>
+            </h3>
+            <div className="flex flex-col gap-3">
+              {AVAILABLE_AVATARS.map((avatar) => {
+                const isUnlocked = (studentData?.unlockedAvatars || ['boy']).includes(avatar.id);
+                const isEquipped = (studentData?.activeAvatar || 'boy') === avatar.id;
+                
+                return (
+                  <div key={avatar.id} className="flex items-center justify-between p-2 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl border border-slate-100">
+                        {avatar.icon}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-700 text-sm">{avatar.name}</span>
+                        {!isUnlocked && <span className="text-[10px] font-black text-amber-500">{avatar.cost} pts</span>}
+                      </div>
+                    </div>
+                    <div>
+                      {isEquipped ? (
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">Equipped</span>
+                      ) : isUnlocked ? (
+                        <button onClick={() => handleAvatarEquip(avatar.id)} className="px-3 py-1 bg-fuchsia-100 hover:bg-fuchsia-200 text-fuchsia-700 rounded-lg text-xs font-bold transition-colors">
+                          Equip
+                        </button>
+                      ) : (
+                        <button onClick={() => handleAvatarPurchase(avatar.id, avatar.cost)} className="px-3 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm">
+                          Buy
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ─── Mobile D-Pad (Explore Mode) ─── */}
-      {isExploreMode && (
-        <div className="absolute bottom-8 right-8 z-30 flex flex-col items-center gap-2 pointer-events-auto select-none sm:hidden">
-          <button 
-            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.forward = true; }}
-            onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.forward = false; }}
-            className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
-            <ChevronUp className="w-8 h-8" />
-          </button>
-          <div className="flex gap-14">
-            <button 
-              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.left = true; }}
-              onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.left = false; }}
-              className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-            <button 
-              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.right = true; }}
-              onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.right = false; }}
-              className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
-              <ChevronRight className="w-8 h-8" />
-            </button>
-          </div>
-          <button 
-            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.backward = true; }}
-            onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.backward = false; }}
-            className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
-            <ChevronDown className="w-8 h-8" />
-          </button>
-        </div>
-      )}
+      {isExploreMode && <MobileDPad />}
 
       {/* ─── 3D Canvas ─── */}
       <main className={`flex-1 w-full h-full ${cursorClass}`}
@@ -2720,7 +2618,7 @@ export default function VoxelBuilder() {
             </mesh>
           ))}
 
-          {isExploreMode && <Player objects={objects} />}
+          {isExploreMode && <Player objects={objects} activeAvatar={studentData?.activeAvatar || 'boy'} />}
           <MapControls 
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.05} 

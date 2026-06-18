@@ -15,6 +15,8 @@ export interface IStudent extends Document {
   };
   inventory: string[];
   customColors: string[];
+  unlockedAvatars: string[];
+  activeAvatar: string;
   isClassTime?: boolean;
   assignedGame?: 'pet' | 'builder';
   worldBlocks: Array<{
@@ -49,6 +51,8 @@ const StudentSchema = new Schema<IStudent>(
     },
     inventory: { type: [String], default: [] },
     customColors: { type: [String], default: [] },
+    unlockedAvatars: { type: [String], default: ['boy'] },
+    activeAvatar: { type: String, default: 'boy' },
     isClassTime: { type: Boolean, default: false },
     assignedGame: { type: String, enum: ['pet', 'builder'], default: 'pet' },
     worldBlocks: {

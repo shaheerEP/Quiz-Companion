@@ -8,6 +8,7 @@ import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
@@ -1782,7 +1783,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 /* ─── Main Component ─── */
 
 import { EXAMPLE_WORLDS } from "./worlds";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Gamepad2, X } from "lucide-react";
 import Link from "next/link";
 
 export default function ExampleWorldsViewer() {
@@ -1791,13 +1792,23 @@ export default function ExampleWorldsViewer() {
   const [loading, setLoading] = useState(true);
   const [activeWorldId, setActiveWorldId] = useState(EXAMPLE_WORLDS[0].id);
   const [isListOpen, setIsListOpen] = useState(true);
+  const [isExploreMode, setIsExploreMode] = useState(false);
+  const [studentData, setStudentData] = useState<any>(null);
+
+  usePlayerKeyboardControls();
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
       setSettings(data);
       setLoading(false);
     });
-  }, []);
+    if (user?.id) {
+      fetch('/api/students').then(res => res.json()).then(data => {
+         const me = data.find((s:any) => s._id === user.id);
+         if (me) setStudentData(me);
+      });
+    }
+  }, [user]);
 
   if (!user || user.role !== 'student') return null;
   if (loading) return (
@@ -1819,40 +1830,38 @@ export default function ExampleWorldsViewer() {
           <ArrowLeft className="w-5 h-5" /> Back to My World
         </Link>
         
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col gap-3">
-          <div 
-            className="flex justify-between items-center cursor-pointer select-none" 
-            onClick={() => setIsListOpen(!isListOpen)}
-          >
-            <h2 className="text-sky-800 font-black text-lg uppercase tracking-wider mb-1">Example Worlds</h2>
-            {isListOpen ? <ChevronUp className="w-5 h-5 text-sky-800" /> : <ChevronDown className="w-5 h-5 text-sky-800" />}
-          </div>
-
-          {isListOpen ? (
-            <>
-              {EXAMPLE_WORLDS.map(world => (
-                <button key={world.id}
-                  onClick={() => { setActiveWorldId(world.id); setIsListOpen(false); }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${activeWorldId === world.id ? 'bg-sky-500 text-white shadow-md' : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-100'}`}
-                >
-                  <span className="text-xl">{world.emoji}</span>
-                  {world.name}
-                </button>
-              ))}
-            </>
-          ) : (
-            <button 
-              onClick={() => setIsListOpen(true)} 
-              className="flex items-center justify-between px-4 py-3 bg-sky-100 text-sky-700 hover:bg-sky-200 border border-sky-200 rounded-xl font-bold transition-colors"
+        {isListOpen ? (
+          <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col gap-3">
+            <div 
+              className="flex justify-between items-center cursor-pointer select-none" 
+              onClick={() => setIsListOpen(false)}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{activeWorld.emoji}</span>
-                <span>{activeWorld.name}</span>
-              </div>
-              <span className="text-sm font-normal underline decoration-sky-400">Change</span>
-            </button>
-          )}
-        </div>
+              <h2 className="text-sky-800 font-black text-lg uppercase tracking-wider mb-1">Example Worlds</h2>
+              <ChevronUp className="w-5 h-5 text-sky-800" />
+            </div>
+
+            {EXAMPLE_WORLDS.map(world => (
+              <button key={world.id}
+                onClick={() => { setActiveWorldId(world.id); setIsListOpen(false); }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${activeWorldId === world.id ? 'bg-sky-500 text-white shadow-md' : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-100'}`}
+              >
+                <span className="text-xl">{world.emoji}</span>
+                {world.name}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button 
+            onClick={() => setIsListOpen(true)}
+            className="bg-white/80 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white pointer-events-auto flex items-center justify-between gap-3 text-sky-800 font-bold hover:bg-white transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{activeWorld.emoji}</span>
+              <span>{activeWorld.name}</span>
+            </div>
+            <ChevronDown className="w-5 h-5 text-sky-800" />
+          </button>
+        )}
 
         {isListOpen && (
           <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
@@ -1865,6 +1874,16 @@ export default function ExampleWorldsViewer() {
           </div>
         )}
       </div>
+
+      {/* Top Right Actions */}
+      <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
+        <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
+          {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile D-Pad (Explore Mode) */}
+      {isExploreMode && <MobileDPad />}
 
       {/* 3D Canvas */}
       <main className="flex-1 w-full h-full cursor-move">
@@ -1889,7 +1908,9 @@ export default function ExampleWorldsViewer() {
             return <Block key={idx} data={obj} onClick={() => {}} isDragging={() => false} />;
           })}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
+          {isExploreMode && <Player objects={activeWorld.objects} activeAvatar={studentData?.activeAvatar || 'boy'} />}
+
+          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enabled={!isExploreMode} />
         </Canvas>
       </main>
     </div>
