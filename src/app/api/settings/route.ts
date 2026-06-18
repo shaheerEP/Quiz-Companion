@@ -50,6 +50,7 @@ const DEFAULT_SETTINGS = {
     { id: "truck", name: "Truck", emoji: "🛻", cost: 600, refundOnErase: 300, width: 3.5, height: 2.2, depth: 1.5 },
     { id: "bike", name: "Bike", emoji: "🏍️", cost: 350, refundOnErase: 175, width: 2.2, height: 1.2, depth: 0.6 },
     { id: "bus", name: "Bus", emoji: "🚌", cost: 700, refundOnErase: 350, width: 5.0, height: 2.0, depth: 1.5 },
+    { id: "jeep", name: "Jeep", emoji: "🛻", cost: 550, refundOnErase: 275, width: 2.6, height: 1.6, depth: 1.4 },
   ]
 };
 
