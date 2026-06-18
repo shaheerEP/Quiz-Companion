@@ -56,6 +56,7 @@ export async function PUT(req: Request) {
     if (body.worldBlocks !== undefined) student.worldBlocks = body.worldBlocks;
     if (body.activeAvatar !== undefined) student.activeAvatar = body.activeAvatar;
     if (body.unlockedAvatars !== undefined) student.unlockedAvatars = body.unlockedAvatars;
+    if (body.customColors !== undefined) student.customColors = body.customColors;
 
     await student.save();
     return NextResponse.json(student);
