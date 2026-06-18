@@ -43,6 +43,8 @@ const DEFAULT_SETTINGS = {
     { id: "rock", name: "Rock", emoji: "🪨", cost: 50, refundOnErase: 25, width: 1.0, height: 0.8, depth: 1.0 },
     { id: "bed", name: "Bed", emoji: "🛏️", cost: 150, refundOnErase: 75, width: 1.5, height: 0.5, depth: 2.0 },
     { id: "table", name: "Table", emoji: "🪑", cost: 120, refundOnErase: 60, width: 2.0, height: 1.0, depth: 2.0 },
+    { id: "stool", name: "Stool", emoji: "🪑", cost: 40, refundOnErase: 20, width: 0.8, height: 0.6, depth: 0.8 },
+    { id: "sofa", name: "Sofa", emoji: "🛋️", cost: 200, refundOnErase: 100, width: 2.0, height: 1.2, depth: 1.0 },
     { id: "door", name: "Door", emoji: "🚪", cost: 50, refundOnErase: 25, width: 0.8, height: 1.8, depth: 0.2 },
     { id: "window", name: "Window", emoji: "🪟", cost: 40, refundOnErase: 20, width: 0.8, height: 0.8, depth: 0.1 },
     { id: "lemborgini", name: "Lemborgini", emoji: "🏎️", cost: 500, refundOnErase: 250, width: 3.0, height: 1.0, depth: 1.5 },
