@@ -46,12 +46,11 @@ function Player({ objects }: { objects: PlacedObject[] }) {
   const rightLegRef = useRef<THREE.Group>(null);
   const leftArmRef = useRef<THREE.Group>(null);
   const rightArmRef = useRef<THREE.Group>(null);
-  const { camera } = useThree();
 
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = 4;
+  const speed = 6;
   const walkTime = useRef(0);
 
   useFrame((state, delta) => {
@@ -67,48 +66,48 @@ function Player({ objects }: { objects: PlacedObject[] }) {
     const moving = dirX !== 0 || dirZ !== 0;
 
     if (moving) {
-      const angle = Math.atan2(dirX, dirZ);
-      targetRotation.current = angle;
-      velocity.current.x = Math.sin(angle) * speed;
-      velocity.current.z = Math.cos(angle) * speed;
+      const inputAngle = Math.atan2(dirX, dirZ);
       
-      walkTime.current += delta * 15; // Animation speed
+      const camVec = new THREE.Vector3();
+      state.camera.getWorldDirection(camVec);
+      const camAngle = Math.atan2(-camVec.x, -camVec.z);
+
+      targetRotation.current = camAngle + inputAngle;
+      
+      velocity.current.x = Math.sin(targetRotation.current) * speed;
+      velocity.current.z = Math.cos(targetRotation.current) * speed;
+      
+      walkTime.current += delta * 15;
     } else {
       velocity.current.set(0, 0, 0);
-      walkTime.current = 0; // Reset animation
+      walkTime.current = 0;
     }
 
-    // Update position
     pos.current.x += velocity.current.x * delta;
     pos.current.z += velocity.current.z * delta;
 
-    // Collision / Floor height logic
     const rx = Math.round(pos.current.x);
     const rz = Math.round(pos.current.z);
     
-    // Find the highest block at this position
     let highestY = 0;
     objects.forEach(o => {
       if (o.type === 'item') return;
       const hw = (o.w || 1) / 2;
       const hd = (o.d || 1) / 2;
-      // Check if coordinates overlap block (w=1, d=1 mostly, but handles large roofs)
       if (rx >= o.x - hw && rx <= o.x + hw && rz >= o.z - hd && rz <= o.z + hd) {
         const topY = o.y + (o.h || 1);
         if (topY > highestY) highestY = topY;
       }
     });
 
-    // Smoothly interpolate Y for climbing
     pos.current.y = THREE.MathUtils.lerp(pos.current.y, highestY, delta * 10);
 
-    // Smooth rotation
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation.current, delta * 10);
+    const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
+    const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
+    groupRef.current.rotation.y += wrappedDiff * delta * 10;
 
-    // Apply position
     groupRef.current.position.copy(pos.current);
 
-    // Animate limbs
     if (leftLegRef.current && rightLegRef.current && leftArmRef.current && rightArmRef.current) {
       const swing = Math.sin(walkTime.current) * 0.5;
       leftLegRef.current.rotation.x = swing;
@@ -117,24 +116,37 @@ function Player({ objects }: { objects: PlacedObject[] }) {
       rightArmRef.current.rotation.x = swing;
     }
 
-    // Camera follow (Third-person)
-    const idealOffset = new THREE.Vector3(0, 3, 5);
-    idealOffset.applyEuler(new THREE.Euler(0, targetRotation.current, 0));
-    idealOffset.add(pos.current);
-    
-    camera.position.lerp(idealOffset, delta * 5);
-    
-    const targetLook = new THREE.Vector3(pos.current.x, pos.current.y + 1, pos.current.z);
-    camera.lookAt(targetLook);
+    if (state.controls) {
+      const controls = state.controls as any;
+      const deltaPos = new THREE.Vector3().subVectors(pos.current, controls.target);
+      controls.target.copy(pos.current);
+      state.camera.position.add(deltaPos);
+    }
   });
 
   return (
     <group ref={groupRef}>
-      {/* Head */}
-      <mesh position={[0, 1.4, 0]} castShadow>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial color="#fcd34d" />
-      </mesh>
+      <group position={[0, 1.4, 0]}>
+        {/* Head Base */}
+        <mesh castShadow>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial color="#fcd34d" />
+        </mesh>
+        {/* Hair */}
+        <mesh position={[0, 0.28, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.15, 0.55]} />
+          <meshStandardMaterial color="#3e2723" />
+        </mesh>
+        {/* Eyes */}
+        <mesh position={[-0.1, 0.05, 0.26]} castShadow>
+          <boxGeometry args={[0.08, 0.08, 0.05]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
+        <mesh position={[0.1, 0.05, 0.26]} castShadow>
+          <boxGeometry args={[0.08, 0.08, 0.05]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
+      </group>
       {/* Body */}
       <mesh position={[0, 0.85, 0]} castShadow>
         <boxGeometry args={[0.6, 0.6, 0.3]} />
@@ -2087,7 +2099,7 @@ export default function VoxelBuilder() {
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
-    if (studentData?.isClassTime) return;
+    if (studentData?.isClassTime || isExploreMode) return;
     if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'roof') return;
     if (toolMode === 'build') placeBlock(x, y, z, 'block');
     if (toolMode === 'items') placeItem(x, y, z);
@@ -2144,7 +2156,7 @@ export default function VoxelBuilder() {
   };
 
   const handleBlockClick = (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => {
-    if (studentData?.isClassTime) return;
+    if (studentData?.isClassTime || isExploreMode) return;
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') { paintObject(obj); return; }
     if (toolMode === 'roof') { handleRoofSelection(obj); return; }
@@ -2168,7 +2180,7 @@ export default function VoxelBuilder() {
   };
 
   const handleItemClick = (obj: PlacedObject) => {
-    if (studentData?.isClassTime) return;
+    if (studentData?.isClassTime || isExploreMode) return;
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') return; // Cannot paint items
     if (toolMode === 'roof') return; // Cannot use items as roof corners
@@ -2670,7 +2682,11 @@ export default function VoxelBuilder() {
           ))}
 
           {isExploreMode && <Player objects={objects} />}
-          {!isExploreMode && <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />}
+          <MapControls 
+            makeDefault 
+            maxPolarAngle={Math.PI / 2 - 0.05} 
+            enablePan={!isExploreMode} 
+          />
         </Canvas>
       </main>
     </div>
