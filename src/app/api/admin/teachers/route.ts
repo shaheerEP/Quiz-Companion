@@ -21,7 +21,28 @@ export async function GET() {
   
   try {
     await connectToDatabase();
-    const teachers = await Teacher.find().sort({ createdAt: -1 });
+    // Use aggregation to join students and get student count
+    const teachers = await Teacher.aggregate([
+      {
+        $lookup: {
+          from: "students",
+          localField: "_id",
+          foreignField: "teacherId",
+          as: "studentsList"
+        }
+      },
+      {
+        $addFields: {
+          studentCount: { $size: "$studentsList" }
+        }
+      },
+      {
+        $project: {
+          studentsList: 0 // We don't need the actual students
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
     return NextResponse.json(teachers);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
