@@ -1547,7 +1547,8 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 
         {/* Handlebars */}
         <group position={[-0.5, 0.85, 0]}>
-          <mesh >\n          <cylinderGeometry  />
+          <mesh rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.02, 0.02, 0.6, 8]} />
             <meshStandardMaterial color="#171717" />
           </mesh>
         </group>
@@ -1728,10 +1729,12 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
         ))}
 
         {/* Headlights */}
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[-1.25, 0.65, 0.35]} rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.1, 0.1, 0.05, 16]} />
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
         </mesh>
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[-1.25, 0.65, -0.35]} rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.1, 0.1, 0.05, 16]} />
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
         </mesh>
 
@@ -1780,10 +1783,12 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 
         {/* Roll Cage */}
         {/* Top Side Rails */}
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[-0.2, 1.35, 0.55]} rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.03, 0.03, 2.6, 8]} />
           <meshStandardMaterial color="#171717" />
         </mesh>
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[-0.2, 1.35, -0.55]} rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.03, 0.03, 2.6, 8]} />
           <meshStandardMaterial color="#171717" />
         </mesh>
         {/* Rear Vertical Posts */}
@@ -1805,10 +1810,12 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
           <meshStandardMaterial color="#171717" />
         </mesh>
         {/* Top Crossbars */}
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[1.1, 1.35, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.03, 0.03, 1.1, 8]} />
           <meshStandardMaterial color="#171717" />
         </mesh>
-        <mesh >\n          <cylinderGeometry  />
+        <mesh position={[-1.4, 1.35, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.03, 0.03, 1.1, 8]} />
           <meshStandardMaterial color="#171717" />
         </mesh>
 
@@ -2444,7 +2451,7 @@ export default function VoxelBuilder() {
         )}
 
         {toolMode === 'items' && (
-          <div className="flex gap-2 overflow-visible custom-scrollbar pb-1 px-1 relative items-center">
+          <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
             {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken'].includes(i.id)).map((item: any) => (
               <button key={item.id}
                 onClick={() => setActiveItemId(item.id)}
