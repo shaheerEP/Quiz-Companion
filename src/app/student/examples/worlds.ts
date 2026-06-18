@@ -458,7 +458,7 @@ function generateMansion(): PlacedObject[] {
     for(let z=17; z<=27; z+=3) {
       if (Math.random() > 0.3) {
         const v = vehicles[Math.floor(Math.random() * vehicles.length)];
-        objects.push({ x, y: 0, z, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
+        objects.push({ x, y: 1, z, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
       }
     }
   }
@@ -510,12 +510,12 @@ function generateMansion(): PlacedObject[] {
     if (Math.random() > 0.4 && (tx < -21 || tx > -18) && (tx < 18 || tx > 21)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Lane 1 (driving left, facing -x)
-      objects.push({ x: tx, y: 0, z: 11, color: "", type: "item", itemId: v, rotationY: -Math.PI / 2 });
+      objects.push({ x: tx, y: 1, z: 11, color: "", type: "item", itemId: v, rotationY: -Math.PI / 2 });
     }
     if (Math.random() > 0.4 && (tx+4 < -21 || tx+4 > -18) && (tx+4 < 18 || tx+4 > 21)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Lane 2 (driving right, facing +x)
-      objects.push({ x: tx+4, y: 0, z: 13.5, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
+      objects.push({ x: tx+4, y: 1, z: 13.5, color: "", type: "item", itemId: v, rotationY: Math.PI / 2 });
     }
   }
 
@@ -524,12 +524,12 @@ function generateMansion(): PlacedObject[] {
     if (Math.random() > 0.3 && (tz < 11 || tz > 14)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Driving down (+z), right side (x=20)
-      objects.push({ x: 20, y: 0, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
+      objects.push({ x: 20, y: 1, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
     }
     if (Math.random() > 0.3 && (tz+5 < 11 || tz+5 > 14)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Driving up (-z), left side (x=18.5)
-      objects.push({ x: 18.5, y: 0, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
+      objects.push({ x: 18.5, y: 1, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
     }
   }
 
@@ -538,18 +538,18 @@ function generateMansion(): PlacedObject[] {
     if (Math.random() > 0.3 && (tz < 11 || tz > 14)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Driving down (+z), right side (x=-19)
-      objects.push({ x: -19, y: 0, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
+      objects.push({ x: -19, y: 1, z: tz, color: "", type: "item", itemId: v, rotationY: Math.PI });
     }
     if (Math.random() > 0.3 && (tz+5 < 11 || tz+5 > 14)) {
       const v = trafficVehicles[Math.floor(Math.random() * trafficVehicles.length)];
       // Driving up (-z), left side (x=-20.5)
-      objects.push({ x: -20.5, y: 0, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
+      objects.push({ x: -20.5, y: 1, z: tz+5, color: "", type: "item", itemId: v, rotationY: 0 });
     }
   }
 
 
   // More animals around
-  objects.push({ x: -2, y: 0, z: 12, color: "", type: "item", itemId: "dog" }); // Dog crossing road
+  objects.push({ x: -2, y: 1, z: 12, color: "", type: "item", itemId: "dog" }); // Dog crossing road
   objects.push({ x: 14, y: 0, z: 8, color: "", type: "item", itemId: "cat" });
   objects.push({ x: -14, y: 0, z: -2, color: "", type: "item", itemId: "horse" });
 
