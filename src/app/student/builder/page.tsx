@@ -2328,7 +2328,7 @@ export default function VoxelBuilder() {
       )}
 
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
-      {(!studentData?.isClassTime && !isExploreMode && (toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || (toolMode === 'items' && showItemsMenu))) && (
+      {(!studentData?.isClassTime && !isExploreMode && (toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || toolMode === 'eraser' || toolMode === 'rotate' || (toolMode === 'items' && showItemsMenu))) && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
         {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (

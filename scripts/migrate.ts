@@ -1,12 +1,9 @@
-import { loadEnvConfig } from "@next/env";
-loadEnvConfig(process.cwd());
-
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/live-quiz-companion";
 
 if (!MONGODB_URI) {
-  console.error("Please define the MONGODB_URI environment variable inside .env or .env.local");
+  console.error("Please define the MONGODB_URI environment variable inside .env.local");
   process.exit(1);
 }
 
