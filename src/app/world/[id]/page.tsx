@@ -428,6 +428,160 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
     );
   }
 
+  if (isMatch("defender", "defender", "🚙")) {
+    return (
+      <ModelWrapper>
+        {/* Chassis / Lower Body */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.6, 0.6, 1.4]} />
+          <meshStandardMaterial color="#475569" />
+        </mesh>
+        
+        {/* Front Hood */}
+        <mesh position={[-0.8, 0.85, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.0, 0.1, 1.35]} />
+          <meshStandardMaterial color="#475569" />
+        </mesh>
+
+        {/* Cabin */}
+        <mesh position={[0.3, 1.0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.6, 0.6, 1.35]} />
+          <meshStandardMaterial color="#0f172a" />
+        </mesh>
+        
+        {/* Windows / Glass */}
+        {/* Windshield */}
+        <mesh position={[-0.51, 1.0, 0]} rotation={[0, 0, 0.1]} castShadow receiveShadow>
+          <boxGeometry args={[0.05, 0.55, 1.25]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        {/* Side Windows */}
+        <mesh position={[0.3, 0.95, 0.68]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.45, 0.05]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh position={[0.3, 0.95, -0.68]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.45, 0.05]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        {/* Rear Window */}
+        <mesh position={[1.11, 1.0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.05, 0.5, 1.2]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+
+        {/* Roof */}
+        <mesh position={[0.3, 1.32, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.6, 0.05, 1.35]} />
+          <meshStandardMaterial color="#475569" />
+        </mesh>
+        
+        {/* Roof Rails */}
+        <mesh position={[0.3, 1.36, 0.5]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.05, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+        <mesh position={[0.3, 1.36, -0.5]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 0.05, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+
+        {/* Wheel Arches (Fenders) */}
+        {/* Front Left */}
+        <mesh position={[-0.8, 0.45, 0.72]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.4, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+        {/* Front Right */}
+        <mesh position={[-0.8, 0.45, -0.72]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.4, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+        {/* Rear Left */}
+        <mesh position={[0.8, 0.45, 0.72]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.4, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+        {/* Rear Right */}
+        <mesh position={[0.8, 0.45, -0.72]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.4, 0.05]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+
+        {/* Wheels */}
+        {[[-0.8, 0.25, 0.7], [0.8, 0.25, 0.7], [-0.8, 0.25, -0.7], [0.8, 0.25, -0.7]].map((pos, i) => (
+          <group key={i} position={pos as [number, number, number]}>
+            <mesh rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.35, 0.35, 0.25, 16]} />
+              <meshStandardMaterial color="#0f172a" />
+            </mesh>
+            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, (pos[2] > 0 ? 0.13 : -0.13)]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.2, 0.2, 0.02, 16]} />
+              <meshStandardMaterial color="#1e293b" />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Spare Tire on Rear Tailgate */}
+        <group position={[1.45, 0.7, 0]}>
+          <mesh rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.35, 0.35, 0.2, 16]} />
+            <meshStandardMaterial color="#0f172a" />
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI / 2]} position={[0.11, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.2, 0.2, 0.02, 16]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+        </group>
+
+        {/* Front Grill */}
+        <mesh position={[-1.31, 0.65, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.05, 0.2, 1.2]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+
+        {/* Headlights (Round in Square housing) */}
+        <mesh position={[-1.32, 0.65, 0.45]} castShadow>
+          <boxGeometry args={[0.05, 0.2, 0.2]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh position={[-1.35, 0.65, 0.45]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
+        </mesh>
+        <mesh position={[-1.32, 0.65, -0.45]} castShadow>
+          <boxGeometry args={[0.05, 0.2, 0.2]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh position={[-1.35, 0.65, -0.45]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} />
+        </mesh>
+
+        {/* Taillights */}
+        <mesh position={[1.31, 0.65, 0.55]} castShadow>
+          <boxGeometry args={[0.05, 0.15, 0.1]} />
+          <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} />
+        </mesh>
+        <mesh position={[1.31, 0.65, -0.55]} castShadow>
+          <boxGeometry args={[0.05, 0.15, 0.1]} />
+          <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} />
+        </mesh>
+
+        {/* Front Bumper */}
+        <mesh position={[-1.35, 0.35, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 0.15, 1.4]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        {/* Rear Bumper */}
+        <mesh position={[1.35, 0.35, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 0.15, 1.4]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("lamp", "lamp", "🏮")) {
     return (
       <ModelWrapper>
