@@ -301,6 +301,72 @@ function generateMansion(): PlacedObject[] {
     objects.push({ x: -13, y, z: 7, color: glass, type: "block" });
   }
 
+  // Coffee Shop (x: 13 to 15, z: 6 to 9) right of mansion
+  const cafeColor = "#fcd34d";
+  for(let y=0; y<=2; y++) {
+    for(let z=6; z<=9; z++) {
+      objects.push({ x: 13, y, z, color: cafeColor, type: "block" });
+      objects.push({ x: 15, y, z, color: cafeColor, type: "block" });
+    }
+    objects.push({ x: 14, y, z: 6, color: glass, type: "block" });
+    objects.push({ x: 14, y, z: 9, color: cafeColor, type: "block" });
+  }
+  objects.push({ x: 14, y: 3, z: 7.5, color: "#ef4444", type: "large-roof", w: 3, d: 4, h: 1 });
+  objects.push({ x: 14, y: 0, z: 7, color: "", type: "item", itemId: "table" });
+
+  // --- ACROSS THE STREET (z: 15 to 22) --- //
+
+  // 1. Skyscraper (x: -14 to -9, z: 16 to 21)
+  const skyWall = "#9ca3af";
+  const skyGlass = "#38bdf8";
+  for(let x=-14; x<=-9; x++) {
+    for(let z=16; z<=21; z++) {
+      objects.push({ x, y: 0, z, color: skyWall, type: "block" });
+    }
+  }
+  for(let y=1; y<=12; y++) {
+    for(let x=-13; x<=-10; x++) {
+      for(let z=17; z<=20; z++) {
+        // Hollow skyscraper shell with glass front/back
+        if (x === -13 || x === -10) objects.push({ x, y, z, color: skyWall, type: "block" });
+        else if (z === 17 || z === 20) objects.push({ x, y, z, color: skyGlass, type: "block" });
+      }
+    }
+  }
+  objects.push({ x: -11.5, y: 13, z: 18.5, color: "#1f2937", type: "large-roof", w: 4, d: 4, h: 1 });
+
+  // 2. City Park Plaza (x: -5 to 2, z: 16 to 21)
+  const plazaStone = "#e5e7eb";
+  for(let x=-5; x<=2; x++) {
+    for(let z=16; z<=21; z++) {
+      objects.push({ x, y: 0, z, color: ((x+z)%2===0) ? plazaStone : stone, type: "block" });
+    }
+  }
+  objects.push({ x: -1, y: 0, z: 18, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -4, y: 0, z: 17, color: "", type: "item", itemId: "bench" });
+  objects.push({ x: 1, y: 0, z: 20, color: "", type: "item", itemId: "bench", rotationY: Math.PI });
+
+  // 3. Cozy House (x: 5 to 11, z: 16 to 21)
+  const houseBrick = "#b91c1c";
+  for(let x=6; x<=10; x++) {
+    for(let z=17; z<=20; z++) {
+      objects.push({ x, y: 0, z, color: "#8B5A2B", type: "block" });
+    }
+  }
+  for(let y=1; y<=2; y++) {
+    for(let x=6; x<=10; x++) {
+      objects.push({ x, y, z: 17, color: (x===8 && y===1) ? glass : houseBrick, type: "block" }); // Front
+      objects.push({ x, y, z: 20, color: houseBrick, type: "block" }); // Back
+    }
+    for(let z=18; z<=19; z++) {
+      objects.push({ x: 6, y, z, color: houseBrick, type: "block" }); // Left
+      objects.push({ x: 10, y, z, color: houseBrick, type: "block" }); // Right
+    }
+  }
+  objects.push({ x: 8, y: 3, z: 18.5, color: "#1f2937", type: "large-roof", w: 5, d: 4, h: 1 });
+  objects.push({ x: 9, y: 0, z: 16, color: "", type: "item", itemId: "bush" });
+  objects.push({ x: 6, y: 0, z: 16, color: "", type: "item", itemId: "bush" });
+
   // More animals around
   objects.push({ x: -2, y: 0, z: 12, color: "", type: "item", itemId: "dog" }); // Dog crossing road
   objects.push({ x: 14, y: 0, z: 8, color: "", type: "item", itemId: "cat" });
