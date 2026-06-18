@@ -18,6 +18,7 @@ type PlacedObject = {
   type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
   w?: number; d?: number; h?: number;
+  rotationY?: number;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
