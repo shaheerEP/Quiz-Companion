@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2 } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 
@@ -30,6 +30,147 @@ const BASE_COLORS = [
   { id: "brick", color: "#B22222", name: "Brick" },
   { id: "glass", color: "#ADD8E6", name: "Glass" },
 ];
+
+/* ─── Explore Mode Logic ─── */
+
+const controlsRef = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false
+};
+
+function Player({ objects }: { objects: PlacedObject[] }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const leftLegRef = useRef<THREE.Group>(null);
+  const rightLegRef = useRef<THREE.Group>(null);
+  const leftArmRef = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
+
+  const pos = useRef(new THREE.Vector3(0, 0, 0));
+  const velocity = useRef(new THREE.Vector3(0, 0, 0));
+  const targetRotation = useRef(0);
+  const speed = 4;
+  const walkTime = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+
+    let dirX = 0;
+    let dirZ = 0;
+    if (controlsRef.forward) dirZ -= 1;
+    if (controlsRef.backward) dirZ += 1;
+    if (controlsRef.left) dirX -= 1;
+    if (controlsRef.right) dirX += 1;
+
+    const moving = dirX !== 0 || dirZ !== 0;
+
+    if (moving) {
+      const angle = Math.atan2(dirX, dirZ);
+      targetRotation.current = angle;
+      velocity.current.x = Math.sin(angle) * speed;
+      velocity.current.z = Math.cos(angle) * speed;
+      
+      walkTime.current += delta * 15; // Animation speed
+    } else {
+      velocity.current.set(0, 0, 0);
+      walkTime.current = 0; // Reset animation
+    }
+
+    // Update position
+    pos.current.x += velocity.current.x * delta;
+    pos.current.z += velocity.current.z * delta;
+
+    // Collision / Floor height logic
+    const rx = Math.round(pos.current.x);
+    const rz = Math.round(pos.current.z);
+    
+    // Find the highest block at this position
+    let highestY = 0;
+    objects.forEach(o => {
+      if (o.type === 'item') return;
+      const hw = (o.w || 1) / 2;
+      const hd = (o.d || 1) / 2;
+      // Check if coordinates overlap block (w=1, d=1 mostly, but handles large roofs)
+      if (rx >= o.x - hw && rx <= o.x + hw && rz >= o.z - hd && rz <= o.z + hd) {
+        const topY = o.y + (o.h || 1);
+        if (topY > highestY) highestY = topY;
+      }
+    });
+
+    // Smoothly interpolate Y for climbing
+    pos.current.y = THREE.MathUtils.lerp(pos.current.y, highestY, delta * 10);
+
+    // Smooth rotation
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation.current, delta * 10);
+
+    // Apply position
+    groupRef.current.position.copy(pos.current);
+
+    // Animate limbs
+    if (leftLegRef.current && rightLegRef.current && leftArmRef.current && rightArmRef.current) {
+      const swing = Math.sin(walkTime.current) * 0.5;
+      leftLegRef.current.rotation.x = swing;
+      rightLegRef.current.rotation.x = -swing;
+      leftArmRef.current.rotation.x = -swing;
+      rightArmRef.current.rotation.x = swing;
+    }
+
+    // Camera follow (Third-person)
+    const idealOffset = new THREE.Vector3(0, 3, 5);
+    idealOffset.applyEuler(new THREE.Euler(0, targetRotation.current, 0));
+    idealOffset.add(pos.current);
+    
+    camera.position.lerp(idealOffset, delta * 5);
+    
+    const targetLook = new THREE.Vector3(pos.current.x, pos.current.y + 1, pos.current.z);
+    camera.lookAt(targetLook);
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Head */}
+      <mesh position={[0, 1.4, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial color="#fcd34d" />
+      </mesh>
+      {/* Body */}
+      <mesh position={[0, 0.85, 0]} castShadow>
+        <boxGeometry args={[0.6, 0.6, 0.3]} />
+        <meshStandardMaterial color="#3b82f6" />
+      </mesh>
+      {/* Left Arm */}
+      <group ref={leftArmRef} position={[-0.4, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.6, 0.2]} />
+          <meshStandardMaterial color="#fcd34d" />
+        </mesh>
+      </group>
+      {/* Right Arm */}
+      <group ref={rightArmRef} position={[0.4, 1.15, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.6, 0.2]} />
+          <meshStandardMaterial color="#fcd34d" />
+        </mesh>
+      </group>
+      {/* Left Leg */}
+      <group ref={leftLegRef} position={[-0.15, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <boxGeometry args={[0.25, 0.5, 0.25]} />
+          <meshStandardMaterial color="#1e3a8a" />
+        </mesh>
+      </group>
+      {/* Right Leg */}
+      <group ref={rightLegRef} position={[0.15, 0.55, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <boxGeometry args={[0.25, 0.5, 0.25]} />
+          <meshStandardMaterial color="#1e3a8a" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
 
 /* ─── 3D Components ─── */
 
@@ -98,6 +239,56 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
       {children}
     </group>
   );
+
+  const renderAnimal = (bodyColor: string, bodyArgs: [number,number,number], headColor: string, headArgs: [number,number,number], headPos: [number,number,number], legColor: string, legArgs: [number,number,number], hasHorns?: boolean, hornColor?: string) => {
+    const [bw, bh, bd] = bodyArgs;
+    const [lw, lh, ld] = legArgs;
+    const legX = bw/2 - lw/2;
+    const legZ = bd/2 - ld/2;
+    const bodyY = lh + bh/2;
+    
+    return (
+      <ModelWrapper>
+        {/* Body */}
+        <mesh position={[0, bodyY, 0]} castShadow receiveShadow>
+          <boxGeometry args={bodyArgs} />
+          <meshStandardMaterial color={bodyColor} />
+        </mesh>
+        {/* Head */}
+        <mesh position={headPos} castShadow receiveShadow>
+          <boxGeometry args={headArgs} />
+          <meshStandardMaterial color={headColor} />
+        </mesh>
+        {/* Legs */}
+        {[
+          [-legX, lh/2, legZ], [legX, lh/2, legZ],
+          [-legX, lh/2, -legZ], [legX, lh/2, -legZ]
+        ].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={legArgs} />
+            <meshStandardMaterial color={legColor} />
+          </mesh>
+        ))}
+        {/* Horns */}
+        {hasHorns && (
+          <>
+            <mesh position={[headPos[0] - 0.2, headPos[1] + headArgs[1]/2 + 0.1, headPos[2]]} castShadow receiveShadow>
+              <coneGeometry args={[0.05, 0.3, 4]} />
+              <meshStandardMaterial color={hornColor || "#e5e7eb"} />
+            </mesh>
+            <mesh position={[headPos[0] + 0.2, headPos[1] + headArgs[1]/2 + 0.1, headPos[2]]} castShadow receiveShadow>
+              <coneGeometry args={[0.05, 0.3, 4]} />
+              <meshStandardMaterial color={hornColor || "#e5e7eb"} />
+            </mesh>
+          </>
+        )}
+      </ModelWrapper>
+    );
+  };
+
+  const name = itemDef?.name?.toLowerCase() || "";
+  const emoji = itemDef?.emoji || "";
+  const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
 
   if (isMatch("cat", "cat", "🐈")) {
     return (
@@ -1798,6 +1989,39 @@ export default function VoxelBuilder() {
   const [showDirections, setShowDirections] = useState(false);
   const [showVehiclesDropdown, setShowVehiclesDropdown] = useState(false);
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
+  const [isExploreMode, setIsExploreMode] = useState(false);
+
+  /* ─── Keyboard Listeners ─── */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'ArrowUp': case 'KeyW': controlsRef.forward = true; break;
+        case 'ArrowDown': case 'KeyS': controlsRef.backward = true; break;
+        case 'ArrowLeft': case 'KeyA': controlsRef.left = true; break;
+        case 'ArrowRight': case 'KeyD': controlsRef.right = true; break;
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'ArrowUp': case 'KeyW': controlsRef.forward = false; break;
+        case 'ArrowDown': case 'KeyS': controlsRef.backward = false; break;
+        case 'ArrowLeft': case 'KeyA': controlsRef.left = false; break;
+        case 'ArrowRight': case 'KeyD': controlsRef.right = false; break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (studentData?.isClassTime) {
+      setIsExploreMode(true);
+    }
+  }, [studentData?.isClassTime]);
 
   /* ─── Data Fetching ─── */
 
@@ -2112,7 +2336,7 @@ export default function VoxelBuilder() {
       )}
 
       {/* ─── Left Panel: Points, Tools, Undo ─── */}
-      {!studentData?.isClassTime && (
+      {(!studentData?.isClassTime && !isExploreMode) && (
         <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none max-h-[calc(100vh-7rem)] overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden">
         {/* Points */}
         <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
@@ -2168,7 +2392,7 @@ export default function VoxelBuilder() {
       )}
 
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
-      {!studentData?.isClassTime && (
+      {(!studentData?.isClassTime && !isExploreMode) && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
         {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (
@@ -2323,6 +2547,11 @@ export default function VoxelBuilder() {
 
       {/* ─── Top Right Actions ─── */}
       <div className="absolute top-24 right-4 md:right-6 z-10 flex flex-col items-end gap-2">
+        {!studentData?.isClassTime && (
+          <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
+            {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
+          </button>
+        )}
         <button onClick={handleShare} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-emerald-600 hover:text-emerald-800 transition-colors pointer-events-auto flex items-center justify-center" title="Share World">
           <Share2 className="w-5 h-5" />
         </button>
@@ -2342,6 +2571,38 @@ export default function VoxelBuilder() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ─── Mobile D-Pad (Explore Mode) ─── */}
+      {isExploreMode && (
+        <div className="absolute bottom-8 right-8 z-30 flex flex-col items-center gap-2 pointer-events-auto select-none sm:hidden">
+          <button 
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.forward = true; }}
+            onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.forward = false; }}
+            className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
+            <ChevronUp className="w-8 h-8" />
+          </button>
+          <div className="flex gap-14">
+            <button 
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.left = true; }}
+              onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.left = false; }}
+              className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+            <button 
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.right = true; }}
+              onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.right = false; }}
+              className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          </div>
+          <button 
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.backward = true; }}
+            onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.backward = false; }}
+            className="w-14 h-14 bg-white/60 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center active:bg-sky-500/80 active:text-white text-sky-800 transition-colors">
+            <ChevronDown className="w-8 h-8" />
+          </button>
+        </div>
+      )}
 
       {/* ─── 3D Canvas ─── */}
       <main className={`flex-1 w-full h-full ${cursorClass}`}
@@ -2401,7 +2662,8 @@ export default function VoxelBuilder() {
             </mesh>
           ))}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />
+          {isExploreMode && <Player objects={objects} />}
+          {!isExploreMode && <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} />}
         </Canvas>
       </main>
     </div>

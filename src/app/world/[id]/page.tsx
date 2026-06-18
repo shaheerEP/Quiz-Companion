@@ -71,6 +71,10 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
     </group>
   );
 
+  const name = itemDef?.name?.toLowerCase() || "";
+  const emoji = itemDef?.emoji || "";
+  const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
+
   if (isMatch("cat", "cat", "🐈")) {
     return (
       <ModelWrapper>
