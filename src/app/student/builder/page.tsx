@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 
 // Returns true if the pointer moved enough to be considered a drag
-const DRAG_THRESHOLD = 5; // px
+const DRAG_THRESHOLD = 10; // px
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -476,7 +476,13 @@ export default function VoxelBuilder() {
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeColor, setActiveColor] = useState<string>("#8B5A2B");
-  const [objects, setObjects] = useState<PlacedObject[]>([]);
+  const [objectsState, setObjectsState] = useState<PlacedObject[]>([]);
+  const objectsRef = useRef<PlacedObject[]>([]);
+  const objects = objectsState;
+  const setObjects = useCallback((objs: PlacedObject[]) => {
+    setObjectsState(objs);
+    objectsRef.current = objs;
+  }, []);
   const [actionMessage, setActionMessage] = useState<{text: string, type: 'error'|'success'} | null>(null);
   const [undosRemaining, setUndosRemaining] = useState(3);
   const [sessionPlaced, setSessionPlaced] = useState<PlacedObject[]>([]);
@@ -566,7 +572,7 @@ export default function VoxelBuilder() {
   };
 
   const rotateObject = (obj: PlacedObject) => {
-    const newObjects = objects.map(o => {
+    const newObjects = objectsRef.current.map(o => {
       if (o.x === obj.x && o.y === obj.y && o.z === obj.z) {
         if (o.type === 'large-roof') {
           return { ...o, w: o.d, d: o.w, rotationY: ((o.rotationY || 0) + Math.PI / 2) % (Math.PI * 2) };
@@ -576,7 +582,7 @@ export default function VoxelBuilder() {
       return o;
     });
     setObjects(newObjects);
-    saveObjects(newObjects, studentData.pointsBalance, `Rotated object`, 0);
+    saveObjects(newObjects, studentData?.pointsBalance || 0, `Rotated object`, 0);
   };
 
   const handleRoofSelection = (obj: PlacedObject) => {
@@ -919,11 +925,18 @@ export default function VoxelBuilder() {
           </div>
         )}
 
-        {(toolMode === 'eraser' || toolMode === 'rotate') && (
+        {toolMode === 'eraser' && (
           <div className="flex items-center gap-3 text-rose-600 font-bold text-sm px-2">
             <Eraser className="w-5 h-5" />
             <span>Click any block or item to erase it</span>
             {blockRefund > 0 && <span className="text-emerald-500 text-xs font-black">(blocks: +{blockRefund} pts)</span>}
+          </div>
+        )}
+
+        {toolMode === 'rotate' && (
+          <div className="flex items-center gap-3 text-purple-600 font-bold text-sm px-2">
+            <RotateCw className="w-5 h-5" />
+            <span>Click any block or item to rotate it</span>
           </div>
         )}
       </div>
