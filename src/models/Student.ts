@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IStudent extends Document {
+  teacherId: mongoose.Types.ObjectId;
   name: string;
   password?: string;
   totalSessions: number;
@@ -35,7 +36,8 @@ export interface IStudent extends Document {
 
 const StudentSchema = new Schema<IStudent>(
   {
-    name: { type: String, required: true, unique: true },
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
+    name: { type: String, required: true },
     password: { type: String, required: false },
     totalSessions: { type: Number, default: 0 },
     lifetimePoints: { type: Number, default: 0 },
@@ -75,6 +77,8 @@ const StudentSchema = new Schema<IStudent>(
   },
   { timestamps: true }
 );
+
+StudentSchema.index({ teacherId: 1, name: 1 }, { unique: true });
 
 export const Student: Model<IStudent> =
   mongoose.models.Student || mongoose.model<IStudent>("Student", StudentSchema);

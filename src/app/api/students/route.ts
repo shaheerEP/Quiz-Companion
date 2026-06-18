@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     await connectToDatabase();
-    const students = await Student.find({}).sort({ updatedAt: -1 });
+    const students = await Student.find({ teacherId }).sort({ updatedAt: -1 });
     return NextResponse.json(students);
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch students" }, { status: 500 });
@@ -14,11 +18,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { name, password } = await req.json();
     if (!name || !password) return NextResponse.json({ error: "Name and password are required" }, { status: 400 });
 
     await connectToDatabase();
-    const newStudent = await Student.create({ name, password });
+    const newStudent = await Student.create({ name, password, teacherId });
     return NextResponse.json(newStudent, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to create student", details: error.message }, { status: 500 });
@@ -27,12 +34,15 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await req.json();
     const { id, name, password, pointsBalance, lifetimePoints } = body;
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
-    const student = await Student.findById(id);
+    const student = await Student.findOne({ _id: id, teacherId });
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     if (name !== undefined) student.name = name;
@@ -56,12 +66,15 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
-    await Student.findByIdAndDelete(id);
+    await Student.findOneAndDelete({ _id: id, teacherId });
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to delete student", details: error.message }, { status: 500 });

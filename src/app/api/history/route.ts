@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Session } from "@/models/Session";
 import { QuestionLog } from "@/models/QuestionLog";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function GET(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
 
@@ -15,12 +18,13 @@ export async function GET(req: Request) {
     await connectToDatabase();
 
     // Fetch all sessions to get the session IDs for this student
-    const allSessions = await Session.find({ studentId });
+    const allSessions = await Session.find({ studentId, teacherId });
     const allSessionIds = allSessions.map((s) => s._id);
 
     // Fetch all logs (questions, bonuses, deductions) for these sessions
     const allLogs = await QuestionLog.find({
-      sessionId: { $in: allSessionIds }
+      sessionId: { $in: allSessionIds },
+      teacherId
     });
 
     const historyItems: any[] = [];

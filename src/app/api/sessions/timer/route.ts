@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Session } from "@/models/Session";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function PUT(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { sessionId, isTimerRunning, studentStopTime, stoppedByStudent, cancelled, teacherStopTime, teacherStartTime } = await req.json();
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
-    const session = await Session.findById(sessionId);
+    const session = await Session.findOne({ _id: sessionId, teacherId });
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
 
     session.isTimerRunning = isTimerRunning;
@@ -46,13 +49,16 @@ export async function PUT(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get("sessionId");
     
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
-    const session = await Session.findById(sessionId);
+    const session = await Session.findOne({ _id: sessionId, teacherId });
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
 
     return NextResponse.json({ 

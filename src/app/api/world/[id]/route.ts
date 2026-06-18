@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const student = await Student.findById(id).lean();
     if (!student) return NextResponse.json({ error: "World not found" }, { status: 404 });
 
-    const settings = await Settings.findOne({ key: "config" }).lean();
+    const settings = await Settings.findOne({ key: "config", teacherId: student.teacherId }).lean();
 
     return NextResponse.json({
       name: student.name,

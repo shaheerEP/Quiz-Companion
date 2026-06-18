@@ -29,17 +29,21 @@ export interface ISettingsValue {
 }
 
 export interface ISettings extends Document {
+  teacherId: mongoose.Types.ObjectId;
   key: string;
   value: ISettingsValue;
 }
 
 const SettingsSchema = new Schema<ISettings>(
   {
-    key: { type: String, required: true, unique: true },
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
+    key: { type: String, required: true },
     value: { type: Schema.Types.Mixed, required: true },
   },
   { timestamps: true }
 );
+
+SettingsSchema.index({ teacherId: 1, key: 1 }, { unique: true });
 
 export const Settings: Model<ISettings> =
   mongoose.models.Settings || mongoose.model<ISettings>("Settings", SettingsSchema);

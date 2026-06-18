@@ -3,9 +3,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 type AuthUser = {
-  role: "teacher" | "student" | null;
+  role: "admin" | "teacher" | "student" | null;
   id?: string;
   name?: string;
+  teacherId?: string;
   student?: any;
 };
 

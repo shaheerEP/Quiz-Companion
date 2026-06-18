@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IQuestionLog extends Document {
+  teacherId: mongoose.Types.ObjectId;
   sessionId: mongoose.Types.ObjectId;
   logType?: 'question' | 'bonus' | 'deduction';
   questionNumber?: number;
@@ -12,6 +13,7 @@ export interface IQuestionLog extends Document {
 
 const QuestionLogSchema = new Schema<IQuestionLog>(
   {
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
     sessionId: { type: Schema.Types.ObjectId, ref: "Session", required: true },
     logType: { type: String, enum: ['question', 'bonus', 'deduction'], default: 'question' },
     questionNumber: { type: Number, default: 0 },

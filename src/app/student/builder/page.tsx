@@ -1892,6 +1892,7 @@ export default function VoxelBuilder() {
   const [showDirections, setShowDirections] = useState(false);
   const [showVehiclesDropdown, setShowVehiclesDropdown] = useState(false);
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
+  const [showItemsMenu, setShowItemsMenu] = useState(true);
   const [showAvatars, setShowAvatars] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
 
@@ -2327,7 +2328,7 @@ export default function VoxelBuilder() {
       )}
 
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
-      {(!studentData?.isClassTime && !isExploreMode) && (
+      {(!studentData?.isClassTime && !isExploreMode && (toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || (toolMode === 'items' && showItemsMenu))) && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
         {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (
@@ -2378,11 +2379,11 @@ export default function VoxelBuilder() {
           </>
         )}
 
-        {toolMode === 'items' && (
+        {toolMode === 'items' && showItemsMenu && (
           <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
             {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken'].includes(i.id)).map((item: any) => (
               <button key={item.id}
-                onClick={() => setActiveItemId(item.id)}
+                onClick={() => { setActiveItemId(item.id); setShowItemsMenu(false); }}
                 className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
                 title={`${item.name} — ${item.cost} pts`}>
                 <span className="text-2xl leading-none">{item.emoji}</span>
@@ -2412,7 +2413,7 @@ export default function VoxelBuilder() {
                         className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
                          {shopItems.filter((i: any) => ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(i.id)).map((item: any) => (
                             <button key={item.id}
-                              onClick={() => { setActiveItemId(item.id); setShowVehiclesDropdown(false); }}
+                              onClick={() => { setActiveItemId(item.id); setShowVehiclesDropdown(false); setShowItemsMenu(false); }}
                               className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
                               title={`${item.name} — ${item.cost} pts`}>
                               <span className="text-2xl leading-none">{item.emoji}</span>
@@ -2447,7 +2448,7 @@ export default function VoxelBuilder() {
                         className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
                          {shopItems.filter((i: any) => ['cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken'].includes(i.id)).map((item: any) => (
                             <button key={item.id}
-                              onClick={() => { setActiveItemId(item.id); setShowAnimalsDropdown(false); }}
+                              onClick={() => { setActiveItemId(item.id); setShowAnimalsDropdown(false); setShowItemsMenu(false); }}
                               className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
                               title={`${item.name} — ${item.cost} pts`}>
                               <span className="text-2xl leading-none">{item.emoji}</span>

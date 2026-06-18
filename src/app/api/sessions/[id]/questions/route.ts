@@ -3,9 +3,12 @@ import connectToDatabase from "@/lib/db";
 import { Session } from "@/models/Session";
 import { QuestionLog } from "@/models/QuestionLog";
 import { Student } from "@/models/Student";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const sessionId = id;
     const { questionNumber, responseTime, starsAwarded, points, isCorrect, compliment } = await req.json();
@@ -18,6 +21,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     
     const newQuestionLog = await QuestionLog.create({
       sessionId,
+      teacherId,
       questionNumber,
       responseTime,
       starsAwarded: isCorrect ? starsAwarded : 0,
@@ -25,7 +29,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       isCorrect
     });
 
-    const session = await Session.findById(sessionId);
+    const session = await Session.findOne({ _id: sessionId, teacherId });
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
     
     const newTotalQuestions = session.totalQuestions + 1;
@@ -51,7 +55,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
     // Check if the session has reached the finale question count threshold to mark it completed
     const { Settings } = await import("@/models/Settings");
-    const config = await Settings.findOne({ key: "config" });
+    const config = await Settings.findOne({ key: "config", teacherId });
     const finaleQuestionCount = config?.value?.badgeThresholds?.finaleQuestionCount || 5;
     if (newTotalQuestions >= finaleQuestionCount) {
       session.isCompleted = true;
@@ -60,7 +64,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     await session.save();
 
     if (actualPoints > 0) {
-      await Student.findByIdAndUpdate(session.studentId, { 
+      await Student.findOneAndUpdate({ _id: session.studentId, teacherId }, { 
         $inc: { 
           lifetimePoints: actualPoints,
           pointsBalance: actualPoints 
@@ -77,9 +81,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { id } = await context.params;
     await connectToDatabase();
-    const questions = await QuestionLog.find({ sessionId: id }).sort({ questionNumber: 1 });
+    const questions = await QuestionLog.find({ sessionId: id, teacherId }).sort({ questionNumber: 1 });
     return NextResponse.json(questions);
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch questions", details: error.message }, { status: 500 });

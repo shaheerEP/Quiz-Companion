@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Settings } from "@/models/Settings";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 const DEFAULT_SETTINGS = {
   ratingTiers: [
@@ -59,10 +60,13 @@ const DEFAULT_SETTINGS = {
 
 export async function GET() {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     await connectToDatabase();
-    let config = await Settings.findOne({ key: "config" });
+    let config = await Settings.findOne({ key: "config", teacherId });
     if (!config) {
-      config = await Settings.create({ key: "config", value: DEFAULT_SETTINGS });
+      config = await Settings.create({ key: "config", value: DEFAULT_SETTINGS, teacherId });
     } else {
       let updated = false;
       const newValue = { ...config.value };
@@ -87,7 +91,7 @@ export async function GET() {
         }
       }
       if (updated) {
-        config = await Settings.findOneAndUpdate({ key: "config" }, { value: newValue }, { new: true });
+        config = await Settings.findOneAndUpdate({ key: "config", teacherId }, { value: newValue }, { new: true });
       }
     }
     return NextResponse.json(config?.value || DEFAULT_SETTINGS);
@@ -99,10 +103,13 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const value = await req.json();
     await connectToDatabase();
     const config = await Settings.findOneAndUpdate(
-      { key: "config" },
+      { key: "config", teacherId },
       { value },
       { new: true, upsert: true }
     );

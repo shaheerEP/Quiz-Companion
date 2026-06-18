@@ -3,9 +3,12 @@ import connectToDatabase from "@/lib/db";
 import { Session } from "@/models/Session";
 import { QuestionLog } from "@/models/QuestionLog";
 import { Student } from "@/models/Student";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const sessionId = id;
     const { logType, points } = await req.json();
@@ -18,12 +21,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     
     const newLog = await QuestionLog.create({
       sessionId,
+      teacherId,
       logType,
       points,
       isCorrect: logType === 'bonus'
     });
 
-    const session = await Session.findById(sessionId);
+    const session = await Session.findOne({ _id: sessionId, teacherId });
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
     
     // Add manual points to final score? 
@@ -34,12 +38,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     await session.save();
 
     // Update student points
-    const student = await Student.findById(session.studentId);
+    const student = await Student.findOne({ _id: session.studentId, teacherId });
     if (student) {
       const newBalance = Math.max(0, student.pointsBalance + actualPoints);
       const newLifetime = Math.max(0, student.lifetimePoints + actualPoints);
       
-      await Student.findByIdAndUpdate(session.studentId, { 
+      await Student.findOneAndUpdate({ _id: session.studentId, teacherId }, { 
         pointsBalance: newBalance,
         lifetimePoints: newLifetime
       });

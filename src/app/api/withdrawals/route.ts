@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
 import { WithdrawalLog } from "@/models/WithdrawalLog";
+import { getTeacherId } from "@/lib/auth-helpers";
 
 export async function POST(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { studentId, pointsDeducted, rewardDescription } = await req.json();
     
     if (!studentId || !pointsDeducted || !rewardDescription) {
@@ -12,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     await connectToDatabase();
-    const student = await Student.findById(studentId);
+    const student = await Student.findOne({ _id: studentId, teacherId });
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
     
     if (student.pointsBalance < pointsDeducted) {
@@ -26,6 +29,7 @@ export async function POST(req: Request) {
     // Log withdrawal
     const withdrawal = await WithdrawalLog.create({
       studentId,
+      teacherId,
       pointsDeducted,
       rewardDescription
     });
@@ -38,11 +42,15 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const teacherId = await getTeacherId();
+    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
     
     await connectToDatabase();
-    const query = studentId ? { studentId } : {};
+    const query: any = { teacherId };
+    if (studentId) query.studentId = studentId;
     const logs = await WithdrawalLog.find(query).sort({ date: -1 });
     return NextResponse.json(logs);
   } catch (error: any) {

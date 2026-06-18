@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { PlayCircle, ShieldCheck, User } from "lucide-react";
 
 export default function Login() {
-  const [role, setRole] = useState<"teacher" | "student">("student");
+  const [role, setRole] = useState<"admin" | "teacher" | "student">("student");
   const [username, setUsername] = useState("");
+  const [teacherUsername, setTeacherUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { refreshAuth } = useAuth();
@@ -20,7 +21,12 @@ export default function Login() {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, username: role === "student" ? username : undefined, password })
+      body: JSON.stringify({
+        role,
+        username: role !== "admin" ? username : undefined,
+        teacherUsername: role === "student" ? teacherUsername : undefined,
+        password
+      })
     });
 
     const data = await res.json();
@@ -28,7 +34,9 @@ export default function Login() {
       setError(data.error || "Login failed");
     } else {
       await refreshAuth();
-      if (role === "teacher") {
+      if (role === "admin") {
+        router.push("/admin");
+      } else if (role === "teacher") {
         router.push("/teacher");
       } else {
         router.push("/student");
@@ -51,16 +59,23 @@ export default function Login() {
           <button
             type="button"
             onClick={() => setRole("student")}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all text-lg ${role === "student" ? "bg-indigo-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "student" ? "bg-indigo-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
           >
-            <User className="w-5 h-5" /> Student
+            <User className="w-4 h-4 md:w-5 md:h-5" /> Student
           </button>
           <button
             type="button"
             onClick={() => setRole("teacher")}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all text-lg ${role === "teacher" ? "bg-rose-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "teacher" ? "bg-rose-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
           >
-            <ShieldCheck className="w-5 h-5" /> Teacher
+            <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" /> Teacher
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("admin")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "admin" ? "bg-amber-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+          >
+            <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" /> Admin
           </button>
         </div>
 
@@ -68,8 +83,33 @@ export default function Login() {
           {error && <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-center font-bold text-sm">{error}</div>}
           
           {role === "student" && (
+            <>
+              <div>
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Teacher Username</label>
+                <input
+                  type="text"
+                  value={teacherUsername}
+                  onChange={(e) => setTeacherUsername(e.target.value)}
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {role === "teacher" && (
             <div>
-              <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
+              <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Teacher Username</label>
               <input
                 type="text"
                 value={username}

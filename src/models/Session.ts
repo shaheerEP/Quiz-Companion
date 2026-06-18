@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface ISession extends Document {
+  teacherId: mongoose.Types.ObjectId;
   studentId: mongoose.Types.ObjectId;
   date: Date;
   totalQuestions: number;
@@ -23,6 +24,7 @@ export interface ISession extends Document {
 
 const SessionSchema = new Schema<ISession>(
   {
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
     studentId: { type: Schema.Types.ObjectId, ref: "Student", required: true },
     date: { type: Date, default: Date.now },
     totalQuestions: { type: Number, default: 0 },

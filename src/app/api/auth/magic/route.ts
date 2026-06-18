@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     
     if (!student) return NextResponse.redirect(new URL("/login", req.url));
 
-    const sessionData = { role: "student", id: student._id.toString(), name: student.name };
+    const sessionData = { role: "student", id: student._id.toString(), name: student.name, teacherId: student.teacherId.toString() };
     const cookieStore = await cookies();
     cookieStore.set("auth_session", Buffer.from(JSON.stringify(sessionData)).toString("base64"), {
       httpOnly: true,
