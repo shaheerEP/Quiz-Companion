@@ -62,7 +62,6 @@ function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick:
   );
 }
 
-import { useMemo } from "react";
 
 function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
   const { w = 1, h = 1, d = 1 } = data;
@@ -93,7 +92,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
 
   // Helper to wrap custom geometry
   const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
-    <group position={[data.x, data.y - 0.5, data.z]} onClick={handleClick}>
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       {children}
     </group>
   );
@@ -426,7 +425,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   const boxColor = "#9ca3af";
 
   return (
-    <group position={[data.x, yPos, data.z]} onClick={handleClick}>
+    <group position={[data.x, yPos, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={boxColor} />
