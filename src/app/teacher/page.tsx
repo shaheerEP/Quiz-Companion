@@ -8,7 +8,7 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe } from "lucide-react";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -368,6 +368,15 @@ export default function TeacherDashboard() {
                     <option value="builder">World Builder</option>
                   </select>
                 </div>
+
+                <a 
+                  href={`/world/${activeStudent._id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-bold py-3 rounded-xl border border-blue-500/30 transition-all flex justify-center items-center gap-2 mt-2"
+                >
+                  <Globe className="w-5 h-5" /> Explore Built World
+                </a>
 
                 {settings && (
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">

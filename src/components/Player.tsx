@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -34,43 +34,73 @@ export function usePlayerKeyboardControls() {
 }
 
 export function MobileDPad() {
-  return (
-    <div className="absolute bottom-6 right-6 flex flex-col items-center gap-2 pointer-events-auto" style={{ zIndex: 50 }}>
-      {/* Up Button */}
-      <button 
-        className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
-        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.forward = true; }}
-        onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.forward = false; }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-      </button>
-      
-      {/* Middle Row: Left and Right */}
-      <div className="flex gap-10">
-        <button 
-          className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
-          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.left = true; }}
-          onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.left = false; }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-        </button>
-        <button 
-          className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
-          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.right = true; }}
-          onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.right = false; }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-        </button>
-      </div>
+  const baseRef = useRef<HTMLDivElement>(null);
+  const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const maxDistance = 35; // Max pixels the knob can move from center
 
-      {/* Down Button */}
-      <button 
-        className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/40 rounded-xl flex items-center justify-center text-white active:bg-white/40 touch-none"
-        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); controlsRef.backward = true; }}
-        onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); controlsRef.backward = false; }}
+  const handlePointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateJoystick(e);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    updateJoystick(e);
+  };
+
+  const updateJoystick = (e: React.PointerEvent) => {
+    if (!baseRef.current) return;
+    const rect = baseRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    let dx = e.clientX - centerX;
+    let dy = e.clientY - centerY;
+    
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > maxDistance) {
+      dx = (dx / distance) * maxDistance;
+      dy = (dy / distance) * maxDistance;
+    }
+    
+    setKnobPos({ x: dx, y: dy });
+
+    const threshold = 15;
+    controlsRef.forward = dy < -threshold;
+    controlsRef.backward = dy > threshold;
+    controlsRef.left = dx < -threshold;
+    controlsRef.right = dx > threshold;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isDragging.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setKnobPos({ x: 0, y: 0 });
+    controlsRef.forward = false;
+    controlsRef.backward = false;
+    controlsRef.left = false;
+    controlsRef.right = false;
+  };
+
+  return (
+    <div className="absolute bottom-8 right-8 pointer-events-auto select-none" style={{ zIndex: 50 }}>
+      <div 
+        ref={baseRef}
+        className="w-32 h-32 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-full flex items-center justify-center touch-none shadow-xl relative cursor-pointer"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-      </button>
+        <div 
+          className="w-12 h-12 bg-white/90 rounded-full shadow-lg border border-slate-200 absolute transition-none pointer-events-none"
+          style={{ transform: `translate(${knobPos.x}px, ${knobPos.y}px)` }}
+        >
+          <div className="absolute inset-2 rounded-full border-2 border-slate-300 opacity-50" />
+        </div>
+      </div>
     </div>
   );
 }
