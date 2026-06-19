@@ -2265,6 +2265,17 @@ export default function VoxelBuilder() {
         </div>
       )}
 
+      {toolMode === 'items' && activeItemId && !showItemsMenu && !studentData?.isClassTime && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-amber-600/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg border border-amber-400 flex items-center gap-4">
+          <span className="font-bold flex items-center gap-2">
+            Selected: <span className="text-xl">{shopItems.find((i: any) => i.id === activeItemId)?.emoji}</span> {shopItems.find((i: any) => i.id === activeItemId)?.name}
+          </span>
+          <button onClick={() => setShowItemsMenu(true)} className="bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-lg text-sm font-black transition-colors">
+            Change Item
+          </button>
+        </div>
+      )}
+
       {studentData?.isClassTime && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-rose-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg font-black tracking-widest uppercase border border-rose-400">
           Class Time Active - Explore Mode
@@ -2290,7 +2301,18 @@ export default function VoxelBuilder() {
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'roof' ? 'bg-sky-600 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
             <Triangle className="w-4 h-4" /> Roof
           </button>
-          <button onClick={() => setToolMode('items')}
+          <button onClick={() => {
+            if (toolMode === 'items') {
+              setShowItemsMenu(!showItemsMenu);
+              setShowVehiclesDropdown(false);
+              setShowAnimalsDropdown(false);
+            } else {
+              setToolMode('items');
+              setShowItemsMenu(true);
+              setShowVehiclesDropdown(false);
+              setShowAnimalsDropdown(false);
+            }
+          }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'items' ? 'bg-amber-500 text-white' : 'text-amber-700 hover:bg-amber-50'}`}>
             <TreePine className="w-4 h-4" /> Items
           </button>
