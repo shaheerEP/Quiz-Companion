@@ -15,12 +15,12 @@ export default function TeacherDashboard() {
   const [students, setStudents] = useState<any[]>([]);
   const [activeStudent, setActiveStudent] = useState<any>(null);
   const [activeSession, setActiveSession] = useState<any>(null);
-  
+
   const [isRunning, setIsRunning] = useState(false);
-  const [showRating, setShowRating] = useState<{stars: number, compliment: string, points: number} | null>(null);
+  const [showRating, setShowRating] = useState<{ stars: number, compliment: string, points: number } | null>(null);
   const [showWrong, setShowWrong] = useState(false);
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
-  const [manualAnim, setManualAnim] = useState<{type: 'bonus'|'deduction', amount: number} | null>(null);
+  const [manualAnim, setManualAnim] = useState<{ type: 'bonus' | 'deduction', amount: number } | null>(null);
   const [prevBundles, setPrevBundles] = useState<number | null>(null);
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
@@ -45,13 +45,13 @@ export default function TeacherDashboard() {
   const handleToggleClassTime = async () => {
     if (!activeStudent) return;
     const newIsClassTime = !activeStudent.isClassTime;
-    
+
     await fetch("/api/students", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: activeStudent._id, isClassTime: newIsClassTime })
     });
-    
+
     setActiveStudent({ ...activeStudent, isClassTime: newIsClassTime });
     setStudents(students.map(s => s._id === activeStudent._id ? { ...s, isClassTime: newIsClassTime } : s));
   };
@@ -60,14 +60,14 @@ export default function TeacherDashboard() {
     const studentId = e.target.value;
     const student = students.find(s => s._id === studentId);
     setActiveStudent(student);
-    
+
     if (student) {
       const res = await fetch(`/api/sessions?studentId=${studentId}`);
       const sessions = await res.json();
-      
+
       const historyRes = await fetch(`/api/history?studentId=${studentId}`);
       setHistoryItems(await historyRes.json());
-      
+
       if (sessions.length > 0 && !sessions[0].isCompleted) {
         setActiveSession(sessions[0]);
       } else {
@@ -91,12 +91,12 @@ export default function TeacherDashboard() {
         try {
           const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
           const sessions = await res.json();
-        
+
           const active = sessions.find((s: any) => !s.isCompleted);
-          
+
           const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
           setHistoryItems(await historyRes.json());
-          
+
           if (active) {
             if (active.stoppedByStudent && active.studentStopTime !== null) {
               setActiveSession(active);
@@ -104,7 +104,7 @@ export default function TeacherDashboard() {
           } else {
             setActiveSession(null);
           }
-        } catch (e) {}
+        } catch (e) { }
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -113,17 +113,17 @@ export default function TeacherDashboard() {
   const handleAddBonus = async () => {
     const amount = prompt("Enter bonus points to add:");
     if (!amount || isNaN(Number(amount)) || !activeSession) return;
-    
+
     await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ logType: 'bonus', points: Number(amount) })
     });
-    
+
     const newPoints = activeStudent.pointsBalance + Number(amount);
     const newLifetime = activeStudent.lifetimePoints + Number(amount);
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
-    
+
     setManualAnim({ type: 'bonus', amount: Number(amount) });
 
     fetch(`/api/sessions/${activeSession._id}/questions`)
@@ -134,7 +134,7 @@ export default function TeacherDashboard() {
   const handleDeductPoints = async () => {
     const amount = prompt("Enter points to deduct:");
     if (!amount || isNaN(Number(amount)) || !activeSession) return;
-    
+
     await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -144,7 +144,7 @@ export default function TeacherDashboard() {
     const newPoints = Math.max(0, activeStudent.pointsBalance - Number(amount));
     const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
     setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
-    
+
     setManualAnim({ type: 'deduction', amount: Number(amount) });
 
     fetch(`/api/sessions/${activeSession._id}/questions`)
@@ -158,23 +158,23 @@ export default function TeacherDashboard() {
       await fetch("/api/sessions/timer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          sessionId: activeSession._id, 
+        body: JSON.stringify({
+          sessionId: activeSession._id,
           isTimerRunning: run,
           ...(teacherStopTime !== undefined && { teacherStopTime }),
           ...(teacherStartTime !== undefined && { teacherStartTime })
         })
       });
-      
+
       const newStudentStopTime = teacherStopTime !== undefined ? teacherStopTime : (run ? null : activeSession.studentStopTime);
       const newStoppedByStudent = teacherStopTime !== undefined ? false : (run ? false : activeSession.stoppedByStudent);
-      
-      setActiveSession({ 
-        ...activeSession, 
-        isTimerRunning: run, 
-        stoppedByStudent: newStoppedByStudent, 
+
+      setActiveSession({
+        ...activeSession,
+        isTimerRunning: run,
+        stoppedByStudent: newStoppedByStudent,
         studentStopTime: newStudentStopTime,
-        lastQuestionResult: run ? null : activeSession.lastQuestionResult 
+        lastQuestionResult: run ? null : activeSession.lastQuestionResult
       });
     }
   };
@@ -196,7 +196,7 @@ export default function TeacherDashboard() {
     let matchedTier = { name: "Incorrect!", stars: 0, points: 0, maxSeconds: 999 };
     if (isCorrect) {
       const sortedTiers = [...settings.ratingTiers].sort((a: any, b: any) => a.maxSeconds - b.maxSeconds);
-      matchedTier = sortedTiers[sortedTiers.length - 1]; 
+      matchedTier = sortedTiers[sortedTiers.length - 1];
       for (const tier of sortedTiers) {
         if (seconds <= tier.maxSeconds) {
           matchedTier = tier;
@@ -228,7 +228,7 @@ export default function TeacherDashboard() {
     const result = await res.json();
 
     const actualPoints = isCorrect ? matchedTier.points : 0;
-    
+
     setActiveSession((prev: any) => ({
       ...prev,
       totalQuestions: prev.totalQuestions + 1,
@@ -304,11 +304,11 @@ export default function TeacherDashboard() {
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     let dayString = dateObj.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
     if (dateObj.toDateString() === today.toDateString()) dayString = "Today";
     else if (dateObj.toDateString() === yesterday.toDateString()) dayString = "Yesterday";
-    
+
     if (!acc[dayString]) acc[dayString] = [];
     acc[dayString].push(item);
     return acc;
@@ -327,7 +327,7 @@ export default function TeacherDashboard() {
               <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
               Student Profile
             </h2>
-            <select 
+            <select
               className="w-full bg-gray-950 border border-gray-800 text-white font-bold rounded-xl px-4 py-4 outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none shadow-inner"
               onChange={handleStudentChange}
               value={activeStudent?._id || ""}
@@ -350,10 +350,10 @@ export default function TeacherDashboard() {
                   <span className="text-gray-500 font-medium">Lifetime Points</span>
                   <span className="text-xl font-bold text-gray-300">{activeStudent.lifetimePoints?.toLocaleString() || 0}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50 mt-2">
                   <span className="text-gray-400 font-bold">Class Time (Read-Only)</span>
-                  <button 
+                  <button
                     onClick={handleToggleClassTime}
                     className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-gray-700'}`}
                   >
@@ -361,29 +361,9 @@ export default function TeacherDashboard() {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50">
-                  <span className="text-gray-400 font-bold">Assigned Game</span>
-                  <select 
-                    className="bg-gray-900 border border-gray-700 text-white font-bold rounded-lg px-3 py-1 outline-none focus:border-indigo-500 cursor-pointer"
-                    value={activeStudent.assignedGame || 'pet'}
-                    onChange={async (e) => {
-                      const newGame = e.target.value;
-                      await fetch("/api/students", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: activeStudent._id, assignedGame: newGame })
-                      });
-                      setActiveStudent({ ...activeStudent, assignedGame: newGame });
-                      // Also update the students list
-                      setStudents(students.map(s => s._id === activeStudent._id ? { ...s, assignedGame: newGame } : s));
-                    }}
-                  >
-                    <option value="pet">Virtual Pet</option>
-                    <option value="builder">World Builder</option>
-                  </select>
-                </div>
 
-                <a 
+
+                <a
                   href={`/world/${activeStudent._id}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -404,8 +384,8 @@ export default function TeacherDashboard() {
                       </span>
                     </div>
                     <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
+                      <div
+                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500"
                         style={{ width: `${Math.min(100, Math.max(0, (((activeStudent.lifetimePoints || 0) % (settings.bundleLimit || 1000)) / (settings.bundleLimit || 1000)) * 100))}%` }}
                       ></div>
                     </div>
@@ -414,16 +394,16 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                 )}
-                
+
                 {activeSession && (
                   <div className="flex gap-4 w-full">
-                    <button 
+                    <button
                       onClick={handleAddBonus}
                       className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-3 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
                     >
                       <PlusCircle className="w-5 h-5" /> Add Points
                     </button>
-                    <button 
+                    <button
                       onClick={handleDeductPoints}
                       className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-3 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
                     >
@@ -431,7 +411,7 @@ export default function TeacherDashboard() {
                     </button>
                   </div>
                 )}
-            
+
                 {Object.keys(groupedHistory).length > 0 && (
                   <div className="mt-8 bg-black/30 p-6 rounded-3xl border border-white/5 shadow-inner">
                     <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
@@ -494,10 +474,10 @@ export default function TeacherDashboard() {
                 <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-xs">Active Student</p>
                 <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
               </div>
-              <Stopwatch 
+              <Stopwatch
                 key={resetTimerKey}
-                isRunning={isRunning} 
-                setIsRunning={handleTimerRunningState} 
+                isRunning={isRunning}
+                setIsRunning={handleTimerRunningState}
                 onScore={handleScore}
                 onCancel={handleCancel}
                 studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
@@ -513,7 +493,7 @@ export default function TeacherDashboard() {
                 <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
                 Live Session
               </h2>
-              
+
               <div className="flex flex-col gap-4">
                 <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
                   <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Progress</p>
@@ -530,68 +510,15 @@ export default function TeacherDashboard() {
                   </p>
                 </div>
                 {activeSession.isCompleted && (
-                <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
-                  <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
-                  <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
-                </div>
-              )}
+                  <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
+                    <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
+                    <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {questionLogs.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg flex-1">
-                <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
-                  <div className="bg-indigo-500/20 p-2 rounded-lg"><ListChecks className="w-5 h-5 text-indigo-400" /></div>
-                  Question Results
-                </h2>
-                <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  {questionLogs.map((log) => (
-                    <div key={log._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-xl border border-gray-800/50">
-                      <div className="flex items-center gap-4">
-                        {log.logType === 'bonus' ? (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400">
-                            <PlusCircle className="w-5 h-5" />
-                          </div>
-                        ) : log.logType === 'deduction' ? (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400">
-                            <MinusCircle className="w-5 h-5" />
-                          </div>
-                        ) : (
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${log.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                            Q{log.questionNumber}
-                          </div>
-                        )}
-                        <div>
-                          {log.logType === 'bonus' ? (
-                            <>
-                              <p className="font-bold text-indigo-400">+{log.points} pts</p>
-                              <p className="text-xs text-gray-500">Manual Bonus</p>
-                            </>
-                          ) : log.logType === 'deduction' ? (
-                            <>
-                              <p className="font-bold text-rose-400">-{log.points} pts</p>
-                              <p className="text-xs text-gray-500">Manual Deduction</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className={`font-bold ${log.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {log.isCorrect ? `+${log.points} pts` : 'No points'}
-                              </p>
-                              <p className="text-xs text-gray-500">{Number(log.responseTime).toFixed(1)}s response</p>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {(!log.logType || log.logType === 'question') && log.isCorrect && (
-                        <div className="text-lg">
-                          {"⭐".repeat(log.starsAwarded)}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
           </aside>
         )}
       </main>
@@ -599,13 +526,13 @@ export default function TeacherDashboard() {
       {/* Mobile Action Bar */}
       {activeSession && activeStudent && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-gray-950 border-t border-gray-800 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <button 
+          <button
             onClick={handleAddBonus}
             className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-4 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
           >
             <PlusCircle className="w-6 h-6" /> Add Points
           </button>
-          <button 
+          <button
             onClick={handleDeductPoints}
             className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-4 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
           >
@@ -615,7 +542,7 @@ export default function TeacherDashboard() {
       )}
 
       {showRating && (
-        <StarRatingAnimation 
+        <StarRatingAnimation
           stars={showRating.stars}
           compliment={showRating.compliment}
           points={showRating.points}
@@ -624,7 +551,7 @@ export default function TeacherDashboard() {
       )}
 
       {showWrong && (
-        <WrongAnswerAnimation 
+        <WrongAnswerAnimation
           onComplete={() => {
             setShowWrong(false);
             handleRatingComplete();
@@ -633,7 +560,7 @@ export default function TeacherDashboard() {
       )}
 
       {manualAnim && (
-        <ManualPointsAnimation 
+        <ManualPointsAnimation
           type={manualAnim.type}
           amount={manualAnim.amount}
           onComplete={() => setManualAnim(null)}

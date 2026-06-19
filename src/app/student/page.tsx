@@ -97,6 +97,8 @@ export default function StudentDashboard() {
     return () => clearInterval(interval);
   }, [user]);
 
+  const initialTimerSyncDoneRef = useRef(false);
+
   useEffect(() => {
     if (!activeSession) return;
 
@@ -138,21 +140,27 @@ export default function StudentDashboard() {
             } else {
               setLastResult(timerData.lastQuestionResult);
               setFrozenTime(timerData.lastQuestionResult.responseTime);
-              // Trigger star animation once per result
-              if (timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
+              
+              if (!initialTimerSyncDoneRef.current) {
                 lastResultIdRef.current = resultKey;
-                setShowRating({
-                  stars: timerData.lastQuestionResult.stars,
-                  compliment: timerData.lastQuestionResult.compliment || '',
-                  points: timerData.lastQuestionResult.points
-                });
-              } else if (!timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
-                lastResultIdRef.current = resultKey;
-                setShowWrong(true);
+              } else {
+                // Trigger star animation once per result
+                if (timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
+                  lastResultIdRef.current = resultKey;
+                  setShowRating({
+                    stars: timerData.lastQuestionResult.stars,
+                    compliment: timerData.lastQuestionResult.compliment || '',
+                    points: timerData.lastQuestionResult.points
+                  });
+                } else if (!timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
+                  lastResultIdRef.current = resultKey;
+                  setShowWrong(true);
+                }
               }
             }
           }
         }
+        initialTimerSyncDoneRef.current = true;
       } catch (e) {}
     };
 
@@ -269,29 +277,6 @@ export default function StudentDashboard() {
                   <p className="text-2xl font-black text-white">{lifetimePoints.toLocaleString()}</p>
                 </div>
               </div>
-
-              {settings && (
-                <div className="bg-black/30 p-6 rounded-2xl border border-white/10 backdrop-blur-md mt-auto w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-indigo-200 font-bold flex items-center gap-2">
-                      <Package className="w-5 h-5 text-purple-400" />
-                      {bundleItemName} Collected
-                    </span>
-                    <span className="text-3xl font-black text-purple-400">x{bundlesEarned}</span>
-                  </div>
-                  <div className="w-full bg-black/50 rounded-full h-4 border border-white/10 overflow-hidden mb-2 relative">
-                    <div 
-                      className="bg-gradient-to-r from-purple-500 to-fuchsia-400 h-full rounded-full transition-all duration-1000 relative overflow-hidden" 
-                      style={{ width: `${progressPercent}%` }}
-                    >
-                      <div className="absolute inset-0 bg-white/20 skew-x-12 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-right text-indigo-300 font-bold">
-                    {currentProgress} / {bundleLimit} points to next
-                  </div>
-                </div>
-              )}
             </div>
           </div>
             
@@ -406,6 +391,29 @@ export default function StudentDashboard() {
                 </>
              )}
             </div>
+
+            {settings && (
+              <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 font-bold flex items-center gap-2">
+                    <Package className="w-4 h-4 text-purple-400" />
+                    {settings.bundleItemName || "🍫 Chocolate"}
+                  </span>
+                  <span className="text-2xl font-black text-purple-400">
+                    x{bundlesEarned}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${progressPercent}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-right text-gray-500 font-bold">
+                  {currentProgress} / {bundleLimit} to next
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
