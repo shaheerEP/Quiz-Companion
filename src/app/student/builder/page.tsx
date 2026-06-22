@@ -153,7 +153,7 @@ function InteractiveVehicle({ data, onEnterVehicle, children }: { data: PlacedOb
   useFrame((state) => {
     const vPos = vec.current.set(data.x, data.y, data.z);
     const dist = state.camera.position.distanceTo(vPos);
-    if (dist < 4) {
+    if (dist < 8) {
       if (!showUI) setShowUI(true);
     } else {
       if (showUI) setShowUI(false);
@@ -1985,8 +1985,12 @@ export default function VoxelBuilder() {
   const [activeDepth, setActiveDepth] = useState<number>(1);
   const [activeRotation, setActiveRotation] = useState<number>(0);
   const [isEditingBlocks, setIsEditingBlocks] = useState(false);
+  const isEditingRef = useRef(false);
+  useEffect(() => { isEditingRef.current = isEditingBlocks; }, [isEditingBlocks]);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [drivingVehicle, setDrivingVehicle] = useState<PlacedObject | null>(null);
+  const drivingVehicleRef = useRef<PlacedObject | null>(null);
+  useEffect(() => { drivingVehicleRef.current = drivingVehicle; }, [drivingVehicle]);
   
   const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
 
@@ -2051,7 +2055,7 @@ export default function VoxelBuilder() {
       const currentStudent = students.find((s: any) => s._id === user.id);
       const config = await settingsRes.json();
       setSettings(config);
-      if (currentStudent && !isSavingRef.current) {
+      if (currentStudent && !isSavingRef.current && !isEditingRef.current && !drivingVehicleRef.current) {
         setStudentData(currentStudent);
         setObjects(currentStudent.worldBlocks || []);
         if (!activeColor) {
@@ -2071,8 +2075,21 @@ export default function VoxelBuilder() {
     const newPos = playerState.pos;
     const newRot = playerState.rotation;
     
-    // Create new object list with updated vehicle
-    const updatedObjects = objectsRef.current.map(o => o === drivingVehicle ? { ...o, x: newPos.x, y: newPos.y, z: newPos.z, rotationY: newRot } : o);
+    // Use original ID to match since objects array might have been recreated by interval fetch
+    const origId = getBlockId(drivingVehicle);
+    let found = false;
+    const updatedObjects = objectsRef.current.map(o => {
+      if (!found && getBlockId(o) === origId && o.itemId === drivingVehicle.itemId) {
+        found = true;
+        return { ...o, x: newPos.x, y: newPos.y, z: newPos.z, rotationY: newRot };
+      }
+      return o;
+    });
+
+    if (!found) {
+      updatedObjects.push({ ...drivingVehicle, x: newPos.x, y: newPos.y, z: newPos.z, rotationY: newRot });
+    }
+
     setObjects(updatedObjects);
     saveObjects(updatedObjects, studentData?.pointsBalance || 0, "Exited vehicle", 0);
     setDrivingVehicle(null);

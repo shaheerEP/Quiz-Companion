@@ -117,7 +117,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = drivingVehicle ? 15 : 6;
+  const speed = drivingVehicle ? 15 : 3;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -128,7 +128,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     if (!initialized.current) {
       let startY = 0;
       objects.forEach(o => {
-        if (o.type === 'item') return;
+
         const hw = (o.w || 1) / 2;
         const hd = (o.d || 1) / 2;
         if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw && 
@@ -174,7 +174,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       let wallHit = false;
 
       objects.forEach(o => {
-        if (o.type === 'item') return;
+
         const hw = (o.w || 1) / 2;
         const hd = (o.d || 1) / 2;
         const blockMinX = o.x - hw;
@@ -264,8 +264,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     }
 
     if (moving) {
-      const distance = 8;
-      const height = 4;
+      const distance = 4;
+      const height = 2.5;
       const angle = groupRef.current.rotation.y;
       
       const offsetX = -Math.sin(angle) * distance; 
@@ -285,7 +285,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     <group ref={groupRef}>
       {drivingVehicle ? (
         <>
-          <group position={[0, -0.5, 0]}>
+          <group position={[0, -0.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
             {vehicleMesh}
           </group>
           {drivingVehicle.itemId === 'bike' && (
