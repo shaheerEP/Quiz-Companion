@@ -1914,7 +1914,7 @@ export default function VoxelBuilder() {
   const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
 
   const updateSelectedBlocks = (updates: Partial<PlacedObject>) => {
-    if (selectedBlockIds.length === 0) return;
+    if (selectedBlockIds.length === 0) return null;
     const newObjects = objects.map(o => {
       const id = getBlockId(o);
       if (selectedBlockIds.includes(id)) {
@@ -1923,6 +1923,7 @@ export default function VoxelBuilder() {
       return o;
     });
     setObjects(newObjects);
+    return newObjects;
   };
 
   const handleThicknessChange = (val: number) => {
@@ -1942,7 +1943,16 @@ export default function VoxelBuilder() {
 
   const handleColorChange = (color: string) => {
     setActiveColor(color);
-    if (isEditingBlocks) updateSelectedBlocks({ color });
+    if (isEditingBlocks) {
+      const newObjects = updateSelectedBlocks({ color });
+      if (newObjects) saveObjects(newObjects, studentData.pointsBalance, "Edited block color", 0);
+    }
+  };
+
+  const handleEditSave = () => {
+    if (isEditingBlocks && selectedBlockIds.length > 0) {
+      saveObjects(objectsRef.current, studentData.pointsBalance, "Edited block properties", 0);
+    }
   };
 
   /* ─── Keyboard Listeners ─── */
@@ -2425,24 +2435,24 @@ export default function VoxelBuilder() {
                   </button>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Thick</span>
+                      <span>Depth</span>
                       <span>{activeThickness}</span>
                     </div>
-                    <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} className="accent-sky-500" />
+                    <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Depth</span>
+                      <span>Thick</span>
                       <span>{activeDepth}</span>
                     </div>
-                    <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} className="accent-sky-500" />
+                    <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                       <span>Rot</span>
                       <span>{activeRotation}°</span>
                     </div>
-                    <input type="range" min="0" max="360" step="15" value={activeRotation} onChange={e => handleRotationChange(parseInt(e.target.value))} className="accent-sky-500" />
+                    <input type="range" min="0" max="360" step="15" value={activeRotation} onChange={e => handleRotationChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
                 </div>
               )}
