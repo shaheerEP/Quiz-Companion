@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
-import { Player, usePlayerKeyboardControls, MobileDPad } from '@/components/Player';
+import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -96,7 +96,88 @@ function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onC
   );
 }
 
-function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean }) {
+function InteractiveDoor({ data, handleClick }: { data: PlacedObject; handleClick: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showUI, setShowUI] = useState(false);
+  const vec = useRef(new THREE.Vector3());
+
+  useFrame((state) => {
+    const doorPos = vec.current.set(data.x, data.y, data.z);
+    const dist = state.camera.position.distanceTo(doorPos);
+    if (dist < 3.5) {
+      if (!showUI) setShowUI(true);
+    } else {
+      if (showUI) setShowUI(false);
+    }
+  });
+
+  const handleToggle = (e: any) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  const baseRotation = data.rotationY || 0;
+  const swing = isOpen ? Math.PI / 2 : 0;
+
+  return (
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onClick={handleClick}>
+      <group position={[-0.4, 0, 0]} rotation={[0, swing, 0]}>
+        <mesh position={[0.4, 0.9, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 1.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0.7, 0.9, 0.08]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+        
+        {showUI && (
+          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
+            <button 
+              onClick={handleToggle}
+              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
+            >
+              {isOpen ? "Close Door" : "Open Door"}
+            </button>
+          </Html>
+        )}
+      </group>
+    </group>
+  );
+}
+
+function InteractiveVehicle({ data, onEnterVehicle, children }: { data: PlacedObject; onEnterVehicle: () => void; children: React.ReactNode }) {
+  const [showUI, setShowUI] = useState(false);
+  const vec = useRef(new THREE.Vector3());
+
+  useFrame((state) => {
+    const vPos = vec.current.set(data.x, data.y, data.z);
+    const dist = state.camera.position.distanceTo(vPos);
+    if (dist < 4) {
+      if (!showUI) setShowUI(true);
+    } else {
+      if (showUI) setShowUI(false);
+    }
+  });
+
+  return (
+    <group>
+      {children}
+      {showUI && (
+        <Html position={[data.x, data.y + 1.5, data.z]} center zIndexRange={[100, 0]}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEnterVehicle(); }}
+            className="bg-amber-500/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-amber-400 whitespace-nowrap shadow-xl border border-amber-300 transition-all cursor-pointer"
+          >
+            Enter Vehicle
+          </button>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean, onEnterVehicle?: () => void }) {
   const w = itemDef?.width ?? 1;
   const h = itemDef?.height ?? 1;
   const d = itemDef?.depth ?? 1;
@@ -110,6 +191,14 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   };
 
   const itemId = data.itemId || "";
+  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(itemId);
+
+  const wrapIfVehicle = (node: React.ReactNode) => {
+    if (isVehicle && onEnterVehicle) {
+      return <InteractiveVehicle data={data} onEnterVehicle={onEnterVehicle}>{node}</InteractiveVehicle>;
+    }
+    return node;
+  };
 
   // Helper to wrap custom geometry
   const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -781,20 +870,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("door", "door", "🚪")) {
-    return (
-      <ModelWrapper>
-        {/* Door Frame */}
-        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.8, 1.8, 0.1]} />
-          <meshStandardMaterial color="#8B5A2B" />
-        </mesh>
-        {/* Door Knob */}
-        <mesh position={[0.3, 0.9, 0.08]} castShadow receiveShadow>
-          <sphereGeometry args={[0.05, 16, 16]} />
-          <meshStandardMaterial color="#fbbf24" />
-        </mesh>
-      </ModelWrapper>
-    );
+    return <InteractiveDoor data={data} handleClick={handleClick} />;
   }
 
   if (isMatch("window", "window", "🪟")) {
@@ -914,7 +990,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("car", "car", "🚗")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Body */}
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -938,7 +1014,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("lemborgini", "lemborgini", "🏎️")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Chassis / Lower Body */}
         <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
@@ -1039,7 +1115,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("defender", "defender", "🚙")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Chassis / Lower Body */}
         <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
@@ -1192,7 +1268,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("truck", "truck", "🛻")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Chassis / Lower Body Frame */}
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -1330,7 +1406,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("bike", "bike", "🏍️")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Main Body (Fairing and Gas Tank) */}
         {/* Lower Fairing */}
@@ -1464,7 +1540,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("bus", "bus", "🚌")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Main Body */}
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -1606,7 +1682,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("jeep", "jeep", "🛻")) {
-    return (
+    return wrapIfVehicle(
       <ModelWrapper>
         {/* Main Body Lower */}
         <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
@@ -1910,6 +1986,7 @@ export default function VoxelBuilder() {
   const [activeRotation, setActiveRotation] = useState<number>(0);
   const [isEditingBlocks, setIsEditingBlocks] = useState(false);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const [drivingVehicle, setDrivingVehicle] = useState<PlacedObject | null>(null);
   
   const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
 
@@ -1982,6 +2059,23 @@ export default function VoxelBuilder() {
         }
       }
     } catch (e) {} finally { if (!isSavingRef.current) setLoading(false); }
+  };
+
+
+  const handleEnterVehicle = (obj: PlacedObject) => {
+    setDrivingVehicle(obj);
+  };
+
+  const handleExitVehicle = () => {
+    if (!drivingVehicle) return;
+    const newPos = playerState.pos;
+    const newRot = playerState.rotation;
+    
+    // Create new object list with updated vehicle
+    const updatedObjects = objectsRef.current.map(o => o === drivingVehicle ? { ...o, x: newPos.x, y: newPos.y, z: newPos.z, rotationY: newRot } : o);
+    setObjects(updatedObjects);
+    saveObjects(updatedObjects, studentData?.pointsBalance || 0, "Exited vehicle", 0);
+    setDrivingVehicle(null);
   };
 
   useEffect(() => { fetchData(); const i = setInterval(fetchData, 5000); return () => clearInterval(i); }, [user]);
@@ -2676,6 +2770,18 @@ export default function VoxelBuilder() {
       {/* ─── Mobile D-Pad (Explore Mode) ─── */}
       {isExploreMode && <MobileDPad />}
 
+      {/* ─── Driving Mode Exit UI ─── */}
+      {drivingVehicle && (
+        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
+          <button 
+            onClick={handleExitVehicle}
+            className="bg-red-500 hover:bg-red-600 text-white font-black text-xl px-8 py-4 rounded-3xl shadow-2xl border-4 border-white transition-transform hover:scale-105 animate-bounce"
+          >
+            Exit Vehicle
+          </button>
+        </div>
+      )}
+
       {/* ─── 3D Canvas ─── */}
       <main className={`flex-1 w-full h-full ${cursorClass}`}
         onPointerDown={(e) => {
@@ -2713,10 +2819,10 @@ export default function VoxelBuilder() {
 
           <Ground onClick={handleGroundClick} isDragging={isDraggingFn} />
           
-          {objects.map((obj, idx) => {
+          {objects.filter(o => o !== drivingVehicle).map((obj, idx) => {
             if (obj.type === 'item') {
               const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} />;
+              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} />;
             }
             if (obj.type === 'roof') {
               return <RoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
@@ -2734,7 +2840,20 @@ export default function VoxelBuilder() {
             </mesh>
           ))}
 
-          {isExploreMode && <Player objects={objects} activeAvatar={studentData?.activeAvatar || 'boy'} />}
+          {isExploreMode && <Player 
+            objects={objects.filter(o => o !== drivingVehicle)} 
+            activeAvatar={studentData?.activeAvatar || 'boy'} 
+            drivingVehicle={drivingVehicle}
+            vehicleMesh={
+              drivingVehicle ? 
+              <ItemObject 
+                data={{ ...drivingVehicle, x: 0, y: 0.5, z: 0, rotationY: 0 }} 
+                itemDef={shopItems.find((i: any) => i.id === drivingVehicle.itemId)} 
+                onClick={() => {}} 
+                isDragging={() => false} 
+              /> : undefined
+            }
+          />}
           <MapControls 
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.05} 

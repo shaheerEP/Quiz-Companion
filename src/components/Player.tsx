@@ -105,7 +105,9 @@ export function MobileDPad() {
   );
 }
 
-export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], activeAvatar?: string }) {
+export const playerState = { pos: new THREE.Vector3(), rotation: 0 };
+
+export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleMesh }: { objects: any[], activeAvatar?: string, drivingVehicle?: any | null, vehicleMesh?: React.ReactNode }) {
   const groupRef = useRef<THREE.Group>(null);
   const leftLegRef = useRef<THREE.Group>(null);
   const rightLegRef = useRef<THREE.Group>(null);
@@ -115,7 +117,7 @@ export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], acti
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = 6;
+  const speed = drivingVehicle ? 15 : 6;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -231,6 +233,9 @@ export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], acti
     pos.current.z = targetZ;
     logicalY.current = finalFloorY;
     
+    playerState.pos.copy(pos.current);
+    playerState.rotation = targetRotation.current;
+
     pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
 
     const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
@@ -257,10 +262,27 @@ export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], acti
   });
 
   return (
-    <group ref={groupRef} scale={[0.5, 0.5, 0.5]}>
-      {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
-      {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
-      {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+    <group ref={groupRef}>
+      {drivingVehicle ? (
+        <>
+          <group position={[0, -0.5, 0]}>
+            {vehicleMesh}
+          </group>
+          {drivingVehicle.itemId === 'bike' && (
+             <group position={[0, 0.8, 0]} scale={[0.5, 0.5, 0.5]}>
+               {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+               {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+               {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+             </group>
+          )}
+        </>
+      ) : (
+        <group scale={[0.5, 0.5, 0.5]}>
+          {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+          {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+          {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+        </group>
+      )}
     </group>
   );
 }
