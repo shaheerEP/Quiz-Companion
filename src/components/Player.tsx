@@ -117,9 +117,28 @@ export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], acti
   const targetRotation = useRef(0);
   const speed = 6;
   const walkTime = useRef(0);
+  const logicalY = useRef(0);
+  const initialized = useRef(false);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
+
+    if (!initialized.current) {
+      let startY = 0;
+      objects.forEach(o => {
+        if (o.type === 'item') return;
+        const hw = (o.w || 1) / 2;
+        const hd = (o.d || 1) / 2;
+        if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw && 
+            pos.current.z >= o.z - hd && pos.current.z <= o.z + hd) {
+          const topY = o.y + (o.h || 1);
+          if (topY > startY) startY = topY;
+        }
+      });
+      logicalY.current = startY;
+      pos.current.y = startY;
+      initialized.current = true;
+    }
 
     let dirX = 0;
     let dirZ = 0;
@@ -145,24 +164,74 @@ export function Player({ objects, activeAvatar = 'boy' }: { objects: any[], acti
       walkTime.current = 0;
     }
 
-    pos.current.x += velocity.current.x * delta;
-    pos.current.z += velocity.current.z * delta;
+    const checkCollision = (x: number, z: number, currentY: number) => {
+      const r = 0.25;
+      const stepHeight = 1.1;
+      const playerHeight = 1.5;
+      let floorY = 0;
+      let wallHit = false;
 
-    const rx = Math.round(pos.current.x);
-    const rz = Math.round(pos.current.z);
-    
-    let highestY = 0;
-    objects.forEach(o => {
-      if (o.type === 'item') return;
-      const hw = (o.w || 1) / 2;
-      const hd = (o.d || 1) / 2;
-      if (rx >= o.x - hw && rx <= o.x + hw && rz >= o.z - hd && rz <= o.z + hd) {
-        const topY = o.y + (o.h || 1);
-        if (topY > highestY) highestY = topY;
+      objects.forEach(o => {
+        if (o.type === 'item') return;
+        const hw = (o.w || 1) / 2;
+        const hd = (o.d || 1) / 2;
+        const blockMinX = o.x - hw;
+        const blockMaxX = o.x + hw;
+        const blockMinZ = o.z - hd;
+        const blockMaxZ = o.z + hd;
+
+        const playerMinX = x - r;
+        const playerMaxX = x + r;
+        const playerMinZ = z - r;
+        const playerMaxZ = z + r;
+
+        if (playerMaxX > blockMinX && playerMinX < blockMaxX &&
+            playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
+          const topY = o.y + (o.h || 1);
+          const bottomY = o.y;
+
+          if (topY <= currentY + stepHeight) {
+            if (topY > floorY) floorY = topY;
+          } else if (bottomY < currentY + playerHeight) {
+            wallHit = true;
+          }
+        }
+      });
+      return { floorY, wallHit };
+    };
+
+    const currentY = logicalY.current;
+    let targetX = pos.current.x + velocity.current.x * delta;
+    let targetZ = pos.current.z + velocity.current.z * delta;
+
+    let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, currentY);
+    if (wallHitX) targetX = pos.current.x;
+
+    let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, currentY);
+    if (wallHitZ) targetZ = pos.current.z;
+
+    let { floorY: finalFloorY, wallHit: finalWallHit } = checkCollision(targetX, targetZ, currentY);
+    if (finalWallHit) {
+      let { wallHit: slideX, floorY: floorX } = checkCollision(targetX, pos.current.z, currentY);
+      let { wallHit: slideZ, floorY: floorZ } = checkCollision(pos.current.x, targetZ, currentY);
+      if (!slideX) {
+        targetZ = pos.current.z;
+        finalFloorY = floorX;
+      } else if (!slideZ) {
+        targetX = pos.current.x;
+        finalFloorY = floorZ;
+      } else {
+        targetX = pos.current.x;
+        targetZ = pos.current.z;
+        finalFloorY = currentY;
       }
-    });
+    }
 
-    pos.current.y = THREE.MathUtils.lerp(pos.current.y, highestY, delta * 10);
+    pos.current.x = targetX;
+    pos.current.z = targetZ;
+    logicalY.current = finalFloorY;
+    
+    pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
 
     const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
     const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;

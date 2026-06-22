@@ -20,6 +20,8 @@ export type PlacedObject = {
   type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
   rotationY?: number;
+  thickness?: number;
+  depth?: number;
   w?: number; d?: number; h?: number;
 };
 
@@ -53,12 +55,20 @@ function Ground({ onClick, isDragging }: { onClick: (x: number, y: number, z: nu
   );
 }
 
-function Block({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3) => void, isDragging: () => boolean }) {
+function Block({ data, onClick, isDragging, isSelected }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean, isSelected?: boolean }) {
+  const thickness = data.thickness || 1;
+  const depth = data.depth || 1;
+  const rotationY = data.rotationY || 0;
   return (
-    <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
-      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal); }}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
+    <mesh position={[data.x, data.y - 0.5 + thickness / 2, data.z]} rotation={[0, rotationY, 0]} castShadow receiveShadow
+      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal, e.point); }}>
+      <boxGeometry args={[1, thickness, depth]} />
+      <meshStandardMaterial 
+        color={data.color} 
+        transparent={data.color === "#ADD8E6" || isSelected} 
+        opacity={isSelected ? 0.8 : (data.color === "#ADD8E6" ? 0.6 : 1)}
+        emissive={isSelected ? "#4ade80" : "#000000"} 
+      />
     </mesh>
   );
 }
@@ -1895,6 +1905,45 @@ export default function VoxelBuilder() {
   const [showItemsMenu, setShowItemsMenu] = useState(true);
   const [showAvatars, setShowAvatars] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
+  const [activeThickness, setActiveThickness] = useState<number>(1);
+  const [activeDepth, setActiveDepth] = useState<number>(1);
+  const [activeRotation, setActiveRotation] = useState<number>(0);
+  const [isEditingBlocks, setIsEditingBlocks] = useState(false);
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  
+  const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
+
+  const updateSelectedBlocks = (updates: Partial<PlacedObject>) => {
+    if (selectedBlockIds.length === 0) return;
+    const newObjects = objects.map(o => {
+      const id = getBlockId(o);
+      if (selectedBlockIds.includes(id)) {
+        return { ...o, ...updates };
+      }
+      return o;
+    });
+    setObjects(newObjects);
+  };
+
+  const handleThicknessChange = (val: number) => {
+    setActiveThickness(val);
+    if (isEditingBlocks) updateSelectedBlocks({ thickness: val });
+  };
+
+  const handleDepthChange = (val: number) => {
+    setActiveDepth(val);
+    if (isEditingBlocks) updateSelectedBlocks({ depth: val });
+  };
+
+  const handleRotationChange = (val: number) => {
+    setActiveRotation(val);
+    if (isEditingBlocks) updateSelectedBlocks({ rotationY: (val * Math.PI) / 180 });
+  };
+
+  const handleColorChange = (color: string) => {
+    setActiveColor(color);
+    if (isEditingBlocks) updateSelectedBlocks({ color });
+  };
 
   /* ─── Keyboard Listeners ─── */
   usePlayerKeyboardControls();
@@ -2068,6 +2117,12 @@ export default function VoxelBuilder() {
     if (toolMode === 'roof') { handleRoofSelection(obj); return; }
     if (toolMode === 'rotate') { rotateObject(obj); return; }
     
+    if (toolMode === 'build' && isEditingBlocks) {
+      const id = getBlockId(obj);
+      setSelectedBlockIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      return;
+    }
+
     if (!faceNormal) return;
     
     // For large flat roofs, calculate adjacent block center accurately using point and normal
@@ -2119,7 +2174,7 @@ export default function VoxelBuilder() {
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type, thickness: activeThickness, depth: activeDepth, rotationY: (activeRotation * Math.PI) / 180 };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - actualBlockCost;
     setObjects(newObjects);
@@ -2363,9 +2418,37 @@ export default function VoxelBuilder() {
               </div>
             </div>
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
+              {toolMode === 'build' && (
+                <div className="flex items-center gap-3 pr-3 border-r border-sky-200">
+                  <button onClick={() => setIsEditingBlocks(!isEditingBlocks)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${isEditingBlocks ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {isEditingBlocks ? 'Done Editing' : 'Edit Blocks'}
+                  </button>
+                  <div className="flex flex-col gap-1 w-24">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                      <span>Thick</span>
+                      <span>{activeThickness}</span>
+                    </div>
+                    <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} className="accent-sky-500" />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                      <span>Depth</span>
+                      <span>{activeDepth}</span>
+                    </div>
+                    <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} className="accent-sky-500" />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                      <span>Rot</span>
+                      <span>{activeRotation}°</span>
+                    </div>
+                    <input type="range" min="0" max="360" step="15" value={activeRotation} onChange={e => handleRotationChange(parseInt(e.target.value))} className="accent-sky-500" />
+                  </div>
+                </div>
+              )}
               {BASE_COLORS.map((b) => (
                 <button key={b.id}
-                  onClick={() => setActiveColor(b.color)}
+                  onClick={() => handleColorChange(b.color)}
                   className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
                   style={{ backgroundColor: b.color }} title={b.name}
                 />
@@ -2373,7 +2456,7 @@ export default function VoxelBuilder() {
               
               {studentData?.customColors?.map((color: string, idx: number) => (
                 <button key={`custom-${idx}`}
-                  onClick={() => setActiveColor(color)}
+                  onClick={() => handleColorChange(color)}
                   className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
                   style={{ backgroundColor: color }} title={color}
                 />
@@ -2631,7 +2714,7 @@ export default function VoxelBuilder() {
             if (obj.type === 'large-roof') {
               return <LargeRoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
             }
-            return <Block key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
+            return <Block key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} isSelected={selectedBlockIds.includes(getBlockId(obj))} />;
           })}
 
           {selectedRoofCorners.map((corner, idx) => (
