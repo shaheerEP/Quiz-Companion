@@ -290,16 +290,13 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
     // Chase Camera Logic
     const targetLookAt = new THREE.Vector3(pos.current.x, pos.current.y + 1, pos.current.z);
-    
-    if (state.controls) {
-      const controls = state.controls as any;
-      controls.target.lerp(targetLookAt, delta * 10);
-      controls.update();
-    } else {
-      state.camera.lookAt(targetLookAt);
-    }
 
     if (moving) {
+      if (state.controls) {
+        const controls = state.controls as any;
+        controls.enabled = false;
+      }
+      
       const distance = drivingVehicle ? 6 : 2.5;
       const height = drivingVehicle ? 3 : 1.5;
       const angle = groupRef.current.rotation.y;
@@ -314,6 +311,21 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       );
       
       state.camera.position.lerp(idealCamPos, delta * 1.5);
+      state.camera.lookAt(targetLookAt);
+
+      if (state.controls) {
+        const controls = state.controls as any;
+        controls.target.copy(targetLookAt);
+      }
+    } else {
+      if (state.controls) {
+        const controls = state.controls as any;
+        controls.enabled = true;
+        controls.target.lerp(targetLookAt, delta * 10);
+        controls.update();
+      } else {
+        state.camera.lookAt(targetLookAt);
+      }
     }
   });
 
