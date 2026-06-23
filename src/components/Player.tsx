@@ -55,16 +55,16 @@ export function MobileDPad() {
     const rect = baseRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
+
     let dx = e.clientX - centerX;
     let dy = e.clientY - centerY;
-    
+
     const distance = Math.sqrt(dx * dx + dy * dy);
     if (distance > maxDistance) {
       dx = (dx / distance) * maxDistance;
       dy = (dy / distance) * maxDistance;
     }
-    
+
     setKnobPos({ x: dx, y: dy });
 
     const threshold = 15;
@@ -86,7 +86,7 @@ export function MobileDPad() {
 
   return (
     <div className="absolute bottom-8 right-8 pointer-events-auto select-none" style={{ zIndex: 50 }}>
-      <div 
+      <div
         ref={baseRef}
         className="w-32 h-32 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-full flex items-center justify-center touch-none shadow-xl relative cursor-pointer"
         onPointerDown={handlePointerDown}
@@ -94,7 +94,7 @@ export function MobileDPad() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        <div 
+        <div
           className="w-12 h-12 bg-white/90 rounded-full shadow-lg border border-slate-200 absolute transition-none pointer-events-none"
           style={{ transform: `translate(${knobPos.x}px, ${knobPos.y}px)` }}
         >
@@ -117,7 +117,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = drivingVehicle ? 4 : 3;
+  const speed = drivingVehicle ? 5.5 : 3;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -145,8 +145,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
         const hw = (o.w || 1) / 2;
         const hd = (o.d || 1) / 2;
-        if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw && 
-            pos.current.z >= o.z - hd && pos.current.z <= o.z + hd) {
+        if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw &&
+          pos.current.z >= o.z - hd && pos.current.z <= o.z + hd) {
           const topY = o.y + (o.h || 1);
           if (topY > startY) startY = topY;
         }
@@ -176,11 +176,11 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         // The virtual joystick allows left/right simultaneously with forward/backward
         if (controlsRef.left) turnAmount = 0.5;
         if (controlsRef.right) turnAmount = -0.5;
-        
+
         // When reversing, turning left makes the front go right
         groupRef.current.rotation.y += turnAmount * delta * Math.sign(moveSpeed);
       }
-      
+
       velocity.current.x = Math.sin(groupRef.current.rotation.y) * moveSpeed;
       velocity.current.z = Math.cos(groupRef.current.rotation.y) * moveSpeed;
       targetRotation.current = groupRef.current.rotation.y;
@@ -192,7 +192,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         state.camera.getWorldDirection(camVec);
         const camAngle = Math.atan2(-camVec.x, -camVec.z);
         targetRotation.current = camAngle + inputAngle;
-        
+
         velocity.current.x = Math.sin(targetRotation.current) * speed;
         velocity.current.z = Math.cos(targetRotation.current) * speed;
         walkTime.current += delta * 15;
@@ -228,7 +228,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         const playerMaxZ = z + r;
 
         if (playerMaxX > blockMinX && playerMinX < blockMaxX &&
-            playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
+          playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
           const topY = o.y + (o.h || 1);
           const bottomY = o.y;
 
@@ -272,7 +272,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     pos.current.x = targetX;
     pos.current.z = targetZ;
     logicalY.current = finalFloorY;
-    
+
     playerState.pos.copy(pos.current);
     playerState.rotation = targetRotation.current;
 
@@ -296,20 +296,20 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         const controls = state.controls as any;
         controls.enabled = false;
       }
-      
+
       const distance = drivingVehicle ? 6 : 2.5;
       const height = drivingVehicle ? 3 : 1.5;
       const angle = groupRef.current.rotation.y;
-      
-      const offsetX = -Math.sin(angle) * distance; 
+
+      const offsetX = -Math.sin(angle) * distance;
       const offsetZ = -Math.cos(angle) * distance;
-      
+
       const idealCamPos = new THREE.Vector3(
         pos.current.x + offsetX,
         pos.current.y + height,
         pos.current.z + offsetZ
       );
-      
+
       state.camera.position.lerp(idealCamPos, delta * 1.5);
       state.camera.lookAt(targetLookAt);
 
@@ -337,11 +337,11 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
             {vehicleMesh}
           </group>
           {drivingVehicle.itemId === 'bike' && (
-             <group position={[0, 0.8, 0]} scale={[0.5, 0.5, 0.5]}>
-               {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
-               {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
-               {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
-             </group>
+            <group position={[0, 0.8, 0]} scale={[0.5, 0.5, 0.5]}>
+              {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+              {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+              {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+            </group>
           )}
         </>
       ) : (
@@ -398,7 +398,7 @@ function KnightModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) 
       <mesh position={[0, 0.85, 0]} castShadow><boxGeometry args={[0.65, 0.65, 0.35]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>
       {/* Belt */}
       <mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.66, 0.1, 0.36]} /><meshStandardMaterial color="#78350f" /></mesh>
-      
+
       {/* Left Arm with Shield */}
       <group ref={leftArmRef} position={[-0.45, 1.15, 0]}>
         {/* Shoulder pad */}
@@ -407,7 +407,7 @@ function KnightModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) 
         {/* Shield */}
         <mesh position={[-0.15, -0.2, 0.1]} castShadow><boxGeometry args={[0.1, 0.6, 0.5]} /><meshStandardMaterial color="#b91c1c" metalness={0.4} /></mesh>
       </group>
-      
+
       {/* Right Arm with Sword */}
       <group ref={rightArmRef} position={[0.45, 1.15, 0]}>
         <mesh position={[0, 0.1, 0]} castShadow><boxGeometry args={[0.3, 0.2, 0.3]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} /></mesh>
@@ -441,7 +441,7 @@ function RobotModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) {
         <mesh position={[0.2, 0.3, 0]} castShadow><cylinderGeometry args={[0.02, 0.02, 0.2]} /><meshStandardMaterial color="#94a3b8" /></mesh>
         <mesh position={[0.2, 0.4, 0]} castShadow><sphereGeometry args={[0.06]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} /></mesh>
       </group>
-      
+
       {/* Body */}
       <mesh position={[0, 0.85, 0]} castShadow><cylinderGeometry args={[0.35, 0.3, 0.7, 8]} /><meshStandardMaterial color="#cbd5e1" metalness={0.5} roughness={0.5} /></mesh>
       {/* Body Screen/Meter */}
@@ -452,7 +452,7 @@ function RobotModel({ leftArmRef, rightArmRef, leftLegRef, rightLegRef }: any) {
         {/* Claw */}
         <mesh position={[0, -0.55, 0]} castShadow><boxGeometry args={[0.15, 0.15, 0.15]} /><meshStandardMaterial color="#ef4444" /></mesh>
       </group>
-      
+
       <group ref={rightArmRef} position={[0.45, 1.15, 0]}>
         <mesh position={[0, -0.2, 0]} castShadow><cylinderGeometry args={[0.08, 0.08, 0.6]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} /></mesh>
         {/* Claw */}
