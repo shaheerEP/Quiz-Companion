@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useState, use, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
