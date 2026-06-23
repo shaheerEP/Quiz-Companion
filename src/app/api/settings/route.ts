@@ -26,6 +26,8 @@ const DEFAULT_SETTINGS = {
   builderRoofCost: 100,
   customColorCost: 100,
   builderBlockRefund: 0,
+  landUpgradeCost: 1000,
+  landUpgradeAmount: 50,
   builderQuote: "Build for your beloved Mom",
   builderItems: [
     { id: "tree", name: "Tree", emoji: "🌲", cost: 100, refundOnErase: 50, width: 1, height: 2.5, depth: 1 },
@@ -77,6 +79,8 @@ export async function GET() {
       if (newValue.builderRoofCost === undefined) { newValue.builderRoofCost = 100; updated = true; }
       if (newValue.customColorCost === undefined) { newValue.customColorCost = DEFAULT_SETTINGS.customColorCost; updated = true; }
       if (newValue.builderBlockRefund === undefined) { newValue.builderBlockRefund = 0; updated = true; }
+      if (newValue.landUpgradeCost === undefined) { newValue.landUpgradeCost = 1000; updated = true; }
+      if (newValue.landUpgradeAmount === undefined) { newValue.landUpgradeAmount = 50; updated = true; }
       if (newValue.builderQuote === undefined) { newValue.builderQuote = DEFAULT_SETTINGS.builderQuote; updated = true; }
       if (newValue.builderItems === undefined) { 
         newValue.builderItems = DEFAULT_SETTINGS.builderItems; 

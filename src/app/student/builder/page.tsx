@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Sky, MapControls, Html, Text } from "@react-three/drei";
+import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2848,20 +2848,127 @@ export default function VoxelBuilder() {
           )}
 
           <Ground onClick={handleGroundClick} isDragging={isDraggingFn} />
+          {isExploreMode && <BakeShadows />}
           
-          {objects.filter(o => o !== drivingVehicle).map((obj, idx) => {
-            if (obj.type === 'item') {
-              const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
-            }
-            if (obj.type === 'roof') {
-              return <RoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
-            }
-            if (obj.type === 'large-roof') {
-              return <LargeRoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
-            }
-            return <Block key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} isSelected={selectedBlockIds.includes(getBlockId(obj))} />;
-          })}
+          {(() => {
+            const validObjects = objects.filter(o => o !== drivingVehicle);
+            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
+            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
+            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
+            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
+            const items = validObjects.filter(o => o.type === 'item');
+
+            const getBoxProps = (data: PlacedObject) => {
+              if (data.type === 'large-roof') {
+                return {
+                  position: [data.x, data.y, data.z] as [number, number, number],
+                  scale: [data.w || 1, data.h || 1, data.d || 1] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              } else {
+                const thickness = data.thickness || 1;
+                const depth = data.depth || 1;
+                return {
+                  position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
+                  scale: [1, thickness, depth] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              }
+            };
+
+            return (
+              <>
+                {opaqueBoxes.length > 0 && (
+                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial />
+                    {opaqueBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`ob-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {glassBoxes.length > 0 && (
+                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`gb-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {opaqueRoofs.length > 0 && (
+                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial />
+                    {opaqueRoofs.map((data, idx) => (
+                      <Instance
+                        key={`or-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                        onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {glassRoofs.length > 0 && (
+                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassRoofs.map((data, idx) => (
+                      <Instance
+                        key={`gr-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                        onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {/* Selected Highlights */}
+                {opaqueBoxes.concat(glassBoxes).map((data, idx) => {
+                  if (!selectedBlockIds.includes(getBlockId(data))) return null;
+                  const props = getBoxProps(data);
+                  return (
+                    <mesh key={`sel-${idx}`} position={props.position} rotation={props.rotation}>
+                      <boxGeometry args={[props.scale[0] * 1.05, props.scale[1] + 0.05, props.scale[2] + 0.05]} />
+                      <meshBasicMaterial color="#ef4444" wireframe />
+                    </mesh>
+                  );
+                })}
+
+                {items.map((obj, idx) => {
+                  const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+                  return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
+                })}
+              </>
+            );
+          })()}
 
           {selectedRoofCorners.map((corner, idx) => (
             <mesh key={`corner-${idx}`} position={[corner.x, corner.y, corner.z]}>

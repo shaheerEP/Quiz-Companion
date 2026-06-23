@@ -20,6 +20,7 @@ export interface IStudent extends Document {
   activeAvatar: string;
   isClassTime?: boolean;
   assignedGame?: 'pet' | 'builder';
+  landSize: number;
   worldBlocks: Array<{
     x: number;
     y: number;
@@ -59,6 +60,7 @@ const StudentSchema = new Schema<IStudent>(
     activeAvatar: { type: String, default: 'boy' },
     isClassTime: { type: Boolean, default: false },
     assignedGame: { type: String, enum: ['pet', 'builder'], default: 'pet' },
+    landSize: { type: Number, default: 50 },
     worldBlocks: {
       type: [
         {

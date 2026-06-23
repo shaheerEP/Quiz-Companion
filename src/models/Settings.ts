@@ -26,6 +26,8 @@ export interface ISettingsValue {
   builderQuote?: string;
   builderItems?: { id: string; name: string; emoji: string; cost: number; refundOnErase: number; width: number; height: number; depth: number }[];
   isClassTime?: boolean;
+  landUpgradeCost?: number;
+  landUpgradeAmount?: number;
 }
 
 export interface ISettings extends Document {

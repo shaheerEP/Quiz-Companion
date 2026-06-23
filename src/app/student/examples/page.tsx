@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
-import { Sky, MapControls, Html, Text } from "@react-three/drei";
+import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +20,8 @@ type PlacedObject = {
   itemId?: string;
   w?: number; d?: number; h?: number;
   rotationY?: number;
+  thickness?: number;
+  depth?: number;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
@@ -1893,20 +1895,111 @@ export default function ExampleWorldsViewer() {
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
           
           <Ground onClick={() => {}} isDragging={() => false} />
+          {isExploreMode && <BakeShadows />}
           
-          {activeWorld.objects.map((obj, idx) => {
-            if (obj.type === 'item') {
-              const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={() => {}} isDragging={() => false} />;
-            }
-            if (obj.type === 'roof') {
-              return <RoofBlock key={idx} data={obj} onClick={() => {}} isDragging={() => false} />;
-            }
-            if (obj.type === 'large-roof') {
-              return <LargeRoofBlock key={idx} data={obj} onClick={() => {}} isDragging={() => false} />;
-            }
-            return <Block key={idx} data={obj} onClick={() => {}} isDragging={() => false} />;
-          })}
+          {(() => {
+            const validObjects = activeWorld.objects;
+            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
+            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
+            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
+            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
+            const items = validObjects.filter(o => o.type === 'item');
+
+            const getBoxProps = (data: PlacedObject) => {
+              if (data.type === 'large-roof') {
+                return {
+                  position: [data.x, data.y, data.z] as [number, number, number],
+                  scale: [data.w || 1, data.h || 1, data.d || 1] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              } else {
+                const thickness = data.thickness || 1;
+                const depth = data.depth || 1;
+                return {
+                  position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
+                  scale: [1, thickness, depth] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              }
+            };
+
+            return (
+              <>
+                {opaqueBoxes.length > 0 && (
+                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial />
+                    {opaqueBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`ob-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {glassBoxes.length > 0 && (
+                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`gb-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {opaqueRoofs.length > 0 && (
+                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial />
+                    {opaqueRoofs.map((data, idx) => (
+                      <Instance
+                        key={`or-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {glassRoofs.length > 0 && (
+                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassRoofs.map((data, idx) => (
+                      <Instance
+                        key={`gr-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {items.map((obj, idx) => {
+                  const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+                  return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={() => {}} isDragging={() => false} />;
+                })}
+              </>
+            );
+          })()}
 
           {isExploreMode && <Player objects={activeWorld.objects} activeAvatar={studentData?.activeAvatar || 'boy'} />}
 

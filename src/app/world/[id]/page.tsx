@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Sky, MapControls, Html, Text } from "@react-three/drei";
+import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 import { Copy, Check, Gamepad2, X } from "lucide-react";
@@ -16,6 +16,8 @@ export type PlacedObject = {
   itemId?: string;
   rotationY?: number;
   w?: number; d?: number; h?: number;
+  thickness?: number;
+  depth?: number;
 };
 
 /* ─── 3D Components (Read-Only) ─── */
@@ -1919,20 +1921,111 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
           )}
 
           <Ground />
+          {isExploreMode && <BakeShadows />}
 
-          {objects.map((obj, idx) => {
-            if (obj.type === 'item') {
-              const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} />;
-            }
-            if (obj.type === 'roof') {
-              return <RoofBlock key={idx} data={obj} />;
-            }
-            if (obj.type === 'large-roof') {
-              return <LargeRoofBlock key={idx} data={obj} />;
-            }
-            return <Block key={idx} data={obj} />;
-          })}
+          {(() => {
+            const validObjects = objects;
+            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
+            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
+            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
+            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
+            const items = validObjects.filter(o => o.type === 'item');
+
+            const getBoxProps = (data: PlacedObject) => {
+              if (data.type === 'large-roof') {
+                return {
+                  position: [data.x, data.y, data.z] as [number, number, number],
+                  scale: [data.w || 1, data.h || 1, data.d || 1] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              } else {
+                const thickness = data.thickness || 1;
+                const depth = data.depth || 1;
+                return {
+                  position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
+                  scale: [1, thickness, depth] as [number, number, number],
+                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                };
+              }
+            };
+
+            return (
+              <>
+                {opaqueBoxes.length > 0 && (
+                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial />
+                    {opaqueBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`ob-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {glassBoxes.length > 0 && (
+                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassBoxes.map((data, idx) => {
+                      const props = getBoxProps(data);
+                      return (
+                        <Instance
+                          key={`gb-${idx}`}
+                          position={props.position}
+                          scale={props.scale}
+                          rotation={props.rotation}
+                          color={data.color}
+                        />
+                      );
+                    })}
+                  </Instances>
+                )}
+
+                {opaqueRoofs.length > 0 && (
+                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial />
+                    {opaqueRoofs.map((data, idx) => (
+                      <Instance
+                        key={`or-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {glassRoofs.length > 0 && (
+                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                    <coneGeometry args={[0.71, 1, 4]} />
+                    <meshStandardMaterial transparent opacity={0.6} />
+                    {glassRoofs.map((data, idx) => (
+                      <Instance
+                        key={`gr-${idx}`}
+                        position={[data.x, data.y, data.z]}
+                        rotation={[0, Math.PI / 4, 0]}
+                        color={data.color}
+                      />
+                    ))}
+                  </Instances>
+                )}
+
+                {items.map((obj, idx) => {
+                  const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+                  return <ItemObject key={idx} data={obj} itemDef={itemDef} />;
+                })}
+              </>
+            );
+          })()}
 
           {isExploreMode && <Player objects={objects} activeAvatar={worldData.activeAvatar || 'boy'} />}
 
