@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
@@ -172,9 +172,10 @@ function InteractiveVehicle({ data, onEnterVehicle, isExploreMode, children }: {
         <Html position={[data.x, data.y + 1.5, data.z]} center zIndexRange={[100, 0]}>
           <button 
             onClick={(e) => { e.stopPropagation(); onEnterVehicle(); }}
-            className="bg-amber-500/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-amber-400 whitespace-nowrap shadow-xl border border-amber-300 transition-all cursor-pointer"
+            className="bg-amber-500 text-white p-2.5 rounded-full pointer-events-auto hover:bg-amber-400 shadow-xl border-2 border-white transition-transform hover:scale-110 cursor-pointer"
+            title="Enter Vehicle"
           >
-            Enter Vehicle
+            <LogIn className="w-6 h-6" />
           </button>
         </Html>
       )}
@@ -2803,9 +2804,10 @@ export default function VoxelBuilder() {
         <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
           <button 
             onClick={handleExitVehicle}
-            className="bg-red-500 hover:bg-red-600 text-white font-black text-xl px-8 py-4 rounded-3xl shadow-2xl border-4 border-white transition-transform hover:scale-105 animate-bounce"
+            className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full shadow-2xl border-4 border-white transition-transform hover:scale-105 animate-bounce"
+            title="Exit Vehicle"
           >
-            Exit Vehicle
+            <LogOut className="w-8 h-8" />
           </button>
         </div>
       )}
