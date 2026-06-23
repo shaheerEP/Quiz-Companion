@@ -117,7 +117,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = drivingVehicle ? 7.5 : 3;
+  const speed = drivingVehicle ? 4 : 3;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -160,8 +160,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         moving = true;
         let turnAmount = 0;
         // The virtual joystick allows left/right simultaneously with forward/backward
-        if (controlsRef.left) turnAmount = 0.8;
-        if (controlsRef.right) turnAmount = -0.8;
+        if (controlsRef.left) turnAmount = 0.5;
+        if (controlsRef.right) turnAmount = -0.5;
         
         // When reversing, turning left makes the front go right
         groupRef.current.rotation.y += turnAmount * delta * Math.sign(moveSpeed);
