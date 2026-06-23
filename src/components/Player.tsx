@@ -264,8 +264,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     }
 
     if (moving) {
-      const distance = 4;
-      const height = 2.5;
+      const distance = 2.5;
+      const height = 1.5;
       const angle = groupRef.current.rotation.y;
       
       const offsetX = -Math.sin(angle) * distance; 
@@ -285,7 +285,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     <group ref={groupRef}>
       {drivingVehicle ? (
         <>
-          <group position={[0, -0.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
+          <group position={[0, -0.5, 0]} rotation={[0, Math.PI / 2, 0]}>
             {vehicleMesh}
           </group>
           {drivingVehicle.itemId === 'bike' && (
