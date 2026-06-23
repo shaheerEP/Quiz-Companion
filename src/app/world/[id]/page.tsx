@@ -1936,7 +1936,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
 
           {isExploreMode && <Player objects={objects} activeAvatar={worldData.activeAvatar || 'boy'} />}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enablePan={!isExploreMode} />
+          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enablePan={!isExploreMode} rotateSpeed={0.5} />
         </Canvas>
       </main>
     </div>

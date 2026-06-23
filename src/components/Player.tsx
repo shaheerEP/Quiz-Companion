@@ -240,7 +240,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
     const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
     const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
-    groupRef.current.rotation.y += wrappedDiff * delta * 10;
+    groupRef.current.rotation.y += wrappedDiff * delta * 3;
 
     groupRef.current.position.copy(pos.current);
 
@@ -277,7 +277,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         pos.current.z + offsetZ
       );
       
-      state.camera.position.lerp(idealCamPos, delta * 2.5);
+      state.camera.position.lerp(idealCamPos, delta * 1.5);
     }
   });
 

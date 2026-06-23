@@ -65,10 +65,15 @@ function Block({ data, onClick, isDragging, isSelected }: { data: PlacedObject, 
       <boxGeometry args={[1, thickness, depth]} />
       <meshStandardMaterial 
         color={data.color} 
-        transparent={data.color === "#ADD8E6" || isSelected} 
-        opacity={isSelected ? 0.8 : (data.color === "#ADD8E6" ? 0.6 : 1)}
-        emissive={isSelected ? "#4ade80" : "#000000"} 
+        transparent={data.color === "#ADD8E6"} 
+        opacity={data.color === "#ADD8E6" ? 0.6 : 1}
       />
+      {isSelected && (
+        <mesh>
+          <boxGeometry args={[1.05, thickness + 0.05, depth + 0.05]} />
+          <meshBasicMaterial color="#ef4444" wireframe />
+        </mesh>
+      )}
     </mesh>
   );
 }
@@ -146,14 +151,14 @@ function InteractiveDoor({ data, handleClick }: { data: PlacedObject; handleClic
   );
 }
 
-function InteractiveVehicle({ data, onEnterVehicle, children }: { data: PlacedObject; onEnterVehicle: () => void; children: React.ReactNode }) {
+function InteractiveVehicle({ data, onEnterVehicle, isExploreMode, children }: { data: PlacedObject; onEnterVehicle: () => void; isExploreMode?: boolean; children: React.ReactNode }) {
   const [showUI, setShowUI] = useState(false);
   const vec = useRef(new THREE.Vector3());
 
   useFrame((state) => {
     const vPos = vec.current.set(data.x, data.y, data.z);
     const dist = state.camera.position.distanceTo(vPos);
-    if (dist < 8) {
+    if (dist < 8 && isExploreMode) {
       if (!showUI) setShowUI(true);
     } else {
       if (showUI) setShowUI(false);
@@ -177,7 +182,7 @@ function InteractiveVehicle({ data, onEnterVehicle, children }: { data: PlacedOb
   );
 }
 
-function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean, onEnterVehicle?: () => void }) {
+function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExploreMode }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean, onEnterVehicle?: () => void, isExploreMode?: boolean }) {
   const w = itemDef?.width ?? 1;
   const h = itemDef?.height ?? 1;
   const d = itemDef?.depth ?? 1;
@@ -195,7 +200,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle }: { da
 
   const wrapIfVehicle = (node: React.ReactNode) => {
     if (isVehicle && onEnterVehicle) {
-      return <InteractiveVehicle data={data} onEnterVehicle={onEnterVehicle}>{node}</InteractiveVehicle>;
+      return <InteractiveVehicle data={data} onEnterVehicle={onEnterVehicle} isExploreMode={isExploreMode}>{node}</InteractiveVehicle>;
     }
     return node;
   };
@@ -2541,7 +2546,13 @@ export default function VoxelBuilder() {
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
               {toolMode === 'build' && (
                 <div className="flex items-center gap-3 pr-3 border-r border-sky-200">
-                  <button onClick={() => setIsEditingBlocks(!isEditingBlocks)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${isEditingBlocks ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  <button onClick={() => {
+                    if (isEditingBlocks) {
+                      handleEditSave();
+                      setSelectedBlockIds([]);
+                    }
+                    setIsEditingBlocks(!isEditingBlocks);
+                  }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${isEditingBlocks ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                     {isEditingBlocks ? 'Done Editing' : 'Edit Blocks'}
                   </button>
                   <div className="flex flex-col gap-1 w-24">
@@ -2839,7 +2850,7 @@ export default function VoxelBuilder() {
           {objects.filter(o => o !== drivingVehicle).map((obj, idx) => {
             if (obj.type === 'item') {
               const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} />;
+              return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
             }
             if (obj.type === 'roof') {
               return <RoofBlock key={idx} data={obj} onClick={handleBlockClick} isDragging={isDraggingFn} />;
@@ -2875,6 +2886,7 @@ export default function VoxelBuilder() {
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.05} 
             enablePan={!isExploreMode} 
+            rotateSpeed={0.5}
           />
         </Canvas>
       </main>
