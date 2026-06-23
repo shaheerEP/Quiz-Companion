@@ -122,6 +122,20 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const logicalY = useRef(0);
   const initialized = useRef(false);
 
+  useEffect(() => {
+    if (drivingVehicle) {
+      pos.current.set(drivingVehicle.x, drivingVehicle.y, drivingVehicle.z);
+      const vehicleRot = (drivingVehicle.rotationY || 0) - Math.PI / 2;
+      if (groupRef.current) {
+        groupRef.current.position.copy(pos.current);
+        groupRef.current.rotation.y = vehicleRot;
+      }
+      targetRotation.current = vehicleRot;
+      playerState.rotation = vehicleRot;
+      logicalY.current = drivingVehicle.y;
+    }
+  }, [drivingVehicle]);
+
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 

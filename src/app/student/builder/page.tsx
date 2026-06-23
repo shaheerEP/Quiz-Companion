@@ -2079,7 +2079,7 @@ export default function VoxelBuilder() {
   const handleExitVehicle = () => {
     if (!drivingVehicle) return;
     const newPos = playerState.pos;
-    const newRot = playerState.rotation;
+    const newRot = playerState.rotation + Math.PI / 2;
     
     // Use original ID to match since objects array might have been recreated by interval fetch
     const origId = getBlockId(drivingVehicle);
