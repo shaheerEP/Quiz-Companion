@@ -117,7 +117,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = drivingVehicle ? 15 : 3;
+  const speed = drivingVehicle ? 7.5 : 3;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -149,21 +149,47 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     if (controlsRef.left) dirX -= 1;
     if (controlsRef.right) dirX += 1;
 
-    const moving = dirX !== 0 || dirZ !== 0;
+    let moving = false;
 
-    if (moving) {
-      const inputAngle = Math.atan2(dirX, dirZ);
-      const camVec = new THREE.Vector3();
-      state.camera.getWorldDirection(camVec);
-      const camAngle = Math.atan2(-camVec.x, -camVec.z);
-      targetRotation.current = camAngle + inputAngle;
+    if (drivingVehicle) {
+      let moveSpeed = 0;
+      if (controlsRef.forward) moveSpeed = speed;
+      else if (controlsRef.backward) moveSpeed = -speed;
+
+      if (moveSpeed !== 0) {
+        moving = true;
+        let turnAmount = 0;
+        // The virtual joystick allows left/right simultaneously with forward/backward
+        if (controlsRef.left) turnAmount = 0.8;
+        if (controlsRef.right) turnAmount = -0.8;
+        
+        // When reversing, turning left makes the front go right
+        groupRef.current.rotation.y += turnAmount * delta * Math.sign(moveSpeed);
+      }
       
-      velocity.current.x = Math.sin(targetRotation.current) * speed;
-      velocity.current.z = Math.cos(targetRotation.current) * speed;
-      walkTime.current += delta * 15;
+      velocity.current.x = Math.sin(groupRef.current.rotation.y) * moveSpeed;
+      velocity.current.z = Math.cos(groupRef.current.rotation.y) * moveSpeed;
+      targetRotation.current = groupRef.current.rotation.y;
     } else {
-      velocity.current.set(0, 0, 0);
-      walkTime.current = 0;
+      if (dirX !== 0 || dirZ !== 0) {
+        moving = true;
+        const inputAngle = Math.atan2(dirX, dirZ);
+        const camVec = new THREE.Vector3();
+        state.camera.getWorldDirection(camVec);
+        const camAngle = Math.atan2(-camVec.x, -camVec.z);
+        targetRotation.current = camAngle + inputAngle;
+        
+        velocity.current.x = Math.sin(targetRotation.current) * speed;
+        velocity.current.z = Math.cos(targetRotation.current) * speed;
+        walkTime.current += delta * 15;
+      } else {
+        velocity.current.set(0, 0, 0);
+        walkTime.current = 0;
+      }
+
+      const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
+      const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
+      groupRef.current.rotation.y += wrappedDiff * delta * 3;
     }
 
     const checkCollision = (x: number, z: number, currentY: number) => {
@@ -238,10 +264,6 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
     pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
 
-    const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
-    const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
-    groupRef.current.rotation.y += wrappedDiff * delta * 3;
-
     groupRef.current.position.copy(pos.current);
 
     if (leftLegRef.current && rightLegRef.current && leftArmRef.current && rightArmRef.current) {
@@ -264,8 +286,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     }
 
     if (moving) {
-      const distance = 2.5;
-      const height = 1.5;
+      const distance = drivingVehicle ? 6 : 2.5;
+      const height = drivingVehicle ? 3 : 1.5;
       const angle = groupRef.current.rotation.y;
       
       const offsetX = -Math.sin(angle) * distance; 
