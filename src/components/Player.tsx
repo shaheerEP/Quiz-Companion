@@ -107,7 +107,7 @@ export function MobileDPad() {
 
 export const playerState = { pos: new THREE.Vector3(), rotation: 0 };
 
-export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleMesh }: { objects: any[], activeAvatar?: string, drivingVehicle?: any | null, vehicleMesh?: React.ReactNode }) {
+export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleMesh, landSize = 50 }: { objects: any[], activeAvatar?: string, drivingVehicle?: any | null, vehicleMesh?: React.ReactNode, landSize?: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const leftLegRef = useRef<THREE.Group>(null);
   const rightLegRef = useRef<THREE.Group>(null);
@@ -268,6 +268,10 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         finalFloorY = currentY;
       }
     }
+
+    const halfLand = landSize / 2;
+    if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
+    if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
 
     pos.current.x = targetX;
     pos.current.z = targetZ;

@@ -10,6 +10,7 @@ import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucke
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
+import { CameraBounds } from "@/components/CameraBounds";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -2918,6 +2919,7 @@ export default function VoxelBuilder() {
             </Text>
           )}
 
+          <CameraBounds landSize={studentData?.landSize ?? 50} />
           <Ground landSize={studentData?.landSize ?? 50} onClick={handleGroundClick} isDragging={isDraggingFn} />
           {isExploreMode && <BakeShadows />}
           
@@ -2950,7 +2952,7 @@ export default function VoxelBuilder() {
             return (
               <>
                 {opaqueBoxes.length > 0 && (
-                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial />
                     {opaqueBoxes.map((data, idx) => {
@@ -2970,7 +2972,7 @@ export default function VoxelBuilder() {
                 )}
 
                 {glassBoxes.length > 0 && (
-                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassBoxes.map((data, idx) => {
@@ -2990,7 +2992,7 @@ export default function VoxelBuilder() {
                 )}
 
                 {opaqueRoofs.length > 0 && (
-                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial />
                     {opaqueRoofs.map((data, idx) => (
@@ -3006,7 +3008,7 @@ export default function VoxelBuilder() {
                 )}
 
                 {glassRoofs.length > 0 && (
-                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassRoofs.map((data, idx) => (
@@ -3052,6 +3054,7 @@ export default function VoxelBuilder() {
             objects={objects.filter(o => o !== drivingVehicle)} 
             activeAvatar={studentData?.activeAvatar || 'boy'} 
             drivingVehicle={drivingVehicle}
+            landSize={studentData?.landSize ?? 50}
             vehicleMesh={
               drivingVehicle ? 
               <ItemObject 
@@ -3067,6 +3070,7 @@ export default function VoxelBuilder() {
             maxPolarAngle={Math.PI / 2 - 0.05} 
             enablePan={!isExploreMode} 
             rotateSpeed={0.5}
+            maxDistance={(studentData?.landSize ?? 50) * 1.5}
           />
         </Canvas>
       </main>

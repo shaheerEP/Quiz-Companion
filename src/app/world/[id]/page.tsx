@@ -5,9 +5,10 @@ import { Canvas } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
-import { Copy, Check, Gamepad2, X } from "lucide-react";
+import { Copy, Check, Gamepad2, X, LogIn, LogOut } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
+import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
+import { CameraBounds } from "@/components/CameraBounds";
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -22,12 +23,12 @@ export type PlacedObject = {
 
 /* ─── 3D Components (Read-Only) ─── */
 
-function Ground() {
+function Ground({ landSize = 50 }: { landSize?: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-      <planeGeometry args={[100, 100]} />
+      <planeGeometry args={[landSize, landSize]} />
       <meshStandardMaterial color="#4ade80" />
-      <gridHelper args={[100, 100, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
+      <gridHelper args={[landSize, landSize, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
     </mesh>
   );
 }
@@ -60,7 +61,39 @@ function LargeRoofBlock({ data }: { data: PlacedObject }) {
   );
 }
 
-function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
+function InteractiveVehicle({ data, onEnterVehicle, isExploreMode, children }: { data: PlacedObject; onEnterVehicle: () => void; isExploreMode?: boolean; children: React.ReactNode }) {
+  const [showUI, setShowUI] = useState(false);
+  const vec = useRef(new THREE.Vector3());
+
+  useFrame((state) => {
+    const vPos = vec.current.set(data.x, data.y, data.z);
+    const dist = state.camera.position.distanceTo(vPos);
+    if (dist < 8 && isExploreMode) {
+      if (!showUI) setShowUI(true);
+    } else {
+      if (showUI) setShowUI(false);
+    }
+  });
+
+  return (
+    <group>
+      {children}
+      {showUI && (
+        <Html position={[data.x, data.y + 1.5, data.z]} center zIndexRange={[100, 0]}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEnterVehicle(); }}
+            className="bg-amber-500 text-white p-2.5 rounded-full pointer-events-auto hover:bg-amber-400 shadow-xl border-2 border-white transition-transform hover:scale-110 cursor-pointer"
+            title="Enter Vehicle"
+          >
+            <LogIn className="w-6 h-6" />
+          </button>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: PlacedObject, itemDef: any, onEnterVehicle?: () => void, isExploreMode?: boolean }) {
   const w = itemDef?.width ?? 1;
   const h = itemDef?.height ?? 1;
   const d = itemDef?.depth ?? 1;
@@ -72,9 +105,17 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
   };
 
   const itemId = data.itemId || "";
+  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(itemId);
+
+  const wrapIfVehicle = (node: React.ReactNode) => {
+    if (isVehicle && onEnterVehicle) {
+      return <InteractiveVehicle data={data} onEnterVehicle={onEnterVehicle} isExploreMode={isExploreMode}>{node}</InteractiveVehicle>;
+    }
+    return <>{node}</>;
+  };
 
   // Helper to wrap custom geometry
-  const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
+  const ModelWrapper = ({ children }: { children: React.ReactNode }) => wrapIfVehicle(
     <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       {children}
     </group>
@@ -1814,7 +1855,7 @@ function ItemObject({ data, itemDef }: { data: PlacedObject, itemDef: any }) {
   // Fallback for custom teacher items: box with emoji
   const boxColor = "#9ca3af";
 
-  return (
+  return wrapIfVehicle(
     <group position={[data.x, yPos, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[w, h, d]} />
@@ -1842,6 +1883,8 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
+  const [objects, setObjects] = useState<PlacedObject[]>([]);
+  const [drivingVehicle, setDrivingVehicle] = useState<PlacedObject | null>(null);
 
   usePlayerKeyboardControls();
 
@@ -1852,6 +1895,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
         if (!res.ok) throw new Error("World not found or error loading");
         const data = await res.json();
         setWorldData(data);
+        setObjects(data.worldBlocks || []);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -1880,8 +1924,22 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
     </div>
   );
 
-  const objects: PlacedObject[] = worldData.worldBlocks;
   const shopItems: any[] = worldData.builderItems || [];
+
+  const handleEnterVehicle = (obj: PlacedObject) => {
+    setDrivingVehicle(obj);
+  };
+
+  const handleExitVehicle = () => {
+    if (!drivingVehicle) return;
+    const newPos = playerState.pos;
+    const newRot = playerState.rotation + Math.PI / 2;
+    
+    // Create new object list with updated vehicle
+    const updatedObjects = objects.map(o => o === drivingVehicle ? { ...o, x: newPos.x, y: newPos.y, z: newPos.z, rotationY: newRot } : o);
+    setObjects(updatedObjects);
+    setDrivingVehicle(null);
+  };
 
   return (
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
@@ -1893,6 +1951,11 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
         <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
           {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
         </button>
+        {isExploreMode && drivingVehicle && (
+          <button onClick={handleExitVehicle} className="bg-rose-500 text-white p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center hover:bg-rose-400 border-2 border-rose-300" title="Exit Vehicle">
+            <LogOut className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Mobile D-Pad (Explore Mode) */}
@@ -1920,7 +1983,8 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             </Text>
           )}
 
-          <Ground />
+          <CameraBounds landSize={worldData.landSize ?? 50} />
+          <Ground landSize={worldData.landSize ?? 50} />
           {isExploreMode && <BakeShadows />}
 
           {(() => {
@@ -1952,7 +2016,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             return (
               <>
                 {opaqueBoxes.length > 0 && (
-                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial />
                     {opaqueBoxes.map((data, idx) => {
@@ -1971,7 +2035,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                 )}
 
                 {glassBoxes.length > 0 && (
-                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassBoxes.map((data, idx) => {
@@ -1990,7 +2054,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                 )}
 
                 {opaqueRoofs.length > 0 && (
-                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial />
                     {opaqueRoofs.map((data, idx) => (
@@ -2005,7 +2069,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                 )}
 
                 {glassRoofs.length > 0 && (
-                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassRoofs.map((data, idx) => (
@@ -2021,15 +2085,34 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
 
                 {items.map((obj, idx) => {
                   const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-                  return <ItemObject key={idx} data={obj} itemDef={itemDef} />;
+                  if (obj === drivingVehicle) return null;
+                  return <ItemObject key={idx} data={obj} itemDef={itemDef} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
                 })}
               </>
             );
           })()}
 
-          {isExploreMode && <Player objects={objects} activeAvatar={worldData.activeAvatar || 'boy'} />}
+          {isExploreMode && <Player 
+            objects={objects.filter(o => o !== drivingVehicle)} 
+            activeAvatar={worldData.activeAvatar || 'boy'} 
+            landSize={worldData.landSize ?? 50}
+            drivingVehicle={drivingVehicle}
+            vehicleMesh={
+              drivingVehicle ? 
+              <ItemObject 
+                data={{ ...drivingVehicle, x: 0, y: 0.5, z: 0, rotationY: 0 }} 
+                itemDef={shopItems.find((i: any) => i.id === drivingVehicle.itemId)} 
+              /> : undefined
+            }
+          />}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enablePan={!isExploreMode} rotateSpeed={0.5} />
+          <MapControls 
+            makeDefault 
+            maxPolarAngle={Math.PI / 2 - 0.05} 
+            enablePan={!isExploreMode} 
+            rotateSpeed={0.5} 
+            maxDistance={(worldData.landSize ?? 50) * 1.5}
+          />
         </Canvas>
       </main>
     </div>

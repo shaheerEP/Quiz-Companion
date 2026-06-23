@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
+import { CameraBounds } from "@/components/CameraBounds";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
@@ -35,13 +36,13 @@ const BASE_COLORS = [
 
 /* ─── 3D Components ─── */
 
-function Ground({ onClick, isDragging }: { onClick: (x: number, y: number, z: number) => void, isDragging: () => boolean }) {
+function Ground({ landSize = 50, onClick, isDragging }: { landSize?: number, onClick: (x: number, y: number, z: number) => void, isDragging: () => boolean }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow
       onClick={(e) => { if (isDragging()) return; e.stopPropagation(); const p = e.point; onClick(Math.round(p.x), 0, Math.round(p.z)); }}>
-      <planeGeometry args={[100, 100]} />
+      <planeGeometry args={[landSize, landSize]} />
       <meshStandardMaterial color="#4ade80" />
-      <gridHelper args={[100, 100, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
+      <gridHelper args={[landSize, landSize, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
     </mesh>
   );
 }
@@ -1894,7 +1895,8 @@ export default function ExampleWorldsViewer() {
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
           
-          <Ground onClick={() => {}} isDragging={() => false} />
+          <CameraBounds landSize={studentData?.landSize ?? 50} />
+          <Ground landSize={studentData?.landSize ?? 50} onClick={() => {}} isDragging={() => false} />
           {isExploreMode && <BakeShadows />}
           
           {(() => {
@@ -1926,7 +1928,7 @@ export default function ExampleWorldsViewer() {
             return (
               <>
                 {opaqueBoxes.length > 0 && (
-                  <Instances limit={opaqueBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial />
                     {opaqueBoxes.map((data, idx) => {
@@ -1945,7 +1947,7 @@ export default function ExampleWorldsViewer() {
                 )}
 
                 {glassBoxes.length > 0 && (
-                  <Instances limit={glassBoxes.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassBoxes.map((data, idx) => {
@@ -1964,7 +1966,7 @@ export default function ExampleWorldsViewer() {
                 )}
 
                 {opaqueRoofs.length > 0 && (
-                  <Instances limit={opaqueRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial />
                     {opaqueRoofs.map((data, idx) => (
@@ -1979,7 +1981,7 @@ export default function ExampleWorldsViewer() {
                 )}
 
                 {glassRoofs.length > 0 && (
-                  <Instances limit={glassRoofs.length} castShadow receiveShadow>
+                  <Instances limit={100000} castShadow receiveShadow>
                     <coneGeometry args={[0.71, 1, 4]} />
                     <meshStandardMaterial transparent opacity={0.6} />
                     {glassRoofs.map((data, idx) => (
@@ -2001,9 +2003,15 @@ export default function ExampleWorldsViewer() {
             );
           })()}
 
-          {isExploreMode && <Player objects={activeWorld.objects} activeAvatar={studentData?.activeAvatar || 'boy'} />}
+          {isExploreMode && <Player objects={activeWorld.objects} activeAvatar={studentData?.activeAvatar || 'boy'} landSize={studentData?.landSize ?? 50} />}
 
-          <MapControls makeDefault maxPolarAngle={Math.PI / 2 - 0.05} enablePan={!isExploreMode} rotateSpeed={0.5} />
+          <MapControls 
+            makeDefault 
+            maxPolarAngle={Math.PI / 2 - 0.05} 
+            enablePan={!isExploreMode} 
+            rotateSpeed={0.5} 
+            maxDistance={(studentData?.landSize ?? 50) * 1.5}
+          />
         </Canvas>
       </main>
     </div>

@@ -17,6 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return NextResponse.json({
       name: student.name,
       worldBlocks: student.worldBlocks || [],
+      landSize: student.landSize || 50,
       builderQuote: settings?.value?.builderQuote || "",
       builderItems: settings?.value?.builderItems || [],
     });
