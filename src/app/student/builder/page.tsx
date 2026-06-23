@@ -44,13 +44,13 @@ const AVAILABLE_AVATARS = [
 
 /* ─── 3D Components ─── */
 
-function Ground({ onClick, isDragging }: { onClick: (x: number, y: number, z: number) => void, isDragging: () => boolean }) {
+function Ground({ landSize, onClick, isDragging }: { landSize: number, onClick: (x: number, y: number, z: number) => void, isDragging: () => boolean }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow
       onClick={(e) => { if (isDragging()) return; e.stopPropagation(); const p = e.point; onClick(Math.round(p.x), 0, Math.round(p.z)); }}>
-      <planeGeometry args={[100, 100]} />
+      <planeGeometry args={[landSize, landSize]} />
       <meshStandardMaterial color="#4ade80" />
-      <gridHelper args={[100, 100, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
+      <gridHelper args={[landSize, landSize, "#22c55e", "#22c55e"]} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
     </mesh>
   );
 }
@@ -1986,6 +1986,7 @@ export default function VoxelBuilder() {
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
   const [showItemsMenu, setShowItemsMenu] = useState(true);
   const [showAvatars, setShowAvatars] = useState(false);
+  const [showLandUpgrade, setShowLandUpgrade] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
   const [activeThickness, setActiveThickness] = useState<number>(1);
   const [activeDepth, setActiveDepth] = useState<number>(1);
@@ -2158,6 +2159,37 @@ export default function VoxelBuilder() {
     }
   };
 
+  const handleLandPurchase = async () => {
+    if (!studentData) return;
+    const cost = settings?.landUpgradeCost ?? 1000;
+    if (studentData.pointsBalance < cost) {
+      showMessage(`Need ${cost} points to buy more land!`, "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const newBalance = studentData.pointsBalance - cost;
+      const currentLandSize = studentData.landSize ?? 50;
+      const amount = settings?.landUpgradeAmount ?? 50;
+      const newLandSize = currentLandSize + amount;
+      
+      const res = await fetch("/api/students", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, landSize: newLandSize })
+      });
+      if (!res.ok) throw new Error();
+      
+      await fetch("/api/withdrawals", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: user?.id, pointsDeducted: cost, rewardDescription: `Expanded land to ${newLandSize}x${newLandSize}` })
+      });
+
+      setStudentData({ ...studentData, pointsBalance: newBalance, landSize: newLandSize });
+      showMessage("Land expanded!", "success");
+    } catch (e) { showMessage("Failed to expand land", "error"); } finally { setLoading(false); }
+  };
+
   /* ─── Save helper ─── */
 
   const saveObjects = async (newObjects: PlacedObject[], newBalance: number, desc: string, pointsDeducted: number) => {
@@ -2181,6 +2213,9 @@ export default function VoxelBuilder() {
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
+    const landSize = (studentData?.landSize ?? 50) / 2;
+    if (x < -landSize || x > landSize || z < -landSize || z > landSize) return;
+
     if (studentData?.isClassTime || isExploreMode) return;
     if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'roof') return;
     if (toolMode === 'build') placeBlock(x, y, z, 'block');
@@ -2263,6 +2298,9 @@ export default function VoxelBuilder() {
       nz = Math.round(point.z + faceNormal.z * 0.5);
     }
 
+    const landSize = (studentData?.landSize ?? 50) / 2;
+    if (nx < -landSize || nx > landSize || nz < -landSize || nz > landSize) return;
+
     if (toolMode === 'build') placeBlock(nx, ny, nz, 'block');
     if (toolMode === 'items') placeItem(nx, ny, nz);
   };
@@ -2273,8 +2311,13 @@ export default function VoxelBuilder() {
     if (toolMode === 'paint') return; // Cannot paint items
     if (toolMode === 'roof') return; // Cannot use items as roof corners
     if (toolMode === 'rotate') { rotateObject(obj); return; }
-    if (toolMode === 'build') placeBlock(obj.x + 1, 0, obj.z, 'block');
-    if (toolMode === 'items') placeItem(obj.x + 1, 0, obj.z);
+    const nx = obj.x + 1;
+    const nz = obj.z;
+    const landSize = (studentData?.landSize ?? 50) / 2;
+    if (nx < -landSize || nx > landSize || nz < -landSize || nz > landSize) return;
+
+    if (toolMode === 'build') placeBlock(nx, 0, nz, 'block');
+    if (toolMode === 'items') placeItem(nx, 0, nz);
   };
 
   /* ─── Place Block ─── */
@@ -2726,6 +2769,9 @@ export default function VoxelBuilder() {
             <button onClick={() => setShowAvatars(!showAvatars)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-fuchsia-600 hover:text-fuchsia-800 transition-colors pointer-events-auto flex items-center justify-center" title="Avatar Shop">
               <span className="text-xl leading-none">👤</span>
             </button>
+            <button onClick={() => setShowLandUpgrade(!showLandUpgrade)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-emerald-600 hover:text-emerald-800 transition-colors pointer-events-auto flex items-center justify-center" title="Expand Land">
+              <span className="text-xl leading-none">🗺️</span>
+            </button>
             <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
               {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
             </button>
@@ -2796,6 +2842,31 @@ export default function VoxelBuilder() {
         )}
       </AnimatePresence>
 
+      {/* ─── Land Upgrade Overlay ─── */}
+      <AnimatePresence>
+        {showLandUpgrade && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute top-36 right-20 z-40 bg-white/95 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-emerald-200 pointer-events-auto min-w-[200px]">
+            <h3 className="font-black text-emerald-800 mb-3 text-center flex items-center justify-center gap-2">
+              <span>Expand Land</span>
+            </h3>
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-bold text-slate-600 text-center">
+                Current Size: {studentData?.landSize ?? 50}x{studentData?.landSize ?? 50}
+              </p>
+              <button 
+                onClick={handleLandPurchase} 
+                className="w-full py-2 bg-amber-400 hover:bg-amber-500 text-white rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 transition-transform hover:scale-105"
+              >
+                Buy (+{settings?.landUpgradeAmount ?? 50})
+                <br />
+                {settings?.landUpgradeCost ?? 1000} pts
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ─── Mobile D-Pad (Explore Mode) ─── */}
       {isExploreMode && <MobileDPad />}
 
@@ -2847,7 +2918,7 @@ export default function VoxelBuilder() {
             </Text>
           )}
 
-          <Ground onClick={handleGroundClick} isDragging={isDraggingFn} />
+          <Ground landSize={studentData?.landSize ?? 50} onClick={handleGroundClick} isDragging={isDraggingFn} />
           {isExploreMode && <BakeShadows />}
           
           {(() => {
