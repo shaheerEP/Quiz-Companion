@@ -1969,7 +1969,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
-          <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
+          <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
 
           {worldData.builderQuote && (
             <Text
@@ -2026,7 +2026,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   const blocks = opaqueBoxes.filter(o => Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
-                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow>
+                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
                       <primitive object={getCurvedGeometry(level)} attach="geometry" />
                       <meshStandardMaterial />
                       {blocks.map((data, idx) => {
@@ -2049,7 +2049,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   const blocks = glassBoxes.filter(o => Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
-                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow>
+                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
                       <primitive object={getCurvedGeometry(level)} attach="geometry" />
                       <meshStandardMaterial transparent opacity={0.6} />
                       {blocks.map((data, idx) => {
@@ -2073,7 +2073,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   if (roofs.length === 0) return null;
                   const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
                   return (
-                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
+                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
                       <coneGeometry args={[0.71, 1, segments]} />
                       <meshStandardMaterial />
                       {roofs.map((data, idx) => (

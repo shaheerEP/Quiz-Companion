@@ -2961,7 +2961,7 @@ export default function VoxelBuilder() {
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
-          <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} />
+          <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
           
           {settings?.builderQuote && (
             <Text
