@@ -34,6 +34,8 @@ export interface IStudent extends Document {
     w?: number;
     d?: number;
     h?: number;
+    width?: number;
+    curveness?: number;
   }>;
 }
 
@@ -76,6 +78,8 @@ const StudentSchema = new Schema<IStudent>(
           w: Number,
           d: Number,
           h: Number,
+          width: Number,
+          curveness: Number
         }
       ],
       default: []

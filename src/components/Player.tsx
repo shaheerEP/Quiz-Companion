@@ -143,11 +143,11 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       let startY = 0;
       objects.forEach(o => {
 
-        const hw = (o.w || 1) / 2;
-        const hd = (o.d || 1) / 2;
+        const hw = (o.w || o.width || 1) / 2;
+        const hd = (o.d || o.depth || 1) / 2;
         if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw &&
           pos.current.z >= o.z - hd && pos.current.z <= o.z + hd) {
-          const topY = o.y + (o.h || 1);
+          const topY = o.y + (o.h || o.thickness || 1);
           if (topY > startY) startY = topY;
         }
       });
@@ -215,8 +215,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
       objects.forEach(o => {
 
-        const hw = (o.w || 1) / 2;
-        const hd = (o.d || 1) / 2;
+        const hw = (o.w || o.width || 1) / 2;
+        const hd = (o.d || o.depth || 1) / 2;
         const blockMinX = o.x - hw;
         const blockMaxX = o.x + hw;
         const blockMinZ = o.z - hd;
@@ -229,7 +229,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
         if (playerMaxX > blockMinX && playerMinX < blockMaxX &&
           playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
-          const topY = o.y + (o.h || 1);
+          const topY = o.y + (o.h || o.thickness || 1);
           const bottomY = o.y;
 
           if (topY <= currentY + stepHeight) {

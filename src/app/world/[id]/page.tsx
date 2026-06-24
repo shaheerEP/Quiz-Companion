@@ -9,6 +9,7 @@ import { Copy, Check, Gamepad2, X, LogIn, LogOut } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
+import { getCurvedGeometry } from "@/components/BlockGeometries";
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -19,6 +20,8 @@ export type PlacedObject = {
   w?: number; d?: number; h?: number;
   thickness?: number;
   depth?: number;
+  width?: number;
+  curveness?: number;
 };
 
 /* ─── 3D Components (Read-Only) ─── */
@@ -2003,55 +2006,66 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               } else {
+                const width = data.width || 1;
                 const thickness = data.thickness || 1;
                 const depth = data.depth || 1;
                 return {
                   position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
-                  scale: [1, thickness, depth] as [number, number, number],
+                  scale: [width, thickness, depth] as [number, number, number],
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               }
             };
 
+            const curvenessLevels = [0, 1, 2, 3, 4];
+
             return (
               <>
-                {opaqueBoxes.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial />
-                    {opaqueBoxes.map((data, idx) => {
-                      const props = getBoxProps(data);
-                      return (
-                        <Instance
-                          key={`ob-${idx}`}
-                          position={props.position}
-                          scale={props.scale}
-                          rotation={props.rotation}
-                          color={data.color}
-                        />
-                      );
-                    })}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const blocks = opaqueBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`ob-${level}-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })}
 
-                {glassBoxes.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial transparent opacity={0.6} />
-                    {glassBoxes.map((data, idx) => {
-                      const props = getBoxProps(data);
-                      return (
-                        <Instance
-                          key={`gb-${idx}`}
-                          position={props.position}
-                          scale={props.scale}
-                          rotation={props.rotation}
-                          color={data.color}
-                        />
-                      );
-                    })}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const blocks = glassBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gb-${level}-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })}
 
                 {opaqueRoofs.length > 0 && (
                   <Instances limit={100000} castShadow receiveShadow>

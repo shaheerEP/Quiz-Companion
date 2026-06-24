@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
+import { getCurvedGeometry } from "@/components/BlockGeometries";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -24,6 +25,8 @@ export type PlacedObject = {
   thickness?: number;
   depth?: number;
   w?: number; d?: number; h?: number;
+  width?: number;
+  curveness?: number;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate';
@@ -1989,8 +1992,10 @@ export default function VoxelBuilder() {
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
+  const [activeWidth, setActiveWidth] = useState<number>(1);
   const [activeThickness, setActiveThickness] = useState<number>(1);
   const [activeDepth, setActiveDepth] = useState<number>(1);
+  const [activeCurveness, setActiveCurveness] = useState<number>(0);
   const [activeRotation, setActiveRotation] = useState<number>(0);
   const [isEditingBlocks, setIsEditingBlocks] = useState(false);
   const isEditingRef = useRef(false);
@@ -2015,6 +2020,11 @@ export default function VoxelBuilder() {
     return newObjects;
   };
 
+  const handleWidthChange = (val: number) => {
+    setActiveWidth(val);
+    if (isEditingBlocks) updateSelectedBlocks({ width: val });
+  };
+
   const handleThicknessChange = (val: number) => {
     setActiveThickness(val);
     if (isEditingBlocks) updateSelectedBlocks({ thickness: val });
@@ -2023,6 +2033,11 @@ export default function VoxelBuilder() {
   const handleDepthChange = (val: number) => {
     setActiveDepth(val);
     if (isEditingBlocks) updateSelectedBlocks({ depth: val });
+  };
+
+  const handleCurvenessChange = (val: number) => {
+    setActiveCurveness(val);
+    if (isEditingBlocks) updateSelectedBlocks({ curveness: val });
   };
 
   const handleRotationChange = (val: number) => {
@@ -2345,7 +2360,7 @@ export default function VoxelBuilder() {
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type, thickness: activeThickness, depth: activeDepth, rotationY: (activeRotation * Math.PI) / 180 };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180 };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - actualBlockCost;
     setObjects(newObjects);
@@ -2602,17 +2617,31 @@ export default function VoxelBuilder() {
                   </button>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Depth</span>
+                      <span>Width</span>
+                      <span>{activeWidth}</span>
+                    </div>
+                    <input type="range" min="0.1" max="1" step="0.1" value={activeWidth} onChange={e => handleWidthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                      <span>Height</span>
                       <span>{activeThickness}</span>
                     </div>
                     <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Thick</span>
+                      <span>Depth</span>
                       <span>{activeDepth}</span>
                     </div>
                     <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                      <span>Curve</span>
+                      <span>{activeCurveness}</span>
+                    </div>
+                    <input type="range" min="0" max="4" step="1" value={activeCurveness} onChange={e => handleCurvenessChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
@@ -2939,57 +2968,68 @@ export default function VoxelBuilder() {
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               } else {
+                const width = data.width || 1;
                 const thickness = data.thickness || 1;
                 const depth = data.depth || 1;
                 return {
                   position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
-                  scale: [1, thickness, depth] as [number, number, number],
+                  scale: [width, thickness, depth] as [number, number, number],
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               }
             };
+            
+            const curvenessLevels = [0, 1, 2, 3, 4];
 
             return (
               <>
-                {opaqueBoxes.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial />
-                    {opaqueBoxes.map((data, idx) => {
-                      const props = getBoxProps(data);
-                      return (
-                        <Instance
-                          key={`ob-${idx}`}
-                          position={props.position}
-                          scale={props.scale}
-                          rotation={props.rotation}
-                          color={data.color}
-                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                        />
-                      );
-                    })}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const blocks = opaqueBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`ob-${level}-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })}
 
-                {glassBoxes.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial transparent opacity={0.6} />
-                    {glassBoxes.map((data, idx) => {
-                      const props = getBoxProps(data);
-                      return (
-                        <Instance
-                          key={`gb-${idx}`}
-                          position={props.position}
-                          scale={props.scale}
-                          rotation={props.rotation}
-                          color={data.color}
-                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                        />
-                      );
-                    })}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const blocks = glassBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gb-${level}-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })}
 
                 {opaqueRoofs.length > 0 && (
                   <Instances limit={100000} castShadow receiveShadow>
