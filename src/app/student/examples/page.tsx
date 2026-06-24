@@ -1979,35 +1979,47 @@ export default function ExampleWorldsViewer() {
                   );
                 })}
 
-                {opaqueRoofs.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <coneGeometry args={[0.71, 1, 4]} />
-                    <meshStandardMaterial />
-                    {opaqueRoofs.map((data, idx) => (
-                      <Instance
-                        key={`or-${idx}`}
-                        position={[data.x, data.y, data.z]}
-                        rotation={[0, Math.PI / 4, 0]}
-                        color={data.color}
-                      />
-                    ))}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);
+                  if (roofs.length === 0) return null;
+                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                  return (
+                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <coneGeometry args={[0.71, 1, segments]} />
+                      <meshStandardMaterial />
+                      {roofs.map((data, idx) => (
+                        <Instance
+                          key={`or-${level}-${idx}`}
+                          position={[data.x, data.y, data.z]}
+                          rotation={[0, Math.PI / 4, 0]}
+                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                          color={data.color}
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
 
-                {glassRoofs.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <coneGeometry args={[0.71, 1, 4]} />
-                    <meshStandardMaterial transparent opacity={0.6} />
-                    {glassRoofs.map((data, idx) => (
-                      <Instance
-                        key={`gr-${idx}`}
-                        position={[data.x, data.y, data.z]}
-                        rotation={[0, Math.PI / 4, 0]}
-                        color={data.color}
-                      />
-                    ))}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const roofs = glassRoofs.filter(o => Math.round(o.curveness || 0) === level);
+                  if (roofs.length === 0) return null;
+                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                  return (
+                    <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <coneGeometry args={[0.71, 1, segments]} />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {roofs.map((data, idx) => (
+                        <Instance
+                          key={`gr-${level}-${idx}`}
+                          position={[data.x, data.y, data.z]}
+                          rotation={[0, Math.PI / 4, 0]}
+                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                          color={data.color}
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
 
                 {items.map((obj, idx) => {
                   const itemDef = shopItems.find((i: any) => i.id === obj.itemId);

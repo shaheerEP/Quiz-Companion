@@ -2027,7 +2027,7 @@ export default function VoxelBuilder() {
 
   const handleThicknessChange = (val: number) => {
     setActiveThickness(val);
-    if (isEditingBlocks) updateSelectedBlocks({ thickness: val });
+    if (isEditingBlocks) updateSelectedBlocks({ thickness: val, h: val });
   };
 
   const handleDepthChange = (val: number) => {
@@ -2233,7 +2233,15 @@ export default function VoxelBuilder() {
     if (x < -landSize || x > landSize || z < -landSize || z > landSize) return;
 
     if (studentData?.isClassTime || isExploreMode) return;
-    if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'roof') return;
+    if (toolMode === 'eraser' || toolMode === 'paint') return;
+    
+    if ((toolMode === 'build' || toolMode === 'roof') && isEditingRef.current) {
+      setSelectedBlockIds([]);
+      return;
+    }
+    
+    if (toolMode === 'roof') return;
+
     if (toolMode === 'build') placeBlock(x, y, z, 'block');
     if (toolMode === 'items') placeItem(x, y, z);
   };
@@ -2278,12 +2286,12 @@ export default function VoxelBuilder() {
 
       const width = maxX - minX + 1;
       const depth = maxZ - minZ + 1;
-      const height = 1;
+      const height = activeThickness;
       const cx = minX + (width - 1) / 2;
       const cz = minZ + (depth - 1) / 2;
       const cy = maxY + 1;
 
-      placeLargeRoof(cx, cy, cz, width, depth, height);
+      placeLargeRoof(cx, cy, cz, width, depth, height, activeCurveness);
       setSelectedRoofCorners([]);
     }
   };
@@ -2292,10 +2300,10 @@ export default function VoxelBuilder() {
     if (studentData?.isClassTime || isExploreMode) return;
     if (toolMode === 'eraser') { eraseObject(obj); return; }
     if (toolMode === 'paint') { paintObject(obj); return; }
-    if (toolMode === 'roof') { handleRoofSelection(obj); return; }
+    if (toolMode === 'roof' && !isEditingRef.current) { handleRoofSelection(obj); return; }
     if (toolMode === 'rotate') { rotateObject(obj); return; }
     
-    if (toolMode === 'build' && isEditingBlocks) {
+    if ((toolMode === 'build' || toolMode === 'roof') && isEditingRef.current) {
       const id = getBlockId(obj);
       setSelectedBlockIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
       return;
@@ -2327,6 +2335,9 @@ export default function VoxelBuilder() {
     if (toolMode === 'paint') return; // Cannot paint items
     if (toolMode === 'roof') return; // Cannot use items as roof corners
     if (toolMode === 'rotate') { rotateObject(obj); return; }
+    
+    if (toolMode === 'build' && isEditingRef.current) return; // Ignore clicks on items when editing blocks
+
     const nx = obj.x + 1;
     const nz = obj.z;
     const landSize = (studentData?.landSize ?? 50) / 2;
@@ -2338,12 +2349,12 @@ export default function VoxelBuilder() {
 
   /* ─── Place Block ─── */
 
-  const placeLargeRoof = (x: number, y: number, z: number, w: number, d: number, h: number) => {
+  const placeLargeRoof = (x: number, y: number, z: number, w: number, d: number, h: number, curveness: number) => {
     if (!studentData) return;
     const cost = actualRoofCost;
     if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type: 'large-roof', w, d, h };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type: 'large-roof', w, d, h, curveness };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - cost;
     setObjects(newObjects);
@@ -2604,7 +2615,7 @@ export default function VoxelBuilder() {
               </div>
             </div>
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
-              {toolMode === 'build' && (
+              {(toolMode === 'build' || toolMode === 'roof') && (
                 <div className="flex items-center gap-3 pr-3 border-r border-sky-200">
                   <button onClick={() => {
                     if (isEditingBlocks) {
@@ -2613,15 +2624,19 @@ export default function VoxelBuilder() {
                     }
                     setIsEditingBlocks(!isEditingBlocks);
                   }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${isEditingBlocks ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    {isEditingBlocks ? 'Done Editing' : 'Edit Blocks'}
+                    {isEditingBlocks ? 'Done Editing' : (toolMode === 'roof' ? 'Edit Roofs' : 'Edit Blocks')}
                   </button>
-                  <div className="flex flex-col gap-1 w-24">
-                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Width</span>
-                      <span>{activeWidth}</span>
+
+                  {toolMode === 'build' && (
+                    <div className="flex flex-col gap-1 w-24">
+                      <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                        <span>Width</span>
+                        <span>{activeWidth}</span>
+                      </div>
+                      <input type="range" min="0.1" max="1" step="0.1" value={activeWidth} onChange={e => handleWidthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                     </div>
-                    <input type="range" min="0.1" max="1" step="0.1" value={activeWidth} onChange={e => handleWidthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
-                  </div>
+                  )}
+
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                       <span>Height</span>
@@ -2629,13 +2644,17 @@ export default function VoxelBuilder() {
                     </div>
                     <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
-                  <div className="flex flex-col gap-1 w-24">
-                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Depth</span>
-                      <span>{activeDepth}</span>
+
+                  {toolMode === 'build' && (
+                    <div className="flex flex-col gap-1 w-24">
+                      <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                        <span>Depth</span>
+                        <span>{activeDepth}</span>
+                      </div>
+                      <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                     </div>
-                    <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
-                  </div>
+                  )}
+
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                       <span>Curve</span>
@@ -2643,13 +2662,16 @@ export default function VoxelBuilder() {
                     </div>
                     <input type="range" min="0" max="4" step="1" value={activeCurveness} onChange={e => handleCurvenessChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
-                  <div className="flex flex-col gap-1 w-24">
-                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Rot</span>
-                      <span>{activeRotation}°</span>
+                  
+                  {toolMode === 'build' && (
+                    <div className="flex flex-col gap-1 w-24">
+                      <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                        <span>Rot</span>
+                        <span>{activeRotation}°</span>
+                      </div>
+                      <input type="range" min="0" max="360" step="15" value={activeRotation} onChange={e => handleRotationChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                     </div>
-                    <input type="range" min="0" max="360" step="15" value={activeRotation} onChange={e => handleRotationChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
-                  </div>
+                  )}
                 </div>
               )}
               {BASE_COLORS.map((b) => (
@@ -3031,37 +3053,49 @@ export default function VoxelBuilder() {
                   );
                 })}
 
-                {opaqueRoofs.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <coneGeometry args={[0.71, 1, 4]} />
-                    <meshStandardMaterial />
-                    {opaqueRoofs.map((data, idx) => (
-                      <Instance
-                        key={`or-${idx}`}
-                        position={[data.x, data.y, data.z]}
-                        rotation={[0, Math.PI / 4, 0]}
-                        color={data.color}
-                        onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                      />
-                    ))}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);
+                  if (roofs.length === 0) return null;
+                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                  return (
+                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <coneGeometry args={[0.71, 1, segments]} />
+                      <meshStandardMaterial />
+                      {roofs.map((data, idx) => (
+                        <Instance
+                          key={`or-${level}-${idx}`}
+                          position={[data.x, data.y, data.z]}
+                          rotation={[0, Math.PI / 4, 0]}
+                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                          color={data.color}
+                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
 
-                {glassRoofs.length > 0 && (
-                  <Instances limit={100000} castShadow receiveShadow>
-                    <coneGeometry args={[0.71, 1, 4]} />
-                    <meshStandardMaterial transparent opacity={0.6} />
-                    {glassRoofs.map((data, idx) => (
-                      <Instance
-                        key={`gr-${idx}`}
-                        position={[data.x, data.y, data.z]}
-                        rotation={[0, Math.PI / 4, 0]}
-                        color={data.color}
-                        onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                      />
-                    ))}
-                  </Instances>
-                )}
+                {curvenessLevels.map(level => {
+                  const roofs = glassRoofs.filter(o => Math.round(o.curveness || 0) === level);
+                  if (roofs.length === 0) return null;
+                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                  return (
+                    <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
+                      <coneGeometry args={[0.71, 1, segments]} />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {roofs.map((data, idx) => (
+                        <Instance
+                          key={`gr-${level}-${idx}`}
+                          position={[data.x, data.y, data.z]}
+                          rotation={[0, Math.PI / 4, 0]}
+                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                          color={data.color}
+                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
 
                 {/* Selected Highlights */}
                 {opaqueBoxes.concat(glassBoxes).map((data, idx) => {
