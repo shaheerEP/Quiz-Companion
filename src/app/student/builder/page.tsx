@@ -2313,13 +2313,21 @@ export default function VoxelBuilder() {
     
     // For large flat roofs, calculate adjacent block center accurately using point and normal
     let nx = obj.x + faceNormal.x;
-    let ny = obj.y + faceNormal.y;
     let nz = obj.z + faceNormal.z;
+    let ny = obj.y + faceNormal.y;
     
     if (obj.type === 'large-roof' && point && faceNormal) {
       nx = Math.round(point.x + faceNormal.x * 0.5);
-      ny = Math.round(point.y + faceNormal.y * 0.5);
       nz = Math.round(point.z + faceNormal.z * 0.5);
+    }
+
+    if (faceNormal.y === 1) {
+      const h = (obj.type === 'large-roof' ? obj.h : obj.thickness) || 1;
+      ny = Number((obj.y + h).toFixed(2));
+    } else if (faceNormal.y === -1) {
+      ny = Number((obj.y - activeThickness).toFixed(2));
+    } else {
+      ny = obj.y;
     }
 
     const landSize = (studentData?.landSize ?? 50) / 2;
@@ -2984,9 +2992,10 @@ export default function VoxelBuilder() {
 
             const getBoxProps = (data: PlacedObject) => {
               if (data.type === 'large-roof') {
+                const h = data.h || 1;
                 return {
-                  position: [data.x, data.y, data.z] as [number, number, number],
-                  scale: [data.w || 1, data.h || 1, data.d || 1] as [number, number, number],
+                  position: [data.x, data.y - 0.5 + h / 2, data.z] as [number, number, number],
+                  scale: [data.w || 1, h, data.d || 1] as [number, number, number],
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               } else {
@@ -3064,7 +3073,7 @@ export default function VoxelBuilder() {
                       {roofs.map((data, idx) => (
                         <Instance
                           key={`or-${level}-${idx}`}
-                          position={[data.x, data.y, data.z]}
+                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
                           rotation={[0, Math.PI / 4, 0]}
                           scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
                           color={data.color}
@@ -3086,7 +3095,7 @@ export default function VoxelBuilder() {
                       {roofs.map((data, idx) => (
                         <Instance
                           key={`gr-${level}-${idx}`}
-                          position={[data.x, data.y, data.z]}
+                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
                           rotation={[0, Math.PI / 4, 0]}
                           scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
                           color={data.color}

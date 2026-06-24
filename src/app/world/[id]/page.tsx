@@ -2000,9 +2000,10 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
 
             const getBoxProps = (data: PlacedObject) => {
               if (data.type === 'large-roof') {
+                const h = data.h || 1;
                 return {
-                  position: [data.x, data.y, data.z] as [number, number, number],
-                  scale: [data.w || 1, data.h || 1, data.d || 1] as [number, number, number],
+                  position: [data.x, data.y - 0.5 + h / 2, data.z] as [number, number, number],
+                  scale: [data.w || 1, h, data.d || 1] as [number, number, number],
                   rotation: [0, data.rotationY || 0, 0] as [number, number, number]
                 };
               } else {
@@ -2078,7 +2079,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                       {roofs.map((data, idx) => (
                         <Instance
                           key={`or-${level}-${idx}`}
-                          position={[data.x, data.y, data.z]}
+                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
                           rotation={[0, Math.PI / 4, 0]}
                           scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
                           color={data.color}
@@ -2099,7 +2100,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                       {roofs.map((data, idx) => (
                         <Instance
                           key={`gr-${level}-${idx}`}
-                          position={[data.x, data.y, data.z]}
+                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
                           rotation={[0, Math.PI / 4, 0]}
                           scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
                           color={data.color}
