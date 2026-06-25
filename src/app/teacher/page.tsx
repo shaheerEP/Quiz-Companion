@@ -38,47 +38,59 @@ export default function TeacherDashboard() {
   }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
 
   const selectStudent = async (studentId: string, currentStudents: any[]) => {
-    if (!studentId) {
-      setActiveStudent(null);
-      setActiveSession(null);
-      localStorage.removeItem("lastSelectedStudentId");
-      return;
-    }
+    try {
+      if (!studentId) {
+        setActiveStudent(null);
+        setActiveSession(null);
+        if (typeof window !== 'undefined') window.localStorage.removeItem("lastSelectedStudentId");
+        return;
+      }
 
-    const student = currentStudents.find(s => s._id === studentId);
-    if (!student) return;
-    
-    setActiveStudent(student);
-    localStorage.setItem("lastSelectedStudentId", studentId);
+      const student = currentStudents.find(s => String(s._id) === String(studentId));
+      if (!student) {
+        if (typeof window !== 'undefined') window.localStorage.removeItem("lastSelectedStudentId");
+        return;
+      }
+      
+      setActiveStudent(student);
+      if (typeof window !== 'undefined') window.localStorage.setItem("lastSelectedStudentId", String(studentId));
 
-    const res = await fetch(`/api/sessions?studentId=${studentId}`);
-    const sessions = await res.json();
+      const res = await fetch(`/api/sessions?studentId=${studentId}`);
+      if (!res.ok) throw new Error("Failed to fetch sessions");
+      const sessions = await res.json();
 
-    const historyRes = await fetch(`/api/history?studentId=${studentId}`);
-    setHistoryItems(await historyRes.json());
+      const historyRes = await fetch(`/api/history?studentId=${studentId}`);
+      if (!historyRes.ok) throw new Error("Failed to fetch history");
+      setHistoryItems(await historyRes.json());
 
-    if (sessions.length > 0 && !sessions[0].isCompleted) {
-      setActiveSession(sessions[0]);
-    } else {
-      const newSessionRes = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId: student._id })
-      });
-      const newSession = await newSessionRes.json();
-      setActiveSession(newSession);
+      if (sessions && sessions.length > 0 && !sessions[0].isCompleted) {
+        setActiveSession(sessions[0]);
+      } else {
+        const newSessionRes = await fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: student._id })
+        });
+        if (!newSessionRes.ok) throw new Error("Failed to create session");
+        const newSession = await newSessionRes.json();
+        setActiveSession(newSession);
+      }
+    } catch (error) {
+      console.error("Error in selectStudent:", error);
     }
   };
 
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(setSettings);
+    fetch("/api/settings").then(res => res.json()).then(setSettings).catch(console.error);
     fetch("/api/students").then(res => res.json()).then(data => {
       setStudents(data);
-      const lastId = localStorage.getItem("lastSelectedStudentId");
-      if (lastId && data.find((s: any) => s._id === lastId)) {
-        selectStudent(lastId, data);
+      if (typeof window !== 'undefined') {
+        const lastId = window.localStorage.getItem("lastSelectedStudentId");
+        if (lastId && data.find((s: any) => String(s._id) === String(lastId))) {
+          selectStudent(lastId, data);
+        }
       }
-    });
+    }).catch(console.error);
   }, []);
 
   const handleToggleClassTime = async () => {
