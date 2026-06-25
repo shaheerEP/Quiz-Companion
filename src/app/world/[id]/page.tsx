@@ -2021,8 +2021,6 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             const curvenessLevels = [0, 1, 2, 3, 4];
             const boxShapes = ['box', undefined];
 
-            const curvenessLevels = [0, 1, 2, 3, 4];
-
             return (
               <>
                 {curvenessLevels.map(level => {
