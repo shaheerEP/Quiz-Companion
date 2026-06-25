@@ -94,33 +94,4 @@ export const getPyramidGeometry = () => {
   return geometry;
 };
 
-export const getWedgeGeometry = () => {
-  if (geometries[200]) return geometries[200];
-  const shape = new THREE.Shape();
-  shape.moveTo(-0.5, -0.5);
-  shape.lineTo(0.5, -0.5);
-  shape.lineTo(-0.5, 0.5); // Triangle cross-section
-  shape.lineTo(-0.5, -0.5);
-  const geometry = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false });
-  geometry.translate(0, 0, -0.5); // Center Z
-  
-  geometry.computeBoundingSphere();
-  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
-  
-  geometries[200] = geometry;
-  return geometry;
-};
 
-export const getPyramidGeometry = () => {
-  if (geometries[201]) return geometries[201];
-  // A pyramid is a 4-sided cone
-  // Radius needs to be sqrt(0.5^2 + 0.5^2) = 0.7071 to exactly fit a 1x1 base
-  const geometry = new THREE.ConeGeometry(0.7071, 1, 4);
-  geometry.rotateY(Math.PI / 4); // Align the base to the grid axes
-  
-  geometry.computeBoundingSphere();
-  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
-  
-  geometries[201] = geometry;
-  return geometry;
-};
