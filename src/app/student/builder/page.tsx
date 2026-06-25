@@ -2013,37 +2013,42 @@ export default function VoxelBuilder() {
     const hasHeightUpdate = updates.thickness !== undefined || updates.h !== undefined;
     let newObjects = [...objects];
     
+    const selectedIndices = newObjects
+      .map((o, idx) => selectedBlockIds.includes(getBlockId(o)) ? idx : -1)
+      .filter(idx => idx !== -1);
+    
     if (hasHeightUpdate) {
-      for (let i = 0; i < newObjects.length; i++) {
+      for (const i of selectedIndices) {
         const o = newObjects[i];
-        const id = getBlockId(o);
-        if (selectedBlockIds.includes(id)) {
-          const oldHeight = (o.type === 'large-roof' ? o.h : o.thickness) || 1;
-          const newHeight = (o.type === 'large-roof' ? updates.h : updates.thickness) ?? oldHeight;
-          const delta = newHeight - oldHeight;
-          
-          if (delta !== 0) {
-            for (let j = 0; j < newObjects.length; j++) {
-              const above = newObjects[j];
-              if (above.x === o.x && above.z === o.z && above.y > o.y) {
-                newObjects[j] = { ...above, y: Number((above.y + delta).toFixed(2)) };
-              }
+        const oldHeight = (o.type === 'large-roof' ? o.h : o.thickness) || 1;
+        const newHeight = (o.type === 'large-roof' ? updates.h : updates.thickness) ?? oldHeight;
+        const delta = newHeight - oldHeight;
+        
+        if (delta !== 0) {
+          const oW = o.w || 1;
+          const oD = o.d || 1;
+          const minX = o.x - (oW - 1) / 2;
+          const maxX = o.x + (oW - 1) / 2;
+          const minZ = o.z - (oD - 1) / 2;
+          const maxZ = o.z + (oD - 1) / 2;
+
+          for (let j = 0; j < newObjects.length; j++) {
+            const above = newObjects[j];
+            if (above.x >= minX && above.x <= maxX && above.z >= minZ && above.z <= maxZ && above.y > o.y) {
+              newObjects[j] = { ...above, y: Number((above.y + delta).toFixed(2)) };
             }
           }
-          newObjects[i] = { ...newObjects[i], ...updates };
         }
+        newObjects[i] = { ...newObjects[i], ...updates };
       }
     } else {
-      newObjects = newObjects.map(o => {
-        const id = getBlockId(o);
-        if (selectedBlockIds.includes(id)) {
-          return { ...o, ...updates };
-        }
-        return o;
-      });
+      for (const i of selectedIndices) {
+        newObjects[i] = { ...newObjects[i], ...updates };
+      }
     }
 
     setObjects(newObjects);
+    objectsRef.current = newObjects;
     return newObjects;
   };
 
