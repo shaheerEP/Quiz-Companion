@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
-import { getCurvedGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry } from "@/components/BlockGeometries";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -2009,13 +2009,40 @@ export default function VoxelBuilder() {
 
   const updateSelectedBlocks = (updates: Partial<PlacedObject>) => {
     if (selectedBlockIds.length === 0) return null;
-    const newObjects = objects.map(o => {
-      const id = getBlockId(o);
-      if (selectedBlockIds.includes(id)) {
-        return { ...o, ...updates };
+    
+    const hasHeightUpdate = updates.thickness !== undefined || updates.h !== undefined;
+    let newObjects = [...objects];
+    
+    if (hasHeightUpdate) {
+      for (let i = 0; i < newObjects.length; i++) {
+        const o = newObjects[i];
+        const id = getBlockId(o);
+        if (selectedBlockIds.includes(id)) {
+          const oldHeight = (o.type === 'large-roof' ? o.h : o.thickness) || 1;
+          const newHeight = (o.type === 'large-roof' ? updates.h : updates.thickness) ?? oldHeight;
+          const delta = newHeight - oldHeight;
+          
+          if (delta !== 0) {
+            for (let j = 0; j < newObjects.length; j++) {
+              const above = newObjects[j];
+              if (above.x === o.x && above.z === o.z && above.y > o.y) {
+                newObjects[j] = { ...above, y: Number((above.y + delta).toFixed(2)) };
+              }
+            }
+          }
+          newObjects[i] = { ...newObjects[i], ...updates };
+        }
       }
-      return o;
-    });
+    } else {
+      newObjects = newObjects.map(o => {
+        const id = getBlockId(o);
+        if (selectedBlockIds.includes(id)) {
+          return { ...o, ...updates };
+        }
+        return o;
+      });
+    }
+
     setObjects(newObjects);
     return newObjects;
   };
@@ -3068,7 +3095,7 @@ export default function VoxelBuilder() {
                   const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
                   return (
                     <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <coneGeometry args={[0.71, 1, segments]} />
+                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
                       <meshStandardMaterial />
                       {roofs.map((data, idx) => (
                         <Instance
@@ -3090,7 +3117,7 @@ export default function VoxelBuilder() {
                   const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
                   return (
                     <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <coneGeometry args={[0.71, 1, segments]} />
+                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
                       <meshStandardMaterial transparent opacity={0.6} />
                       {roofs.map((data, idx) => (
                         <Instance

@@ -9,7 +9,7 @@ import { Copy, Check, Gamepad2, X, LogIn, LogOut } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
-import { getCurvedGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry } from "@/components/BlockGeometries";
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -2074,7 +2074,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
                   return (
                     <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <coneGeometry args={[0.71, 1, segments]} />
+                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
                       <meshStandardMaterial />
                       {roofs.map((data, idx) => (
                         <Instance
@@ -2095,7 +2095,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
                   return (
                     <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <coneGeometry args={[0.71, 1, segments]} />
+                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
                       <meshStandardMaterial transparent opacity={0.6} />
                       {roofs.map((data, idx) => (
                         <Instance

@@ -9,6 +9,8 @@ export const getCurvedGeometry = (level: number) => {
 
   if (safeLevel === 0) {
     const box = new THREE.BoxGeometry(1, 1, 1);
+    box.computeBoundingSphere();
+    if (box.boundingSphere) box.boundingSphere.radius = 10000;
     geometries[0] = box;
     return box;
   }
@@ -44,6 +46,19 @@ export const getCurvedGeometry = (level: number) => {
   geometry.translate(0, 0, -0.5); // Center along Z before rotation
   geometry.rotateX(Math.PI / 2); // Now Y goes from -0.5 to 0.5
   
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  
   geometries[safeLevel] = geometry;
   return geometry;
+};
+
+export const getRoofGeometry = (segments: number) => {
+  const cacheKey = 100 + segments;
+  if (geometries[cacheKey]) return geometries[cacheKey];
+  const cone = new THREE.ConeGeometry(0.71, 1, segments);
+  cone.computeBoundingSphere();
+  if (cone.boundingSphere) cone.boundingSphere.radius = 10000;
+  geometries[cacheKey] = cone;
+  return cone;
 };
