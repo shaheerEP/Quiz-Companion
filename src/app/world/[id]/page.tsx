@@ -1998,13 +1998,13 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
             const items = validObjects.filter(o => o.type === 'item');
 
-            const getBoxProps = (data: PlacedObject) => {
+            const getBoxProps = (data: any) => {
               if (data.type === 'large-roof') {
                 const h = data.h || 1;
                 return {
                   position: [data.x, data.y - 0.5 + h / 2, data.z] as [number, number, number],
                   scale: [data.w || 1, h, data.d || 1] as [number, number, number],
-                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
                 };
               } else {
                 const width = data.width || 1;
@@ -2013,17 +2013,20 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                 return {
                   position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
                   scale: [width, thickness, depth] as [number, number, number],
-                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
                 };
               }
             };
+            
+            const curvenessLevels = [0, 1, 2, 3, 4];
+            const boxShapes = ['box', undefined];
 
             const curvenessLevels = [0, 1, 2, 3, 4];
 
             return (
               <>
                 {curvenessLevels.map(level => {
-                  const blocks = opaqueBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  const blocks = opaqueBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
                     <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
@@ -2045,8 +2048,54 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                   );
                 })}
 
+                {(() => {
+                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'wedge');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                      <primitive object={getWedgeGeometry()} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`ow-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
+                {(() => {
+                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'pyramid');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                      <primitive object={getPyramidGeometry()} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`op-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
                 {curvenessLevels.map(level => {
-                  const blocks = glassBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  const blocks = glassBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
                     <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
@@ -2067,6 +2116,52 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
                     </Instances>
                   );
                 })}
+
+                {(() => {
+                  const blocks = glassBoxes.filter(o => o.blockShape === 'wedge');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                      <primitive object={getWedgeGeometry()} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gw-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
+                {(() => {
+                  const blocks = glassBoxes.filter(o => o.blockShape === 'pyramid');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                      <primitive object={getPyramidGeometry()} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gp-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
 
                 {curvenessLevels.map(level => {
                   const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);

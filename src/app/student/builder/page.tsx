@@ -22,11 +22,14 @@ export type PlacedObject = {
   type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
   rotationY?: number;
+  rotationX?: number;
+  rotationZ?: number;
   thickness?: number;
   depth?: number;
   w?: number; d?: number; h?: number;
   width?: number;
   curveness?: number;
+  blockShape?: 'box' | 'wedge' | 'pyramid';
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate';
@@ -1979,6 +1982,7 @@ export default function VoxelBuilder() {
   // Stable ref-based isDragging check used by 3D components
   const draggedRef = useRef(false);
   const isDraggingFn = useCallback(() => draggedRef.current, []);
+  const [isRotating, setIsRotating] = useState(false);
 
   const [toolMode, setToolMode] = useState<ToolMode>('build');
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -1997,6 +2001,7 @@ export default function VoxelBuilder() {
   const [activeDepth, setActiveDepth] = useState<number>(1);
   const [activeCurveness, setActiveCurveness] = useState<number>(0);
   const [activeRotation, setActiveRotation] = useState<number>(0);
+  const [activeShape, setActiveShape] = useState<'box' | 'wedge' | 'pyramid'>('box');
   const [isEditingBlocks, setIsEditingBlocks] = useState(false);
   const isEditingRef = useRef(false);
   useEffect(() => { isEditingRef.current = isEditingBlocks; }, [isEditingBlocks]);
@@ -2072,9 +2077,112 @@ export default function VoxelBuilder() {
     if (isEditingBlocks) updateSelectedBlocks({ curveness: val });
   };
 
+  const handleShapeChange = (shape: 'box' | 'wedge' | 'pyramid') => {
+    setActiveShape(shape);
+    if (isEditingBlocks) updateSelectedBlocks({ blockShape: shape });
+  };
+
   const handleRotationChange = (val: number) => {
     setActiveRotation(val);
     if (isEditingBlocks) updateSelectedBlocks({ rotationY: (val * Math.PI) / 180 });
+  };
+
+  const dragStartRotations = useRef<{index: number, rot: THREE.Quaternion, pos: THREE.Vector3, h: number}[]>([]);
+  const dragCenter = useRef<THREE.Vector3>(new THREE.Vector3());
+  const dragStartMouse = useRef<{x: number, y: number}>({x: 0, y: 0});
+
+  const handleHighlightPointerDown = (e: any, data: PlacedObject) => {
+    if (toolMode !== 'build' && toolMode !== 'roof') return;
+    e.stopPropagation();
+    e.target.setPointerCapture(e.pointerId);
+    setIsRotating(true);
+    dragStartMouse.current = { x: e.clientX, y: e.clientY };
+    
+    const selectedIndices = objectsRef.current
+      .map((o, idx) => selectedBlockIds.includes(getBlockId(o)) ? idx : -1)
+      .filter(idx => idx !== -1);
+
+    dragStartRotations.current = selectedIndices.map(i => {
+      const o = objectsRef.current[i];
+      const euler = new THREE.Euler(o.rotationX || 0, o.rotationY || 0, o.rotationZ || 0, 'XYZ');
+      const thickness = o.thickness || 1;
+      const h = o.type === 'large-roof' ? (o.h || 1) : thickness;
+      const posY = o.y - 0.5 + h / 2;
+      return {
+        index: i,
+        rot: new THREE.Quaternion().setFromEuler(euler),
+        pos: new THREE.Vector3(o.x, posY, o.z),
+        h: h
+      };
+    });
+    
+    const center = new THREE.Vector3();
+    dragStartRotations.current.forEach(b => center.add(b.pos));
+    if (dragStartRotations.current.length > 0) {
+      center.divideScalar(dragStartRotations.current.length);
+    }
+    dragCenter.current = center;
+  };
+
+  const handleHighlightPointerMove = (e: any) => {
+    if (!isRotating) return;
+    e.stopPropagation();
+    const dx = e.clientX - dragStartMouse.current.x;
+    const dy = e.clientY - dragStartMouse.current.y;
+    
+    const angleX = dy * 0.01;
+    const angleY = dx * 0.01;
+    const deltaQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(angleX, angleY, 0, 'YXZ'));
+    
+    let newObjects = [...objectsRef.current];
+    let changed = false;
+    const newSelectedIds: string[] = [];
+    
+    for (const state of dragStartRotations.current) {
+      const o = newObjects[state.index];
+      const relativePos = state.pos.clone().sub(dragCenter.current);
+      relativePos.applyQuaternion(deltaQ);
+      const newPos = dragCenter.current.clone().add(relativePos);
+      
+      const newRot = state.rot.clone().premultiply(deltaQ);
+      const euler = new THREE.Euler().setFromQuaternion(newRot, 'XYZ');
+      
+      const newDataY = newPos.y + 0.5 - state.h / 2;
+      
+      newObjects[state.index] = {
+        ...o,
+        x: Number(newPos.x.toFixed(2)),
+        y: Number(newDataY.toFixed(2)),
+        z: Number(newPos.z.toFixed(2)),
+        rotationX: Number(euler.x.toFixed(2)),
+        rotationY: Number(euler.y.toFixed(2)),
+        rotationZ: Number(euler.z.toFixed(2))
+      };
+      changed = true;
+      newSelectedIds.push(getBlockId(newObjects[state.index]));
+    }
+    
+    if (changed) {
+      setObjects(newObjects);
+      objectsRef.current = newObjects;
+      setSelectedBlockIds(newSelectedIds);
+    }
+  };
+
+  const handleHighlightPointerUp = (e: any) => {
+    if (!isRotating) return;
+    e.stopPropagation();
+    if (e.target && e.target.releasePointerCapture) {
+      e.target.releasePointerCapture(e.pointerId);
+    }
+    setIsRotating(false);
+    handleEditSave();
+  };
+
+  const handleEditSave = () => {
+    if (isEditingBlocks && selectedBlockIds.length > 0) {
+      saveObjects(objectsRef.current, studentData.pointsBalance, "Edited block properties", 0);
+    }
   };
 
   const handleColorChange = (color: string) => {
@@ -2082,12 +2190,6 @@ export default function VoxelBuilder() {
     if (isEditingBlocks) {
       const newObjects = updateSelectedBlocks({ color });
       if (newObjects) saveObjects(newObjects, studentData.pointsBalance, "Edited block color", 0);
-    }
-  };
-
-  const handleEditSave = () => {
-    if (isEditingBlocks && selectedBlockIds.length > 0) {
-      saveObjects(objectsRef.current, studentData.pointsBalance, "Edited block properties", 0);
     }
   };
 
@@ -2583,7 +2685,30 @@ export default function VoxelBuilder() {
         </div>
 
         {/* Tool Selector */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col overflow-hidden">
+        <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Block Shape</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'box', icon: 'Box' },
+                        { id: 'wedge', icon: 'Wedge' },
+                        { id: 'pyramid', icon: 'Pyramid' }
+                      ].map((shape) => (
+                        <button
+                          key={shape.id}
+                          onClick={() => handleShapeChange(shape.id as any)}
+                          className={`py-2 px-1 rounded-xl text-xs font-bold transition-all ${
+                            activeShape === shape.id 
+                              ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
+                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          }`}
+                        >
+                          {shape.icon}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col overflow-hidden">
           <button onClick={() => { setToolMode('build'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors ${toolMode === 'build' ? 'bg-sky-500 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
             <Hammer className="w-4 h-4" /> Build
@@ -2981,12 +3106,17 @@ export default function VoxelBuilder() {
           draggedRef.current = false;
         }}
         onPointerMove={(e) => {
+          handleHighlightPointerMove(e);
           if (!pointerDownPos.current) return;
           const dx = e.clientX - pointerDownPos.current.x;
           const dy = e.clientY - pointerDownPos.current.y;
           if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
             draggedRef.current = true;
           }
+        }}
+        onPointerUp={(e) => {
+          handleHighlightPointerUp(e);
+          pointerDownPos.current = null;
         }}
       >
         <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
@@ -3027,7 +3157,7 @@ export default function VoxelBuilder() {
                 return {
                   position: [data.x, data.y - 0.5 + h / 2, data.z] as [number, number, number],
                   scale: [data.w || 1, h, data.d || 1] as [number, number, number],
-                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
                 };
               } else {
                 const width = data.width || 1;
@@ -3036,17 +3166,19 @@ export default function VoxelBuilder() {
                 return {
                   position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
                   scale: [width, thickness, depth] as [number, number, number],
-                  rotation: [0, data.rotationY || 0, 0] as [number, number, number]
+                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
                 };
               }
             };
             
             const curvenessLevels = [0, 1, 2, 3, 4];
+            const boxShapes = ['box', undefined];
 
             return (
               <>
+                {/* Boxes */}
                 {curvenessLevels.map(level => {
-                  const blocks = opaqueBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  const blocks = opaqueBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
                     <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow>
@@ -3069,8 +3201,59 @@ export default function VoxelBuilder() {
                   );
                 })}
 
+                {/* Wedges */}
+                {(() => {
+                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'wedge');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow>
+                      <primitive object={getWedgeGeometry()} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`ow-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Pyramids */}
+                {(() => {
+                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'pyramid');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow>
+                      <primitive object={getPyramidGeometry()} attach="geometry" />
+                      <meshStandardMaterial />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`op-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Glass Boxes */}
                 {curvenessLevels.map(level => {
-                  const blocks = glassBoxes.filter(o => Math.round(o.curveness || 0) === level);
+                  const blocks = glassBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
                   if (blocks.length === 0) return null;
                   return (
                     <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow>
@@ -3092,6 +3275,56 @@ export default function VoxelBuilder() {
                     </Instances>
                   );
                 })}
+
+                {/* Glass Wedges */}
+                {(() => {
+                  const blocks = glassBoxes.filter(o => o.blockShape === 'wedge');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow>
+                      <primitive object={getWedgeGeometry()} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gw-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Glass Pyramids */}
+                {(() => {
+                  const blocks = glassBoxes.filter(o => o.blockShape === 'pyramid');
+                  if (blocks.length === 0) return null;
+                  return (
+                    <Instances limit={100000} castShadow receiveShadow>
+                      <primitive object={getPyramidGeometry()} attach="geometry" />
+                      <meshStandardMaterial transparent opacity={0.6} />
+                      {blocks.map((data, idx) => {
+                        const props = getBoxProps(data);
+                        return (
+                          <Instance
+                            key={`gp-${idx}`}
+                            position={props.position}
+                            scale={props.scale}
+                            rotation={props.rotation}
+                            color={data.color}
+                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                          />
+                        );
+                      })}
+                    </Instances>
+                  );
+                })()}
 
                 {curvenessLevels.map(level => {
                   const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);
@@ -3142,9 +3375,14 @@ export default function VoxelBuilder() {
                   if (!selectedBlockIds.includes(getBlockId(data))) return null;
                   const props = getBoxProps(data);
                   return (
-                    <mesh key={`sel-${idx}`} position={props.position} rotation={props.rotation}>
-                      <boxGeometry args={[props.scale[0] * 1.05, props.scale[1] + 0.05, props.scale[2] + 0.05]} />
-                      <meshBasicMaterial color="#ef4444" wireframe />
+                    <mesh 
+                      key={`sel-${idx}`} 
+                      position={props.position} 
+                      rotation={props.rotation}
+                      onPointerDown={(e) => handleHighlightPointerDown(e, data)}
+                    >
+                      <boxGeometry args={[props.scale[0] + 0.05, props.scale[1] + 0.05, props.scale[2] + 0.05]} />
+                      <meshBasicMaterial color="#eab308" wireframe />
                     </mesh>
                   );
                 })}
