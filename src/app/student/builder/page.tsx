@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
-import { getCurvedGeometry, getRoofGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
