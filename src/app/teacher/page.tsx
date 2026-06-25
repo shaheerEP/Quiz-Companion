@@ -37,9 +37,48 @@ export default function TeacherDashboard() {
     }
   }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
 
+  const selectStudent = async (studentId: string, currentStudents: any[]) => {
+    if (!studentId) {
+      setActiveStudent(null);
+      setActiveSession(null);
+      localStorage.removeItem("lastSelectedStudentId");
+      return;
+    }
+
+    const student = currentStudents.find(s => s._id === studentId);
+    if (!student) return;
+    
+    setActiveStudent(student);
+    localStorage.setItem("lastSelectedStudentId", studentId);
+
+    const res = await fetch(`/api/sessions?studentId=${studentId}`);
+    const sessions = await res.json();
+
+    const historyRes = await fetch(`/api/history?studentId=${studentId}`);
+    setHistoryItems(await historyRes.json());
+
+    if (sessions.length > 0 && !sessions[0].isCompleted) {
+      setActiveSession(sessions[0]);
+    } else {
+      const newSessionRes = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: student._id })
+      });
+      const newSession = await newSessionRes.json();
+      setActiveSession(newSession);
+    }
+  };
+
   useEffect(() => {
     fetch("/api/settings").then(res => res.json()).then(setSettings);
-    fetch("/api/students").then(res => res.json()).then(setStudents);
+    fetch("/api/students").then(res => res.json()).then(data => {
+      setStudents(data);
+      const lastId = localStorage.getItem("lastSelectedStudentId");
+      if (lastId && data.find((s: any) => s._id === lastId)) {
+        selectStudent(lastId, data);
+      }
+    });
   }, []);
 
   const handleToggleClassTime = async () => {
@@ -57,31 +96,7 @@ export default function TeacherDashboard() {
   };
 
   const handleStudentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const studentId = e.target.value;
-    const student = students.find(s => s._id === studentId);
-    setActiveStudent(student);
-
-    if (student) {
-      const res = await fetch(`/api/sessions?studentId=${studentId}`);
-      const sessions = await res.json();
-
-      const historyRes = await fetch(`/api/history?studentId=${studentId}`);
-      setHistoryItems(await historyRes.json());
-
-      if (sessions.length > 0 && !sessions[0].isCompleted) {
-        setActiveSession(sessions[0]);
-      } else {
-        const newSessionRes = await fetch("/api/sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentId: student._id })
-        });
-        const newSession = await newSessionRes.json();
-        setActiveSession(newSession);
-      }
-    } else {
-      setActiveSession(null);
-    }
+    selectStudent(e.target.value, students);
   };
 
   useEffect(() => {
@@ -419,9 +434,16 @@ export default function TeacherDashboard() {
                       Daily History
                     </h3>
                     <div className="flex flex-col gap-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                      {Object.keys(groupedHistory).map(day => (
+                      {Object.keys(groupedHistory).map(day => {
+                        const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
+                        return (
                         <div key={day} className="flex flex-col gap-3">
-                          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-indigo-500/50">{day}</p>
+                          <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
+                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{day}</p>
+                            <p className={`text-sm font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                              {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
+                            </p>
+                          </div>
                           <div className="flex flex-col gap-2">
                             {groupedHistory[day].map((item: any) => (
                               <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">

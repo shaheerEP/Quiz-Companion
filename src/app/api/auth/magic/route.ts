@@ -22,7 +22,8 @@ export async function GET(req: Request) {
     cookieStore.set("auth_session", Buffer.from(JSON.stringify(sessionData)).toString("base64"), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      path: "/"
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60
     });
 
     return NextResponse.redirect(new URL("/student", req.url));

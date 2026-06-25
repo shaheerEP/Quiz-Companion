@@ -288,9 +288,16 @@ export default function StudentDashboard() {
                   Daily History
                 </h3>
                 <div className="flex flex-col gap-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                  {Object.keys(groupedHistory).map(day => (
+                  {Object.keys(groupedHistory).map(day => {
+                    const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
+                    return (
                     <div key={day} className="flex flex-col gap-3">
-                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-indigo-500/50">{day}</p>
+                      <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{day}</p>
+                        <p className={`text-sm font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                          {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
+                        </p>
+                      </div>
                       <div className="flex flex-col gap-2">
                         {groupedHistory[day].map((item: any) => (
                           <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
