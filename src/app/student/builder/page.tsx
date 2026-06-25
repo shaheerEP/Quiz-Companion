@@ -2263,7 +2263,6 @@ export default function VoxelBuilder() {
     if (toolMode === 'eraser' || toolMode === 'paint') return;
     
     if ((toolMode === 'build' || toolMode === 'roof') && isEditingRef.current) {
-      setSelectedBlockIds([]);
       return;
     }
     
