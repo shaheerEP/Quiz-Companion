@@ -51,7 +51,14 @@ export async function PUT(req: Request) {
     if (lifetimePoints !== undefined) student.lifetimePoints = Number(lifetimePoints);
     if (isClassTime !== undefined) student.isClassTime = isClassTime;
     if (rewardSystem !== undefined) student.rewardSystem = rewardSystem;
-    if (profileImageUrl !== undefined) student.profileImageUrl = profileImageUrl;
+    
+    if (profileImageUrl !== undefined) {
+      if (student.profileImageUrl && student.profileImageUrl !== profileImageUrl) {
+        const { deleteCloudinaryImage } = await import("@/lib/cloudinary");
+        await deleteCloudinaryImage(student.profileImageUrl);
+      }
+      student.profileImageUrl = profileImageUrl;
+    }
     
     // Legacy fields check
     if (body.pet !== undefined) student.pet = body.pet;
@@ -80,7 +87,13 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
-    await Student.findOneAndDelete({ _id: id, teacherId });
+    const student = await Student.findOneAndDelete({ _id: id, teacherId });
+    
+    if (student && student.profileImageUrl) {
+      const { deleteCloudinaryImage } = await import("@/lib/cloudinary");
+      await deleteCloudinaryImage(student.profileImageUrl);
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to delete student", details: error.message }, { status: 500 });

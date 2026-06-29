@@ -23,7 +23,12 @@ export async function POST(req: Request) {
     // Upload to Cloudinary using a stream
     const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: "interactive-quiz/profiles" },
+        { 
+          folder: "interactive-quiz/profiles",
+          transformation: [
+            { width: 400, height: 400, crop: "fill", gravity: "face" }
+          ]
+        },
         (error, result) => {
           if (error) return reject(error);
           resolve(result);

@@ -503,37 +503,42 @@ export default function TeacherDashboard() {
             <>
               <div className="absolute top-8 left-8 z-10 hidden md:block">
                 <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Active Student</p>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-lg">
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl">
                       {activeStudent.profileImageUrl ? (
                         <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-8 h-8 text-gray-500" />
+                        <User className="w-12 h-12 md:w-16 md:h-16 text-gray-500" />
                       )}
                     </div>
-                    <div className="absolute -bottom-2 -right-2 flex gap-0.5 bg-gray-950 p-0.5 rounded-full border border-gray-800 shadow-xl">
-                      {(activeStudent.dailyPoints || 0) >= 600 && <span title="Good" className="text-xs">🌟</span>}
-                      {(activeStudent.dailyPoints || 0) >= 750 && <span title="Great" className="text-xs">🚀</span>}
-                      {(activeStudent.dailyPoints || 0) >= 1000 && <span title="Excellent" className="text-xs">👑</span>}
+                    <div className="absolute -bottom-3 -right-3 flex gap-1 bg-gray-950 p-1.5 rounded-full border border-gray-800 shadow-xl">
+                      {(activeStudent.dailyPoints || 0) >= 600 && <span title="Good" className="text-xl filter drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]">🌟</span>}
+                      {(activeStudent.dailyPoints || 0) >= 750 && <span title="Great" className="text-xl filter drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">🚀</span>}
+                      {(activeStudent.dailyPoints || 0) >= 1000 && <span title="Excellent" className="text-xl filter drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]">👑</span>}
                     </div>
                   </div>
-                  <h1 className="text-5xl lg:text-6xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
+                  <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tight capitalize drop-shadow-md text-center md:text-left mt-4 md:mt-0">{activeStudent.name}</h1>
                 </div>
               </div>
               <div className="md:hidden absolute top-6 w-full text-center z-10 px-4 flex flex-col items-center">
-                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-xs">Active Student</p>
-                <div className="flex items-center gap-3">
+                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm">Active Student</p>
+                <div className="flex flex-col items-center gap-3">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/50 bg-gray-800 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-[3px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-lg">
                       {activeStudent.profileImageUrl ? (
                         <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-5 h-5 text-gray-500" />
+                        <User className="w-10 h-10 text-gray-500" />
                       )}
                     </div>
+                    <div className="absolute -bottom-3 -right-3 flex gap-1 bg-gray-950 p-1 rounded-full border border-gray-800 shadow-xl">
+                      {(activeStudent.dailyPoints || 0) >= 600 && <span title="Good" className="text-lg">🌟</span>}
+                      {(activeStudent.dailyPoints || 0) >= 750 && <span title="Great" className="text-lg">🚀</span>}
+                      {(activeStudent.dailyPoints || 0) >= 1000 && <span title="Excellent" className="text-lg">👑</span>}
+                    </div>
                   </div>
-                  <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
+                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
                 </div>
               </div>
               <Stopwatch
