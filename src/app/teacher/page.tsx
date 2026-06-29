@@ -149,7 +149,8 @@ export default function TeacherDashboard() {
 
     const newPoints = activeStudent.pointsBalance + Number(amount);
     const newLifetime = activeStudent.lifetimePoints + Number(amount);
-    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
+    const newDaily = (activeStudent.dailyPoints || 0) + Number(amount);
+    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime, dailyPoints: newDaily });
 
     setManualAnim({ type: 'bonus', amount: Number(amount) });
 
@@ -170,7 +171,8 @@ export default function TeacherDashboard() {
 
     const newPoints = Math.max(0, activeStudent.pointsBalance - Number(amount));
     const newLifetime = Math.max(0, activeStudent.lifetimePoints - Number(amount));
-    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime });
+    const newDaily = Math.max(0, (activeStudent.dailyPoints || 0) - Number(amount));
+    setActiveStudent({ ...activeStudent, pointsBalance: newPoints, lifetimePoints: newLifetime, dailyPoints: newDaily });
 
     setManualAnim({ type: 'deduction', amount: Number(amount) });
 
@@ -268,7 +270,8 @@ export default function TeacherDashboard() {
     setActiveStudent((prev: any) => ({
       ...prev,
       lifetimePoints: prev.lifetimePoints + actualPoints,
-      pointsBalance: prev.pointsBalance + actualPoints
+      pointsBalance: prev.pointsBalance + actualPoints,
+      dailyPoints: (prev.dailyPoints || 0) + actualPoints
     }));
 
     if (!isCorrect) {
@@ -373,7 +376,15 @@ export default function TeacherDashboard() {
                     {activeStudent.pointsBalance?.toLocaleString() || 0}
                   </span>
                 </div>
-                <div className="flex items-center justify-between px-4">
+                <div className="flex items-center justify-between bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 shadow-inner mt-1">
+                  <span className="text-indigo-400 font-bold flex items-center gap-2">
+                    <Zap className="w-4 h-4" /> Today's Points
+                  </span>
+                  <span className="text-2xl font-black text-indigo-400">
+                    {activeStudent.dailyPoints?.toLocaleString() || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 mt-2">
                   <span className="text-gray-500 font-medium">Lifetime Points</span>
                   <span className="text-xl font-bold text-gray-300">{activeStudent.lifetimePoints?.toLocaleString() || 0}</span>
                 </div>
@@ -423,53 +434,53 @@ export default function TeacherDashboard() {
                 )}
 
                 {activeSession && (
-                  <div className="flex gap-4 w-full">
+                  <div className="flex gap-2 w-full">
                     <button
                       onClick={handleAddBonus}
-                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-3 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
+                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-2.5 px-2 text-sm rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-1.5"
                     >
-                      <PlusCircle className="w-5 h-5" /> Add Points
+                      <PlusCircle className="w-4 h-4" /> Add Points
                     </button>
                     <button
                       onClick={handleDeductPoints}
-                      className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-3 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
+                      className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-2.5 px-2 text-sm rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-1.5"
                     >
-                      <MinusCircle className="w-5 h-5" /> Deduct
+                      <MinusCircle className="w-4 h-4" /> Deduct
                     </button>
                   </div>
                 )}
 
                 {Object.keys(groupedHistory).length > 0 && (
-                  <div className="mt-8 bg-black/30 p-6 rounded-3xl border border-white/5 shadow-inner">
-                    <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-                      <History className="w-6 h-6 text-indigo-400" />
+                  <div className="mt-8 bg-black/30 p-5 rounded-3xl border border-white/5 shadow-inner">
+                    <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+                      <History className="w-5 h-5 text-indigo-400" />
                       Daily History
                     </h3>
-                    <div className="flex flex-col gap-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                       {Object.keys(groupedHistory).map(day => {
                         const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
                         return (
-                        <div key={day} className="flex flex-col gap-3">
+                        <div key={day} className="flex flex-col gap-2">
                           <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
-                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{day}</p>
-                            <p className={`text-sm font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
+                            <p className={`text-xs font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
                               {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
                             </p>
                           </div>
                           <div className="flex flex-col gap-2">
                             {groupedHistory[day].map((item: any) => (
-                              <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                                <div className="flex items-center gap-4">
-                                  {item.type === 'quiz' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
-                                  {item.type === 'bonus' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
-                                  {item.type === 'deduction' && <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                              <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  {item.type === 'quiz' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-4 h-4" /></div>}
+                                  {item.type === 'bonus' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-4 h-4" /></div>}
+                                  {item.type === 'deduction' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-4 h-4" /></div>}
                                   <div>
-                                    <p className="font-bold text-gray-200 text-lg">{item.title}</p>
-                                    {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                                    <p className="font-bold text-gray-200 text-sm">{item.title}</p>
+                                    {item.details && <p className="text-[10px] text-gray-500 font-medium">{item.details}</p>}
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                <div className="text-right shrink-0">
+                                  <p className={`font-black text-base ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
                                     {item.type === 'deduction' ? '-' : '+'}{item.points}
                                   </p>
                                 </div>
