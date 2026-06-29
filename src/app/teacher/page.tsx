@@ -490,7 +490,7 @@ export default function TeacherDashboard() {
         </aside>
 
         {/* Main Interaction Area */}
-        <section className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 relative overflow-hidden min-h-[400px] md:min-h-[500px] xl:min-h-[700px] ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
+        <section className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex flex-col items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-8 relative overflow-hidden min-h-[400px] md:min-h-[500px] ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
           {!activeStudent ? (
             <div className="text-center text-gray-500 flex flex-col items-center max-w-sm">
               <div className="w-32 h-32 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-gray-700/50">
@@ -500,9 +500,9 @@ export default function TeacherDashboard() {
               <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
             </div>
           ) : (
-            <>
-              <div className="absolute top-8 left-8 z-10 hidden md:block">
-                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Active Student</p>
+            <div className="w-full flex flex-col h-full items-center justify-center gap-12">
+              <div className="w-full flex-col hidden md:flex items-start">
+                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm">Active Student</p>
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="relative">
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl">
@@ -521,7 +521,7 @@ export default function TeacherDashboard() {
                   <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tight capitalize drop-shadow-md text-center md:text-left mt-4 md:mt-0">{activeStudent.name}</h1>
                 </div>
               </div>
-              <div className="md:hidden absolute top-6 w-full text-center z-10 px-4 flex flex-col items-center">
+              <div className="w-full md:hidden flex flex-col items-center">
                 <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm">Active Student</p>
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
@@ -541,6 +541,7 @@ export default function TeacherDashboard() {
                   <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
                 </div>
               </div>
+              <div className="flex-1 flex items-center justify-center w-full">
               <Stopwatch
                 key={resetTimerKey}
                 isRunning={isRunning}
@@ -549,7 +550,8 @@ export default function TeacherDashboard() {
                 onCancel={handleCancel}
                 studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
               />
-            </>
+              </div>
+            </div>
           )}
         </section>
         {/* Right Sidebar */}
