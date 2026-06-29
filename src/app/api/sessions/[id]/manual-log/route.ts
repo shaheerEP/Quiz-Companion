@@ -37,16 +37,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     session.finalScore = Math.max(0, session.finalScore + actualPoints);
     await session.save();
 
-    // Update student points
     const student = await Student.findOne({ _id: session.studentId, teacherId });
     if (student) {
-      const newBalance = Math.max(0, student.pointsBalance + actualPoints);
-      const newLifetime = Math.max(0, student.lifetimePoints + actualPoints);
-      
-      await Student.findOneAndUpdate({ _id: session.studentId, teacherId }, { 
-        pointsBalance: newBalance,
-        lifetimePoints: newLifetime
-      });
+      const { updateStudentPoints } = await import("@/lib/points");
+      updateStudentPoints(student, actualPoints);
+      await student.save();
     }
 
     return NextResponse.json(newLog, { status: 201 });

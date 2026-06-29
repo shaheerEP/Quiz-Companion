@@ -9,7 +9,7 @@ import { Copy, Check, Gamepad2, X, LogIn, LogOut } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
-import { getCurvedGeometry, getRoofGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 
 export type PlacedObject = {
   x: number; y: number; z: number;
@@ -17,11 +17,14 @@ export type PlacedObject = {
   type?: 'block' | 'item' | 'roof' | 'large-roof';
   itemId?: string;
   rotationY?: number;
+  rotationX?: number;
+  rotationZ?: number;
   w?: number; d?: number; h?: number;
   thickness?: number;
   depth?: number;
   width?: number;
   curveness?: number;
+  blockShape?: 'box' | 'wedge' | 'pyramid';
 };
 
 /* ─── 3D Components (Read-Only) ─── */

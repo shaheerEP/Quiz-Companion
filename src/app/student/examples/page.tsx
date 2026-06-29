@@ -10,7 +10,7 @@ import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucke
 import { motion, AnimatePresence } from "framer-motion";
 import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
-import { getCurvedGeometry, getRoofGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 5; // px
@@ -22,10 +22,13 @@ type PlacedObject = {
   itemId?: string;
   w?: number; d?: number; h?: number;
   rotationY?: number;
+  rotationX?: number;
+  rotationZ?: number;
   thickness?: number;
   depth?: number;
   width?: number;
   curveness?: number;
+  blockShape?: 'box' | 'wedge' | 'pyramid';
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';

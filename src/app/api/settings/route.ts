@@ -22,6 +22,12 @@ const DEFAULT_SETTINGS = {
   allowStudentToStopTimer: true,
   bundleLimit: 1000,
   bundleItemName: "🍫 Chocolate",
+  weeklyTargetPoints: 5000,
+  tieredRewards: [
+    { name: "Level 1 Reward", points: 5000 },
+    { name: "Level 2 Reward", points: 4750 },
+    { name: "Level 3 Reward", points: 4500 }
+  ],
   builderBlockCost: 50,
   builderRoofCost: 100,
   customColorCost: 100,
@@ -75,6 +81,15 @@ export async function GET() {
       if (newValue.allowStudentToStopTimer === undefined) { newValue.allowStudentToStopTimer = true; updated = true; }
       if (newValue.bundleLimit === undefined) { newValue.bundleLimit = 1000; updated = true; }
       if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
+      if (newValue.weeklyTargetPoints === undefined) { newValue.weeklyTargetPoints = 5000; updated = true; }
+      if (newValue.tieredRewards === undefined) { 
+        newValue.tieredRewards = [
+          { name: "Level 1 Reward", points: 5000 },
+          { name: "Level 2 Reward", points: 4750 },
+          { name: "Level 3 Reward", points: 4500 }
+        ]; 
+        updated = true; 
+      }
       if (newValue.builderBlockCost === undefined) { newValue.builderBlockCost = 50; updated = true; }
       if (newValue.builderRoofCost === undefined) { newValue.builderRoofCost = 100; updated = true; }
       if (newValue.customColorCost === undefined) { newValue.customColorCost = DEFAULT_SETTINGS.customColorCost; updated = true; }

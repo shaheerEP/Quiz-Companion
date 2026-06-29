@@ -64,12 +64,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     await session.save();
 
     if (actualPoints > 0) {
-      await Student.findOneAndUpdate({ _id: session.studentId, teacherId }, { 
-        $inc: { 
-          lifetimePoints: actualPoints,
-          pointsBalance: actualPoints 
-        } 
-      });
+      const student = await Student.findOne({ _id: session.studentId, teacherId });
+      if (student) {
+        const { updateStudentPoints } = await import("@/lib/points");
+        updateStudentPoints(student, actualPoints);
+        await student.save();
+      }
     }
 
     return NextResponse.json(newQuestionLog, { status: 201 });

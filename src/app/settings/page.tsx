@@ -106,7 +106,9 @@ export default function SettingsPage() {
         name: editingStudent.name,
         password: editingStudent.password,
         pointsBalance: editingStudent.pointsBalance,
-        lifetimePoints: editingStudent.lifetimePoints
+        lifetimePoints: editingStudent.lifetimePoints,
+        rewardSystem: editingStudent.rewardSystem,
+        profileImageUrl: editingStudent.profileImageUrl
       })
     });
     setEditingStudent(null);
@@ -241,8 +243,54 @@ export default function SettingsPage() {
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
                             />
                           </div>
+                          <div>
+                            <label className="text-xs text-purple-400 font-bold mb-1 block">Reward System</label>
+                            <select 
+                              value={editingStudent.rewardSystem || 'classic'} onChange={e => setEditingStudent({...editingStudent, rewardSystem: e.target.value})}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-purple-500 appearance-none"
+                            >
+                              <option value="classic">Classic (Bundles)</option>
+                              <option value="tiered">Tiered (Levels)</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-cyan-400 font-bold mb-1 block">Profile Image URL (or upload via Cloudinary)</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text" value={editingStudent.profileImageUrl || ''} onChange={e => setEditingStudent({...editingStudent, profileImageUrl: e.target.value})} placeholder="https://..."
+                                className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-cyan-500"
+                              />
+                              <label className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-xl cursor-pointer flex items-center justify-center transition-colors">
+                                Upload
+                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  
+                                  const formData = new FormData();
+                                  formData.append("file", file);
+                                  
+                                  try {
+                                    setLoading(true);
+                                    const res = await fetch(`/api/upload`, { method: "POST", body: formData });
+                                    const data = await res.json();
+                                    
+                                    if (data.secure_url) {
+                                      setEditingStudent({...editingStudent, profileImageUrl: data.secure_url});
+                                    } else {
+                                      alert("Upload failed: " + (data.error || "Unknown error"));
+                                    }
+                                  } catch (err) {
+                                    alert("Upload failed. Check console.");
+                                    console.error(err);
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }} />
+                              </label>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mt-2">
                           <button type="submit" disabled={loading} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2">
                             <Save className="w-4 h-4" /> Save
                           </button>
@@ -408,6 +456,51 @@ export default function SettingsPage() {
                   />
                   <label className="text-sm text-gray-300 font-bold">Allow Students to Stop Timer Remotely</label>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
+              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
+                <div className="bg-fuchsia-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-fuchsia-400" /></div>
+                Tiered Reward Levels
+              </h2>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Weekly Target Points</label>
+                  <input 
+                    type="number" value={settings.weeklyTargetPoints ?? 5000}
+                    onChange={e => setSettings({...settings, weeklyTargetPoints: Number(e.target.value)})}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-fuchsia-500 transition-colors text-xl"
+                  />
+                </div>
+                {settings.tieredRewards?.map((reward: any, index: number) => (
+                  <div key={index} className="grid grid-cols-2 gap-4 bg-gray-950 p-4 rounded-xl border border-gray-800">
+                    <div>
+                      <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Level {index + 1} Name</label>
+                      <input 
+                        type="text" value={reward.name}
+                        onChange={e => {
+                          const newRewards = [...(settings.tieredRewards || [])];
+                          newRewards[index] = { ...newRewards[index], name: e.target.value };
+                          setSettings({...settings, tieredRewards: newRewards});
+                        }}
+                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-fuchsia-400 font-bold uppercase mb-1 block">Points Required</label>
+                      <input 
+                        type="number" value={reward.points}
+                        onChange={e => {
+                          const newRewards = [...(settings.tieredRewards || [])];
+                          newRewards[index] = { ...newRewards[index], points: Number(e.target.value) };
+                          setSettings({...settings, tieredRewards: newRewards});
+                        }}
+                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -38,7 +38,7 @@ export async function PUT(req: Request) {
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { id, name, password, pointsBalance, lifetimePoints } = body;
+    const { id, name, password, pointsBalance, lifetimePoints, isClassTime, rewardSystem, profileImageUrl } = body;
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
@@ -49,10 +49,14 @@ export async function PUT(req: Request) {
     if (password !== undefined) student.password = password;
     if (pointsBalance !== undefined) student.pointsBalance = Number(pointsBalance);
     if (lifetimePoints !== undefined) student.lifetimePoints = Number(lifetimePoints);
+    if (isClassTime !== undefined) student.isClassTime = isClassTime;
+    if (rewardSystem !== undefined) student.rewardSystem = rewardSystem;
+    if (profileImageUrl !== undefined) student.profileImageUrl = profileImageUrl;
+    
+    // Legacy fields check
     if (body.pet !== undefined) student.pet = body.pet;
     if (body.inventory !== undefined) student.inventory = body.inventory;
     if (body.assignedGame !== undefined) student.assignedGame = body.assignedGame;
-    if (body.isClassTime !== undefined) student.isClassTime = body.isClassTime;
     if (body.worldBlocks !== undefined) student.worldBlocks = body.worldBlocks;
     if (body.activeAvatar !== undefined) student.activeAvatar = body.activeAvatar;
     if (body.unlockedAvatars !== undefined) student.unlockedAvatars = body.unlockedAvatars;

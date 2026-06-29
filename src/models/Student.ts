@@ -19,6 +19,12 @@ export interface IStudent extends Document {
   unlockedAvatars: string[];
   activeAvatar: string;
   isClassTime?: boolean;
+  rewardSystem?: 'classic' | 'tiered';
+  profileImageUrl?: string;
+  weeklyPoints?: number;
+  lastWeeklyReset?: Date;
+  dailyPoints?: number;
+  lastDailyReset?: Date;
   assignedGame?: 'pet' | 'builder';
   landSize: number;
   worldBlocks: Array<{
@@ -61,6 +67,12 @@ const StudentSchema = new Schema<IStudent>(
     unlockedAvatars: { type: [String], default: ['boy'] },
     activeAvatar: { type: String, default: 'boy' },
     isClassTime: { type: Boolean, default: false },
+    rewardSystem: { type: String, enum: ['classic', 'tiered'], default: 'classic' },
+    profileImageUrl: { type: String },
+    weeklyPoints: { type: Number, default: 0 },
+    lastWeeklyReset: { type: Date },
+    dailyPoints: { type: Number, default: 0 },
+    lastDailyReset: { type: Date },
     assignedGame: { type: String, enum: ['pet', 'builder'], default: 'pet' },
     landSize: { type: Number, default: 50 },
     worldBlocks: {

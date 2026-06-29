@@ -19,6 +19,8 @@ export interface ISettingsValue {
   allowStudentToStopTimer?: boolean;
   bundleLimit?: number;
   bundleItemName?: string;
+  weeklyTargetPoints?: number;
+  tieredRewards?: { name: string; points: number }[];
   builderBlockCost?: number;
   customColorCost?: number;
   builderRoofCost?: number;

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle } from "lucide-react";
+import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
@@ -250,9 +250,30 @@ export default function StudentDashboard() {
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
         
-        <div className="mb-2">
-          <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Welcome back,</p>
-          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight capitalize">{user.name}</h1>
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-4">
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-indigo-500/50 bg-gray-800 flex items-center justify-center">
+                {user.student?.profileImageUrl ? (
+                  <img src={user.student.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-12 h-12 text-gray-500" />
+                )}
+              </div>
+              {/* Daily Badges */}
+              <div className="absolute -bottom-4 -right-4 flex gap-1 bg-gray-950 p-1.5 rounded-full border border-gray-800 shadow-xl">
+                {(user.student?.dailyPoints || 0) >= 600 && <span title="Good (600+ pts today)" className="text-xl filter drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]">🌟</span>}
+                {(user.student?.dailyPoints || 0) >= 750 && <span title="Great (750+ pts today)" className="text-xl filter drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">🚀</span>}
+                {(user.student?.dailyPoints || 0) >= 1000 && <span title="Excellent (1000+ pts today)" className="text-xl filter drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]">👑</span>}
+                {(user.student?.dailyPoints || 0) < 600 && <span className="text-xs text-gray-500 font-bold px-2 py-1">No Badges Yet</span>}
+              </div>
+            </div>
+            <div>
+              <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Welcome back,</p>
+              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight capitalize">{user.name}</h1>
+              <p className="text-sm text-gray-400 mt-1 font-bold">Today's Points: <span className="text-emerald-400">{user.student?.dailyPoints || 0}</span></p>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -401,25 +422,70 @@ export default function StudentDashboard() {
             </div>
 
             {settings && (
-              <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400 font-bold flex items-center gap-2">
-                    <Package className="w-4 h-4 text-purple-400" />
-                    {settings.bundleItemName || "🍫 Chocolate"}
-                  </span>
-                  <span className="text-2xl font-black text-purple-400">
-                    x{bundlesEarned}
-                  </span>
+              <div className="flex flex-col gap-4">
+                {/* Weekly Target Progress */}
+                <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 font-bold flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-fuchsia-400" />
+                      Weekly Goal
+                    </span>
+                    <span className="text-2xl font-black text-fuchsia-400">
+                      {user.student?.weeklyPoints || 0} pts
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-950 rounded-full h-4 border border-gray-800 overflow-hidden relative">
+                    <div 
+                      className="bg-gradient-to-r from-fuchsia-500 to-pink-500 h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${Math.min(100, ((user.student?.weeklyPoints || 0) / (settings.weeklyTargetPoints || 5000)) * 100)}%` }}
+                    ></div>
+                    {/* Tier Markers if on tiered system */}
+                    {user.student?.rewardSystem === 'tiered' && settings.tieredRewards?.map((tier: any, i: number) => {
+                      const pos = (tier.points / (settings.weeklyTargetPoints || 5000)) * 100;
+                      if (pos > 100) return null;
+                      return (
+                        <div key={i} className="absolute top-0 bottom-0 w-1 bg-white/20" style={{ left: `${pos}%` }} title={`${tier.name} (${tier.points} pts)`}></div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="text-xs text-gray-500 font-bold">Resets Monday</div>
+                    <div className="text-xs text-gray-400 font-bold">Target: {settings.weeklyTargetPoints || 5000}</div>
+                  </div>
+                  {user.student?.rewardSystem === 'tiered' && (
+                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-800/50">
+                      {settings.tieredRewards?.map((tier: any, i: number) => (
+                        <div key={i} className={`text-[10px] px-2 py-1 rounded-md font-bold ${(user.student?.weeklyPoints || 0) >= tier.points ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'bg-gray-800 text-gray-500'}`}>
+                          {tier.name} ({tier.points})
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${progressPercent}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-right text-gray-500 font-bold">
-                  {currentProgress} / {bundleLimit} to next
-                </div>
+
+                {/* Classic Bundle Progress - only if not tiered, or we can just always show it. Let's only show if not tiered or if they still want it. */}
+                {user.student?.rewardSystem !== 'tiered' && (
+                  <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold flex items-center gap-2">
+                        <Package className="w-4 h-4 text-purple-400" />
+                        {settings.bundleItemName || "🍫 Chocolate"}
+                      </span>
+                      <span className="text-2xl font-black text-purple-400">
+                        x{bundlesEarned}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-right text-gray-500 font-bold">
+                      {currentProgress} / {bundleLimit} to next
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
