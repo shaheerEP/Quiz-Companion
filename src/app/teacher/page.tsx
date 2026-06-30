@@ -481,18 +481,18 @@ export default function TeacherDashboard() {
                       
                       {/* Wrapped Badges */}
                       {(activeStudent.dailyPoints || 0) >= 600 && (
-                        <div className="absolute -left-3 bottom-8 md:bottom-10 bg-gray-950 p-2 rounded-full border-2 border-yellow-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
-                          <span title="Good" className="text-2xl md:text-3xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
+                        <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
+                          <span title="Good" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
                         </div>
                       )}
                       {(activeStudent.dailyPoints || 0) >= 750 && (
-                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 md:-bottom-6 bg-gray-950 p-2.5 rounded-full border-2 border-sky-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
-                          <span title="Great" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
+                        <div className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
+                          <span title="Great" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
                         </div>
                       )}
                       {(activeStudent.dailyPoints || 0) >= 1000 && (
-                        <div className="absolute -right-3 bottom-8 md:bottom-10 bg-gray-950 p-3 rounded-full border-2 border-purple-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
-                          <span title="Excellent" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">👑</span>
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-10 md:-top-12 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
+                          <span title="Excellent" className="text-6xl md:text-7xl filter drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]">👑</span>
                         </div>
                       )}
                     </div>
@@ -502,7 +502,7 @@ export default function TeacherDashboard() {
                 
                 <div className="w-full md:hidden flex flex-col items-center">
                   <p className="text-indigo-400 font-bold uppercase tracking-widest mb-4 text-sm">Active Student</p>
-                  <div className="flex flex-col items-center gap-6">
+                  <div className="flex flex-col items-center gap-6 mt-4">
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-[4px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl relative z-10">
                         {activeStudent.profileImageUrl ? (
@@ -514,18 +514,18 @@ export default function TeacherDashboard() {
                       
                       {/* Wrapped Badges (Mobile) */}
                       {(activeStudent.dailyPoints || 0) >= 600 && (
-                        <div className="absolute -left-2 bottom-6 bg-gray-950 p-1.5 rounded-full border border-yellow-500/50 shadow-xl z-20 flex items-center justify-center">
-                          <span title="Good" className="text-2xl filter drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]">🌟</span>
+                        <div className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                          <span title="Good" className="text-3xl filter drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]">🌟</span>
                         </div>
                       )}
                       {(activeStudent.dailyPoints || 0) >= 750 && (
-                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 bg-gray-950 p-2 rounded-full border border-sky-500/50 shadow-xl z-20 flex items-center justify-center">
-                          <span title="Great" className="text-3xl filter drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">🚀</span>
+                        <div className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                          <span title="Great" className="text-4xl filter drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">🚀</span>
                         </div>
                       )}
                       {(activeStudent.dailyPoints || 0) >= 1000 && (
-                        <div className="absolute -right-2 bottom-6 bg-gray-950 p-2.5 rounded-full border border-purple-500/50 shadow-xl z-20 flex items-center justify-center">
-                          <span title="Excellent" className="text-4xl filter drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">👑</span>
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-20 flex items-center justify-center">
+                          <span title="Excellent" className="text-5xl filter drop-shadow-[0_0_15px_rgba(192,132,252,0.9)]">👑</span>
                         </div>
                       )}
                     </div>

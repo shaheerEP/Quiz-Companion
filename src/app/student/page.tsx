@@ -262,18 +262,18 @@ export default function StudentDashboard() {
               </div>
               {/* Wrapped Daily Badges */}
               {(user.student?.dailyPoints || 0) >= 600 && (
-                <div className="absolute -left-3 bottom-8 md:bottom-10 bg-gray-950 p-2 rounded-full border-2 border-yellow-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
-                  <span title="Good (600+ pts today)" className="text-2xl md:text-3xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
+                <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
+                  <span title="Good (600+ pts today)" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
                 </div>
               )}
               {(user.student?.dailyPoints || 0) >= 750 && (
-                <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 md:-bottom-6 bg-gray-950 p-2.5 rounded-full border-2 border-sky-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
-                  <span title="Great (750+ pts today)" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
+                <div className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
+                  <span title="Great (750+ pts today)" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
                 </div>
               )}
               {(user.student?.dailyPoints || 0) >= 1000 && (
-                <div className="absolute -right-3 bottom-8 md:bottom-10 bg-gray-950 p-3 rounded-full border-2 border-purple-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
-                  <span title="Excellent (1000+ pts today)" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">👑</span>
+                <div className="absolute left-1/2 -translate-x-1/2 -top-10 md:-top-12 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
+                  <span title="Excellent (1000+ pts today)" className="text-6xl md:text-7xl filter drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]">👑</span>
                 </div>
               )}
             </div>
