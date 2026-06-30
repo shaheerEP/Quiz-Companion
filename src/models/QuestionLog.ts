@@ -9,6 +9,7 @@ export interface IQuestionLog extends Document {
   starsAwarded?: number;
   points: number;
   isCorrect?: boolean;
+  date?: Date;
 }
 
 const QuestionLogSchema = new Schema<IQuestionLog>(
