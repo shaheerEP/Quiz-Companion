@@ -449,122 +449,147 @@ export default function TeacherDashboard() {
                     </button>
                   </div>
                 )}
-
-                {Object.keys(groupedHistory).length > 0 && (
-                  <div className="mt-8 bg-black/30 p-5 rounded-3xl border border-white/5 shadow-inner">
-                    <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-                      <History className="w-5 h-5 text-indigo-400" />
-                      Daily History
-                    </h3>
-                    <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                      {Object.keys(groupedHistory).map(day => {
-                        const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
-                        return (
-                        <div key={day} className="flex flex-col gap-2">
-                          <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
-                            <p className={`text-xs font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
-                              {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
-                            </p>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            {groupedHistory[day].map((item: any) => (
-                              <div key={item._id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  {item.type === 'quiz' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-4 h-4" /></div>}
-                                  {item.type === 'bonus' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-4 h-4" /></div>}
-                                  {item.type === 'deduction' && <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-4 h-4" /></div>}
-                                  <div>
-                                    <p className="font-bold text-gray-200 text-sm">{item.title}</p>
-                                    {item.details && <p className="text-[10px] text-gray-500 font-medium">{item.details}</p>}
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                  <p className={`font-black text-base ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
-                                    {item.type === 'deduction' ? '-' : '+'}{item.points}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
-
-
         </aside>
 
         {/* Main Interaction Area */}
-        <section className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex flex-col items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-8 relative overflow-hidden min-h-[400px] md:min-h-[500px] ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
-          {!activeStudent ? (
-            <div className="text-center text-gray-500 flex flex-col items-center max-w-sm">
-              <div className="w-32 h-32 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-gray-700/50">
-                <User className="w-16 h-16 text-gray-600" />
+        <div className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex flex-col gap-6 ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
+          <section className="w-full flex flex-col items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-8 relative overflow-hidden min-h-[400px] md:min-h-[500px]">
+            {!activeStudent ? (
+              <div className="text-center text-gray-500 flex flex-col items-center max-w-sm">
+                <div className="w-32 h-32 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-gray-700/50">
+                  <User className="w-16 h-16 text-gray-600" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-300 mb-2">Teacher Dashboard</h3>
+                <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
               </div>
-              <h3 className="text-2xl font-black text-gray-300 mb-2">Teacher Dashboard</h3>
-              <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
-            </div>
-          ) : (
-            <div className="w-full flex flex-col h-full items-center justify-center gap-12">
-              <div className="w-full flex-col hidden md:flex items-start">
-                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm">Active Student</p>
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="relative">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl">
-                      {activeStudent.profileImageUrl ? (
-                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-12 h-12 md:w-16 md:h-16 text-gray-500" />
+            ) : (
+              <div className="w-full flex flex-col h-full items-center justify-center gap-8">
+                <div className="w-full flex-col hidden md:flex items-start">
+                  <p className="text-indigo-400 font-bold uppercase tracking-widest mb-4 text-sm">Active Student</p>
+                  <div className="flex flex-col md:flex-row items-center gap-10">
+                    <div className="relative">
+                      <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl relative z-10">
+                        {activeStudent.profileImageUrl ? (
+                          <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
+                        )}
+                      </div>
+                      
+                      {/* Wrapped Badges */}
+                      {(activeStudent.dailyPoints || 0) >= 600 && (
+                        <div className="absolute -left-3 bottom-8 md:bottom-10 bg-gray-950 p-2 rounded-full border-2 border-yellow-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
+                          <span title="Good" className="text-2xl md:text-3xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
+                        </div>
+                      )}
+                      {(activeStudent.dailyPoints || 0) >= 750 && (
+                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 md:-bottom-6 bg-gray-950 p-2.5 rounded-full border-2 border-sky-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
+                          <span title="Great" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
+                        </div>
+                      )}
+                      {(activeStudent.dailyPoints || 0) >= 1000 && (
+                        <div className="absolute -right-3 bottom-8 md:bottom-10 bg-gray-950 p-3 rounded-full border-2 border-purple-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
+                          <span title="Excellent" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">👑</span>
+                        </div>
                       )}
                     </div>
-                    <div className="absolute -bottom-3 -right-3 flex gap-1 bg-gray-950 p-1.5 rounded-full border border-gray-800 shadow-xl">
-                      {(activeStudent.dailyPoints || 0) >= 600 && <span title="Good" className="text-xl filter drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]">🌟</span>}
-                      {(activeStudent.dailyPoints || 0) >= 750 && <span title="Great" className="text-xl filter drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">🚀</span>}
-                      {(activeStudent.dailyPoints || 0) >= 1000 && <span title="Excellent" className="text-xl filter drop-shadow-[0_0_8px_rgba(192,132,252,0.8)]">👑</span>}
-                    </div>
+                    <h1 className="text-5xl lg:text-8xl font-black text-white tracking-tight capitalize drop-shadow-lg text-center md:text-left mt-6 md:mt-0">{activeStudent.name}</h1>
                   </div>
-                  <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tight capitalize drop-shadow-md text-center md:text-left mt-4 md:mt-0">{activeStudent.name}</h1>
                 </div>
-              </div>
-              <div className="w-full md:hidden flex flex-col items-center">
-                <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm">Active Student</p>
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-[3px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-lg">
-                      {activeStudent.profileImageUrl ? (
-                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-10 h-10 text-gray-500" />
+                
+                <div className="w-full md:hidden flex flex-col items-center">
+                  <p className="text-indigo-400 font-bold uppercase tracking-widest mb-4 text-sm">Active Student</p>
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full overflow-hidden border-[4px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl relative z-10">
+                        {activeStudent.profileImageUrl ? (
+                          <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-16 h-16 text-gray-500" />
+                        )}
+                      </div>
+                      
+                      {/* Wrapped Badges (Mobile) */}
+                      {(activeStudent.dailyPoints || 0) >= 600 && (
+                        <div className="absolute -left-2 bottom-6 bg-gray-950 p-1.5 rounded-full border border-yellow-500/50 shadow-xl z-20 flex items-center justify-center">
+                          <span title="Good" className="text-2xl filter drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]">🌟</span>
+                        </div>
+                      )}
+                      {(activeStudent.dailyPoints || 0) >= 750 && (
+                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 bg-gray-950 p-2 rounded-full border border-sky-500/50 shadow-xl z-20 flex items-center justify-center">
+                          <span title="Great" className="text-3xl filter drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">🚀</span>
+                        </div>
+                      )}
+                      {(activeStudent.dailyPoints || 0) >= 1000 && (
+                        <div className="absolute -right-2 bottom-6 bg-gray-950 p-2.5 rounded-full border border-purple-500/50 shadow-xl z-20 flex items-center justify-center">
+                          <span title="Excellent" className="text-4xl filter drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">👑</span>
+                        </div>
                       )}
                     </div>
-                    <div className="absolute -bottom-3 -right-3 flex gap-1 bg-gray-950 p-1 rounded-full border border-gray-800 shadow-xl">
-                      {(activeStudent.dailyPoints || 0) >= 600 && <span title="Good" className="text-lg">🌟</span>}
-                      {(activeStudent.dailyPoints || 0) >= 750 && <span title="Great" className="text-lg">🚀</span>}
-                      {(activeStudent.dailyPoints || 0) >= 1000 && <span title="Excellent" className="text-lg">👑</span>}
-                    </div>
+                    <h1 className="text-5xl font-black text-white tracking-tight capitalize drop-shadow-lg">{activeStudent.name}</h1>
                   </div>
-                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight capitalize drop-shadow-md">{activeStudent.name}</h1>
+                </div>
+                <div className="flex items-center justify-center w-full mt-4">
+                <Stopwatch
+                  key={resetTimerKey}
+                  isRunning={isRunning}
+                  setIsRunning={handleTimerRunningState}
+                  onScore={handleScore}
+                  onCancel={handleCancel}
+                  studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
+                />
                 </div>
               </div>
-              <div className="flex-1 flex items-center justify-center w-full">
-              <Stopwatch
-                key={resetTimerKey}
-                isRunning={isRunning}
-                setIsRunning={handleTimerRunningState}
-                onScore={handleScore}
-                onCancel={handleCancel}
-                studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
-              />
+            )}
+          </section>
+          
+          {activeStudent && Object.keys(groupedHistory).length > 0 && (
+            <section className="w-full bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 xl:p-8">
+              <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+                <History className="w-6 h-6 text-indigo-400" />
+                Daily History
+              </h3>
+              <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                {Object.keys(groupedHistory).map(day => {
+                  const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
+                  return (
+                  <div key={day} className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
+                      <p className={`text-xs font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                        {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {groupedHistory[day].map((item: any) => (
+                        <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                          <div className="flex items-center gap-4">
+                            {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
+                            {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
+                            {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                            <div>
+                              <p className="font-bold text-gray-200 text-base">{item.title}</p>
+                              {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                              {item.type === 'deduction' ? '-' : '+'}{item.points}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  );
+                })}
               </div>
-            </div>
+            </section>
           )}
-        </section>
+        </div>
         {/* Right Sidebar */}
         {activeSession && (
           <aside className="w-full md:col-span-2 lg:col-span-12 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit order-3">

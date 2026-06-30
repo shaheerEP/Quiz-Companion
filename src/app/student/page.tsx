@@ -250,27 +250,36 @@ export default function StudentDashboard() {
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
         
-        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-4">
-          <div className="flex flex-col md:flex-row items-center gap-6">
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-8">
+          <div className="flex flex-col md:flex-row items-center gap-10">
             <div className="relative">
-              <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl">
+              <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl relative z-10">
                 {user.student?.profileImageUrl ? (
                   <img src={user.student.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
                 )}
               </div>
-              {/* Daily Badges */}
-              <div className="absolute -bottom-4 -right-4 flex gap-2 bg-gray-950 p-2.5 rounded-full border border-gray-800 shadow-xl">
-                {(user.student?.dailyPoints || 0) >= 600 && <span title="Good (600+ pts today)" className="text-3xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>}
-                {(user.student?.dailyPoints || 0) >= 750 && <span title="Great (750+ pts today)" className="text-3xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>}
-                {(user.student?.dailyPoints || 0) >= 1000 && <span title="Excellent (1000+ pts today)" className="text-3xl filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">👑</span>}
-                {(user.student?.dailyPoints || 0) < 600 && <span className="text-sm text-gray-500 font-bold px-3 py-1.5">No Badges Yet</span>}
-              </div>
+              {/* Wrapped Daily Badges */}
+              {(user.student?.dailyPoints || 0) >= 600 && (
+                <div className="absolute -left-3 bottom-8 md:bottom-10 bg-gray-950 p-2 rounded-full border-2 border-yellow-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
+                  <span title="Good (600+ pts today)" className="text-2xl md:text-3xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
+                </div>
+              )}
+              {(user.student?.dailyPoints || 0) >= 750 && (
+                <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 md:-bottom-6 bg-gray-950 p-2.5 rounded-full border-2 border-sky-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
+                  <span title="Great (750+ pts today)" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
+                </div>
+              )}
+              {(user.student?.dailyPoints || 0) >= 1000 && (
+                <div className="absolute -right-3 bottom-8 md:bottom-10 bg-gray-950 p-3 rounded-full border-2 border-purple-500/50 shadow-xl z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
+                  <span title="Excellent (1000+ pts today)" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">👑</span>
+                </div>
+              )}
             </div>
-            <div className="text-center md:text-left mt-4 md:mt-0">
-              <p className="text-indigo-400 font-bold uppercase tracking-widest mb-1 text-sm">Welcome back,</p>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight capitalize">{user.name}</h1>
+            <div className="text-center md:text-left">
+              <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm md:text-base">Welcome back,</p>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tight capitalize drop-shadow-lg">{user.name}</h1>
               <p className="text-sm text-gray-400 mt-1 font-bold">Today's Points: <span className="text-emerald-400">{user.student?.dailyPoints || 0}</span></p>
             </div>
           </div>
