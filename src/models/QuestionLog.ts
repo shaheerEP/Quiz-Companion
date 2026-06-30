@@ -22,7 +22,7 @@ const QuestionLogSchema = new Schema<IQuestionLog>(
     starsAwarded: { type: Number, default: 0 },
     points: { type: Number, required: true },
     isCorrect: { type: Boolean, default: true },
-    date: { type: Date, default: Date.now },
+    date: { type: Date },
   },
   { timestamps: true }
 );
