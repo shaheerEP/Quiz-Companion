@@ -11,7 +11,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const sessionId = id;
-    const { logType, points } = await req.json();
+    const { logType, points, date } = await req.json();
 
     if (!sessionId || !logType || points === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -24,7 +24,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       teacherId,
       logType,
       points,
-      isCorrect: logType === 'bonus'
+      isCorrect: logType === 'bonus',
+      ...(date && { date: new Date(date) })
     });
 
     const session = await Session.findOne({ _id: sessionId, teacherId });
@@ -40,7 +41,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const student = await Student.findOne({ _id: session.studentId, teacherId });
     if (student) {
       const { updateStudentPoints } = await import("@/lib/points");
-      updateStudentPoints(student, actualPoints);
+      updateStudentPoints(student, actualPoints, date ? new Date(date) : undefined);
       await student.save();
     }
 

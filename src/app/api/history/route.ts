@@ -30,11 +30,12 @@ export async function GET(req: Request) {
     const historyItems: any[] = [];
 
     for (const log of allLogs) {
+      const logDate = log.date || (log as any).createdAt || new Date();
       if (log.logType === 'bonus') {
         historyItems.push({
           _id: log._id.toString(),
           type: 'bonus',
-          date: (log as any).createdAt || new Date(),
+          date: logDate,
           points: log.points,
           title: 'Manual Bonus',
           details: ''
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
         historyItems.push({
           _id: log._id.toString(),
           type: 'deduction',
-          date: (log as any).createdAt || new Date(),
+          date: logDate,
           points: log.points,
           title: 'Manual Deduction',
           details: ''
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
         historyItems.push({
           _id: log._id.toString(),
           type: 'quiz',
-          date: (log as any).createdAt || new Date(),
+          date: logDate,
           points: log.points,
           title: `Question ${log.questionNumber || 0}`,
           details: `${log.isCorrect ? 'Correct' : 'Incorrect'} (${log.responseTime?.toFixed(1) || 0}s)`

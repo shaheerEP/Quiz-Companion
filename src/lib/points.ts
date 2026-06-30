@@ -17,7 +17,8 @@ function getStartOfDay(date: Date) {
 
 export function updateStudentPoints(
   student: any,
-  pointsToAdd: number
+  pointsToAdd: number,
+  targetDate?: Date
 ) {
   const now = new Date();
   const startOfCurrentWeek = getStartOfWeek(now);
@@ -35,9 +36,15 @@ export function updateStudentPoints(
     student.lastDailyReset = now;
   }
 
-  // Only add positive points to daily/weekly trackers (or subtract if penalty)
-  student.weeklyPoints = Math.max(0, (student.weeklyPoints || 0) + pointsToAdd);
-  student.dailyPoints = Math.max(0, (student.dailyPoints || 0) + pointsToAdd);
+  const effectiveDate = targetDate ? new Date(targetDate) : now;
+
+  // Only add positive points to daily/weekly trackers if the target date is in the current period
+  if (effectiveDate >= startOfCurrentWeek) {
+    student.weeklyPoints = Math.max(0, (student.weeklyPoints || 0) + pointsToAdd);
+  }
+  if (effectiveDate >= startOfCurrentDay) {
+    student.dailyPoints = Math.max(0, (student.dailyPoints || 0) + pointsToAdd);
+  }
   
   student.pointsBalance = Math.max(0, (student.pointsBalance || 0) + pointsToAdd);
   student.lifetimePoints = Math.max(0, (student.lifetimePoints || 0) + pointsToAdd);
