@@ -4,6 +4,51 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { User, Gift, Save, Trash2, Edit2, Link as LinkIcon, Package } from "lucide-react";
 
+const compressImage = async (file: File, maxSize: number = 800): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+            } else {
+              reject(new Error("Canvas to Blob failed"));
+            }
+          },
+          "image/jpeg",
+          0.8
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [originalSettings, setOriginalSettings] = useState<any>(null);
@@ -266,11 +311,13 @@ export default function SettingsPage() {
                                   const file = e.target.files?.[0];
                                   if (!file) return;
                                   
-                                  const formData = new FormData();
-                                  formData.append("file", file);
-                                  
                                   try {
                                     setLoading(true);
+                                    const compressedFile = await compressImage(file, 800);
+                                    
+                                    const formData = new FormData();
+                                    formData.append("file", compressedFile);
+                                    
                                     const res = await fetch(`/api/upload`, { method: "POST", body: formData });
                                     const data = await res.json();
                                     
