@@ -2685,7 +2685,7 @@ export default function VoxelBuilder() {
         </div>
 
         {/* Tool Selector */}
-        <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+        <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 pointer-events-auto">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Block Shape</h4>
                     <div className="grid grid-cols-3 gap-2">
                       {[
