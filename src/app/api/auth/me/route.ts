@@ -13,6 +13,15 @@ export async function GET() {
     if (session.role === "student") {
       await connectToDatabase();
       const student = await Student.findById(session.id);
+      if (student) {
+        const { updateStudentPoints } = await import("@/lib/points");
+        const prevDaily = student.lastDailyReset;
+        const prevWeekly = student.lastWeeklyReset;
+        updateStudentPoints(student, 0);
+        if (student.lastDailyReset !== prevDaily || student.lastWeeklyReset !== prevWeekly) {
+          await student.save();
+        }
+      }
       return NextResponse.json({ ...session, student });
     }
     return NextResponse.json(session);

@@ -3,6 +3,8 @@ import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
 import { getTeacherId } from "@/lib/auth-helpers";
 
+import { updateStudentPoints } from "@/lib/points";
+
 export async function GET() {
   try {
     const teacherId = await getTeacherId();
@@ -10,6 +12,19 @@ export async function GET() {
 
     await connectToDatabase();
     const students = await Student.find({ teacherId }).sort({ updatedAt: -1 });
+    
+    // Auto-reset daily and weekly points on load if needed
+    let hasUpdates = false;
+    for (const student of students) {
+      const prevDaily = student.lastDailyReset;
+      const prevWeekly = student.lastWeeklyReset;
+      updateStudentPoints(student, 0);
+      if (student.lastDailyReset !== prevDaily || student.lastWeeklyReset !== prevWeekly) {
+        await student.save();
+        hasUpdates = true;
+      }
+    }
+
     return NextResponse.json(students);
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch students" }, { status: 500 });
