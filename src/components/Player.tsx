@@ -214,6 +214,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       let wallHit = false;
 
       objects.forEach(o => {
+        if (o.isOpen) return; // Allow walking through open doors
+
         const hw = (o.w || o.width || 1) / 2;
         const hd = (o.d || o.depth || 1) / 2;
         const blockMinX = o.x - hw;

@@ -556,9 +556,109 @@ function generateMansion(): PlacedObject[] {
   return objects;
 }
 
+function generateBungalow(): PlacedObject[] {
+  const objects: PlacedObject[] = [];
+  const foundationColor = "#374151"; // dark gray
+  const wallColor = "#f3f4f6"; // off-white
+  const accentColor = "#14b8a6"; // teal accent
+  const roofColor = "#1e293b"; // very dark blue/gray
+  const woodColor = "#b45309"; // warm wood
+  const glass = "#ADD8E6"; // glass
+
+  // 1. Massive Foundation / Deck using single large blocks
+  // Central Foundation
+  objects.push({ x: 0, y: 0, z: 0, color: foundationColor, type: "block", width: 30, thickness: 1, depth: 30 });
+  // Wrap-around Wooden Deck
+  objects.push({ x: 0, y: 0.2, z: 16, color: woodColor, type: "block", width: 32, thickness: 0.5, depth: 4 });
+  objects.push({ x: 0, y: 0.2, z: -16, color: woodColor, type: "block", width: 32, thickness: 0.5, depth: 4 });
+  objects.push({ x: -16, y: 0.2, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 32 });
+  objects.push({ x: 16, y: 0.2, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 32 });
+
+  // 2. Main Building Shell (using thickness for height to avoid loops)
+  // Left Wing (Solid)
+  objects.push({ x: -10, y: 3.5, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
+  // Right Wing (Solid)
+  objects.push({ x: 10, y: 3.5, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
+  
+  // Center (Living area, lots of glass)
+  objects.push({ x: 0, y: 7, z: -5, color: wallColor, type: "block", width: 12, thickness: 1, depth: 18 }); // Center roof slab
+  objects.push({ x: 0, y: 3.5, z: 4, color: glass, type: "block", width: 12, thickness: 6, depth: 0.5 }); // Front giant glass wall
+  objects.push({ x: 0, y: 3.5, z: -14, color: wallColor, type: "block", width: 12, thickness: 6, depth: 1 }); // Back solid wall
+  
+  // 3. Curved Pillars (using curveness)
+  for (let px of [-14, -6, 6, 14]) {
+    for (let pz of [12, -12]) {
+      objects.push({ x: px, y: 3.5, z: pz, color: accentColor, type: "block", width: 1, thickness: 6, depth: 1, curveness: 3 });
+    }
+  }
+
+  // 4. Sloped Roofs (using Wedges & Pyramids & rotations)
+  // Wedge roof on left wing (sloping left)
+  objects.push({ x: -10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationZ: Math.PI / 2 });
+  // Wedge roof on right wing (sloping right)
+  objects.push({ x: 10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationZ: -Math.PI / 2 });
+  
+  // Decorative Pyramids at the corners of the center roof
+  objects.push({ x: -5.5, y: 8, z: 3.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
+  objects.push({ x: 5.5, y: 8, z: 3.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
+  objects.push({ x: -5.5, y: 8, z: -13.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
+  objects.push({ x: 5.5, y: 8, z: -13.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
+
+  // 5. Grand Entrance (Awning using wedge with X rotation)
+  objects.push({ x: 0, y: 4, z: 8, color: woodColor, type: "block", blockShape: "wedge", width: 6, thickness: 2, depth: 8, rotationX: Math.PI / 2 });
+  // Supporting pillars for awning
+  objects.push({ x: -2.5, y: 2, z: 11, color: foundationColor, type: "block", width: 0.5, thickness: 4, depth: 0.5, curveness: 4 });
+  objects.push({ x: 2.5, y: 2, z: 11, color: foundationColor, type: "block", width: 0.5, thickness: 4, depth: 0.5, curveness: 4 });
+
+  // 6. Large Swimming Pool in front
+  objects.push({ x: 0, y: 0.1, z: 24, color: "#cbd5e1", type: "block", width: 20, thickness: 0.5, depth: 10 }); // Pool deck
+  objects.push({ x: 0, y: 0.2, z: 24, color: "#3b82f6", type: "block", width: 18, thickness: 0.4, depth: 8 }); // Water (lowered slightly)
+
+  // 7. Interior Items (Living Room)
+  objects.push({ x: 0, y: 1, z: 0, color: "", type: "item", itemId: "sofa", rotationY: Math.PI });
+  objects.push({ x: 0, y: 1, z: 2, color: "", type: "item", itemId: "table" });
+  objects.push({ x: -3, y: 1, z: -2, color: "", type: "item", itemId: "lamp" });
+  objects.push({ x: 3, y: 1, z: -2, color: "", type: "item", itemId: "bench", rotationY: Math.PI / 2 });
+
+  // Interior Items (Left Wing Bedroom)
+  objects.push({ x: -10, y: 1, z: -5, color: "", type: "item", itemId: "bed", rotationY: Math.PI / 2 });
+  objects.push({ x: -13, y: 1, z: -8, color: "", type: "item", itemId: "chest" });
+  objects.push({ x: -7, y: 1, z: -2, color: "", type: "item", itemId: "stool" });
+
+  // Interior Items (Right Wing Dining/Kitchen)
+  objects.push({ x: 10, y: 1, z: -2, color: "", type: "item", itemId: "table" });
+  objects.push({ x: 8, y: 1, z: -2, color: "", type: "item", itemId: "stool" });
+  objects.push({ x: 12, y: 1, z: -2, color: "", type: "item", itemId: "stool" });
+  objects.push({ x: 10, y: 1, z: -4, color: "", type: "item", itemId: "stool" });
+  objects.push({ x: 10, y: 1, z: 0, color: "", type: "item", itemId: "stool" });
+
+  // 8. Exterior Landscape (Trees, bushes, animals, cars)
+  for (let x = -20; x <= 20; x += 10) {
+    if (x === 0) continue;
+    objects.push({ x, y: 0, z: 18, color: "", type: "item", itemId: "tree" });
+    objects.push({ x, y: 0, z: 30, color: "", type: "item", itemId: "tree" });
+  }
+  for (let x = -24; x <= 24; x += 4) {
+    objects.push({ x, y: 0, z: -20, color: "", type: "item", itemId: "bush" });
+  }
+  
+  // Animals & Vehicles
+  objects.push({ x: -8, y: 1, z: 22, color: "", type: "item", itemId: "dog" });
+  objects.push({ x: 8, y: 1, z: 26, color: "", type: "item", itemId: "cat" });
+  objects.push({ x: 18, y: 1, z: 20, color: "", type: "item", itemId: "lemborgini", rotationY: -Math.PI / 4 });
+  objects.push({ x: -18, y: 1, z: 20, color: "", type: "item", itemId: "defender", rotationY: Math.PI / 4 });
+  
+  // Main Doors & Windows (Using items on walls)
+  objects.push({ x: -2, y: 1, z: 4, color: "", type: "item", itemId: "door", rotationY: 0 });
+  objects.push({ x: 2, y: 1, z: 4, color: "", type: "item", itemId: "door", rotationY: 0 });
+  
+  return objects;
+}
+
 export const EXAMPLE_WORLDS = [
   { id: 'house', name: 'Cozy House', emoji: '🏠', objects: generateHouse() },
   { id: 'farm', name: 'Farm & Zoo', emoji: '🐄', objects: generateFarm() },
   { id: 'park', name: 'City Park', emoji: '🌳', objects: generatePark() },
   { id: 'mansion', name: 'Modern Metropolis', emoji: '🏰', objects: generateMansion() },
+  { id: 'bungalow', name: 'Tremendous Bungalow', emoji: '🏡', objects: generateBungalow() },
 ];

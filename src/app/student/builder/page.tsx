@@ -108,15 +108,15 @@ function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onC
   );
 }
 
-function InteractiveDoor({ data, handleClick }: { data: PlacedObject; handleClick: any }) {
-  const [isOpen, setIsOpen] = useState(false);
+function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObject; handleClick: any; isExploreMode?: boolean }) {
+  const [isOpen, setIsOpen] = useState(data.isOpen || false);
   const [showUI, setShowUI] = useState(false);
   const vec = useRef(new THREE.Vector3());
 
   useFrame((state) => {
     const doorPos = vec.current.set(data.x, data.y, data.z);
     const dist = state.camera.position.distanceTo(doorPos);
-    if (dist < 3.5) {
+    if (dist < 3.5 && isExploreMode) {
       if (!showUI) setShowUI(true);
     } else {
       if (showUI) setShowUI(false);
@@ -125,14 +125,24 @@ function InteractiveDoor({ data, handleClick }: { data: PlacedObject; handleClic
 
   const handleToggle = (e: any) => {
     e.stopPropagation();
-    setIsOpen(!isOpen);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
+  };
+
+  const handleDoubleClick = (e: any) => {
+    if (!isExploreMode) return;
+    e.stopPropagation();
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
   };
 
   const baseRotation = data.rotationY || 0;
   const swing = isOpen ? Math.PI / 2 : 0;
 
   return (
-    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onClick={handleClick}>
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onClick={handleClick} onDoubleClick={handleDoubleClick}>
       <group position={[-0.4, 0, 0]} rotation={[0, swing, 0]}>
         <mesh position={[0.4, 0.9, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.8, 1.8, 0.1]} />
@@ -883,7 +893,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
   }
 
   if (isMatch("door", "door", "🚪")) {
-    return <InteractiveDoor data={data} handleClick={handleClick} />;
+    return <InteractiveDoor data={data} handleClick={handleClick} isExploreMode={isExploreMode} />;
   }
 
   if (isMatch("window", "window", "🪟")) {

@@ -67,6 +67,66 @@ function LargeRoofBlock({ data }: { data: PlacedObject }) {
   );
 }
 
+function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExploreMode?: boolean }) {
+  const [isOpen, setIsOpen] = useState(data.isOpen || false);
+  const [showUI, setShowUI] = useState(false);
+  const vec = useRef(new THREE.Vector3());
+
+  useFrame((state) => {
+    const doorPos = vec.current.set(data.x, data.y, data.z);
+    const dist = state.camera.position.distanceTo(doorPos);
+    if (dist < 3.5 && isExploreMode) {
+      if (!showUI) setShowUI(true);
+    } else {
+      if (showUI) setShowUI(false);
+    }
+  });
+
+  const handleToggle = (e: any) => {
+    e.stopPropagation();
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
+  };
+
+  const handleDoubleClick = (e: any) => {
+    if (!isExploreMode) return;
+    e.stopPropagation();
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
+  };
+
+  const baseRotation = data.rotationY || 0;
+  const swing = isOpen ? Math.PI / 2 : 0;
+
+  return (
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onDoubleClick={handleDoubleClick}>
+      <group position={[-0.4, 0, 0]} rotation={[0, swing, 0]}>
+        <mesh position={[0.4, 0.9, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 1.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0.7, 0.9, 0.08]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+        
+        {showUI && (
+          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
+            <button 
+              onClick={handleToggle}
+              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
+            >
+              {isOpen ? "Close Door" : "Open Door"}
+            </button>
+          </Html>
+        )}
+      </group>
+    </group>
+  );
+}
+
 function InteractiveVehicle({ data, onEnterVehicle, isExploreMode, children }: { data: PlacedObject; onEnterVehicle: () => void; isExploreMode?: boolean; children: React.ReactNode }) {
   const [showUI, setShowUI] = useState(false);
   const vec = useRef(new THREE.Vector3());
@@ -790,20 +850,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
   }
 
   if (isMatch("door", "door", "🚪")) {
-    return (
-      <ModelWrapper>
-        {/* Door Frame */}
-        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.8, 1.8, 0.1]} />
-          <meshStandardMaterial color="#8B5A2B" />
-        </mesh>
-        {/* Door Knob */}
-        <mesh position={[0.3, 0.9, 0.08]} castShadow receiveShadow>
-          <sphereGeometry args={[0.05, 16, 16]} />
-          <meshStandardMaterial color="#fbbf24" />
-        </mesh>
-      </ModelWrapper>
-    );
+    return <InteractiveDoor data={data} isExploreMode={isExploreMode} />;
   }
 
   if (isMatch("window", "window", "🪟")) {

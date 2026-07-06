@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { Canvas } from "@react-three/fiber";
@@ -74,36 +74,88 @@ function RoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick:
 }
 
 
-function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onClick: (obj: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void, isDragging: () => boolean }) {
+function LargeRoofBlock({ data }: { data: PlacedObject }) {
   const { w = 1, h = 1, d = 1 } = data;
-
   return (
-    <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow
-      onClick={(e) => { if (isDragging()) return; e.stopPropagation(); onClick(data, e.face?.normal, e.point); }}>
+    <mesh position={[data.x, data.y, data.z]} castShadow receiveShadow>
       <boxGeometry args={[w, h, d]} />
       <meshStandardMaterial color={data.color} transparent={data.color === "#ADD8E6"} opacity={data.color === "#ADD8E6" ? 0.6 : 1} />
     </mesh>
   );
 }
 
-function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject, itemDef: any, onClick: (obj: PlacedObject) => void, isDragging: () => boolean }) {
+function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExploreMode?: boolean }) {
+  const [isOpen, setIsOpen] = useState(data.isOpen || false);
+  const [showUI, setShowUI] = useState(false);
+  const vec = useRef(new THREE.Vector3());
+
+  useFrame((state) => {
+    const doorPos = vec.current.set(data.x, data.y, data.z);
+    const dist = state.camera.position.distanceTo(doorPos);
+    if (dist < 3.5 && isExploreMode) {
+      if (!showUI) setShowUI(true);
+    } else {
+      if (showUI) setShowUI(false);
+    }
+  });
+
+  const handleToggle = (e: any) => {
+    e.stopPropagation();
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
+  };
+
+  const handleDoubleClick = (e: any) => {
+    if (!isExploreMode) return;
+    e.stopPropagation();
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    data.isOpen = newIsOpen;
+  };
+
+  const baseRotation = data.rotationY || 0;
+  const swing = isOpen ? Math.PI / 2 : 0;
+
+  return (
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onDoubleClick={handleDoubleClick}>
+      <group position={[-0.4, 0, 0]} rotation={[0, swing, 0]}>
+        <mesh position={[0.4, 0.9, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.8, 1.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0.7, 0.9, 0.08]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+        
+        {showUI && (
+          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
+            <button 
+              onClick={handleToggle}
+              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
+            >
+              {isOpen ? "Close Door" : "Open Door"}
+            </button>
+          </Html>
+        )}
+      </group>
+    </group>
+  );
+}
+
+function ItemObject({ data, itemDef, isExploreMode }: { data: PlacedObject, itemDef: any, isExploreMode?: boolean }) {
   const w = itemDef?.width ?? 1;
   const h = itemDef?.height ?? 1;
   const d = itemDef?.depth ?? 1;
   // Position the item so its base sits on the ground (y=0 means bottom of item is at y=-0.5)
   const yPos = data.y + (h / 2) - 0.5;
 
-  const handleClick = (e: any) => {
-    if (isDragging()) return;
-    e.stopPropagation();
-    onClick(data);
-  };
-
   const itemId = data.itemId || "";
 
   // Helper to wrap custom geometry
   const ModelWrapper = ({ children }: { children: React.ReactNode }) => (
-    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, data.rotationY || 0, 0]}>
       {children}
     </group>
   );
@@ -725,20 +777,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   }
 
   if (isMatch("door", "door", "🚪")) {
-    return (
-      <ModelWrapper>
-        {/* Door Frame */}
-        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.8, 1.8, 0.1]} />
-          <meshStandardMaterial color="#8B5A2B" />
-        </mesh>
-        {/* Door Knob */}
-        <mesh position={[0.3, 0.9, 0.08]} castShadow receiveShadow>
-          <sphereGeometry args={[0.05, 16, 16]} />
-          <meshStandardMaterial color="#fbbf24" />
-        </mesh>
-      </ModelWrapper>
-    );
+    return <InteractiveDoor data={data} isExploreMode={isExploreMode} />;
   }
 
   if (isMatch("window", "window", "🪟")) {
@@ -1773,7 +1812,7 @@ function ItemObject({ data, itemDef, onClick, isDragging }: { data: PlacedObject
   const boxColor = "#9ca3af";
 
   return (
-    <group position={[data.x, yPos, data.z]} rotation={[0, data.rotationY || 0, 0]} onClick={handleClick}>
+    <group position={[data.x, yPos, data.z]} rotation={[0, data.rotationY || 0, 0]}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={boxColor} />
@@ -1828,6 +1867,17 @@ export default function ExampleWorldsViewer() {
 
   const activeWorld = EXAMPLE_WORLDS.find(w => w.id === activeWorldId) || EXAMPLE_WORLDS[0];
   const shopItems: any[] = settings?.builderItems || [];
+
+  const memoizedObjects = useMemo(() => {
+    const validObjects = activeWorld.objects;
+    return {
+      opaqueBoxes: validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6"),
+      glassBoxes: validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6"),
+      opaqueRoofs: validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6"),
+      glassRoofs: validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6"),
+      items: validObjects.filter(o => o.type === 'item')
+    };
+  }, [activeWorld.objects]);
 
   return (
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
@@ -1906,12 +1956,7 @@ export default function ExampleWorldsViewer() {
           {isExploreMode && <BakeShadows />}
           
           {(() => {
-            const validObjects = activeWorld.objects;
-            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
-            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
-            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
-            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
-            const items = validObjects.filter(o => o.type === 'item');
+            const { opaqueBoxes, glassBoxes, opaqueRoofs, glassRoofs, items } = memoizedObjects;
 
             const getBoxProps = (data: any) => {
               if (data.type === 'large-roof') {
@@ -2120,7 +2165,7 @@ export default function ExampleWorldsViewer() {
 
                 {items.map((obj, idx) => {
                   const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
-                  return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={() => {}} isDragging={() => false} />;
+                  return <ItemObject key={idx} data={obj} itemDef={itemDef} isExploreMode={isExploreMode} />;
                 })}
               </>
             );
