@@ -408,6 +408,12 @@ export default function TeacherDashboard() {
             <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
               <div className="flex gap-2 items-center">
+                <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100)).toFixed(0)}% of daily goal`}>
+                  <div className="flex text-gray-700">★★★★★</div>
+                  <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100))}%` }}>
+                    ★★★★★
+                  </div>
+                </div>
                 <p className={`text-xs font-bold mr-2 ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
                   {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
                 </p>
@@ -504,21 +510,30 @@ export default function TeacherDashboard() {
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 font-bold flex items-center gap-2">
-                        <Package className="w-4 h-4 text-purple-400" />
-                        {settings.bundleItemName || "🍫 Chocolate"}
+                        <Zap className="w-4 h-4 text-fuchsia-400" />
+                        Weekly Goal
                       </span>
-                      <span className="text-2xl font-black text-purple-400">
-                        x{Math.floor((activeStudent.lifetimePoints || 0) / (settings.bundleLimit || 1000))}
+                      <span className="text-2xl font-black text-fuchsia-400">
+                        {activeStudent.weeklyPoints || 0} pts
                       </span>
                     </div>
-                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
+                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden relative">
                       <div
-                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, Math.max(0, (((activeStudent.lifetimePoints || 0) % (settings.bundleLimit || 1000)) / (settings.bundleLimit || 1000)) * 100))}%` }}
+                        className="bg-gradient-to-r from-fuchsia-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, ((activeStudent.weeklyPoints || 0) / (settings.weeklyTargetPoints || 5000)) * 100)}%` }}
                       ></div>
+                      {/* Tier Markers if on tiered system */}
+                      {activeStudent.rewardSystem === 'tiered' && settings.tieredRewards?.map((tier: any, i: number) => {
+                        const pos = (tier.points / (settings.weeklyTargetPoints || 5000)) * 100;
+                        if (pos > 100) return null;
+                        return (
+                          <div key={i} className="absolute top-0 bottom-0 w-1 bg-white/20" style={{ left: `${pos}%` }} title={`${tier.name} (${tier.points} pts)`}></div>
+                        );
+                      })}
                     </div>
-                    <div className="text-xs text-right text-gray-500 font-bold">
-                      {(activeStudent.lifetimePoints || 0) % (settings.bundleLimit || 1000)} / {settings.bundleLimit || 1000} to next
+                    <div className="flex justify-between text-xs text-gray-500 font-bold">
+                      <span>{activeStudent.weeklyPoints || 0}</span>
+                      <span>{settings.weeklyTargetPoints || 5000}</span>
                     </div>
                   </div>
                 )}

@@ -316,9 +316,17 @@ export default function StudentDashboard() {
                     <div key={day} className="flex flex-col gap-3">
                       <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
                         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{day}</p>
-                        <p className={`text-sm font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
-                          {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
-                        </p>
+                        <div className="flex gap-2 items-center">
+                          <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100)).toFixed(0)}% of daily goal`}>
+                            <div className="flex text-gray-700">★★★★★</div>
+                            <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100))}%` }}>
+                              ★★★★★
+                            </div>
+                          </div>
+                          <p className={`text-sm font-bold ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                            {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
+                          </p>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         {groupedHistory[day].map((item: any) => (
