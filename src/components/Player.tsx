@@ -214,7 +214,6 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       let wallHit = false;
 
       objects.forEach(o => {
-
         const hw = (o.w || o.width || 1) / 2;
         const hd = (o.d || o.depth || 1) / 2;
         const blockMinX = o.x - hw;
@@ -229,8 +228,36 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
         if (playerMaxX > blockMinX && playerMinX < blockMaxX &&
           playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
-          const topY = o.y + (o.h || o.thickness || 1);
+          
+          let topY = o.y + (o.h || o.thickness || 1);
           const bottomY = o.y;
+          
+          const localX = x - o.x;
+          const localZ = z - o.z;
+          const rotY = o.rotationY || 0;
+          const s = Math.sin(-rotY);
+          const c = Math.cos(-rotY);
+          const lx = localX * c - localZ * s;
+          const lz = localX * s + localZ * c;
+          
+          const nx = Math.max(-0.5, Math.min(0.5, lx / (o.w || o.width || 1)));
+          const nz = Math.max(-0.5, Math.min(0.5, lz / (o.d || o.depth || 1)));
+
+          const isWedge = o.blockShape === 'wedge';
+          const isPyramid = o.blockShape === 'pyramid';
+          const isRoof = o.type === 'roof';
+
+          if (isWedge) {
+            const localHeight = Math.max(0, Math.min(1, 0.5 - nx));
+            topY = o.y + localHeight * (o.h || o.thickness || 1);
+          } else if (isPyramid || (isRoof && Math.round(o.curveness || 0) === 0)) {
+            const localHeight = Math.max(0, Math.min(1, (0.5 - Math.max(Math.abs(nx), Math.abs(nz))) * 2));
+            topY = o.y + localHeight * (o.h || o.thickness || 1);
+          } else if (isRoof) {
+            const rDist = Math.sqrt(nx*nx + nz*nz);
+            const localHeight = Math.max(0, Math.min(1, 1 - rDist / 0.7071));
+            topY = o.y + localHeight * (o.h || o.thickness || 1);
+          }
 
           if (topY <= currentY + stepHeight) {
             if (topY > floorY) floorY = topY;
@@ -281,6 +308,24 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     playerState.rotation = targetRotation.current;
 
     pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
+
+    const yaw = groupRef.current.rotation.y;
+    const sinYaw = Math.sin(yaw);
+    const cosYaw = Math.cos(yaw);
+    
+    const forwardOffset = 0.4;
+    const sideOffset = 0.4;
+    
+    const frontY = checkCollision(targetX + sinYaw * forwardOffset, targetZ + cosYaw * forwardOffset, finalFloorY).floorY;
+    const backY = checkCollision(targetX - sinYaw * forwardOffset, targetZ - cosYaw * forwardOffset, finalFloorY).floorY;
+    const rightY = checkCollision(targetX + cosYaw * sideOffset, targetZ - sinYaw * sideOffset, finalFloorY).floorY;
+    const leftY = checkCollision(targetX - cosYaw * sideOffset, targetZ + sinYaw * sideOffset, finalFloorY).floorY;
+
+    const targetPitch = Math.atan2(backY - frontY, forwardOffset * 2);
+    const targetRoll = Math.atan2(rightY - leftY, sideOffset * 2);
+
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, drivingVehicle ? targetPitch : 0, delta * 10);
+    groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, drivingVehicle ? targetRoll : 0, delta * 10);
 
     groupRef.current.position.copy(pos.current);
 
