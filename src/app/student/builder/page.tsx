@@ -2512,7 +2512,7 @@ export default function VoxelBuilder() {
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180 };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - actualBlockCost;
     setObjects(newObjects);
