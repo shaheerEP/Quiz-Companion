@@ -51,7 +51,7 @@ export default function TeacherDashboard() {
         if (typeof window !== 'undefined') window.localStorage.removeItem("lastSelectedStudentId");
         return;
       }
-      
+
       setActiveStudent(student);
       if (typeof window !== 'undefined') window.localStorage.setItem("lastSelectedStudentId", String(studentId));
 
@@ -192,29 +192,29 @@ export default function TeacherDashboard() {
   const handleHistoryManualLog = async (dayString: string, logType: 'bonus' | 'deduction') => {
     const amount = prompt(`Enter points to ${logType === 'bonus' ? 'add' : 'deduct'} for ${dayString}:`);
     if (!amount || isNaN(Number(amount)) || !activeSession) return;
-    
+
     let targetDate = new Date();
     if (dayString === "Yesterday") {
       targetDate.setDate(targetDate.getDate() - 1);
     } else if (dayString !== "Today") {
       targetDate = new Date(dayString);
     }
-    
+
     await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ logType, points: Number(amount), date: targetDate.toISOString() })
     });
-    
+
     const actualPoints = logType === 'bonus' ? Number(amount) : -Number(amount);
-    
+
     const newDaily = dayString === "Today" ? Math.max(0, (activeStudent.dailyPoints || 0) + actualPoints) : activeStudent.dailyPoints;
-    
-    setActiveStudent({ 
-      ...activeStudent, 
-      pointsBalance: Math.max(0, activeStudent.pointsBalance + actualPoints), 
-      lifetimePoints: Math.max(0, activeStudent.lifetimePoints + actualPoints), 
-      dailyPoints: newDaily 
+
+    setActiveStudent({
+      ...activeStudent,
+      pointsBalance: Math.max(0, activeStudent.pointsBalance + actualPoints),
+      lifetimePoints: Math.max(0, activeStudent.lifetimePoints + actualPoints),
+      dailyPoints: newDaily
     });
 
     setManualAnim({ type: logType, amount: Number(amount) });
@@ -404,44 +404,44 @@ export default function TeacherDashboard() {
         {Object.keys(groupedHistory).map(day => {
           const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
           return (
-          <div key={day} className="flex flex-col gap-2">
-            <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
-              <div className="flex gap-2 items-center">
-                <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100)).toFixed(0)}% of daily goal`}>
-                  <div className="flex text-gray-700">★★★★★</div>
-                  <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100))}%` }}>
-                    ★★★★★
-                  </div>
-                </div>
-                <p className={`text-xs font-bold mr-2 ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
-                  {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
-                </p>
-                <button title="Add points for this day" onClick={() => handleHistoryManualLog(day, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center hover:bg-indigo-500/40 transition-colors"><PlusCircle className="w-4 h-4" /></button>
-                <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(day, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center hover:bg-rose-500/40 transition-colors"><MinusCircle className="w-4 h-4" /></button>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {groupedHistory[day].map((item: any) => (
-                <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
-                    {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
-                    {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
-                    <div>
-                      <p className="font-bold text-gray-200 text-base">{item.title}</p>
-                      {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+            <div key={day} className="flex flex-col gap-2">
+              <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
+                <div className="flex gap-2 items-center">
+                  <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100)).toFixed(0)}% of daily goal`}>
+                    <div className="flex text-gray-700">★★★★★</div>
+                    <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100))}%` }}>
+                      ★★★★★
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {item.type === 'deduction' ? '-' : '+'}{item.points}
-                    </p>
-                  </div>
+                  <p className={`text-xs font-bold mr-2 ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                    {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
+                  </p>
+                  <button title="Add points for this day" onClick={() => handleHistoryManualLog(day, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center hover:bg-indigo-500/40 transition-colors"><PlusCircle className="w-4 h-4" /></button>
+                  <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(day, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center hover:bg-rose-500/40 transition-colors"><MinusCircle className="w-4 h-4" /></button>
                 </div>
-              ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                {groupedHistory[day].map((item: any) => (
+                  <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
+                      {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
+                      {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                      <div>
+                        <p className="font-bold text-gray-200 text-base">{item.title}</p>
+                        {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {item.type === 'deduction' ? '-' : '+'}{item.points}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
           );
         })}
       </div>
@@ -590,7 +590,7 @@ export default function TeacherDashboard() {
                           <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
                         )}
                       </div>
-                      
+
                       {/* 5 Star Daily Fill */}
                       <div className="relative inline-block text-3xl md:text-4xl">
                         <div className="flex text-gray-700">★★★★★</div>
@@ -602,7 +602,7 @@ export default function TeacherDashboard() {
                     <h1 className="text-5xl lg:text-8xl font-black text-white tracking-tight capitalize drop-shadow-lg text-center md:text-left mt-6 md:mt-0">{activeStudent.name}</h1>
                   </div>
                 </div>
-                
+
                 <div className="w-full md:hidden flex flex-col items-center">
                   <div className="flex flex-col items-center gap-2 mb-4">
                     <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Active Student</p>
@@ -621,7 +621,7 @@ export default function TeacherDashboard() {
                           <User className="w-16 h-16 text-gray-500" />
                         )}
                       </div>
-                      
+
                       {/* 5 Star Daily Fill (Mobile) */}
                       <div className="relative inline-block text-4xl mt-2">
                         <div className="flex text-gray-700">★★★★★</div>
@@ -634,19 +634,19 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center justify-center w-full mt-4">
-                <Stopwatch
-                  key={resetTimerKey}
-                  isRunning={isRunning}
-                  setIsRunning={handleTimerRunningState}
-                  onScore={handleScore}
-                  onCancel={handleCancel}
-                  studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
-                />
+                  <Stopwatch
+                    key={resetTimerKey}
+                    isRunning={isRunning}
+                    setIsRunning={handleTimerRunningState}
+                    onScore={handleScore}
+                    onCancel={handleCancel}
+                    studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
+                  />
                 </div>
               </div>
             )}
           </section>
-          
+
           <div className="hidden md:block w-full">
             {activeStudent && Object.keys(groupedHistory).length > 0 && renderDailyHistory()}
           </div>
@@ -666,12 +666,7 @@ export default function TeacherDashboard() {
               </h2>
 
               <div className="flex flex-col gap-4">
-                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Progress</p>
-                  <p className="text-4xl font-black text-white">
-                    Q: {activeSession.totalQuestions} <span className="text-2xl text-gray-600 font-bold">/ {settings?.badgeThresholds.finaleQuestionCount || 5}</span>
-                  </p>
-                </div>
+
 
                 <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
                   <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Avg. Speed</p>
