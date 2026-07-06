@@ -589,7 +589,10 @@ function generateBungalow(): PlacedObject[] {
   objects.push({ x: 0, y: 1, z: -10.5, color: wallColor, type: "block", width: 28, thickness: 4, depth: 1 }); // Back
   objects.push({ x: -9, y: 1, z: 10.5, color: wallColor, type: "block", width: 10, thickness: 4, depth: 1 }); // Front Left
   objects.push({ x: 9, y: 1, z: 10.5, color: wallColor, type: "block", width: 10, thickness: 4, depth: 1 }); // Front Right
-  objects.push({ x: 0, y: 1, z: 10.5, color: glass, type: "block", width: 8, thickness: 4, depth: 0.2 }); // Front Center Glass
+  // Front Center Glass (Split to leave a hole for the door)
+  objects.push({ x: -2.5, y: 1, z: 10.5, color: glass, type: "block", width: 3, thickness: 4, depth: 0.2 }); // Left glass
+  objects.push({ x: 2.5, y: 1, z: 10.5, color: glass, type: "block", width: 3, thickness: 4, depth: 0.2 }); // Right glass
+  objects.push({ x: 0, y: 3, z: 10.5, color: glass, type: "block", width: 2, thickness: 2, depth: 0.2 }); // Top glass above door
   
   // Interior Walls (Dividing into 3 main rooms)
   objects.push({ x: -4.5, y: 1, z: 0, color: interiorWallColor, type: "block", width: 1, thickness: 4, depth: 20 });
