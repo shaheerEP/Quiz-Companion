@@ -252,7 +252,7 @@ export default function StudentDashboard() {
         
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-8">
           <div className="flex flex-col md:flex-row items-center gap-10">
-            <div className="relative">
+            <div className="flex flex-col items-center gap-4">
               <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl relative z-10">
                 {user.student?.profileImageUrl ? (
                   <img src={user.student.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -260,22 +260,14 @@ export default function StudentDashboard() {
                   <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
                 )}
               </div>
-              {/* Wrapped Daily Badges */}
-              {(user.student?.dailyPoints || 0) >= 600 && (
-                <div className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '0ms' }}>
-                  <span title="Good (600+ pts today)" className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]">🌟</span>
+              
+              {/* 5 Star Daily Fill */}
+              <div className="relative inline-block text-3xl md:text-4xl">
+                <div className="flex text-gray-700">★★★★★</div>
+                <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, ((user.student?.dailyPoints || 0) / 1000) * 100)}%` }}>
+                  ★★★★★
                 </div>
-              )}
-              {(user.student?.dailyPoints || 0) >= 750 && (
-                <div className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '200ms' }}>
-                  <span title="Great (750+ pts today)" className="text-4xl md:text-5xl filter drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]">🚀</span>
-                </div>
-              )}
-              {(user.student?.dailyPoints || 0) >= 1000 && (
-                <div className="absolute left-1/2 -translate-x-1/2 -top-10 md:-top-12 z-20 flex items-center justify-center animate-bounce" style={{ animationDelay: '400ms' }}>
-                  <span title="Excellent (1000+ pts today)" className="text-6xl md:text-7xl filter drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]">👑</span>
-                </div>
-              )}
+              </div>
             </div>
             <div className="text-center md:text-left">
               <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm md:text-base">Welcome back,</p>
