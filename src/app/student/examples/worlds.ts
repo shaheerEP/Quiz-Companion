@@ -568,35 +568,36 @@ function generateBungalow(): PlacedObject[] {
   // 1. Massive Foundation / Deck using single large blocks
   // Central Foundation
   objects.push({ x: 0, y: 0, z: 0, color: foundationColor, type: "block", width: 30, thickness: 1, depth: 30 });
+  
   // Wrap-around Wooden Deck
-  objects.push({ x: 0, y: 0.2, z: 16, color: woodColor, type: "block", width: 32, thickness: 0.5, depth: 4 });
-  objects.push({ x: 0, y: 0.2, z: -16, color: woodColor, type: "block", width: 32, thickness: 0.5, depth: 4 });
-  objects.push({ x: -16, y: 0.2, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 32 });
-  objects.push({ x: 16, y: 0.2, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 32 });
+  objects.push({ x: 0, y: 0.5, z: 16, color: woodColor, type: "block", width: 30, thickness: 0.5, depth: 4 });
+  objects.push({ x: 0, y: 0.5, z: -16, color: woodColor, type: "block", width: 30, thickness: 0.5, depth: 4 });
+  objects.push({ x: -17, y: 0.5, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 36 });
+  objects.push({ x: 17, y: 0.5, z: 0, color: woodColor, type: "block", width: 4, thickness: 0.5, depth: 36 });
 
   // 2. Main Building Shell (using thickness for height to avoid loops)
   // Left Wing (Solid)
-  objects.push({ x: -10, y: 3.5, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
+  objects.push({ x: -10, y: 1, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
   // Right Wing (Solid)
-  objects.push({ x: 10, y: 3.5, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
+  objects.push({ x: 10, y: 1, z: -5, color: wallColor, type: "block", width: 8, thickness: 6, depth: 18 });
   
   // Center (Living area, lots of glass)
   objects.push({ x: 0, y: 7, z: -5, color: wallColor, type: "block", width: 12, thickness: 1, depth: 18 }); // Center roof slab
-  objects.push({ x: 0, y: 3.5, z: 4, color: glass, type: "block", width: 12, thickness: 6, depth: 0.5 }); // Front giant glass wall
-  objects.push({ x: 0, y: 3.5, z: -14, color: wallColor, type: "block", width: 12, thickness: 6, depth: 1 }); // Back solid wall
+  objects.push({ x: 0, y: 1, z: 4, color: glass, type: "block", width: 12, thickness: 6, depth: 0.5 }); // Front giant glass wall
+  objects.push({ x: 0, y: 1, z: -14, color: wallColor, type: "block", width: 12, thickness: 6, depth: 1 }); // Back solid wall
   
   // 3. Curved Pillars (using curveness)
   for (let px of [-14, -6, 6, 14]) {
     for (let pz of [12, -12]) {
-      objects.push({ x: px, y: 3.5, z: pz, color: accentColor, type: "block", width: 1, thickness: 6, depth: 1, curveness: 3 });
+      objects.push({ x: px, y: 1, z: pz, color: accentColor, type: "block", width: 1.5, thickness: 6, depth: 1.5, curveness: 4 });
     }
   }
 
   // 4. Sloped Roofs (using Wedges & Pyramids & rotations)
   // Wedge roof on left wing (sloping left)
-  objects.push({ x: -10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationZ: Math.PI / 2 });
+  objects.push({ x: -10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationY: Math.PI });
   // Wedge roof on right wing (sloping right)
-  objects.push({ x: 10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationZ: -Math.PI / 2 });
+  objects.push({ x: 10, y: 7, z: -5, color: roofColor, type: "block", blockShape: "wedge", width: 8, thickness: 3, depth: 18, rotationY: 0 });
   
   // Decorative Pyramids at the corners of the center roof
   objects.push({ x: -5.5, y: 8, z: 3.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
@@ -604,15 +605,15 @@ function generateBungalow(): PlacedObject[] {
   objects.push({ x: -5.5, y: 8, z: -13.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
   objects.push({ x: 5.5, y: 8, z: -13.5, color: accentColor, type: "block", blockShape: "pyramid", width: 2, thickness: 2, depth: 2 });
 
-  // 5. Grand Entrance (Awning using wedge with X rotation)
-  objects.push({ x: 0, y: 4, z: 8, color: woodColor, type: "block", blockShape: "wedge", width: 6, thickness: 2, depth: 8, rotationX: Math.PI / 2 });
+  // 5. Grand Entrance (Awning using wedge with Y rotation)
+  objects.push({ x: 0, y: 4, z: 6, color: woodColor, type: "block", blockShape: "wedge", width: 4, thickness: 2, depth: 6, rotationY: -Math.PI / 2 });
   // Supporting pillars for awning
-  objects.push({ x: -2.5, y: 2, z: 11, color: foundationColor, type: "block", width: 0.5, thickness: 4, depth: 0.5, curveness: 4 });
-  objects.push({ x: 2.5, y: 2, z: 11, color: foundationColor, type: "block", width: 0.5, thickness: 4, depth: 0.5, curveness: 4 });
+  objects.push({ x: -2.5, y: 1, z: 7.5, color: foundationColor, type: "block", width: 0.5, thickness: 3, depth: 0.5, curveness: 4 });
+  objects.push({ x: 2.5, y: 1, z: 7.5, color: foundationColor, type: "block", width: 0.5, thickness: 3, depth: 0.5, curveness: 4 });
 
   // 6. Large Swimming Pool in front
-  objects.push({ x: 0, y: 0.1, z: 24, color: "#cbd5e1", type: "block", width: 20, thickness: 0.5, depth: 10 }); // Pool deck
-  objects.push({ x: 0, y: 0.2, z: 24, color: "#3b82f6", type: "block", width: 18, thickness: 0.4, depth: 8 }); // Water (lowered slightly)
+  objects.push({ x: 0, y: 0, z: 24, color: "#cbd5e1", type: "block", width: 20, thickness: 0.5, depth: 10 }); // Pool deck
+  objects.push({ x: 0, y: 0.2, z: 24, color: "#3b82f6", type: "block", width: 18, thickness: 0.2, depth: 8 }); // Water (lowered slightly)
 
   // 7. Interior Items (Living Room)
   objects.push({ x: 0, y: 1, z: 0, color: "", type: "item", itemId: "sofa", rotationY: Math.PI });
@@ -642,11 +643,11 @@ function generateBungalow(): PlacedObject[] {
     objects.push({ x, y: 0, z: -20, color: "", type: "item", itemId: "bush" });
   }
   
-  // Animals & Vehicles
-  objects.push({ x: -8, y: 1, z: 22, color: "", type: "item", itemId: "dog" });
-  objects.push({ x: 8, y: 1, z: 26, color: "", type: "item", itemId: "cat" });
-  objects.push({ x: 18, y: 1, z: 20, color: "", type: "item", itemId: "lemborgini", rotationY: -Math.PI / 4 });
-  objects.push({ x: -18, y: 1, z: 20, color: "", type: "item", itemId: "defender", rotationY: Math.PI / 4 });
+  // Animals & Vehicles (on the ground)
+  objects.push({ x: -8, y: 0, z: 22, color: "", type: "item", itemId: "dog" });
+  objects.push({ x: 8, y: 0, z: 26, color: "", type: "item", itemId: "cat" });
+  objects.push({ x: 18, y: 0, z: 20, color: "", type: "item", itemId: "lemborgini", rotationY: -Math.PI / 4 });
+  objects.push({ x: -18, y: 0, z: 20, color: "", type: "item", itemId: "defender", rotationY: Math.PI / 4 });
   
   // Main Doors & Windows (Using items on walls)
   objects.push({ x: -2, y: 1, z: 4, color: "", type: "item", itemId: "door", rotationY: 0 });
