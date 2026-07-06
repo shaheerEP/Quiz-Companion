@@ -1859,13 +1859,6 @@ export default function ExampleWorldsViewer() {
     }
   }, [user]);
 
-  if (!user || user.role !== 'student') return null;
-  if (loading) return (
-    <div className="min-h-screen bg-sky-100 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-    </div>
-  );
-
   const activeWorld = EXAMPLE_WORLDS.find(w => w.id === activeWorldId) || EXAMPLE_WORLDS[0];
   const shopItems: any[] = settings?.builderItems || [];
 
@@ -1879,6 +1872,13 @@ export default function ExampleWorldsViewer() {
       items: validObjects.filter(o => o.type === 'item')
     };
   }, [activeWorld.objects]);
+
+  if (!user || user.role !== 'student') return null;
+  if (loading) return (
+    <div className="min-h-screen bg-sky-100 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+    </div>
+  );
 
   return (
     <div className="h-screen bg-sky-100 flex flex-col relative overflow-hidden">
