@@ -25,6 +25,7 @@ export type PlacedObject = {
   width?: number;
   curveness?: number;
   blockShape?: 'box' | 'wedge' | 'pyramid';
+  isOpen?: boolean;
 };
 
 /* ─── 3D Components (Read-Only) ─── */

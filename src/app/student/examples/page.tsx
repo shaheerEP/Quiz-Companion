@@ -29,6 +29,7 @@ type PlacedObject = {
   width?: number;
   curveness?: number;
   blockShape?: 'box' | 'wedge' | 'pyramid';
+  isOpen?: boolean;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
