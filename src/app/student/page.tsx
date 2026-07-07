@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User } from "lucide-react";
+import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User, Star } from "lucide-react";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
+import MannersHistoryModal from "@/components/MannersHistoryModal";
 
 export default function StudentDashboard() {
   const { user, refreshAuth } = useAuth();
@@ -26,6 +27,8 @@ export default function StudentDashboard() {
   const [showFinale, setShowFinale] = useState<"Master Mind Champion 🏆" | "Super Solver 🥇" | null>(null);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [mannersLogs, setMannersLogs] = useState<any[]>([]);
+  const [showMannersHistory, setShowMannersHistory] = useState(false);
   const lastResultIdRef = useRef<string | null>(null);
   const shownManualLogsRef = useRef<Set<string>>(new Set());
   const initialLogsFetchedRef = useRef(false);
@@ -77,9 +80,12 @@ export default function StudentDashboard() {
 
         if (active) {
           setActiveSession(active);
-      } else {
-        setActiveSession(null);
-      }
+        } else {
+          setActiveSession(null);
+        }
+      
+        const mannersRes = await fetch(`/api/manners?studentId=${user.id}`);
+        if (mannersRes.ok) setMannersLogs(await mannersRes.json());
       
       // Fetch withdrawals
       const logsRes = await fetch(`/api/withdrawals?studentId=${user.id}`);
@@ -432,6 +438,33 @@ export default function StudentDashboard() {
 
             {settings && (
               <div className="flex flex-col gap-4">
+                {user.student?.mannersEnabled && (
+                  <div 
+                    onClick={() => setShowMannersHistory(true)}
+                    className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-2 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition-colors group"
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <span className="text-gray-400 font-bold flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                        Daily Manners
+                      </span>
+                      <span className="text-xs font-bold text-gray-500 group-hover:text-white transition-colors">History &rarr;</span>
+                    </div>
+                    
+                    <div className="relative inline-block text-5xl md:text-6xl mb-2">
+                      <div className="flex text-gray-800">★★★★★</div>
+                      {(() => {
+                        const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
+                        const pct = todayLog ? todayLog.percentage : 0;
+                        return (
+                          <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]" style={{ width: `${pct}%` }}>
+                            ★★★★★
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
                 {/* Weekly Target Progress */}
                 <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
                   <div className="flex items-center justify-between mb-2">
@@ -535,6 +568,10 @@ export default function StudentDashboard() {
           gifts={settings.mysteryGifts}
           onClose={() => setShowFinale(null)}
         />
+      )}
+
+      {showMannersHistory && user && user.id && (
+        <MannersHistoryModal studentId={user.id} onClose={() => setShowMannersHistory(false)} />
       )}
     </div>
   );

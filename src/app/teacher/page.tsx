@@ -8,7 +8,8 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star } from "lucide-react";
+import MannersHistoryModal from "@/components/MannersHistoryModal";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -26,6 +27,8 @@ export default function TeacherDashboard() {
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [resetTimerKey, setResetTimerKey] = useState(0);
+  const [mannersLogs, setMannersLogs] = useState<any[]>([]);
+  const [showMannersHistory, setShowMannersHistory] = useState(false);
 
   useEffect(() => {
     if (activeSession) {
@@ -62,6 +65,9 @@ export default function TeacherDashboard() {
       const historyRes = await fetch(`/api/history?studentId=${studentId}`);
       if (!historyRes.ok) throw new Error("Failed to fetch history");
       setHistoryItems(await historyRes.json());
+
+      const mannersRes = await fetch(`/api/manners?studentId=${studentId}`);
+      if (mannersRes.ok) setMannersLogs(await mannersRes.json());
 
       if (sessions && sessions.length > 0 && !sessions[0].isCompleted) {
         setActiveSession(sessions[0]);
@@ -123,6 +129,9 @@ export default function TeacherDashboard() {
 
           const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
           setHistoryItems(await historyRes.json());
+
+          const mannersRes = await fetch(`/api/manners?studentId=${activeStudent._id}`);
+          if (mannersRes.ok) setMannersLogs(await mannersRes.json());
 
           if (active) {
             if (active.stoppedByStudent && active.studentStopTime !== null) {
@@ -506,6 +515,30 @@ export default function TeacherDashboard() {
                   <Globe className="w-5 h-5" /> Explore Built World
                 </a>
 
+                {activeStudent.mannersEnabled && (
+                  <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        Today's Manners
+                      </span>
+                      <button onClick={() => setShowMannersHistory(true)} className="text-xs text-gray-500 font-bold hover:text-white transition-colors">History</button>
+                    </div>
+                    <div className="relative inline-block text-4xl text-center mt-2">
+                      <div className="flex justify-center text-gray-800">★★★★★</div>
+                      {(() => {
+                        const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
+                        const pct = todayLog ? todayLog.percentage : 0;
+                        return (
+                          <div className="flex text-yellow-400 absolute top-0 left-0 right-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] mx-auto justify-center" style={{ width: `${pct}%`, marginLeft: 'calc(50% - 60px)' }}>
+                            ★★★★★
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
                 {settings && (
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
                     <div className="flex items-center justify-between">
@@ -743,6 +776,10 @@ export default function TeacherDashboard() {
 
       {showBundleAnim && settings && (
         <BundleAnimation itemName={settings.bundleItemName || "🍫 Chocolate"} />
+      )}
+
+      {showMannersHistory && activeStudent && (
+        <MannersHistoryModal studentId={activeStudent._id} onClose={() => setShowMannersHistory(false)} />
       )}
     </div>
   );

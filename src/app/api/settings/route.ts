@@ -82,7 +82,8 @@ const DEFAULT_SETTINGS = {
     { id: "trash_can", name: "Trash Can", emoji: "🗑️", cost: 40, refundOnErase: 20, width: 0.6, height: 1.0, depth: 0.6 },
     { id: "jeep", name: "Jeep", emoji: "🛻", cost: 550, refundOnErase: 275, width: 2.6, height: 1.6, depth: 1.4 },
   ],
-  prefabs: []
+  prefabs: [],
+  mannersList: []
 };
 
 export async function GET() {
@@ -130,6 +131,10 @@ export async function GET() {
       }
       if (newValue.prefabs === undefined) {
         newValue.prefabs = DEFAULT_SETTINGS.prefabs;
+        updated = true;
+      }
+      if (newValue.mannersList === undefined) {
+        newValue.mannersList = DEFAULT_SETTINGS.mannersList;
         updated = true;
       }
       if (updated) {

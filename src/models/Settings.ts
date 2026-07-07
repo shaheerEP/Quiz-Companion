@@ -31,6 +31,7 @@ export interface ISettingsValue {
   landUpgradeCost?: number;
   landUpgradeAmount?: number;
   prefabs?: any[];
+  mannersList?: { task: string; maxStars: number; id: string }[];
 }
 
 export interface ISettings extends Document {

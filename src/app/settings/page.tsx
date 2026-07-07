@@ -153,7 +153,8 @@ export default function SettingsPage() {
         pointsBalance: editingStudent.pointsBalance,
         lifetimePoints: editingStudent.lifetimePoints,
         rewardSystem: editingStudent.rewardSystem,
-        profileImageUrl: editingStudent.profileImageUrl
+        profileImageUrl: editingStudent.profileImageUrl,
+        mannersEnabled: editingStudent.mannersEnabled
       })
     });
     setEditingStudent(null);
@@ -298,6 +299,17 @@ export default function SettingsPage() {
                               <option value="tiered">Tiered (Levels)</option>
                             </select>
                           </div>
+                          <div>
+                            <label className="text-xs text-yellow-400 font-bold mb-1 block">Manners Feature</label>
+                            <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                              <input 
+                                type="checkbox" checked={editingStudent.mannersEnabled || false} 
+                                onChange={e => setEditingStudent({...editingStudent, mannersEnabled: e.target.checked})}
+                                className="w-5 h-5 text-yellow-500 rounded focus:ring-yellow-500 focus:ring-2 bg-gray-900 border-gray-700"
+                              />
+                              <span className="text-sm font-bold text-gray-300">Enable</span>
+                            </label>
+                          </div>
                           <div className="col-span-2">
                             <label className="text-xs text-cyan-400 font-bold mb-1 block">Profile Image URL (or upload via Cloudinary)</label>
                             <div className="flex gap-2">
@@ -360,10 +372,20 @@ export default function SettingsPage() {
                             const token = btoa(student._id.toString());
                             const url = `${window.location.origin}/api/auth/magic?token=${token}`;
                             navigator.clipboard.writeText(url);
-                            alert("Magic Link Copied! Send this to the student.");
-                          }} className="bg-indigo-500/10 hover:bg-indigo-600 text-indigo-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Magic Link">
+                            alert("Login Magic Link Copied! Send this to the student.");
+                          }} className="bg-indigo-500/10 hover:bg-indigo-600 text-indigo-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Login Magic Link">
                             <LinkIcon className="w-4 h-4" />
                           </button>
+                          {student.mannersEnabled && (
+                            <button onClick={() => {
+                              const token = btoa(student._id.toString());
+                              const url = `${window.location.origin}/manners/${token}`;
+                              navigator.clipboard.writeText(url);
+                              alert("Manners Magic Link Copied! Send this to the parents.");
+                            }} className="bg-yellow-500/10 hover:bg-yellow-600 text-yellow-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Manners Magic Link">
+                              <span className="font-bold text-xs">⭐</span>
+                            </button>
+                          )}
                           <button onClick={() => setEditingStudent(student)} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg transition-colors" title="Edit Student">
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -438,6 +460,55 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex flex-col gap-8">
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <h2 className="text-2xl font-black text-gray-200 flex items-center gap-3">
+                  <div className="bg-yellow-500/20 p-2 rounded-lg">⭐</div>
+                  Manners Tasks
+                </h2>
+                <button 
+                  onClick={() => setSettings({...settings, mannersList: [...(settings.mannersList || []), { id: `task-${Date.now()}`, task: "New Task", maxStars: 1 }]})}
+                  className="bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
+                >
+                  + Add Task
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                {settings.mannersList?.map((task: any, index: number) => (
+                  <div key={index} className="flex flex-wrap items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-800">
+                    <input 
+                      type="text" value={task.task} placeholder="Task Name"
+                      onChange={e => {
+                        const tasks = [...settings.mannersList];
+                        tasks[index].task = e.target.value;
+                        setSettings({...settings, mannersList: tasks});
+                      }}
+                      className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
+                    />
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Max Stars</label>
+                      <input type="number" value={task.maxStars} min="1" max="10"
+                        onChange={e => { const tasks = [...settings.mannersList]; tasks[index].maxStars = Number(e.target.value); setSettings({...settings, mannersList: tasks}); }}
+                        className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-yellow-400 text-sm font-bold outline-none focus:border-yellow-500"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        const tasks = settings.mannersList.filter((_: any, i: number) => i !== index);
+                        setSettings({...settings, mannersList: tasks});
+                      }}
+                      className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg mt-4"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {(!settings.mannersList || settings.mannersList.length === 0) && (
+                  <p className="text-gray-500 text-sm italic">No manners tasks added. Click "+ Add Task" to create one.</p>
+                )}
+              </div>
+            </div>
+
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Mystery Gifts Inventory</h2>
               <textarea 

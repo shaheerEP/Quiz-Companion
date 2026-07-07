@@ -46,6 +46,7 @@ export interface IStudent extends Document {
     materialType?: string;
     textureId?: string;
   }>;
+  mannersEnabled?: boolean;
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -101,7 +102,8 @@ const StudentSchema = new Schema<IStudent>(
         }
       ],
       default: []
-    }
+    },
+    mannersEnabled: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
