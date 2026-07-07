@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
@@ -882,7 +882,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("bench", "bench", "") && itemId !== "park_bench") {
+  if (isMatch("bench", "bench", "") && !(name && name.toLowerCase().includes("park"))) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -995,7 +995,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("table", "table", "🪑") && itemId !== "picnic_table") {
+  if (isMatch("table", "table", "🪑") && !(name && name.toLowerCase().includes("picnic"))) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -3475,6 +3475,16 @@ export default function VoxelBuilder() {
               )}
             </div>
           </>
+        )}
+
+        {toolMode === 'select' && prefabSelectionIds.length > 0 && (
+          <div className="flex gap-2">
+            <button 
+              onClick={handleSavePrefab}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl shadow-md flex items-center gap-2 transition-colors shrink-0">
+              <Save className="w-5 h-5" /> Save Group as Prefab ({prefabSelectionIds.length} items)
+            </button>
+          </div>
         )}
 
         {toolMode === 'items' && showItemsMenu && (
