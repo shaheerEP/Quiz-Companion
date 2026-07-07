@@ -238,7 +238,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
 
   const name = itemDef?.name?.toLowerCase() || "";
   const emoji = itemDef?.emoji || "";
-  const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
+  const isMatch = (...args: string[]) => args.some(a => itemId === a || name.toLowerCase().includes(a.toLowerCase()) || emoji === a);
 
   if (isMatch("grass_field", "grass field", "🌿")) {
     return (
@@ -1202,19 +1202,23 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     return (
       <ModelWrapper>
         {/* Stone Ring */}
-        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-          <torusGeometry args={[0.6, 0.2, 8, 16]} rotation={[Math.PI/2, 0, 0]} />
+        <mesh position={[0, 0.2, 0]} rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+          <torusGeometry args={[0.6, 0.2, 8, 16]} />
           <meshStandardMaterial color="#6b7280" />
         </mesh>
         {/* Logs */}
-        <mesh position={[0, 0.2, 0]} rotation={[0, Math.PI/4, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} rotation={[Math.PI/2, 0, 0]} />
-          <meshStandardMaterial color="#78350f" />
-        </mesh>
-        <mesh position={[0, 0.2, 0]} rotation={[0, -Math.PI/4, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} rotation={[Math.PI/2, 0, 0]} />
-          <meshStandardMaterial color="#78350f" />
-        </mesh>
+        <group position={[0, 0.2, 0]} rotation={[0, Math.PI/4, 0]}>
+          <mesh rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} />
+            <meshStandardMaterial color="#78350f" />
+          </mesh>
+        </group>
+        <group position={[0, 0.2, 0]} rotation={[0, -Math.PI/4, 0]}>
+          <mesh rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} />
+            <meshStandardMaterial color="#78350f" />
+          </mesh>
+        </group>
         {/* Fire */}
         <mesh position={[0, 0.5, 0]} castShadow>
           <coneGeometry args={[0.4, 0.6, 8]} />
