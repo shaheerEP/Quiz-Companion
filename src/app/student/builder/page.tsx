@@ -503,7 +503,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("hedge", "hedge", "🌿")) {
+  if (isMatch("hedge", "hedge")) {
     return (
       <ModelWrapper>
         {/* Main body */}
@@ -1240,7 +1240,40 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("chair", "chair", "🪑")) {
+  if (isMatch("table_and_chair", "table and chair")) {
+    return (
+      <ModelWrapper>
+        {/* Table */}
+        <mesh position={[0, 0.9, -0.4]} castShadow receiveShadow>
+          <boxGeometry args={[1.5, 0.1, 1.0]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {[[-0.6, 0.45, -0.8], [0.6, 0.45, -0.8], [-0.6, 0.45, 0], [0.6, 0.45, 0]].map((pos, i) => (
+          <mesh key={`tleg-${i}`} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={[0.1, 0.9, 0.1]} />
+            <meshStandardMaterial color="#8B5A2B" />
+          </mesh>
+        ))}
+        {/* Chair */}
+        <mesh position={[0, 0.5, 0.4]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.1, 0.6]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        <mesh position={[0, 1.0, 0.65]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.9, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {[[-0.25, 0.25, 0.15], [0.25, 0.25, 0.15], [-0.25, 0.25, 0.65], [0.25, 0.25, 0.65]].map((pos, i) => (
+          <mesh key={`cleg-${i}`} position={pos as [number,number,number]} castShadow receiveShadow>
+            <boxGeometry args={[0.1, 0.5, 0.1]} />
+            <meshStandardMaterial color="#8B5A2B" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("chair", "chair")) {
     return (
       <ModelWrapper>
         {/* Seat */}
@@ -1332,7 +1365,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("table", "table", "🪑")) {
+  if (isMatch("table", "table")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
