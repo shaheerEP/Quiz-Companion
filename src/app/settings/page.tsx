@@ -525,16 +525,16 @@ export default function SettingsPage() {
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Questions per Session</label>
                   <input 
-                    type="number" value={settings.badgeThresholds.finaleQuestionCount}
-                    onChange={e => setSettings({...settings, badgeThresholds: { ...settings.badgeThresholds, finaleQuestionCount: Number(e.target.value) }})}
+                    type="number" value={settings.badgeThresholds?.finaleQuestionCount ?? 10}
+                    onChange={e => setSettings({...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), finaleQuestionCount: Number(e.target.value) }})}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-indigo-500 transition-colors text-2xl"
                   />
                 </div>
                 <div>
                   <label className="text-xs text-yellow-500 font-bold uppercase tracking-wider mb-2 block">Champion Speed (s)</label>
                   <input 
-                    type="number" value={settings.badgeThresholds.speedThreshold}
-                    onChange={e => setSettings({...settings, badgeThresholds: { ...settings.badgeThresholds, speedThreshold: Number(e.target.value) }})}
+                    type="number" value={settings.badgeThresholds?.speedThreshold ?? 5}
+                    onChange={e => setSettings({...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), speedThreshold: Number(e.target.value) }})}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-indigo-500 transition-colors text-2xl"
                   />
                 </div>

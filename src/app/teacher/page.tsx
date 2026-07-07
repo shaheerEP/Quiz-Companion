@@ -342,8 +342,8 @@ export default function TeacherDashboard() {
     setShowRating(null);
     setResetTimerKey(prev => prev + 1);
     if (activeSession && settings) {
-      if (activeSession.totalQuestions >= settings.badgeThresholds.finaleQuestionCount) {
-        if (activeSession.averageSpeed <= settings.badgeThresholds.speedThreshold) {
+      if (activeSession.totalQuestions >= (settings.badgeThresholds?.finaleQuestionCount ?? 10)) {
+        if (activeSession.averageSpeed <= (settings.badgeThresholds?.speedThreshold ?? 5)) {
           setShowFinale("Master Mind Champion 🏆");
         } else {
           setShowFinale("Super Solver 🥇");
