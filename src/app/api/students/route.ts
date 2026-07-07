@@ -53,7 +53,7 @@ export async function PUT(req: Request) {
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { id, name, password, pointsBalance, lifetimePoints, isClassTime, rewardSystem, profileImageUrl, mannersEnabled } = body;
+    const { id, name, password, pointsBalance, lifetimePoints, isClassTime, rewardSystem, profileImageUrl, mannersEnabled, mannersList } = body;
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
@@ -67,6 +67,7 @@ export async function PUT(req: Request) {
     if (isClassTime !== undefined) student.isClassTime = isClassTime;
     if (rewardSystem !== undefined) student.rewardSystem = rewardSystem;
     if (mannersEnabled !== undefined) student.mannersEnabled = mannersEnabled;
+    if (mannersList !== undefined) student.mannersList = mannersList;
     
     if (profileImageUrl !== undefined) {
       if (student.profileImageUrl && student.profileImageUrl !== profileImageUrl) {

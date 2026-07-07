@@ -28,8 +28,7 @@ export async function GET(req: Request) {
     
     // Parent fetching details via token
     if (token) {
-       const settings = await Settings.findOne({ key: "config", teacherId: student.teacherId });
-       const mannersList = settings?.value?.mannersList || [];
+       const mannersList = student.mannersList || [];
        
        const startOfDay = new Date();
        startOfDay.setHours(0, 0, 0, 0);

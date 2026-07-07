@@ -272,31 +272,52 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
   if (isMatch("fountain", "fountain", "⛲")) {
     return (
       <ModelWrapper>
-        {/* Base Pool */}
-        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[1.2, 1.2, 0.4, 16]} />
-          <meshStandardMaterial color="#9ca3af" />
+        {/* Base Pool - octagonal */}
+        <mesh position={[0, 0.15, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.4, 1.5, 0.3, 8]} />
+          <meshStandardMaterial color="#78716c" />
+        </mesh>
+        {/* Inner Pool Wall */}
+        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.2, 1.2, 0.15, 8]} />
+          <meshStandardMaterial color="#a8a29e" />
         </mesh>
         {/* Water in Base */}
-        <mesh position={[0, 0.3, 0]} receiveShadow>
-          <cylinderGeometry args={[1.1, 1.1, 0.2, 16]} />
+        <mesh position={[0, 0.25, 0]} receiveShadow>
+          <cylinderGeometry args={[1.15, 1.15, 0.1, 16]} />
           <meshPhysicalMaterial color="#38bdf8" transmission={0.9} opacity={0.7} transparent />
         </mesh>
-        {/* Center Pillar */}
-        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.3, 0.4, 1.2, 8]} />
-          <meshStandardMaterial color="#d1d5db" />
+        {/* Center Pillar - fluted */}
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.15, 0.25, 1.2, 12]} />
+          <meshStandardMaterial color="#e7e5e4" />
         </mesh>
-        {/* Top Bowl */}
-        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.7, 0.3, 0.2, 16]} />
-          <meshStandardMaterial color="#9ca3af" />
+        {/* Middle Bowl */}
+        <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.6, 0.15, 0.15, 12]} />
+          <meshStandardMaterial color="#a8a29e" />
         </mesh>
-        {/* Water Stream */}
-        <mesh position={[0, 1.8, 0]} castShadow>
-          <cylinderGeometry args={[0.05, 0.05, 0.8, 8]} />
-          <meshPhysicalMaterial color="#bae6fd" transmission={0.8} opacity={0.6} transparent />
+        {/* Upper Pillar */}
+        <mesh position={[0, 1.75, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.08, 0.12, 0.5, 8]} />
+          <meshStandardMaterial color="#e7e5e4" />
         </mesh>
+        {/* Top Finial */}
+        <mesh position={[0, 2.1, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.12, 12, 12]} />
+          <meshStandardMaterial color="#d6d3d1" />
+        </mesh>
+        {/* Water Streams - cascading down */}
+        {[0, 1, 2, 3].map(i => {
+          const angle = (i / 4) * Math.PI * 2;
+          return (
+            <mesh key={`stream-${i}`} position={[Math.cos(angle) * 0.3, 1.3, Math.sin(angle) * 0.3]} castShadow>
+              <cylinderGeometry args={[0.03, 0.03, 0.6, 6]} />
+              <meshPhysicalMaterial color="#7dd3fc" transmission={0.8} opacity={0.5} transparent />
+            </mesh>
+          );
+        })}
+        <pointLight position={[0, 1.5, 0]} intensity={0.3} distance={4} color="#bae6fd" />
       </ModelWrapper>
     );
   }
@@ -414,10 +435,25 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
   if (isMatch("hedge", "hedge", "🌿")) {
     return (
       <ModelWrapper>
-        <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.8, 1.2, 0.6]} />
+        {/* Main body */}
+        <mesh position={[0, 0.55, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.8, 1.0, 0.6]} />
           <meshStandardMaterial color="#166534" />
         </mesh>
+        {/* Rounded top bumps */}
+        {[[-0.5, 1.1, 0], [0, 1.15, 0], [0.5, 1.1, 0]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <sphereGeometry args={[0.35, 8, 8]} />
+            <meshStandardMaterial color="#15803d" />
+          </mesh>
+        ))}
+        {/* Small leaf bumps on sides */}
+        {[[-0.7, 0.6, 0.25], [0.7, 0.6, -0.25], [-0.3, 0.5, 0.3], [0.3, 0.5, -0.3]].map((pos, i) => (
+          <mesh key={`leaf-${i}`} position={pos as [number,number,number]} castShadow>
+            <sphereGeometry args={[0.18, 6, 6]} />
+            <meshStandardMaterial color="#14532d" />
+          </mesh>
+        ))}
       </ModelWrapper>
     );
   }
@@ -425,25 +461,49 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
   if (isMatch("bird_bath", "bird bath")) {
     return (
       <ModelWrapper>
-        {/* Base */}
-        <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+        {/* Square Base */}
+        <mesh position={[0, 0.05, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.5, 0.1, 0.5]} />
+          <meshStandardMaterial color="#a8a29e" />
+        </mesh>
+        {/* Decorative Pillar */}
+        <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.08, 0.12, 0.7, 12]} />
+          <meshStandardMaterial color="#d6d3d1" />
+        </mesh>
+        {/* Pillar Ring */}
+        <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.13, 0.13, 0.05, 12]} />
+          <meshStandardMaterial color="#e7e5e4" />
+        </mesh>
+        {/* Wide Shallow Bowl */}
+        <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.5, 0.12, 0.12, 16]} />
           <meshStandardMaterial color="#d4d4d8" />
         </mesh>
-        {/* Pillar */}
-        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.1, 0.15, 0.8, 16]} />
-          <meshStandardMaterial color="#e4e4e7" />
-        </mesh>
-        {/* Bowl */}
-        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.4, 0.1, 0.15, 16]} />
-          <meshStandardMaterial color="#d4d4d8" />
+        {/* Bowl Rim */}
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow rotation={[Math.PI/2, 0, 0]}>
+          <torusGeometry args={[0.5, 0.03, 8, 24]} />
+          <meshStandardMaterial color="#a8a29e" />
         </mesh>
         {/* Water */}
-        <mesh position={[0, 0.95, 0]} receiveShadow>
-          <cylinderGeometry args={[0.35, 0.35, 0.05, 16]} />
+        <mesh position={[0, 0.88, 0]} receiveShadow>
+          <cylinderGeometry args={[0.45, 0.45, 0.04, 16]} />
           <meshPhysicalMaterial color="#7dd3fc" transmission={0.9} transparent />
+        </mesh>
+        {/* Small Bird */}
+        <mesh position={[0.3, 1.05, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.07, 8, 8]} />
+          <meshStandardMaterial color="#f59e0b" />
+        </mesh>
+        <mesh position={[0.35, 1.1, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshStandardMaterial color="#f59e0b" />
+        </mesh>
+        {/* Bird Beak */}
+        <mesh position={[0.42, 1.09, 0]} rotation={[0, 0, -Math.PI/6]} castShadow>
+          <coneGeometry args={[0.015, 0.04, 4]} />
+          <meshStandardMaterial color="#ea580c" />
         </mesh>
       </ModelWrapper>
     );
@@ -1019,7 +1079,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
-  if (isMatch("stool", "stool", "🪑")) {
+  if (isMatch("stool", "stool")) {
     return (
       <ModelWrapper>
         {/* Seat */}

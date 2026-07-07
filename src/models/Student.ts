@@ -47,6 +47,7 @@ export interface IStudent extends Document {
     textureId?: string;
   }>;
   mannersEnabled?: boolean;
+  mannersList?: { task: string; maxStars: number; id: string }[];
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -103,7 +104,8 @@ const StudentSchema = new Schema<IStudent>(
       ],
       default: []
     },
-    mannersEnabled: { type: Boolean, default: false }
+    mannersEnabled: { type: Boolean, default: false },
+    mannersList: { type: [{ task: String, maxStars: Number, id: String }], default: [] }
   },
   { timestamps: true }
 );
