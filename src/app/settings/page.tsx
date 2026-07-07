@@ -512,7 +512,7 @@ export default function SettingsPage() {
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Mystery Gifts Inventory</h2>
               <textarea 
-                rows={6} value={settings.mysteryGifts.join("\n")}
+                rows={6} value={(settings.mysteryGifts || []).join("\n")}
                 onChange={e => setSettings({...settings, mysteryGifts: e.target.value.split("\n")})}
                 className="w-full bg-gray-950 border border-gray-700 rounded-2xl px-5 py-4 text-white font-medium outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
                 placeholder="e.g. 10 mins free game time"
