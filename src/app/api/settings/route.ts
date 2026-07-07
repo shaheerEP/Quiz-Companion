@@ -70,8 +70,19 @@ const DEFAULT_SETTINGS = {
     { id: "truck", name: "Truck", emoji: "🛻", cost: 600, refundOnErase: 300, width: 3.5, height: 2.2, depth: 1.5 },
     { id: "bike", name: "Bike", emoji: "🏍️", cost: 350, refundOnErase: 175, width: 2.2, height: 1.2, depth: 0.6 },
     { id: "bus", name: "Bus", emoji: "🚌", cost: 700, refundOnErase: 350, width: 5.0, height: 2.0, depth: 1.5 },
+    { id: "street_light", name: "Street Light", emoji: "💡", cost: 80, refundOnErase: 40, width: 0.5, height: 3.5, depth: 0.5 },
+    { id: "fountain", name: "Fountain", emoji: "⛲", cost: 300, refundOnErase: 150, width: 2.5, height: 1.5, depth: 2.5 },
+    { id: "park_bench", name: "Park Bench", emoji: "🪑", cost: 120, refundOnErase: 60, width: 2.0, height: 1.0, depth: 1.0 },
+    { id: "gazebo", name: "Gazebo", emoji: "🛖", cost: 500, refundOnErase: 250, width: 4.0, height: 3.0, depth: 4.0 },
+    { id: "fire_pit", name: "Fire Pit", emoji: "🔥", cost: 150, refundOnErase: 75, width: 1.5, height: 0.5, depth: 1.5 },
+    { id: "picnic_table", name: "Picnic Table", emoji: "🪑", cost: 180, refundOnErase: 90, width: 2.5, height: 1.2, depth: 2.0 },
+    { id: "hedge", name: "Hedge", emoji: "🌿", cost: 80, refundOnErase: 40, width: 2.0, height: 1.2, depth: 0.6 },
+    { id: "bird_bath", name: "Bird Bath", emoji: "⛲", cost: 90, refundOnErase: 45, width: 0.8, height: 1.0, depth: 0.8 },
+    { id: "mailbox", name: "Mailbox", emoji: "📫", cost: 50, refundOnErase: 25, width: 0.4, height: 1.2, depth: 0.4 },
+    { id: "trash_can", name: "Trash Can", emoji: "🗑️", cost: 40, refundOnErase: 20, width: 0.6, height: 1.0, depth: 0.6 },
     { id: "jeep", name: "Jeep", emoji: "🛻", cost: 550, refundOnErase: 275, width: 2.6, height: 1.6, depth: 1.4 },
-  ]
+  ],
+  prefabs: []
 };
 
 export async function GET() {
@@ -116,6 +127,10 @@ export async function GET() {
             updated = true;
           }
         }
+      }
+      if (newValue.prefabs === undefined) {
+        newValue.prefabs = DEFAULT_SETTINGS.prefabs;
+        updated = true;
       }
       if (updated) {
         config = await Settings.findOneAndUpdate({ key: "config", teacherId }, { value: newValue }, { new: true });

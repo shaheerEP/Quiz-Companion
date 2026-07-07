@@ -1094,6 +1094,242 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     }
   }
 
+  if (isMatch("street_light", "street light", "💡")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.2, 0.3, 0.5, 8]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Pole */}
+        <mesh position={[0, 1.75, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.05, 0.1, 2.5, 8]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Lamp */}
+        <mesh position={[0, 3.2, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.3, 16, 16]} />
+          <meshPhysicalMaterial color="#fef08a" emissive="#facc15" emissiveIntensity={2} transmission={0.9} />
+        </mesh>
+        <pointLight position={[0, 3.2, 0]} intensity={1} distance={5} color="#fef08a" />
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("fountain", "fountain", "⛲")) {
+    return (
+      <ModelWrapper>
+        {/* Base Pool */}
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.2, 1.2, 0.4, 16]} />
+          <meshStandardMaterial color="#9ca3af" />
+        </mesh>
+        {/* Water in Base */}
+        <mesh position={[0, 0.3, 0]} receiveShadow>
+          <cylinderGeometry args={[1.1, 1.1, 0.2, 16]} />
+          <meshPhysicalMaterial color="#38bdf8" transmission={0.9} opacity={0.7} transparent />
+        </mesh>
+        {/* Center Pillar */}
+        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.4, 1.2, 8]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        {/* Top Bowl */}
+        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.7, 0.3, 0.2, 16]} />
+          <meshStandardMaterial color="#9ca3af" />
+        </mesh>
+        {/* Water Stream */}
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <cylinderGeometry args={[0.05, 0.05, 0.8, 8]} />
+          <meshPhysicalMaterial color="#bae6fd" transmission={0.8} opacity={0.6} transparent />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("park_bench", "park bench")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.1, 0.8]} />
+          <meshStandardMaterial color="#a16207" />
+        </mesh>
+        <mesh position={[0, 0.9, -0.35]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.5, 0.1]} />
+          <meshStandardMaterial color="#a16207" />
+        </mesh>
+        {/* Iron Legs */}
+        {[[-0.9, 0.2, -0.3], [0.9, 0.2, -0.3], [-0.9, 0.2, 0.3], [0.9, 0.2, 0.3]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.4]} />
+            <meshStandardMaterial color="#111827" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("gazebo", "gazebo", "🛖")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[2.0, 2.0, 0.2, 8]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        {/* Pillars */}
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+          const angle = (i * Math.PI) / 4;
+          return (
+            <mesh key={i} position={[Math.cos(angle)*1.8, 1.5, Math.sin(angle)*1.8]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.08, 0.08, 2.8, 8]} />
+              <meshStandardMaterial color="#f3f4f6" />
+            </mesh>
+          )
+        })}
+        {/* Roof */}
+        <mesh position={[0, 3.2, 0]} castShadow receiveShadow>
+          <coneGeometry args={[2.2, 1.5, 8]} />
+          <meshStandardMaterial color="#4b5563" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("fire_pit", "fire pit", "🔥")) {
+    return (
+      <ModelWrapper>
+        {/* Stone Ring */}
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <torusGeometry args={[0.6, 0.2, 8, 16]} rotation={[Math.PI/2, 0, 0]} />
+          <meshStandardMaterial color="#6b7280" />
+        </mesh>
+        {/* Logs */}
+        <mesh position={[0, 0.2, 0]} rotation={[0, Math.PI/4, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <meshStandardMaterial color="#78350f" />
+        </mesh>
+        <mesh position={[0, 0.2, 0]} rotation={[0, -Math.PI/4, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <meshStandardMaterial color="#78350f" />
+        </mesh>
+        {/* Fire */}
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <coneGeometry args={[0.4, 0.6, 8]} />
+          <meshPhysicalMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={2} transparent opacity={0.8} />
+        </mesh>
+        <pointLight position={[0, 1, 0]} intensity={1.5} distance={5} color="#fb923c" />
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("picnic_table", "picnic table")) {
+    return (
+      <ModelWrapper>
+        {/* Table Top */}
+        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.8]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        {/* Benches */}
+        <mesh position={[0, 0.4, 0.7]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.3]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        <mesh position={[0, 0.4, -0.7]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.3]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        {/* Legs */}
+        <mesh position={[-0.8, 0.4, 0]} rotation={[0, 0, Math.PI/6]} castShadow receiveShadow>
+           <boxGeometry args={[0.1, 1.0, 1.4]} />
+           <meshStandardMaterial color="#92400e" />
+        </mesh>
+        <mesh position={[0.8, 0.4, 0]} rotation={[0, 0, -Math.PI/6]} castShadow receiveShadow>
+           <boxGeometry args={[0.1, 1.0, 1.4]} />
+           <meshStandardMaterial color="#92400e" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("hedge", "hedge", "🌿")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.8, 1.2, 0.6]} />
+          <meshStandardMaterial color="#166534" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("bird_bath", "bird bath")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+          <meshStandardMaterial color="#d4d4d8" />
+        </mesh>
+        {/* Pillar */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.1, 0.15, 0.8, 16]} />
+          <meshStandardMaterial color="#e4e4e7" />
+        </mesh>
+        {/* Bowl */}
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.4, 0.1, 0.15, 16]} />
+          <meshStandardMaterial color="#d4d4d8" />
+        </mesh>
+        {/* Water */}
+        <mesh position={[0, 0.95, 0]} receiveShadow>
+          <cylinderGeometry args={[0.35, 0.35, 0.05, 16]} />
+          <meshPhysicalMaterial color="#7dd3fc" transmission={0.9} transparent />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("mailbox", "mailbox", "📫")) {
+    return (
+      <ModelWrapper>
+        {/* Post */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 1.0, 0.1]} />
+          <meshStandardMaterial color="#451a03" />
+        </mesh>
+        {/* Box */}
+        <mesh position={[0, 1.1, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.3, 0.3, 0.5]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Flag */}
+        <mesh position={[0.16, 1.2, 0.1]} castShadow receiveShadow>
+          <boxGeometry args={[0.02, 0.2, 0.05]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("trash_can", "trash can", "🗑️")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.25, 1.0, 16]} />
+          <meshStandardMaterial color="#374151" />
+        </mesh>
+        <mesh position={[0, 1.05, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.32, 0.32, 0.1, 16]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("flower", "flower", "🌸")) {
     return (
       <ModelWrapper>

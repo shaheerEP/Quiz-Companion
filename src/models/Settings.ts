@@ -30,6 +30,7 @@ export interface ISettingsValue {
   isClassTime?: boolean;
   landUpgradeCost?: number;
   landUpgradeAmount?: number;
+  prefabs?: any[];
 }
 
 export interface ISettings extends Document {

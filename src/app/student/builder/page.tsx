@@ -6,12 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
+import { GroupGizmo } from "./GroupGizmo";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -35,7 +36,14 @@ export type PlacedObject = {
   textureId?: string;
 };
 
-type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate';
+export type Prefab = {
+  id: string;
+  name: string;
+  emoji: string;
+  objects: PlacedObject[];
+};
+
+type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate' | 'select' | 'prefab';
 
 const BASE_COLORS = [
   { id: "wood", color: "#8B5A2B", name: "Wood" },
@@ -298,7 +306,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
 
   const name = itemDef?.name?.toLowerCase() || "";
   const emoji = itemDef?.emoji || "";
-  const isMatch = (idStr: string, nameStr: string, emojiStr: string) => itemId === idStr || name.includes(nameStr) || emoji === emojiStr;
+  const isMatch = (...args: string[]) => args.some(a => itemId === a || name.toLowerCase().includes(a.toLowerCase()) || emoji === a);
 
   if (isMatch("grass_field", "grass field", "🌿")) {
     return (
@@ -1152,6 +1160,246 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         </ModelWrapper>
       )
     }
+  }
+
+  if (isMatch("street_light", "street light", "💡")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.2, 0.3, 0.5, 8]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Pole */}
+        <mesh position={[0, 1.75, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.05, 0.1, 2.5, 8]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Lamp */}
+        <mesh position={[0, 3.2, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.3, 16, 16]} />
+          <meshPhysicalMaterial color="#fef08a" emissive="#facc15" emissiveIntensity={2} transmission={0.9} />
+        </mesh>
+        <pointLight position={[0, 3.2, 0]} intensity={1} distance={5} color="#fef08a" />
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("fountain", "fountain", "⛲")) {
+    return (
+      <ModelWrapper>
+        {/* Base Pool */}
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.2, 1.2, 0.4, 16]} />
+          <meshStandardMaterial color="#9ca3af" />
+        </mesh>
+        {/* Water in Base */}
+        <mesh position={[0, 0.3, 0]} receiveShadow>
+          <cylinderGeometry args={[1.1, 1.1, 0.2, 16]} />
+          <meshPhysicalMaterial color="#38bdf8" transmission={0.9} opacity={0.7} transparent />
+        </mesh>
+        {/* Center Pillar */}
+        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.4, 1.2, 8]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        {/* Top Bowl */}
+        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.7, 0.3, 0.2, 16]} />
+          <meshStandardMaterial color="#9ca3af" />
+        </mesh>
+        {/* Water Stream */}
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <cylinderGeometry args={[0.05, 0.05, 0.8, 8]} />
+          <meshPhysicalMaterial color="#bae6fd" transmission={0.8} opacity={0.6} transparent />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("park_bench", "park bench")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.1, 0.8]} />
+          <meshStandardMaterial color="#a16207" />
+        </mesh>
+        <mesh position={[0, 0.9, -0.35]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 0.5, 0.1]} />
+          <meshStandardMaterial color="#a16207" />
+        </mesh>
+        {/* Iron Legs */}
+        {[[-0.9, 0.2, -0.3], [0.9, 0.2, -0.3], [-0.9, 0.2, 0.3], [0.9, 0.2, 0.3]].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.4]} />
+            <meshStandardMaterial color="#111827" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("gazebo", "gazebo", "🛖")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[2.0, 2.0, 0.2, 8]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        {/* Pillars */}
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+          const angle = (i * Math.PI) / 4;
+          return (
+            <mesh key={i} position={[Math.cos(angle)*1.8, 1.5, Math.sin(angle)*1.8]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.08, 0.08, 2.8, 8]} />
+              <meshStandardMaterial color="#f3f4f6" />
+            </mesh>
+          )
+        })}
+        {/* Roof */}
+        <mesh position={[0, 3.2, 0]} castShadow receiveShadow>
+          <coneGeometry args={[2.2, 1.5, 8]} />
+          <meshStandardMaterial color="#4b5563" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("fire_pit", "fire pit", "🔥")) {
+    return (
+      <ModelWrapper>
+        {/* Stone Ring */}
+        <mesh position={[0, 0.2, 0]} rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+          <torusGeometry args={[0.6, 0.2, 8, 16]} />
+          <meshStandardMaterial color="#6b7280" />
+        </mesh>
+        {/* Logs */}
+        <group position={[0, 0.2, 0]} rotation={[0, Math.PI/4, 0]}>
+          <mesh rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} />
+            <meshStandardMaterial color="#78350f" />
+          </mesh>
+        </group>
+        <group position={[0, 0.2, 0]} rotation={[0, -Math.PI/4, 0]}>
+          <mesh rotation={[Math.PI/2, 0, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.8, 8]} />
+            <meshStandardMaterial color="#78350f" />
+          </mesh>
+        </group>
+        {/* Fire */}
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <coneGeometry args={[0.4, 0.6, 8]} />
+          <meshPhysicalMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={2} transparent opacity={0.8} />
+        </mesh>
+        <pointLight position={[0, 1, 0]} intensity={1.5} distance={5} color="#fb923c" />
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("picnic_table", "picnic table")) {
+    return (
+      <ModelWrapper>
+        {/* Table Top */}
+        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.8]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        {/* Benches */}
+        <mesh position={[0, 0.4, 0.7]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.3]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        <mesh position={[0, 0.4, -0.7]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 0.1, 0.3]} />
+          <meshStandardMaterial color="#b45309" />
+        </mesh>
+        {/* Legs */}
+        <mesh position={[-0.8, 0.4, 0]} rotation={[0, 0, Math.PI/6]} castShadow receiveShadow>
+           <boxGeometry args={[0.1, 1.0, 1.4]} />
+           <meshStandardMaterial color="#92400e" />
+        </mesh>
+        <mesh position={[0.8, 0.4, 0]} rotation={[0, 0, -Math.PI/6]} castShadow receiveShadow>
+           <boxGeometry args={[0.1, 1.0, 1.4]} />
+           <meshStandardMaterial color="#92400e" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("hedge", "hedge", "🌿")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.8, 1.2, 0.6]} />
+          <meshStandardMaterial color="#166534" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("bird_bath", "bird bath")) {
+    return (
+      <ModelWrapper>
+        {/* Base */}
+        <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+          <meshStandardMaterial color="#d4d4d8" />
+        </mesh>
+        {/* Pillar */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.1, 0.15, 0.8, 16]} />
+          <meshStandardMaterial color="#e4e4e7" />
+        </mesh>
+        {/* Bowl */}
+        <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.4, 0.1, 0.15, 16]} />
+          <meshStandardMaterial color="#d4d4d8" />
+        </mesh>
+        {/* Water */}
+        <mesh position={[0, 0.95, 0]} receiveShadow>
+          <cylinderGeometry args={[0.35, 0.35, 0.05, 16]} />
+          <meshPhysicalMaterial color="#7dd3fc" transmission={0.9} transparent />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("mailbox", "mailbox", "📫")) {
+    return (
+      <ModelWrapper>
+        {/* Post */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.1, 1.0, 0.1]} />
+          <meshStandardMaterial color="#451a03" />
+        </mesh>
+        {/* Box */}
+        <mesh position={[0, 1.1, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.3, 0.3, 0.5]} />
+          <meshStandardMaterial color="#1f2937" />
+        </mesh>
+        {/* Flag */}
+        <mesh position={[0.16, 1.2, 0.1]} castShadow receiveShadow>
+          <boxGeometry args={[0.02, 0.2, 0.05]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("trash_can", "trash can", "🗑️")) {
+    return (
+      <ModelWrapper>
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.25, 1.0, 16]} />
+          <meshStandardMaterial color="#374151" />
+        </mesh>
+        <mesh position={[0, 1.05, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.32, 0.32, 0.1, 16]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
+      </ModelWrapper>
+    );
   }
 
   if (isMatch("flower", "flower", "🌸")) {
@@ -2175,6 +2423,7 @@ export default function VoxelBuilder() {
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
   const [showTreesDropdown, setShowTreesDropdown] = useState(false);
   const [showFurnituresDropdown, setShowFurnituresDropdown] = useState(false);
+  const [showLandscapeDropdown, setShowLandscapeDropdown] = useState(false);
   const [showItemsMenu, setShowItemsMenu] = useState(true);
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
@@ -2192,6 +2441,10 @@ export default function VoxelBuilder() {
   const [drivingVehicle, setDrivingVehicle] = useState<PlacedObject | null>(null);
   const drivingVehicleRef = useRef<PlacedObject | null>(null);
   useEffect(() => { drivingVehicleRef.current = drivingVehicle; }, [drivingVehicle]);
+  const [prefabSelectionIds, setPrefabSelectionIds] = useState<string[]>([]);
+  const [showPrefabsDropdown, setShowPrefabsDropdown] = useState(false);
+  const [isGizmoDragging, setIsGizmoDragging] = useState(false);
+  const [activePrefabId, setActivePrefabId] = useState<string | null>(null);
   
   const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
 
@@ -2360,6 +2613,62 @@ export default function VoxelBuilder() {
     }
     setIsRotating(false);
     handleEditSave();
+  };
+
+  const handleSavePrefab = async () => {
+    if (prefabSelectionIds.length === 0) return;
+    
+    // Get selected objects
+    const selectedObjects = objects.filter(o => prefabSelectionIds.includes(getBlockId(o)));
+    if (selectedObjects.length === 0) return;
+    
+    // Find min Y to use as anchor, and center X/Z
+    const minY = Math.min(...selectedObjects.map(o => o.y));
+    const minX = Math.min(...selectedObjects.map(o => o.x));
+    const maxX = Math.max(...selectedObjects.map(o => o.x));
+    const minZ = Math.min(...selectedObjects.map(o => o.z));
+    const maxZ = Math.max(...selectedObjects.map(o => o.z));
+    
+    const cx = Math.round((minX + maxX) / 2);
+    const cz = Math.round((minZ + maxZ) / 2);
+    
+    // Create new prefab
+    const newPrefab: Prefab = {
+      id: `prefab_${Date.now()}`,
+      name: `Prefab ${settings?.prefabs?.length ? settings.prefabs.length + 1 : 1}`,
+      emoji: "📦",
+      objects: selectedObjects.map(o => ({
+        ...o,
+        x: o.x - cx,
+        y: o.y - minY,
+        z: o.z - cz
+      }))
+    };
+    
+    const updatedSettings = {
+      ...settings,
+      prefabs: [...(settings?.prefabs || []), newPrefab]
+    };
+    
+    setSettings(updatedSettings);
+    setPrefabSelectionIds([]);
+    setToolMode('prefab');
+    setActivePrefabId(newPrefab.id);
+    setShowItemsMenu(true);
+    
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefabs: updatedSettings.prefabs })
+      });
+      setActionMessage({text: `Prefab Saved!`, type: 'success'});
+      setTimeout(() => setActionMessage(null), 3000);
+    } catch (e) {
+      console.error(e);
+      setActionMessage({text: `Error saving prefab`, type: 'error'});
+      setTimeout(() => setActionMessage(null), 3000);
+    }
   };
 
   const handleEditSave = () => {
@@ -2543,6 +2852,40 @@ export default function VoxelBuilder() {
     } catch (e) { isSavingRef.current = false; showMessage("Failed to save. Check connection.", "error"); fetchData(); }
   };
 
+  const placePrefab = (anchorX: number, anchorY: number, anchorZ: number) => {
+    const prefab = settings?.prefabs?.find((p: any) => p.id === activePrefabId);
+    if (!prefab) return;
+
+    let cost = 0;
+    prefab.objects.forEach((o: any) => {
+      if (o.type === 'item') {
+        const iDef = shopItems.find(i => i.id === o.itemId);
+        cost += iDef ? iDef.price : 0;
+      } else if (o.type === 'large-roof') {
+        cost += (studentData?.customColors?.includes(o.color) ? 0 : (settings?.builderRoofCost ?? 100));
+      } else {
+        cost += (studentData?.customColors?.includes(o.color) ? 0 : actualBlockCost);
+      }
+    });
+
+    if (studentData.pointsBalance < cost) {
+      setActionMessage({text: `Need ${cost} pts to place prefab!`, type: "error"});
+      setTimeout(() => setActionMessage(null), 3000);
+      return;
+    }
+
+    const newObjs = prefab.objects.map((o: any) => ({
+      ...o,
+      x: anchorX + o.x,
+      y: anchorY + o.y,
+      z: anchorZ + o.z,
+    }));
+    
+    const newWorld = [...objects, ...newObjs];
+    setObjects(newWorld);
+    saveObjects(newWorld, studentData.pointsBalance - cost, `Placed prefab ${prefab.name}`, cost);
+  };
+
   /* ─── Click Handlers ─── */
 
   const handleGroundClick = (x: number, y: number, z: number) => {
@@ -2550,9 +2893,14 @@ export default function VoxelBuilder() {
     if (x < -landSize || x > landSize || z < -landSize || z > landSize) return;
 
     if (studentData?.isClassTime || isExploreMode) return;
-    if (toolMode === 'eraser' || toolMode === 'paint') return;
+    if (toolMode === 'eraser' || toolMode === 'paint' || toolMode === 'select') return;
     
     if ((toolMode === 'build' || toolMode === 'roof') && isEditingRef.current) {
+      return;
+    }
+    
+    if (toolMode === 'prefab' && activePrefabId) {
+      placePrefab(x, y, z);
       return;
     }
     
@@ -2624,6 +2972,12 @@ export default function VoxelBuilder() {
       setSelectedBlockIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
       return;
     }
+    
+    if (toolMode === 'select') {
+      const id = getBlockId(obj);
+      setPrefabSelectionIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      return;
+    }
 
     if (!faceNormal) return;
     
@@ -2660,6 +3014,12 @@ export default function VoxelBuilder() {
     if (toolMode === 'roof') return; // Cannot use items as roof corners
     if (toolMode === 'rotate') { rotateObject(obj); return; }
     
+    if (toolMode === 'select') {
+      const id = getBlockId(obj);
+      setPrefabSelectionIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      return;
+    }
+
     if (toolMode === 'build' && isEditingRef.current) return; // Ignore clicks on items when editing blocks
 
     const nx = obj.x + 1;
@@ -2915,14 +3275,32 @@ export default function VoxelBuilder() {
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'items' ? 'bg-amber-500 text-white' : 'text-amber-700 hover:bg-amber-50'}`}>
             <TreePine className="w-4 h-4" /> Items
           </button>
+
+          {/* Paint */}
           <button onClick={() => { setToolMode('paint'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'paint' ? 'bg-indigo-500 text-white' : 'text-indigo-600 hover:bg-indigo-50'}`}>
             <PaintBucket className="w-4 h-4" /> Paint
           </button>
+
+          {/* Eraser */}
           <button onClick={() => { setToolMode('eraser'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'eraser' ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50'}`}>
-            <Eraser className="w-5 h-5" /> Erase
+            <Eraser className="w-4 h-4" /> <span>Eraser</span>
           </button>
+          
+          {/* Select Tool (Prefabs) */}
+          <button onClick={() => { setToolMode('select'); setActiveItemId(null); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'select' ? 'bg-fuchsia-500 text-white' : 'text-fuchsia-600 hover:bg-fuchsia-50'}`}>
+            <MousePointer2 className="w-4 h-4" /> <span>Select</span>
+          </button>
+
+          {/* Prefabs Tool */}
+          <button onClick={() => { setToolMode('prefab'); setActiveItemId(null); setShowItemsMenu(true); }}
+            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 ${toolMode === 'prefab' ? 'bg-teal-500 text-white' : 'text-teal-600 hover:bg-teal-50'}`}>
+            <Box className="w-4 h-4" /> <span>Prefabs</span>
+          </button>
+
+          {/* Rotate Tool */}
           <button onClick={() => setToolMode('rotate')}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors border-t border-sky-100 rounded-b-2xl ${toolMode === 'rotate' ? 'bg-purple-500 text-white' : 'text-purple-600 hover:bg-purple-50'}`}>
             <RotateCw className="w-5 h-5" /> Rotate
@@ -2949,18 +3327,20 @@ export default function VoxelBuilder() {
       )}
 
       {/* ─── Bottom Bar: Color Palette / Item Palette ─── */}
-      {(!studentData?.isClassTime && !isExploreMode && (toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || toolMode === 'eraser' || toolMode === 'rotate' || (toolMode === 'items' && showItemsMenu))) && (
+      {(!studentData?.isClassTime && !isExploreMode && (toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || toolMode === 'eraser' || toolMode === 'rotate' || toolMode === 'select' || toolMode === 'prefab' || (toolMode === 'items' && showItemsMenu))) && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] md:w-auto max-w-3xl z-10 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex flex-wrap justify-center items-center gap-3 pointer-events-auto">
         
-        {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint') && (
+        {(toolMode === 'build' || toolMode === 'roof' || toolMode === 'paint' || toolMode === 'select') && (
           <>
-            <div className="flex items-center gap-2 pr-3 border-r border-sky-200">
-              <Pickaxe className="w-4 h-4 text-sky-600" />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">{toolMode === 'paint' ? 'Color' : toolMode === 'roof' ? 'Roof' : 'Block'}</span>
-                <span className="text-xs font-black text-amber-500">{toolMode === 'paint' || isCustomColor ? 'Free' : `-${toolMode === 'roof' ? actualRoofCost : actualBlockCost} pts`}</span>
+            {(toolMode !== 'select') && (
+              <div className="flex items-center gap-2 pr-3 border-r border-sky-200">
+                <Pickaxe className="w-4 h-4 text-sky-600" />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">{toolMode === 'paint' ? 'Color' : toolMode === 'roof' ? 'Roof' : 'Block'}</span>
+                  <span className="text-xs font-black text-amber-500">{toolMode === 'paint' || isCustomColor ? 'Free' : `-${toolMode === 'roof' ? actualRoofCost : actualBlockCost} pts`}</span>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center">
               {(toolMode === 'build' || toolMode === 'roof') && (
                 <div className="flex items-center gap-3 pr-3 border-r border-sky-200">
@@ -2978,7 +3358,7 @@ export default function VoxelBuilder() {
                     <div className="flex flex-col gap-1 w-24">
                       <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                         <span>Width</span>
-                        <span>{activeWidth}</span>
+                        <span>{activeWidth}m</span>
                       </div>
                       <input type="range" min="0.1" max="1" step="0.1" value={activeWidth} onChange={e => handleWidthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                     </div>
@@ -2987,7 +3367,7 @@ export default function VoxelBuilder() {
                   <div className="flex flex-col gap-1 w-24">
                     <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                       <span>Height</span>
-                      <span>{activeThickness}</span>
+                      <span>{activeThickness}m</span>
                     </div>
                     <input type="range" min="0.1" max="1" step="0.1" value={activeThickness} onChange={e => handleThicknessChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                   </div>
@@ -2996,22 +3376,24 @@ export default function VoxelBuilder() {
                     <div className="flex flex-col gap-1 w-24">
                       <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                         <span>Depth</span>
-                        <span>{activeDepth}</span>
+                        <span>{activeDepth}m</span>
                       </div>
                       <input type="range" min="0.1" max="1" step="0.1" value={activeDepth} onChange={e => handleDepthChange(parseFloat(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
                     </div>
                   )}
 
-                  <div className="flex flex-col gap-1 w-24">
-                    <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
-                      <span>Curve</span>
-                      <span>{activeCurveness}</span>
-                    </div>
-                    <input type="range" min="0" max="4" step="1" value={activeCurveness} onChange={e => handleCurvenessChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
-                  </div>
-                  
-                  {toolMode === 'build' && (
+                  {toolMode === 'roof' && (
                     <div className="flex flex-col gap-1 w-24">
+                      <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
+                        <span>Curve</span>
+                        <span>{activeCurveness}</span>
+                      </div>
+                      <input type="range" min="0" max="4" step="1" value={activeCurveness} onChange={e => handleCurvenessChange(parseInt(e.target.value))} onPointerUp={handleEditSave} onKeyUp={handleEditSave} className="accent-sky-500" />
+                    </div>
+                  )}
+                  
+                  {(isEditingBlocks && selectedBlockIds.length > 0) && (
+                    <div className="flex flex-col gap-1 w-24 border-l border-sky-100 pl-3">
                       <div className="flex justify-between items-center text-[9px] font-bold text-gray-500 uppercase">
                         <span>Rot</span>
                         <span>{activeRotation}°</span>
@@ -3021,14 +3403,11 @@ export default function VoxelBuilder() {
                   )}
                 </div>
               )}
-              )}
-              
-              <div className="flex gap-2 mb-2 w-full max-w-md bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                <button onClick={() => setActiveMaterialType('color')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'color' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Color</button>
-                <button onClick={() => setActiveMaterialType('texture')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'texture' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Texture</button>
-                <button onClick={() => setActiveMaterialType('glass')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'glass' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Glass</button>
+              <div className="flex gap-2 mb-2 w-full max-w-md bg-white p-1 rounded-xl shadow-sm border border-gray-100 shrink-0">
+                <button onClick={() => setActiveMaterialType('color')} className={`flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'color' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Color</button>
+                <button onClick={() => setActiveMaterialType('texture')} className={`flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'texture' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Texture</button>
+                <button onClick={() => setActiveMaterialType('glass')} className={`flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'glass' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Glass</button>
               </div>
-
               {activeMaterialType === 'color' && (
                 <>
                   {BASE_COLORS.map((b) => (
@@ -3100,7 +3479,7 @@ export default function VoxelBuilder() {
 
         {toolMode === 'items' && showItemsMenu && (
           <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
-            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe'].includes(i.id)).map((item: any) => (
+            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe', 'street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)).map((item: any) => (
               <button key={item.id}
                 onClick={() => { setActiveItemId(item.id); setShowItemsMenu(false); }}
                 className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
@@ -3249,6 +3628,78 @@ export default function VoxelBuilder() {
                    )}
                  </AnimatePresence>
               </div>
+            )}
+
+            {/* Landscaping Dropdown Button */}
+            {shopItems.some((i: any) => ['street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)) && (
+              <div className="relative shrink-0 flex flex-col items-center">
+                 <button 
+                    onClick={() => setShowLandscapeDropdown(!showLandscapeDropdown)}
+                    className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${['street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(activeItemId || '') ? 'border-amber-500 bg-amber-50' : 'border-transparent bg-white'}`}
+                    title="Landscaping Menu">
+                    <span className="text-2xl leading-none">⛲</span>
+                    <span className="text-[10px] font-black text-gray-600">Outdoors</span>
+                    <span className="text-[9px] font-black text-amber-500">Menu</span>
+                 </button>
+                 
+                 <AnimatePresence>
+                   {showLandscapeDropdown && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
+                         {shopItems.filter((i: any) => ['street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)).map((item: any) => (
+                            <button key={item.id}
+                              onClick={() => { setActiveItemId(item.id); setShowLandscapeDropdown(false); setShowItemsMenu(false); }}
+                              className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
+                              title={`${item.name} — ${item.cost} pts`}>
+                              <span className="text-2xl leading-none">{item.emoji}</span>
+                              <span className="text-[10px] font-black text-gray-600">{item.name}</span>
+                              <span className="text-[9px] font-black text-amber-500">-{item.cost}</span>
+                            </button>
+                         ))}
+                      </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+            )}
+          </div>
+        )}
+
+        {toolMode === 'prefab' && (
+          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1 px-1 items-center w-full">
+            <div className="flex items-center gap-2 pr-3 border-r border-sky-200 shrink-0">
+              <Box className="w-4 h-4 text-sky-600" />
+              <div className="flex flex-col leading-tight">
+                <span className="text-[9px] font-bold text-sky-500 uppercase tracking-widest">Prefabs</span>
+              </div>
+            </div>
+            {settings?.prefabs?.length ? settings.prefabs.map((p: any) => {
+              // Calculate prefab cost
+              let cost = 0;
+              p.objects.forEach((o: any) => {
+                if (o.type === 'item') {
+                  const iDef = shopItems.find(i => i.id === o.itemId);
+                  cost += iDef ? iDef.price : 0;
+                } else if (o.type === 'large-roof') {
+                  cost += (studentData?.customColors?.includes(o.color) ? 0 : (settings?.builderRoofCost ?? 100));
+                } else {
+                  cost += (studentData?.customColors?.includes(o.color) ? 0 : actualBlockCost);
+                }
+              });
+
+              return (
+                <button key={p.id} onClick={() => setActivePrefabId(p.id)}
+                  className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activePrefabId === p.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
+                  title={p.name}>
+                  <span className="text-2xl leading-none">{p.emoji || "📦"}</span>
+                  <span className="text-[10px] font-black text-gray-600">{p.name}</span>
+                  <span className="text-[9px] font-black text-amber-500">-{cost} pts</span>
+                </button>
+              );
+            }) : (
+              <div className="text-sm font-bold text-gray-400 px-3 py-2">No prefabs saved yet. Use Select tool to save one!</div>
             )}
           </div>
         )}
@@ -3577,9 +4028,20 @@ export default function VoxelBuilder() {
                 })}
 
                 {/* Selected Highlights */}
-                {opaqueBoxes.concat(glassBoxes).map((data, idx) => {
-                  if (!selectedBlockIds.includes(getBlockId(data))) return null;
-                  const props = getBoxProps(data);
+                {validObjects.map((data, idx) => {
+                  const isBlockEdited = selectedBlockIds.includes(getBlockId(data));
+                  const isPrefabSelected = prefabSelectionIds.includes(getBlockId(data));
+                  if (!isBlockEdited && !isPrefabSelected) return null;
+                  
+                  const isItem = data.type === 'item';
+                  if (isItem && !isPrefabSelected) return null;
+
+                  const props = isItem ? { 
+                    position: [data.x, data.y, data.z] as [number, number, number], 
+                    scale: [1, 1, 1] as [number, number, number], 
+                    rotation: [0, data.rotationY || 0, 0] as [number, number, number] 
+                  } : getBoxProps(data);
+                  
                   return (
                     <mesh 
                       key={`sel-${idx}`} 
@@ -3588,7 +4050,7 @@ export default function VoxelBuilder() {
                       onPointerDown={(e) => handleHighlightPointerDown(e, data)}
                     >
                       <boxGeometry args={[props.scale[0] + 0.05, props.scale[1] + 0.05, props.scale[2] + 0.05]} />
-                      <meshBasicMaterial color="#eab308" wireframe />
+                      <meshBasicMaterial color={isPrefabSelected ? "#d946ef" : "#eab308"} wireframe />
                     </mesh>
                   );
                 })}
@@ -3623,12 +4085,25 @@ export default function VoxelBuilder() {
               /> : undefined
             }
           />}
+
+          {(toolMode === 'select' && prefabSelectionIds.length > 0) && (
+            <GroupGizmo 
+              objects={objects} 
+              selectedIds={prefabSelectionIds} 
+              onUpdateObjects={setObjects} 
+              isGizmoDragging={isGizmoDragging} 
+              setIsGizmoDragging={setIsGizmoDragging} 
+              onDragEnd={() => saveObjects(objectsRef.current, studentData?.pointsBalance || 0, "Resized/Rotated Prefab Group", 0)}
+            />
+          )}
+
           <MapControls 
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.05} 
-            enablePan={!isExploreMode} 
+            enablePan={!isExploreMode && !isGizmoDragging} 
             rotateSpeed={0.5}
             maxDistance={(studentData?.landSize ?? 50) * 1.5}
+            enabled={!isExploreMode && !isGizmoDragging}
           />
         </Canvas>
       </main>
