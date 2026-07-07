@@ -4002,6 +4002,7 @@ export default function VoxelBuilder() {
               { type: 'texture', id: 'stone', transparent: false, glass: false, texture: TEXTURES?.stone },
               { type: 'texture', id: 'brick', transparent: false, glass: false, texture: TEXTURES?.brick },
               { type: 'texture', id: 'shingles', transparent: false, glass: false, texture: TEXTURES?.shingles },
+              { type: 'texture', id: 'tile', transparent: false, glass: false, texture: TEXTURES?.tile },
             ];
 
             return (
