@@ -5,7 +5,7 @@ import { Line } from '@react-three/drei';
 
 export const GroupGizmo = ({ objects, selectedIds, onUpdateObjects, isGizmoDragging, setIsGizmoDragging, onDragEnd }: any) => {
   const { camera, size } = useThree();
-  const selectedObjs = objects.filter((o: any) => selectedIds.includes(o.id || `${o.x}-${o.y}-${o.z}`));
+  const selectedObjs = objects.filter((o: any) => selectedIds.includes(o.id || `${o.x},${o.y},${o.z}`));
 
   if (selectedObjs.length < 1) return null;
 
@@ -96,7 +96,7 @@ export const GroupGizmo = ({ objects, selectedIds, onUpdateObjects, isGizmoDragg
 
       const allObjs = [...objects];
       newObjs.forEach(no => {
-        const idx = allObjs.findIndex((ao: any) => (ao.id || `${ao.x}-${ao.y}-${ao.z}`) === (no.id || `${no.x}-${no.y}-${no.z}`));
+        const idx = allObjs.findIndex((ao: any) => (ao.id || `${ao.x},${ao.y},${ao.z}`) === (no.id || `${no.x},${no.y},${no.z}`));
         if (idx !== -1) allObjs[idx] = no;
       });
       onUpdateObjects(allObjs);
@@ -124,7 +124,7 @@ export const GroupGizmo = ({ objects, selectedIds, onUpdateObjects, isGizmoDragg
 
       const allObjs = [...objects];
       newObjs.forEach(no => {
-        const idx = allObjs.findIndex((ao: any) => (ao.id || `${ao.x}-${ao.y}-${ao.z}`) === (no.id || `${no.x}-${no.y}-${no.z}`));
+        const idx = allObjs.findIndex((ao: any) => (ao.id || `${ao.x},${ao.y},${ao.z}`) === (no.id || `${no.x},${no.y},${no.z}`));
         if (idx !== -1) allObjs[idx] = no;
       });
       onUpdateObjects(allObjs);
