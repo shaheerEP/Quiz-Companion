@@ -30,6 +30,8 @@ type PlacedObject = {
   curveness?: number;
   blockShape?: 'box' | 'wedge' | 'pyramid';
   isOpen?: boolean;
+  materialType?: 'color' | 'texture' | 'glass';
+  textureId?: string;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint';
@@ -760,6 +762,98 @@ function ItemObject({ data, itemDef, isExploreMode }: { data: PlacedObject, item
     );
   }
 
+  if (isMatch("chair", "chair", "🪑")) {
+    return (
+      <ModelWrapper>
+        {/* Seat */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.1, 0.6]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Backrest */}
+        <mesh position={[0, 0.9, -0.25]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Legs */}
+        {[
+          [-0.25, 0.25, 0.25], [0.25, 0.25, 0.25],
+          [-0.25, 0.25, -0.25], [0.25, 0.25, -0.25]
+        ].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.02, 0.5, 8]} />
+            <meshStandardMaterial color="#451a03" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("bookshelf", "bookshelf", "📚")) {
+    return (
+      <ModelWrapper>
+        {/* Main Frame */}
+        <mesh position={[0, 1.25, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 2.5, 0.6]} />
+          <meshStandardMaterial color="#5C4033" />
+        </mesh>
+        {/* Shelves (carved out by adding colored books) */}
+        <mesh position={[0, 1.25, 0.31]} castShadow receiveShadow>
+          <boxGeometry args={[1.8, 2.3, 0.02]} />
+          <meshStandardMaterial color="#3E2723" />
+        </mesh>
+        {/* Books / Contents */}
+        {[0.4, 0.9, 1.4, 1.9].map((y, i) => (
+          <group key={i} position={[0, y, 0.2]}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[1.8, 0.05, 0.4]} />
+              <meshStandardMaterial color="#8B5A2B" />
+            </mesh>
+            <mesh position={[-0.4, 0.2, 0.1]} castShadow receiveShadow>
+              <boxGeometry args={[0.3, 0.35, 0.2]} />
+              <meshStandardMaterial color={['#ef4444', '#3b82f6', '#10b981', '#f59e0b'][i]} />
+            </mesh>
+            <mesh position={[0.5, 0.15, 0.1]} castShadow receiveShadow>
+              <boxGeometry args={[0.6, 0.25, 0.2]} />
+              <meshStandardMaterial color={['#f59e0b', '#ef4444', '#3b82f6', '#10b981'][i]} />
+            </mesh>
+          </group>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("wardrobe", "wardrobe", "🚪")) {
+    return (
+      <ModelWrapper>
+        {/* Frame */}
+        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 2.8, 1.0]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Left Door */}
+        <mesh position={[-0.5, 1.4, 0.52]} castShadow receiveShadow>
+          <boxGeometry args={[0.96, 2.7, 0.05]} />
+          <meshStandardMaterial color="#A0522D" />
+        </mesh>
+        {/* Right Door */}
+        <mesh position={[0.5, 1.4, 0.52]} castShadow receiveShadow>
+          <boxGeometry args={[0.96, 2.7, 0.05]} />
+          <meshStandardMaterial color="#A0522D" />
+        </mesh>
+        {/* Handles */}
+        <mesh position={[-0.1, 1.4, 0.56]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.3]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        <mesh position={[0.1, 1.4, 0.56]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.3]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("table", "table", "🪑")) {
     return (
       <ModelWrapper>
@@ -853,21 +947,78 @@ function ItemObject({ data, itemDef, isExploreMode }: { data: PlacedObject, item
     );
   }
 
-  if (isMatch("tree", "tree", "🌲")) {
-    return (
-      <ModelWrapper>
-        {/* Trunk */}
-        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
-          <meshStandardMaterial color="#5C4033" />
-        </mesh>
-        {/* Leaves */}
-        <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-          <coneGeometry args={[0.8, 1.5, 8]} />
-          <meshStandardMaterial color="#2d6a4f" />
-        </mesh>
-      </ModelWrapper>
-    );
+  if (isMatch("tree", "pine", "oak", "palm", "🌲", "🌳", "🌴")) {
+    const isBig = isMatch("big");
+    const isSmall = isMatch("small");
+    const isOak = isMatch("oak", "🌳");
+    const isPalm = isMatch("palm", "🌴");
+    
+    // Pine tree (default)
+    if (!isOak && !isPalm) {
+      const scale = isBig ? 1.5 : isSmall ? 0.8 : 1.0;
+      return (
+        <ModelWrapper>
+          <group scale={[scale, scale, scale]}>
+            {/* Trunk */}
+            <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
+              <meshStandardMaterial color="#5C4033" />
+            </mesh>
+            {/* Leaves */}
+            <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+              <coneGeometry args={[0.8, 1.5, 8]} />
+              <meshStandardMaterial color="#2d6a4f" />
+            </mesh>
+            {isBig && (
+              <mesh position={[0, 2.2, 0]} castShadow receiveShadow>
+                <coneGeometry args={[0.6, 1.2, 8]} />
+                <meshStandardMaterial color="#2d6a4f" />
+              </mesh>
+            )}
+          </group>
+        </ModelWrapper>
+      );
+    }
+    
+    // Oak Tree
+    if (isOak) {
+      const scale = isBig ? 1.5 : isSmall ? 0.7 : 1.0;
+      return (
+        <ModelWrapper>
+          <group scale={[scale, scale, scale]}>
+            <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.25, 0.3, 1.2, 8]} />
+              <meshStandardMaterial color="#4A3728" />
+            </mesh>
+            <mesh position={[0, 1.8, 0]} castShadow receiveShadow>
+              <sphereGeometry args={[1.0, 16, 16]} />
+              <meshStandardMaterial color="#15803d" />
+            </mesh>
+          </group>
+        </ModelWrapper>
+      );
+    }
+
+    // Palm Tree
+    if (isPalm) {
+      return (
+        <ModelWrapper>
+          <group scale={[1.2, 1.2, 1.2]}>
+             <mesh position={[0, 1.2, 0]} rotation={[0, 0, 0.1]} castShadow receiveShadow>
+               <cylinderGeometry args={[0.15, 0.2, 2.5, 8]} />
+               <meshStandardMaterial color="#c29d59" />
+             </mesh>
+             {/* Palm leaves */}
+             {[0, 1.57, 3.14, 4.71].map((rot, i) => (
+                <mesh key={i} position={[Math.sin(rot)*0.5, 2.5, Math.cos(rot)*0.5]} rotation={[0.4, rot, 0]} castShadow receiveShadow>
+                  <sphereGeometry args={[0.6, 8, 8]} />
+                  <meshStandardMaterial color="#10b981" />
+                </mesh>
+             ))}
+          </group>
+        </ModelWrapper>
+      )
+    }
   }
 
   if (isMatch("flower", "flower", "🌸")) {

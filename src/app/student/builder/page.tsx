@@ -31,6 +31,8 @@ export type PlacedObject = {
   curveness?: number;
   blockShape?: 'box' | 'wedge' | 'pyramid';
   isOpen?: boolean;
+  materialType?: 'color' | 'texture' | 'glass';
+  textureId?: string;
 };
 
 type ToolMode = 'build' | 'items' | 'eraser' | 'roof' | 'paint' | 'rotate';
@@ -42,6 +44,13 @@ const BASE_COLORS = [
   { id: "glass", color: "#ADD8E6", name: "Glass" },
 ];
 
+export const AVAILABLE_TEXTURES = [
+  { id: "wood", url: "/textures/wood.png", name: "Wood Planks" },
+  { id: "stone", url: "/textures/stone.png", name: "Stone Masonry" },
+  { id: "brick", url: "/textures/brick.png", name: "Red Brick" },
+  { id: "shingles", url: "/textures/shingles.png", name: "Roof Shingles" },
+];
+
 const AVAILABLE_AVATARS = [
   { id: 'boy', name: 'Boy', cost: 0, icon: '👦' },
   { id: 'knight', name: 'Knight', cost: 500, icon: '🛡️' },
@@ -49,6 +58,16 @@ const AVAILABLE_AVATARS = [
 ];
 
 /* ─── 3D Components ─── */
+
+const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() : null;
+const TEXTURES: Record<string, THREE.Texture | null> = {};
+if (typeof window !== 'undefined') {
+  TEXTURES.wood = textureLoader!.load('/textures/wood.png');
+  TEXTURES.stone = textureLoader!.load('/textures/stone.png');
+  TEXTURES.brick = textureLoader!.load('/textures/brick.png');
+  TEXTURES.shingles = textureLoader!.load('/textures/shingles.png');
+  Object.values(TEXTURES).forEach(t => { if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; } });
+}
 
 /* ─── 3D Components ─── */
 
@@ -876,6 +895,98 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
+  if (isMatch("chair", "chair", "🪑")) {
+    return (
+      <ModelWrapper>
+        {/* Seat */}
+        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.1, 0.6]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Backrest */}
+        <mesh position={[0, 0.9, -0.25]} castShadow receiveShadow>
+          <boxGeometry args={[0.6, 0.8, 0.1]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Legs */}
+        {[
+          [-0.25, 0.25, 0.25], [0.25, 0.25, 0.25],
+          [-0.25, 0.25, -0.25], [0.25, 0.25, -0.25]
+        ].map((pos, i) => (
+          <mesh key={i} position={pos as [number,number,number]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.02, 0.5, 8]} />
+            <meshStandardMaterial color="#451a03" />
+          </mesh>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("bookshelf", "bookshelf", "📚")) {
+    return (
+      <ModelWrapper>
+        {/* Main Frame */}
+        <mesh position={[0, 1.25, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 2.5, 0.6]} />
+          <meshStandardMaterial color="#5C4033" />
+        </mesh>
+        {/* Shelves (carved out by adding colored books) */}
+        <mesh position={[0, 1.25, 0.31]} castShadow receiveShadow>
+          <boxGeometry args={[1.8, 2.3, 0.02]} />
+          <meshStandardMaterial color="#3E2723" />
+        </mesh>
+        {/* Books / Contents */}
+        {[0.4, 0.9, 1.4, 1.9].map((y, i) => (
+          <group key={i} position={[0, y, 0.2]}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[1.8, 0.05, 0.4]} />
+              <meshStandardMaterial color="#8B5A2B" />
+            </mesh>
+            <mesh position={[-0.4, 0.2, 0.1]} castShadow receiveShadow>
+              <boxGeometry args={[0.3, 0.35, 0.2]} />
+              <meshStandardMaterial color={['#ef4444', '#3b82f6', '#10b981', '#f59e0b'][i]} />
+            </mesh>
+            <mesh position={[0.5, 0.15, 0.1]} castShadow receiveShadow>
+              <boxGeometry args={[0.6, 0.25, 0.2]} />
+              <meshStandardMaterial color={['#f59e0b', '#ef4444', '#3b82f6', '#10b981'][i]} />
+            </mesh>
+          </group>
+        ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("wardrobe", "wardrobe", "🚪")) {
+    return (
+      <ModelWrapper>
+        {/* Frame */}
+        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.0, 2.8, 1.0]} />
+          <meshStandardMaterial color="#8B5A2B" />
+        </mesh>
+        {/* Left Door */}
+        <mesh position={[-0.5, 1.4, 0.52]} castShadow receiveShadow>
+          <boxGeometry args={[0.96, 2.7, 0.05]} />
+          <meshStandardMaterial color="#A0522D" />
+        </mesh>
+        {/* Right Door */}
+        <mesh position={[0.5, 1.4, 0.52]} castShadow receiveShadow>
+          <boxGeometry args={[0.96, 2.7, 0.05]} />
+          <meshStandardMaterial color="#A0522D" />
+        </mesh>
+        {/* Handles */}
+        <mesh position={[-0.1, 1.4, 0.56]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.3]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+        <mesh position={[0.1, 1.4, 0.56]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.3]} />
+          <meshStandardMaterial color="#d1d5db" />
+        </mesh>
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("table", "table", "🪑")) {
     return (
       <ModelWrapper>
@@ -969,21 +1080,78 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("tree", "tree", "🌲")) {
-    return (
-      <ModelWrapper>
-        {/* Trunk */}
-        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
-          <meshStandardMaterial color="#5C4033" />
-        </mesh>
-        {/* Leaves */}
-        <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-          <coneGeometry args={[0.8, 1.5, 8]} />
-          <meshStandardMaterial color="#2d6a4f" />
-        </mesh>
-      </ModelWrapper>
-    );
+  if (isMatch("tree", "pine", "oak", "palm", "🌲", "🌳", "🌴")) {
+    const isBig = isMatch("big");
+    const isSmall = isMatch("small");
+    const isOak = isMatch("oak", "🌳");
+    const isPalm = isMatch("palm", "🌴");
+    
+    // Pine tree (default)
+    if (!isOak && !isPalm) {
+      const scale = isBig ? 1.5 : isSmall ? 0.8 : 1.0;
+      return (
+        <ModelWrapper>
+          <group scale={[scale, scale, scale]}>
+            {/* Trunk */}
+            <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
+              <meshStandardMaterial color="#5C4033" />
+            </mesh>
+            {/* Leaves */}
+            <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+              <coneGeometry args={[0.8, 1.5, 8]} />
+              <meshStandardMaterial color="#2d6a4f" />
+            </mesh>
+            {isBig && (
+              <mesh position={[0, 2.2, 0]} castShadow receiveShadow>
+                <coneGeometry args={[0.6, 1.2, 8]} />
+                <meshStandardMaterial color="#2d6a4f" />
+              </mesh>
+            )}
+          </group>
+        </ModelWrapper>
+      );
+    }
+    
+    // Oak Tree
+    if (isOak) {
+      const scale = isBig ? 1.5 : isSmall ? 0.7 : 1.0;
+      return (
+        <ModelWrapper>
+          <group scale={[scale, scale, scale]}>
+            <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.25, 0.3, 1.2, 8]} />
+              <meshStandardMaterial color="#4A3728" />
+            </mesh>
+            <mesh position={[0, 1.8, 0]} castShadow receiveShadow>
+              <sphereGeometry args={[1.0, 16, 16]} />
+              <meshStandardMaterial color="#15803d" />
+            </mesh>
+          </group>
+        </ModelWrapper>
+      );
+    }
+
+    // Palm Tree
+    if (isPalm) {
+      return (
+        <ModelWrapper>
+          <group scale={[1.2, 1.2, 1.2]}>
+             <mesh position={[0, 1.2, 0]} rotation={[0, 0, 0.1]} castShadow receiveShadow>
+               <cylinderGeometry args={[0.15, 0.2, 2.5, 8]} />
+               <meshStandardMaterial color="#c29d59" />
+             </mesh>
+             {/* Palm leaves */}
+             {[0, 1.57, 3.14, 4.71].map((rot, i) => (
+                <mesh key={i} position={[Math.sin(rot)*0.5, 2.5, Math.cos(rot)*0.5]} rotation={[0.4, rot, 0]} castShadow receiveShadow>
+                  <sphereGeometry args={[0.6, 8, 8]} />
+                  <meshStandardMaterial color="#10b981" />
+                </mesh>
+             ))}
+          </group>
+        </ModelWrapper>
+      )
+    }
   }
 
   if (isMatch("flower", "flower", "🌸")) {
@@ -1977,6 +2145,8 @@ export default function VoxelBuilder() {
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeColor, setActiveColor] = useState<string>("#8B5A2B");
+  const [activeMaterialType, setActiveMaterialType] = useState<'color' | 'texture' | 'glass'>('color');
+  const [activeTexture, setActiveTexture] = useState<string>('wood');
   const [objectsState, setObjectsState] = useState<PlacedObject[]>([]);
   const objectsRef = useRef<PlacedObject[]>([]);
   const objects = objectsState;
@@ -2003,6 +2173,8 @@ export default function VoxelBuilder() {
   const [showDirections, setShowDirections] = useState(false);
   const [showVehiclesDropdown, setShowVehiclesDropdown] = useState(false);
   const [showAnimalsDropdown, setShowAnimalsDropdown] = useState(false);
+  const [showTreesDropdown, setShowTreesDropdown] = useState(false);
+  const [showFurnituresDropdown, setShowFurnituresDropdown] = useState(false);
   const [showItemsMenu, setShowItemsMenu] = useState(true);
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
@@ -2392,8 +2564,8 @@ export default function VoxelBuilder() {
 
   const paintObject = (obj: PlacedObject) => {
     if (obj.type === 'item') return;
-    if (obj.color === activeColor) return;
-    const newObjects = objects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor } : o);
+    if (obj.color === activeColor && obj.materialType === activeMaterialType && obj.textureId === activeTexture) return;
+    const newObjects = objects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor, materialType: activeMaterialType, textureId: activeTexture } : o);
     setObjects(newObjects);
     saveObjects(newObjects, studentData.pointsBalance, `Painted block/roof`, 0);
   };
@@ -2523,7 +2695,7 @@ export default function VoxelBuilder() {
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape };
+    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape, materialType: activeMaterialType, textureId: activeTexture };
     const newObjects = [...objects, obj];
     const newBalance = studentData.pointsBalance - actualBlockCost;
     setObjects(newObjects);
@@ -2849,39 +3021,78 @@ export default function VoxelBuilder() {
                   )}
                 </div>
               )}
-              {BASE_COLORS.map((b) => (
-                <button key={b.id}
-                  onClick={() => handleColorChange(b.color)}
-                  className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
-                  style={{ backgroundColor: b.color }} title={b.name}
-                />
-              ))}
+              )}
               
-              {studentData?.customColors?.map((color: string, idx: number) => (
-                <button key={`custom-${idx}`}
-                  onClick={() => handleColorChange(color)}
-                  className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
-                  style={{ backgroundColor: color }} title={color}
-                />
-              ))}
+              <div className="flex gap-2 mb-2 w-full max-w-md bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                <button onClick={() => setActiveMaterialType('color')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'color' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Color</button>
+                <button onClick={() => setActiveMaterialType('texture')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'texture' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Texture</button>
+                <button onClick={() => setActiveMaterialType('glass')} className={`flex-1 py-1 text-xs font-bold rounded-lg transition-colors ${activeMaterialType === 'glass' ? 'bg-sky-500 text-white' : 'hover:bg-gray-100'}`}>Glass</button>
+              </div>
 
-              {isAddingColor ? (
-                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-sky-200">
-                  <input type="color" value={newColorInput} onChange={e => setNewColorInput(e.target.value)}
-                    className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
-                  <button onClick={() => handleBuyColor(newColorInput)}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-2 py-1.5 rounded-lg flex flex-col leading-none items-center shadow-sm">
-                    <span>BUY</span>
-                    <span>{settings?.customColorCost ?? 100} pts</span>
-                  </button>
-                  <button onClick={() => setIsAddingColor(false)} className="text-gray-400 hover:text-rose-500 px-1">✕</button>
+              {activeMaterialType === 'color' && (
+                <>
+                  {BASE_COLORS.map((b) => (
+                    <button key={b.id}
+                      onClick={() => handleColorChange(b.color)}
+                      className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === b.color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: b.color }} title={b.name}
+                    />
+                  ))}
+                  
+                  {studentData?.customColors?.map((color: string, idx: number) => (
+                    <button key={`custom-${idx}`}
+                      onClick={() => handleColorChange(color)}
+                      className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === color ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }} title={color}
+                    />
+                  ))}
+
+                  {isAddingColor ? (
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-sky-200">
+                      <input type="color" value={newColorInput} onChange={e => setNewColorInput(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer border-0 p-0" />
+                      <button onClick={() => handleBuyColor(newColorInput)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-2 py-1.5 rounded-lg flex flex-col leading-none items-center shadow-sm">
+                        <span>BUY</span>
+                        <span>{settings?.customColorCost ?? 100} pts</span>
+                      </button>
+                      <button onClick={() => setIsAddingColor(false)} className="text-gray-400 hover:text-rose-500 px-1">✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setIsAddingColor(true)}
+                      className="relative shrink-0 w-10 h-10 rounded-xl border-[3px] border-dashed border-sky-300 hover:border-sky-500 text-sky-400 hover:text-sky-500 flex items-center justify-center transition-colors bg-sky-50/50"
+                      title="Add Custom Color">
+                      <span className="text-xl font-bold">+</span>
+                    </button>
+                  )}
+                </>
+              )}
+
+              {activeMaterialType === 'texture' && (
+                <>
+                  {AVAILABLE_TEXTURES.map((t) => (
+                    <button key={t.id}
+                      onClick={() => setActiveTexture(t.id)}
+                      className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeTexture === t.id ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundImage: `url(${t.url})`, backgroundSize: 'cover' }} title={t.name}
+                    />
+                  ))}
+                </>
+              )}
+              
+              {activeMaterialType === 'glass' && (
+                <div className="flex items-center gap-2">
+                   <button
+                      onClick={() => handleColorChange("#ADD8E6")}
+                      className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === "#ADD8E6" ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: "#ADD8E6", opacity: 0.6 }} title="Clear Glass"
+                    />
+                   <button
+                      onClick={() => handleColorChange("#1f2937")}
+                      className={`relative shrink-0 w-10 h-10 rounded-xl border-[3px] transition-transform hover:scale-110 shadow-sm overflow-hidden ${activeColor === "#1f2937" ? 'border-sky-500 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: "#1f2937", opacity: 0.8 }} title="Tinted Glass"
+                    />
                 </div>
-              ) : (
-                <button onClick={() => setIsAddingColor(true)}
-                  className="relative shrink-0 w-10 h-10 rounded-xl border-[3px] border-dashed border-sky-300 hover:border-sky-500 text-sky-400 hover:text-sky-500 flex items-center justify-center transition-colors bg-sky-50/50"
-                  title="Add Custom Color">
-                  <span className="text-xl font-bold">+</span>
-                </button>
               )}
             </div>
           </>
@@ -2889,7 +3100,7 @@ export default function VoxelBuilder() {
 
         {toolMode === 'items' && showItemsMenu && (
           <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
-            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken'].includes(i.id)).map((item: any) => (
+            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe'].includes(i.id)).map((item: any) => (
               <button key={item.id}
                 onClick={() => { setActiveItemId(item.id); setShowItemsMenu(false); }}
                 className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
@@ -2957,6 +3168,76 @@ export default function VoxelBuilder() {
                          {shopItems.filter((i: any) => ['cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken'].includes(i.id)).map((item: any) => (
                             <button key={item.id}
                               onClick={() => { setActiveItemId(item.id); setShowAnimalsDropdown(false); setShowItemsMenu(false); }}
+                              className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
+                              title={`${item.name} — ${item.cost} pts`}>
+                              <span className="text-2xl leading-none">{item.emoji}</span>
+                              <span className="text-[10px] font-black text-gray-600">{item.name}</span>
+                              <span className="text-[9px] font-black text-amber-500">-{item.cost}</span>
+                            </button>
+                         ))}
+                      </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+            )}
+
+            {/* Trees Dropdown Button */}
+            {shopItems.some((i: any) => ['tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree'].includes(i.id)) && (
+              <div className="relative shrink-0 flex flex-col items-center">
+                 <button 
+                    onClick={() => setShowTreesDropdown(!showTreesDropdown)}
+                    className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${['tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree'].includes(activeItemId || '') ? 'border-amber-500 bg-amber-50' : 'border-transparent bg-white'}`}
+                    title="Trees Menu">
+                    <span className="text-2xl leading-none">🌲</span>
+                    <span className="text-[10px] font-black text-gray-600">Trees</span>
+                    <span className="text-[9px] font-black text-amber-500">Menu</span>
+                 </button>
+                 
+                 <AnimatePresence>
+                   {showTreesDropdown && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
+                         {shopItems.filter((i: any) => ['tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree'].includes(i.id)).map((item: any) => (
+                            <button key={item.id}
+                              onClick={() => { setActiveItemId(item.id); setShowTreesDropdown(false); setShowItemsMenu(false); }}
+                              className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
+                              title={`${item.name} — ${item.cost} pts`}>
+                              <span className="text-2xl leading-none">{item.emoji}</span>
+                              <span className="text-[10px] font-black text-gray-600">{item.name}</span>
+                              <span className="text-[9px] font-black text-amber-500">-{item.cost}</span>
+                            </button>
+                         ))}
+                      </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+            )}
+
+            {/* Furnitures Dropdown Button */}
+            {shopItems.some((i: any) => ['bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe'].includes(i.id)) && (
+              <div className="relative shrink-0 flex flex-col items-center">
+                 <button 
+                    onClick={() => setShowFurnituresDropdown(!showFurnituresDropdown)}
+                    className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${['bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe'].includes(activeItemId || '') ? 'border-amber-500 bg-amber-50' : 'border-transparent bg-white'}`}
+                    title="Furnitures Menu">
+                    <span className="text-2xl leading-none">🛋️</span>
+                    <span className="text-[10px] font-black text-gray-600">Furnitures</span>
+                    <span className="text-[9px] font-black text-amber-500">Menu</span>
+                 </button>
+                 
+                 <AnimatePresence>
+                   {showFurnituresDropdown && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
+                         {shopItems.filter((i: any) => ['bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe'].includes(i.id)).map((item: any) => (
+                            <button key={item.id}
+                              onClick={() => { setActiveItemId(item.id); setShowFurnituresDropdown(false); setShowItemsMenu(false); }}
                               className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
                               title={`${item.name} — ${item.cost} pts`}>
                               <span className="text-2xl leading-none">{item.emoji}</span>
@@ -3156,10 +3437,6 @@ export default function VoxelBuilder() {
           
           {(() => {
             const validObjects = objects.filter(o => o !== drivingVehicle);
-            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
-            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
-            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
-            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
             const items = validObjects.filter(o => o.type === 'item');
 
             const getBoxProps = (data: PlacedObject) => {
@@ -3185,199 +3462,117 @@ export default function VoxelBuilder() {
             const curvenessLevels = [0, 1, 2, 3, 4];
             const boxShapes = ['box', undefined];
 
+            const blockMaterials = [
+              { type: 'color', id: 'color', transparent: false, glass: false, texture: null },
+              { type: 'glass', id: 'glass', transparent: true, glass: true, texture: null },
+              { type: 'texture', id: 'wood', transparent: false, glass: false, texture: TEXTURES?.wood },
+              { type: 'texture', id: 'stone', transparent: false, glass: false, texture: TEXTURES?.stone },
+              { type: 'texture', id: 'brick', transparent: false, glass: false, texture: TEXTURES?.brick },
+              { type: 'texture', id: 'shingles', transparent: false, glass: false, texture: TEXTURES?.shingles },
+            ];
+
             return (
               <>
-                {/* Boxes */}
-                {curvenessLevels.map(level => {
-                  const blocks = opaqueBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
-                  if (blocks.length === 0) return null;
+                {blockMaterials.map(mat => {
+                  let subset;
+                  if (mat.type === 'color') {
+                    subset = validObjects.filter(o => (o.materialType === 'color' || !o.materialType) && o.color !== "#ADD8E6");
+                  } else if (mat.type === 'glass') {
+                    subset = validObjects.filter(o => o.materialType === 'glass' || o.color === "#ADD8E6");
+                  } else {
+                    subset = validObjects.filter(o => o.materialType === 'texture' && o.textureId === mat.id);
+                  }
+                  
+                  if (subset.length === 0) return null;
+                  
+                  const boxes = subset.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof'));
+                  const roofs = subset.filter(o => o.type === 'roof');
+
                   return (
-                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
+                    <group key={`mat-${mat.id}`}>
+                      {/* Boxes */}
+                      {curvenessLevels.map(level => {
+                        const blocks = boxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
+                        if (blocks.length === 0) return null;
                         return (
-                          <Instance
-                            key={`ob-${level}-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
+                          <Instances key={`bx-${level}`} limit={100000} castShadow receiveShadow>
+                            <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
+                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`b-${level}-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
+                              );
+                            })}
+                          </Instances>
                         );
                       })}
-                    </Instances>
-                  );
-                })}
 
-                {/* Wedges */}
-                {(() => {
-                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'wedge');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow>
-                      <primitive object={getWedgeGeometry()} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
+                      {/* Wedges */}
+                      {(() => {
+                        const blocks = boxes.filter(o => o.blockShape === 'wedge');
+                        if (blocks.length === 0) return null;
                         return (
-                          <Instance
-                            key={`ow-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
+                          <Instances limit={100000} castShadow receiveShadow>
+                            <primitive object={getWedgeGeometry()} attach="geometry" />
+                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
+                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`w-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
+                              );
+                            })}
+                          </Instances>
+                        );
+                      })()}
+
+                      {/* Pyramids */}
+                      {(() => {
+                        const blocks = boxes.filter(o => o.blockShape === 'pyramid');
+                        if (blocks.length === 0) return null;
+                        return (
+                          <Instances limit={100000} castShadow receiveShadow>
+                            <primitive object={getPyramidGeometry()} attach="geometry" />
+                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
+                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`p-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
+                              );
+                            })}
+                          </Instances>
+                        );
+                      })()}
+                      
+                      {/* Roofs */}
+                      {curvenessLevels.map(level => {
+                        const rfs = roofs.filter(o => Math.round(o.curveness || 0) === level);
+                        if (rfs.length === 0) return null;
+                        const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                        return (
+                          <Instances key={`rf-${level}`} limit={100000} castShadow receiveShadow>
+                            <primitive object={getRoofGeometry(segments)} attach="geometry" />
+                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
+                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            {rfs.map((data, idx) => (
+                              <Instance key={`r-${level}-${idx}`}
+                                position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
+                                rotation={[0, Math.PI / 4, 0]}
+                                scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                                color={data.color}
+                                onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
+                              />
+                            ))}
+                          </Instances>
                         );
                       })}
-                    </Instances>
-                  );
-                })()}
-
-                {/* Pyramids */}
-                {(() => {
-                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'pyramid');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow>
-                      <primitive object={getPyramidGeometry()} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`op-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {/* Glass Boxes */}
-                {curvenessLevels.map(level => {
-                  const blocks = glassBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gb-${level}-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })}
-
-                {/* Glass Wedges */}
-                {(() => {
-                  const blocks = glassBoxes.filter(o => o.blockShape === 'wedge');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow>
-                      <primitive object={getWedgeGeometry()} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gw-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {/* Glass Pyramids */}
-                {(() => {
-                  const blocks = glassBoxes.filter(o => o.blockShape === 'pyramid');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow>
-                      <primitive object={getPyramidGeometry()} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gp-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                            onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {curvenessLevels.map(level => {
-                  const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);
-                  if (roofs.length === 0) return null;
-                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
-                  return (
-                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                      <meshStandardMaterial />
-                      {roofs.map((data, idx) => (
-                        <Instance
-                          key={`or-${level}-${idx}`}
-                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
-                          rotation={[0, Math.PI / 4, 0]}
-                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                          color={data.color}
-                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                        />
-                      ))}
-                    </Instances>
-                  );
-                })}
-
-                {curvenessLevels.map(level => {
-                  const roofs = glassRoofs.filter(o => Math.round(o.curveness || 0) === level);
-                  if (roofs.length === 0) return null;
-                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
-                  return (
-                    <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {roofs.map((data, idx) => (
-                        <Instance
-                          key={`gr-${level}-${idx}`}
-                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
-                          rotation={[0, Math.PI / 4, 0]}
-                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                          color={data.color}
-                          onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                        />
-                      ))}
-                    </Instances>
+                    </group>
                   );
                 })}
 
