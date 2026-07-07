@@ -238,7 +238,13 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
 
   const name = itemDef?.name?.toLowerCase() || "";
   const emoji = itemDef?.emoji || "";
-  const isMatch = (...args: string[]) => args.some(a => itemId === a || name.toLowerCase().includes(a.toLowerCase()) || emoji === a);
+  const isMatch = (...args: string[]) => args.filter(a => a !== "").some(a => {
+    if (itemId === a || emoji === a) return true;
+    const lowerA = a.toLowerCase();
+    const lowerName = name.toLowerCase();
+    const re = new RegExp(`(^|\\s)${lowerA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i');
+    return lowerName === lowerA || re.test(lowerName);
+  });
 
   if (isMatch("street_light", "street light", "💡")) {
     return (
@@ -1082,7 +1088,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
-  if (isMatch("bench", "bench", "") && !(name && name.toLowerCase().includes("park"))) {
+  if (isMatch("bench", "bench", "")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -1195,7 +1201,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
-  if (isMatch("table", "table", "🪑") && !(name && name.toLowerCase().includes("picnic"))) {
+  if (isMatch("table", "table", "🪑")) {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>

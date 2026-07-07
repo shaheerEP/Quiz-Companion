@@ -224,7 +224,7 @@ export default function SettingsPage() {
                     className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors appearance-none"
                   >
                     <option value="">Select...</option>
-                    {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.pointsBalance} pts available)</option>)}
+                    {students?.map(s => <option key={s._id} value={s._id}>{s.name} ({s.pointsBalance} pts available)</option>)}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -256,7 +256,7 @@ export default function SettingsPage() {
               <p className="text-gray-500 italic text-center py-4">No students added yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {students.map(student => (
+                {students?.map(student => (
                   <div key={student._id} className="bg-gray-950 border border-gray-800 p-5 rounded-2xl">
                     {editingStudent?._id === student._id ? (
                       <form onSubmit={handleUpdateStudent} className="flex flex-col gap-4">
@@ -411,7 +411,7 @@ export default function SettingsPage() {
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Gamified Rating Tiers</h2>
             <div className="flex flex-col gap-6">
-              {settings.ratingTiers.map((tier: any, index: number) => (
+              {settings.ratingTiers?.map((tier: any, index: number) => (
                 <div key={index} className="bg-gray-950 p-6 rounded-2xl border border-gray-800">
                   <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
                     <span className="font-black text-xl text-yellow-400">{tier.stars} Stars Output</span>
