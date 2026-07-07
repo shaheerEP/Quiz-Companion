@@ -43,6 +43,8 @@ export interface IStudent extends Document {
     width?: number;
     curveness?: number;
     blockShape?: 'box' | 'wedge' | 'pyramid';
+    materialType?: string;
+    textureId?: string;
   }>;
 }
 
@@ -93,7 +95,9 @@ const StudentSchema = new Schema<IStudent>(
           h: Number,
           width: Number,
           curveness: Number,
-          blockShape: String
+          blockShape: String,
+          materialType: String,
+          textureId: String
         }
       ],
       default: []

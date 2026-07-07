@@ -882,7 +882,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("bench", "bench", "")) {
+  if (isMatch("bench", "bench", "") && itemId !== "park_bench") {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -995,7 +995,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("table", "table", "🪑")) {
+  if (isMatch("table", "table", "🪑") && itemId !== "picnic_table") {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -3222,13 +3222,13 @@ export default function VoxelBuilder() {
       {(!studentData?.isClassTime && !isExploreMode) && (
         <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none max-h-[calc(100vh-7rem)] overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden">
         {/* Points */}
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto">
+        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto shrink-0">
           <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
           <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0}</p>
         </div>
 
         {/* Tool Selector */}
-        <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 pointer-events-auto">
+        <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 pointer-events-auto shrink-0">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Block Shape</h4>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -3251,7 +3251,7 @@ export default function VoxelBuilder() {
                     </div>
                   </div>
 
-                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col overflow-hidden">
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white pointer-events-auto flex flex-col overflow-hidden shrink-0">
           <button onClick={() => { setToolMode('build'); setActiveItemId(null); }}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-colors ${toolMode === 'build' ? 'bg-sky-500 text-white' : 'text-sky-700 hover:bg-sky-50'}`}>
             <Hammer className="w-4 h-4" /> Build
@@ -3309,7 +3309,7 @@ export default function VoxelBuilder() {
 
         {/* Undo */}
         <button onClick={handleUndo} disabled={undosRemaining <= 0 || sessionPlaced.length === 0}
-          className={`p-3 rounded-xl font-bold flex items-center justify-center gap-2 pointer-events-auto transition-colors shadow-lg border border-white
+          className={`p-3 rounded-xl font-bold flex items-center justify-center gap-2 pointer-events-auto transition-colors shadow-lg border border-white shrink-0
             ${(undosRemaining <= 0 || sessionPlaced.length === 0) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white/80 hover:bg-white text-sky-700 backdrop-blur-md'}`}>
           <Undo2 className="w-4 h-4" />
           <span className="text-sm">Undo</span>
@@ -3928,8 +3928,6 @@ export default function VoxelBuilder() {
                   let subset;
                   if (mat.type === 'color') {
                     subset = validObjects.filter(o => (o.materialType === 'color' || !o.materialType) && o.color !== "#ADD8E6");
-                  } else if (mat.type === 'glass') {
-                    subset = validObjects.filter(o => o.materialType === 'glass' || o.color === "#ADD8E6");
                   } else {
                     subset = validObjects.filter(o => o.materialType === 'texture' && o.textureId === mat.id);
                   }
@@ -3948,12 +3946,11 @@ export default function VoxelBuilder() {
                         return (
                           <Instances key={`bx-${level}`} limit={100000} castShadow receiveShadow>
                             <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
-                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
                             {blocks.map((data, idx) => {
                               const props = getBoxProps(data);
                               return (
-                                <Instance key={`b-${level}-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                <Instance key={`b-${level}-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
                                   onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
                               );
                             })}
@@ -3968,12 +3965,11 @@ export default function VoxelBuilder() {
                         return (
                           <Instances limit={100000} castShadow receiveShadow>
                             <primitive object={getWedgeGeometry()} attach="geometry" />
-                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
-                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
                             {blocks.map((data, idx) => {
                               const props = getBoxProps(data);
                               return (
-                                <Instance key={`w-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                <Instance key={`w-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
                                   onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
                               );
                             })}
@@ -3988,12 +3984,11 @@ export default function VoxelBuilder() {
                         return (
                           <Instances limit={100000} castShadow receiveShadow>
                             <primitive object={getPyramidGeometry()} attach="geometry" />
-                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
-                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
                             {blocks.map((data, idx) => {
                               const props = getBoxProps(data);
                               return (
-                                <Instance key={`p-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={data.color}
+                                <Instance key={`p-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
                                   onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
                               );
                             })}
@@ -4009,14 +4004,13 @@ export default function VoxelBuilder() {
                         return (
                           <Instances key={`rf-${level}`} limit={100000} castShadow receiveShadow>
                             <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                            {mat.glass ? <meshPhysicalMaterial transmission={1} roughness={0.1} thickness={0.5} ior={1.5} color="#ffffff" transparent /> : 
-                             <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />}
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
                             {rfs.map((data, idx) => (
                               <Instance key={`r-${level}-${idx}`}
                                 position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
                                 rotation={[0, Math.PI / 4, 0]}
                                 scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                                color={data.color}
+                                color={mat.type === 'texture' ? "#ffffff" : data.color}
                                 onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
                               />
                             ))}

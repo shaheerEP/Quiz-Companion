@@ -814,7 +814,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
-  if (isMatch("bench", "bench", "")) {
+  if (isMatch("bench", "bench", "") && itemId !== "park_bench") {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -927,7 +927,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
-  if (isMatch("table", "table", "🪑")) {
+  if (isMatch("table", "table", "🪑") && itemId !== "picnic_table") {
     return (
       <ModelWrapper>
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
