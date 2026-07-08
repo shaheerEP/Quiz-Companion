@@ -65,9 +65,9 @@ export default function SettingsPage() {
   const [editingStudent, setEditingStudent] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(data => { 
-      setSettings(data); 
-      setOriginalSettings(JSON.parse(JSON.stringify(data))); 
+    fetch("/api/settings").then(res => res.json()).then(data => {
+      setSettings(data);
+      setOriginalSettings(JSON.parse(JSON.stringify(data)));
     });
     fetchStudents();
   }, []);
@@ -113,10 +113,10 @@ export default function SettingsPage() {
     const res = await fetch("/api/withdrawals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        studentId: withdrawStudentId, 
-        pointsDeducted: withdrawAmount, 
-        rewardDescription: withdrawReason 
+      body: JSON.stringify({
+        studentId: withdrawStudentId,
+        pointsDeducted: withdrawAmount,
+        rewardDescription: withdrawReason
       })
     });
     const data = await res.json();
@@ -171,7 +171,7 @@ export default function SettingsPage() {
       <Navbar />
 
       {hasChanges && (
-        <button 
+        <button
           onClick={handleSave} disabled={loading}
           className="fixed top-24 right-10 z-50 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full font-black transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border-2 border-emerald-400 flex items-center gap-2"
         >
@@ -181,10 +181,10 @@ export default function SettingsPage() {
       )}
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
-        
+
         {/* STUDENT MANAGEMENT & WITHDRAWALS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
+
           <div className="flex flex-col gap-8">
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
@@ -194,14 +194,14 @@ export default function SettingsPage() {
               <form onSubmit={handleAddStudent} className="flex flex-col gap-5">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
-                  <input 
+                  <input
                     type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} required
                     className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Login Password</label>
-                  <input 
+                  <input
                     type="text" value={newStudentPassword} onChange={e => setNewStudentPassword(e.target.value)} required
                     className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
                   />
@@ -220,7 +220,7 @@ export default function SettingsPage() {
               <form onSubmit={handleWithdraw} className="flex flex-col gap-5">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Select Student</label>
-                  <select 
+                  <select
                     value={withdrawStudentId} onChange={e => setWithdrawStudentId(e.target.value)} required
                     className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors appearance-none"
                   >
@@ -231,14 +231,14 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Points to Deduct</label>
-                    <input 
+                    <input
                       type="number" value={withdrawAmount} onChange={e => setWithdrawAmount(Number(e.target.value))} required min={1}
                       className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Reward (Reason)</label>
-                    <input 
+                    <input
                       type="text" value={withdrawReason} onChange={e => setWithdrawReason(e.target.value)} required placeholder="e.g. Stickers"
                       className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-emerald-500 transition-colors"
                     />
@@ -264,36 +264,36 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="text-xs text-gray-500 font-bold mb-1 block">Name</label>
-                            <input 
-                              type="text" value={editingStudent.name} onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} required
+                            <input
+                              type="text" value={editingStudent.name} onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })} required
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
                             />
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 font-bold mb-1 block">Password</label>
-                            <input 
-                              type="text" value={editingStudent.password} onChange={e => setEditingStudent({...editingStudent, password: e.target.value})} required
+                            <input
+                              type="text" value={editingStudent.password} onChange={e => setEditingStudent({ ...editingStudent, password: e.target.value })} required
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
                             />
                           </div>
                           <div>
                             <label className="text-xs text-emerald-500 font-bold mb-1 block">Balance (pts)</label>
-                            <input 
-                              type="number" value={editingStudent.pointsBalance} onChange={e => setEditingStudent({...editingStudent, pointsBalance: e.target.value})} required
+                            <input
+                              type="number" value={editingStudent.pointsBalance} onChange={e => setEditingStudent({ ...editingStudent, pointsBalance: e.target.value })} required
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-emerald-500"
                             />
                           </div>
                           <div>
                             <label className="text-xs text-indigo-400 font-bold mb-1 block">Lifetime (pts)</label>
-                            <input 
-                              type="number" value={editingStudent.lifetimePoints} onChange={e => setEditingStudent({...editingStudent, lifetimePoints: e.target.value})} required
+                            <input
+                              type="number" value={editingStudent.lifetimePoints} onChange={e => setEditingStudent({ ...editingStudent, lifetimePoints: e.target.value })} required
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
                             />
                           </div>
                           <div>
                             <label className="text-xs text-purple-400 font-bold mb-1 block">Reward System</label>
-                            <select 
-                              value={editingStudent.rewardSystem || 'classic'} onChange={e => setEditingStudent({...editingStudent, rewardSystem: e.target.value})}
+                            <select
+                              value={editingStudent.rewardSystem || 'classic'} onChange={e => setEditingStudent({ ...editingStudent, rewardSystem: e.target.value })}
                               className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-purple-500 appearance-none"
                             >
                               <option value="classic">Classic (Bundles)</option>
@@ -303,9 +303,9 @@ export default function SettingsPage() {
                           <div>
                             <label className="text-xs text-yellow-400 font-bold mb-1 block">Manners Feature</label>
                             <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                              <input 
-                                type="checkbox" checked={editingStudent.mannersEnabled || false} 
-                                onChange={e => setEditingStudent({...editingStudent, mannersEnabled: e.target.checked})}
+                              <input
+                                type="checkbox" checked={editingStudent.mannersEnabled || false}
+                                onChange={e => setEditingStudent({ ...editingStudent, mannersEnabled: e.target.checked })}
                                 className="w-5 h-5 text-yellow-500 rounded focus:ring-yellow-500 focus:ring-2 bg-gray-900 border-gray-700"
                               />
                               <span className="text-sm font-bold text-gray-300">Enable</span>
@@ -317,9 +317,9 @@ export default function SettingsPage() {
                                 <h3 className="text-lg font-black text-yellow-400 flex items-center gap-2">
                                   ⭐ Manners Tasks
                                 </h3>
-                                <button 
+                                <button
                                   type="button"
-                                  onClick={() => setEditingStudent({...editingStudent, mannersList: [...(editingStudent.mannersList || []), { id: `task-${Date.now()}`, task: "New Task", maxStars: 1 }]})}
+                                  onClick={() => setEditingStudent({ ...editingStudent, mannersList: [...(editingStudent.mannersList || []), { id: `task-${Date.now()}`, task: "New Task", maxStars: 1 }] })}
                                   className="bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
                                 >
                                   + Add Task
@@ -328,27 +328,27 @@ export default function SettingsPage() {
                               <div className="flex flex-col gap-3">
                                 {editingStudent.mannersList?.map((task: any, index: number) => (
                                   <div key={index} className="flex flex-wrap items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-800">
-                                    <input 
+                                    <input
                                       type="text" value={task.task} placeholder="Task Name"
                                       onChange={e => {
                                         const tasks = [...editingStudent.mannersList];
                                         tasks[index].task = e.target.value;
-                                        setEditingStudent({...editingStudent, mannersList: tasks});
+                                        setEditingStudent({ ...editingStudent, mannersList: tasks });
                                       }}
                                       className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
                                     />
                                     <div>
                                       <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Max Stars</label>
                                       <input type="number" value={task.maxStars} min="1" max="10"
-                                        onChange={e => { const tasks = [...editingStudent.mannersList]; tasks[index].maxStars = Number(e.target.value); setEditingStudent({...editingStudent, mannersList: tasks}); }}
+                                        onChange={e => { const tasks = [...editingStudent.mannersList]; tasks[index].maxStars = Number(e.target.value); setEditingStudent({ ...editingStudent, mannersList: tasks }); }}
                                         className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-yellow-400 text-sm font-bold outline-none focus:border-yellow-500"
                                       />
                                     </div>
-                                    <button 
+                                    <button
                                       type="button"
                                       onClick={() => {
                                         const tasks = editingStudent.mannersList.filter((_: any, i: number) => i !== index);
-                                        setEditingStudent({...editingStudent, mannersList: tasks});
+                                        setEditingStudent({ ...editingStudent, mannersList: tasks });
                                       }}
                                       className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg mt-4"
                                     >
@@ -365,8 +365,8 @@ export default function SettingsPage() {
                           <div className="col-span-2">
                             <label className="text-xs text-cyan-400 font-bold mb-1 block">Profile Image URL (or upload via Cloudinary)</label>
                             <div className="flex gap-2">
-                              <input 
-                                type="text" value={editingStudent.profileImageUrl || ''} onChange={e => setEditingStudent({...editingStudent, profileImageUrl: e.target.value})} placeholder="https://..."
+                              <input
+                                type="text" value={editingStudent.profileImageUrl || ''} onChange={e => setEditingStudent({ ...editingStudent, profileImageUrl: e.target.value })} placeholder="https://..."
                                 className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-cyan-500"
                               />
                               <label className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-xl cursor-pointer flex items-center justify-center transition-colors">
@@ -374,19 +374,19 @@ export default function SettingsPage() {
                                 <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (!file) return;
-                                  
+
                                   try {
                                     setLoading(true);
                                     const compressedFile = await compressImage(file, 800);
-                                    
+
                                     const formData = new FormData();
                                     formData.append("file", compressedFile);
-                                    
+
                                     const res = await fetch(`/api/upload`, { method: "POST", body: formData });
                                     const data = await res.json();
-                                    
+
                                     if (data.secure_url) {
-                                      setEditingStudent({...editingStudent, profileImageUrl: data.secure_url});
+                                      setEditingStudent({ ...editingStudent, profileImageUrl: data.secure_url });
                                     } else {
                                       alert("Upload failed: " + (data.error || "Unknown error"));
                                     }
@@ -463,8 +463,8 @@ export default function SettingsPage() {
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
             <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
               <h2 className="text-2xl font-black text-gray-200">Gamified Rating Tiers</h2>
-              <button 
-                onClick={() => setSettings({...settings, ratingTiers: [...(settings.ratingTiers || []), { name: "New Tier", maxSeconds: 15, stars: 1, points: 10 }]})}
+              <button
+                onClick={() => setSettings({ ...settings, ratingTiers: [...(settings.ratingTiers || []), { name: "New Tier", maxSeconds: 15, stars: 1, points: 10 }] })}
                 className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
               >
                 + Add Tier
@@ -476,20 +476,20 @@ export default function SettingsPage() {
                   <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
                     <div className="flex items-center gap-3">
                       <span className="font-black text-xl text-yellow-400">Stars:</span>
-                      <input 
+                      <input
                         type="number" value={tier.stars}
                         onChange={e => {
                           const newTiers = [...settings.ratingTiers];
                           newTiers[index].stars = Number(e.target.value);
-                          setSettings({...settings, ratingTiers: newTiers});
+                          setSettings({ ...settings, ratingTiers: newTiers });
                         }}
                         className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-yellow-400 font-bold outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
-                    <button 
+                    <button
                       onClick={() => {
                         const newTiers = settings.ratingTiers.filter((_: any, i: number) => i !== index);
-                        setSettings({...settings, ratingTiers: newTiers});
+                        setSettings({ ...settings, ratingTiers: newTiers });
                       }}
                       className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg transition-colors"
                       title="Remove Tier"
@@ -500,36 +500,36 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-3">
                       <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Compliment / Title</label>
-                      <input 
+                      <input
                         type="text" value={tier.name}
                         onChange={e => {
                           const newTiers = [...settings.ratingTiers];
                           newTiers[index].name = e.target.value;
-                          setSettings({...settings, ratingTiers: newTiers});
+                          setSettings({ ...settings, ratingTiers: newTiers });
                         }}
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Max Time (sec)</label>
-                      <input 
+                      <input
                         type="number" value={tier.maxSeconds}
                         onChange={e => {
                           const newTiers = [...settings.ratingTiers];
                           newTiers[index].maxSeconds = Number(e.target.value);
-                          setSettings({...settings, ratingTiers: newTiers});
+                          setSettings({ ...settings, ratingTiers: newTiers });
                         }}
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-2 block">Reward Points</label>
-                      <input 
+                      <input
                         type="number" value={tier.points}
                         onChange={e => {
                           const newTiers = [...settings.ratingTiers];
                           newTiers[index].points = Number(e.target.value);
-                          setSettings({...settings, ratingTiers: newTiers});
+                          setSettings({ ...settings, ratingTiers: newTiers });
                         }}
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
                       />
@@ -544,9 +544,9 @@ export default function SettingsPage() {
 
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
               <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Mystery Gifts Inventory</h2>
-              <textarea 
+              <textarea
                 rows={6} value={(settings.mysteryGifts || []).join("\n")}
-                onChange={e => setSettings({...settings, mysteryGifts: e.target.value.split("\n")})}
+                onChange={e => setSettings({ ...settings, mysteryGifts: e.target.value.split("\n") })}
                 className="w-full bg-gray-950 border border-gray-700 rounded-2xl px-5 py-4 text-white font-medium outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
                 placeholder="e.g. 10 mins free game time"
               />
@@ -557,17 +557,17 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Questions per Session</label>
-                  <input 
+                  <input
                     type="number" value={settings.badgeThresholds?.finaleQuestionCount ?? 10}
-                    onChange={e => setSettings({...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), finaleQuestionCount: Number(e.target.value) }})}
+                    onChange={e => setSettings({ ...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), finaleQuestionCount: Number(e.target.value) } })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-indigo-500 transition-colors text-2xl"
                   />
                 </div>
                 <div>
                   <label className="text-xs text-yellow-500 font-bold uppercase tracking-wider mb-2 block">Champion Speed (s)</label>
-                  <input 
+                  <input
                     type="number" value={settings.badgeThresholds?.speedThreshold ?? 5}
-                    onChange={e => setSettings({...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), speedThreshold: Number(e.target.value) }})}
+                    onChange={e => setSettings({ ...settings, badgeThresholds: { ...(settings.badgeThresholds || {}), speedThreshold: Number(e.target.value) } })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-indigo-500 transition-colors text-2xl"
                   />
                 </div>
@@ -583,26 +583,26 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Limit (pts)</label>
-                    <input 
+                    <input
                       type="number" value={settings.bundleLimit}
-                      onChange={e => setSettings({...settings, bundleLimit: Number(e.target.value)})}
+                      onChange={e => setSettings({ ...settings, bundleLimit: Number(e.target.value) })}
                       className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-purple-500 transition-colors text-xl"
                     />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Item</label>
-                    <input 
+                    <input
                       type="text" value={settings.bundleItemName}
-                      onChange={e => setSettings({...settings, bundleItemName: e.target.value})}
+                      onChange={e => setSettings({ ...settings, bundleItemName: e.target.value })}
                       placeholder="e.g. 🍫 Chocolate"
                       className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-purple-500 transition-colors text-xl"
                     />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-700">
-                  <input 
+                  <input
                     type="checkbox" checked={settings.allowStudentToStopTimer}
-                    onChange={e => setSettings({...settings, allowStudentToStopTimer: e.target.checked})}
+                    onChange={e => setSettings({ ...settings, allowStudentToStopTimer: e.target.checked })}
                     className="w-6 h-6 text-indigo-500 rounded focus:ring-indigo-500 focus:ring-2 bg-gray-900 border-gray-700 cursor-pointer"
                   />
                   <label className="text-sm text-gray-300 font-bold">Allow Students to Stop Timer Remotely</label>
@@ -618,9 +618,9 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-6">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Weekly Target Points</label>
-                  <input 
+                  <input
                     type="number" value={settings.weeklyTargetPoints ?? 5000}
-                    onChange={e => setSettings({...settings, weeklyTargetPoints: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, weeklyTargetPoints: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-fuchsia-500 transition-colors text-xl"
                   />
                 </div>
@@ -628,24 +628,24 @@ export default function SettingsPage() {
                   <div key={index} className="grid grid-cols-2 gap-4 bg-gray-950 p-4 rounded-xl border border-gray-800">
                     <div>
                       <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Level {index + 1} Name</label>
-                      <input 
+                      <input
                         type="text" value={reward.name}
                         onChange={e => {
                           const newRewards = [...(settings.tieredRewards || [])];
                           newRewards[index] = { ...newRewards[index], name: e.target.value };
-                          setSettings({...settings, tieredRewards: newRewards});
+                          setSettings({ ...settings, tieredRewards: newRewards });
                         }}
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-fuchsia-400 font-bold uppercase mb-1 block">Points Required</label>
-                      <input 
+                      <input
                         type="number" value={reward.points}
                         onChange={e => {
                           const newRewards = [...(settings.tieredRewards || [])];
                           newRewards[index] = { ...newRewards[index], points: Number(e.target.value) };
-                          setSettings({...settings, tieredRewards: newRewards});
+                          setSettings({ ...settings, tieredRewards: newRewards });
                         }}
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
                       />
@@ -663,9 +663,9 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-6">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Placement Cost (pts)</label>
-                  <input 
+                  <input
                     type="number" value={settings.builderBlockCost}
-                    onChange={e => setSettings({...settings, builderBlockCost: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, builderBlockCost: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
@@ -673,19 +673,19 @@ export default function SettingsPage() {
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Large Roof Cost (pts)</label>
                   <p className="text-xs text-gray-400 mb-2">Points required for a student to build a large roof.</p>
-                  <input 
+                  <input
                     type="number" value={settings.builderRoofCost ?? 100}
-                    onChange={e => setSettings({...settings, builderRoofCost: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, builderRoofCost: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
-                
+
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Custom Color Cost (pts)</label>
                   <p className="text-xs text-gray-400 mb-2">Points required for a student to buy any custom hex color.</p>
-                  <input 
+                  <input
                     type="number" value={settings.customColorCost}
-                    onChange={e => setSettings({...settings, customColorCost: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, customColorCost: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
@@ -693,9 +693,9 @@ export default function SettingsPage() {
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Land Upgrade Amount (blocks)</label>
                   <p className="text-xs text-gray-400 mb-2">How much land size increases per upgrade.</p>
-                  <input 
+                  <input
                     type="number" value={settings.landUpgradeAmount ?? 50}
-                    onChange={e => setSettings({...settings, landUpgradeAmount: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, landUpgradeAmount: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
@@ -703,20 +703,20 @@ export default function SettingsPage() {
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Land Upgrade Cost (pts)</label>
                   <p className="text-xs text-gray-400 mb-2">Points required for a student to expand their land.</p>
-                  <input 
+                  <input
                     type="number" value={settings.landUpgradeCost ?? 1000}
-                    onChange={e => setSettings({...settings, landUpgradeCost: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, landUpgradeCost: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
 
                 <div className="mt-4">
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Motivational Quote</label>
-                  <p className="text-xs text-gray-400 mb-2">A 3D text displayed near the builder scene (e.g. 'Build for your beloved Mom').</p>
-                  <input 
+                  <p className="text-xs text-gray-400 mb-2">A 3D text displayed near the builder scene (e.g. 'For my beloved Parents ❤️👨‍👩‍👧‍👦✨').</p>
+                  <input
                     type="text" value={settings.builderQuote || ''}
-                    onChange={e => setSettings({...settings, builderQuote: e.target.value})}
-                    placeholder="e.g. Build for your beloved Mom"
+                    onChange={e => setSettings({ ...settings, builderQuote: e.target.value })}
+                    placeholder="e.g. For my beloved Parents ❤️👨‍👩‍👧‍👦✨"
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-cyan-500 transition-colors text-xl"
                   />
                 </div>
@@ -731,9 +731,9 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-6">
                 <div>
                   <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Erase Refund (pts returned when erasing a block)</label>
-                  <input 
+                  <input
                     type="number" value={settings.builderBlockRefund ?? 0}
-                    onChange={e => setSettings({...settings, builderBlockRefund: Number(e.target.value)})}
+                    onChange={e => setSettings({ ...settings, builderBlockRefund: Number(e.target.value) })}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-amber-500 transition-colors text-xl"
                   />
                 </div>
@@ -741,40 +741,40 @@ export default function SettingsPage() {
                 <div className="mt-2">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-300">Placeable Items</h3>
-                    <button 
-                      onClick={() => setSettings({...settings, builderItems: [...(settings.builderItems || []), { id: `item-${Date.now()}`, name: "New Item", emoji: "📦", cost: 100, refundOnErase: 50, width: 1, height: 1, depth: 1 }]})}
+                    <button
+                      onClick={() => setSettings({ ...settings, builderItems: [...(settings.builderItems || []), { id: `item-${Date.now()}`, name: "New Item", emoji: "📦", cost: 100, refundOnErase: 50, width: 1, height: 1, depth: 1 }] })}
                       className="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
                     >
                       + Add Item
                     </button>
                   </div>
-                  
+
                   <div className="flex flex-col gap-3">
                     {settings.builderItems?.map((item: any, index: number) => (
                       <div key={index} className="bg-gray-950 p-4 rounded-xl border border-gray-800">
                         <div className="flex flex-wrap items-center gap-3 mb-3">
-                          <input 
+                          <input
                             type="text" value={item.emoji} placeholder="Emoji"
                             onChange={e => {
                               const items = [...settings.builderItems];
                               items[index].emoji = e.target.value;
-                              setSettings({...settings, builderItems: items});
+                              setSettings({ ...settings, builderItems: items });
                             }}
                             className="w-14 bg-gray-900 border border-gray-700 rounded-lg px-2 py-2 text-white text-center text-xl outline-none focus:border-amber-500"
                           />
-                          <input 
+                          <input
                             type="text" value={item.name} placeholder="Item Name"
                             onChange={e => {
                               const items = [...settings.builderItems];
                               items[index].name = e.target.value;
-                              setSettings({...settings, builderItems: items});
+                              setSettings({ ...settings, builderItems: items });
                             }}
                             className="flex-1 min-w-[100px] bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-amber-500"
                           />
-                          <button 
+                          <button
                             onClick={() => {
                               const items = settings.builderItems.filter((_: any, i: number) => i !== index);
-                              setSettings({...settings, builderItems: items});
+                              setSettings({ ...settings, builderItems: items });
                             }}
                             className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg"
                           >
@@ -785,35 +785,35 @@ export default function SettingsPage() {
                           <div>
                             <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Cost</label>
                             <input type="number" value={item.cost}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].cost = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].cost = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
                               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-emerald-400 text-sm font-bold outline-none focus:border-amber-500"
                             />
                           </div>
                           <div>
                             <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Erase Refund</label>
                             <input type="number" value={item.refundOnErase}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].refundOnErase = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].refundOnErase = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
                               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-amber-400 text-sm font-bold outline-none focus:border-amber-500"
                             />
                           </div>
                           <div>
                             <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Width</label>
                             <input type="number" step="0.1" value={item.width}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].width = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].width = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
                               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
                             />
                           </div>
                           <div>
                             <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Height</label>
                             <input type="number" step="0.1" value={item.height}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].height = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].height = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
                               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
                             />
                           </div>
                           <div>
                             <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Depth</label>
                             <input type="number" step="0.1" value={item.depth}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].depth = Number(e.target.value); setSettings({...settings, builderItems: items}); }}
+                              onChange={e => { const items = [...settings.builderItems]; items[index].depth = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
                               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
                             />
                           </div>

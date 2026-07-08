@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS = {
   builderBlockRefund: 0,
   landUpgradeCost: 1000,
   landUpgradeAmount: 50,
-  builderQuote: "Build for your beloved Mom",
+  builderQuote: "For my beloved Parents ❤️👨‍👩‍👧‍👦✨",
   builderItems: [
     { id: "tree", name: "Tree", emoji: "🌲", cost: 100, refundOnErase: 50, width: 1, height: 2.5, depth: 1 },
     { id: "pine_tree_big", name: "Big Pine Tree", emoji: "🌲", cost: 150, refundOnErase: 75, width: 1.5, height: 4.0, depth: 1.5 },
@@ -102,13 +102,13 @@ export async function GET() {
       if (newValue.bundleLimit === undefined) { newValue.bundleLimit = 1000; updated = true; }
       if (newValue.bundleItemName === undefined) { newValue.bundleItemName = "🍫 Chocolate"; updated = true; }
       if (newValue.weeklyTargetPoints === undefined) { newValue.weeklyTargetPoints = 5000; updated = true; }
-      if (newValue.tieredRewards === undefined) { 
+      if (newValue.tieredRewards === undefined) {
         newValue.tieredRewards = [
           { name: "Level 1 Reward", points: 5000 },
           { name: "Level 2 Reward", points: 4750 },
           { name: "Level 3 Reward", points: 4500 }
-        ]; 
-        updated = true; 
+        ];
+        updated = true;
       }
       if (newValue.builderBlockCost === undefined) { newValue.builderBlockCost = 50; updated = true; }
       if (newValue.builderRoofCost === undefined) { newValue.builderRoofCost = 100; updated = true; }
@@ -117,9 +117,9 @@ export async function GET() {
       if (newValue.landUpgradeCost === undefined) { newValue.landUpgradeCost = 1000; updated = true; }
       if (newValue.landUpgradeAmount === undefined) { newValue.landUpgradeAmount = 50; updated = true; }
       if (newValue.builderQuote === undefined) { newValue.builderQuote = DEFAULT_SETTINGS.builderQuote; updated = true; }
-      if (newValue.builderItems === undefined) { 
-        newValue.builderItems = DEFAULT_SETTINGS.builderItems; 
-        updated = true; 
+      if (newValue.builderItems === undefined) {
+        newValue.builderItems = DEFAULT_SETTINGS.builderItems;
+        updated = true;
       } else {
         // Add any new default items that are missing from existing config
         for (const defaultItem of DEFAULT_SETTINGS.builderItems) {
