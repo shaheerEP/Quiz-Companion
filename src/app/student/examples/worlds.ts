@@ -789,6 +789,124 @@ function generateModernFarmhouse(): PlacedObject[] {
   return objects;
 }
 
+function generateModernVilla(): PlacedObject[] {
+  const objects: PlacedObject[] = [];
+  
+  // Colors and Textures
+  const white = "#f8fafc";
+  const darkGrey = "#334155";
+  const lightGrey = "#e2e8f0";
+  const warmLight = "#fef08a";
+  const grassColor = "#4ade80";
+  
+  // Base Terrain
+  // Left side: grass
+  for (let x = -15; x <= -2; x++) {
+    for (let z = -10; z <= 12; z++) {
+      if (Math.random() > 0.4) {
+        objects.push({ x, y: 0, z, color: "", type: "item", itemId: "grass_field" });
+      } else {
+        objects.push({ x, y: 0, z, color: grassColor, type: "block", thickness: 0.2 });
+      }
+    }
+  }
+  
+  // Right side & front: driveway (stone)
+  objects.push({ x: 5, y: 0, z: 2, color: lightGrey, type: "block", width: 20, thickness: 0.2, depth: 24, materialType: "texture", textureId: "stone" });
+  
+  // Foundation
+  objects.push({ x: 0, y: 0.1, z: -3, color: lightGrey, type: "block", width: 28, thickness: 0.4, depth: 14 });
+
+  // --- RIGHT WING (Garage & Balcony) ---
+  // Garage level (y: 0.5 to 3.5)
+  objects.push({ x: 9, y: 2, z: -3, color: white, type: "block", width: 10, thickness: 3.5, depth: 14 });
+  // Garage Doors (Wood texture)
+  objects.push({ x: 6, y: 2, z: 4.1, color: "#8B5A2B", type: "block", width: 4.5, thickness: 3, depth: 0.2, materialType: "texture", textureId: "wood" });
+  objects.push({ x: 11, y: 2, z: 4.1, color: "#8B5A2B", type: "block", width: 4.5, thickness: 3, depth: 0.2, materialType: "texture", textureId: "wood" });
+  
+  // Right Wing Upper Floor (y: 4 to 7)
+  // Back & Side walls
+  objects.push({ x: 9, y: 5.5, z: -9, color: white, type: "block", width: 10, thickness: 3.5, depth: 2 });
+  objects.push({ x: 13.5, y: 5.5, z: -3, color: white, type: "block", width: 1, thickness: 3.5, depth: 10 });
+  
+  // Right Wing Balcony (y: 3.75 floor)
+  objects.push({ x: 9, y: 3.85, z: -2, color: lightGrey, type: "block", width: 10, thickness: 0.3, depth: 12 });
+  
+  // Balcony Glass Railing
+  objects.push({ x: 9, y: 4.5, z: 3.9, color: "#ADD8E6", type: "block", width: 10, thickness: 1, depth: 0.1, materialType: "glass" });
+  
+  // Privacy wood slats on balcony
+  objects.push({ x: 13.5, y: 5.5, z: 2.5, color: "#8B5A2B", type: "block", width: 0.5, thickness: 3.5, depth: 3, materialType: "texture", textureId: "wood" });
+  objects.push({ x: 12, y: 5.5, z: 4, color: "#8B5A2B", type: "block", width: 2, thickness: 3.5, depth: 0.2, materialType: "texture", textureId: "wood" });
+  
+  // Upper floor inner walls (Glass)
+  objects.push({ x: 9, y: 5.5, z: -2, color: "#ADD8E6", type: "block", width: 8, thickness: 3.5, depth: 0.2, materialType: "glass" });
+  objects.push({ x: 4.5, y: 5.5, z: -2, color: "#ADD8E6", type: "block", width: 0.2, thickness: 3.5, depth: 12, materialType: "glass" });
+
+  // Right Wing Roof
+  objects.push({ x: 9, y: 7.25, z: -2.5, color: lightGrey, type: "block", width: 11, thickness: 0.5, depth: 15 }); // White border
+  objects.push({ x: 9, y: 7.6, z: -2.5, color: darkGrey, type: "block", width: 10.5, thickness: 0.2, depth: 14.5 }); // Dark top
+
+  // --- CENTRAL ATRIUM ---
+  // Double-height glass entrance
+  objects.push({ x: 0, y: 3.5, z: 0.5, color: "#ADD8E6", type: "block", width: 6, thickness: 6.5, depth: 0.2, materialType: "glass" });
+  // Stone pillar on the right of entrance
+  objects.push({ x: 3.5, y: 3.5, z: 0.5, color: "#808080", type: "block", width: 1.5, thickness: 7, depth: 2, materialType: "texture", textureId: "stone" });
+  
+  // Atrium floor & ceiling
+  objects.push({ x: 0, y: 0.5, z: -4.5, color: white, type: "block", width: 6, thickness: 0.2, depth: 10 });
+  objects.push({ x: 0, y: 7.25, z: -1, color: darkGrey, type: "block", width: 8, thickness: 0.8, depth: 8 });
+
+  // Inside atrium catwalk (floor 2)
+  objects.push({ x: 0, y: 3.85, z: -3, color: lightGrey, type: "block", width: 6, thickness: 0.3, depth: 3 });
+  objects.push({ x: 0, y: 4.5, z: -1.6, color: "#ADD8E6", type: "block", width: 6, thickness: 1, depth: 0.1, materialType: "glass" });
+
+  // --- LEFT WING ---
+  // Left Wing Ground Floor (y: 0.5 to 3.5)
+  objects.push({ x: -8, y: 2, z: -4, color: white, type: "block", width: 10, thickness: 3.5, depth: 12 });
+  // Wood slat feature on front left
+  objects.push({ x: -9.5, y: 2, z: 2.1, color: "#8B5A2B", type: "block", width: 5, thickness: 3.5, depth: 0.3, materialType: "texture", textureId: "wood" });
+  // Left side ground window
+  objects.push({ x: -13.1, y: 2, z: -2, color: "#ADD8E6", type: "block", width: 0.3, thickness: 2, depth: 4, materialType: "glass" });
+
+  // Ground floor dark trim/roof between floors
+  objects.push({ x: -8, y: 4, z: -3, color: darkGrey, type: "block", width: 11, thickness: 0.6, depth: 14 });
+
+  // Left Wing Upper Floor (y: 4.5 to 7)
+  objects.push({ x: -8, y: 5.75, z: -5, color: white, type: "block", width: 9, thickness: 3, depth: 10 });
+  // Top floor windows
+  objects.push({ x: -11, y: 5.75, z: 0.1, color: "#ADD8E6", type: "block", width: 2, thickness: 2, depth: 0.3, materialType: "glass" });
+  objects.push({ x: -5, y: 5.75, z: 0.1, color: "#ADD8E6", type: "block", width: 1.5, thickness: 2, depth: 0.3, materialType: "glass" });
+  
+  // Left Wing Roof
+  objects.push({ x: -8, y: 7.4, z: -5, color: lightGrey, type: "block", width: 10, thickness: 0.4, depth: 11 }); // White border
+  objects.push({ x: -8, y: 7.7, z: -5, color: darkGrey, type: "block", width: 9.5, thickness: 0.2, depth: 10.5 }); // Dark top
+
+  // --- LIGHTING ---
+  const addLight = (lx: number, ly: number, lz: number) => {
+    objects.push({ x: lx, y: ly, z: lz, color: warmLight, type: "block", width: 0.4, thickness: 0.1, depth: 0.4 });
+    // Simulate glow on the wall below
+    objects.push({ x: lx, y: ly-0.5, z: lz, color: warmLight, type: "block", width: 0.8, thickness: 0.8, depth: 0.1, materialType: "glass" });
+  };
+  addLight(-11, 3.6, 2.1); // Above wood slats
+  addLight(-5, 3.6, 0.1);  // Above right window
+
+  // --- EXTERIOR ITEMS ---
+  objects.push({ x: -14, y: 0, z: 5, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -12, y: 0, z: 8, color: "", type: "item", itemId: "bush" });
+  objects.push({ x: -15, y: 0, z: 2, color: "", type: "item", itemId: "pine_tree_big" });
+  
+  // --- INTERIOR ITEMS ---
+  // Car in garage
+  objects.push({ x: 10, y: 0.5, z: 1, color: "", type: "item", itemId: "car", rotationY: Math.PI });
+  // Furniture visible through glass
+  objects.push({ x: 0, y: 0.5, z: -2, color: "", type: "item", itemId: "sofa" });
+  objects.push({ x: 9, y: 4.5, z: 0, color: "", type: "item", itemId: "bed", rotationY: -Math.PI/2 });
+  objects.push({ x: -9, y: 4.5, z: -2, color: "", type: "item", itemId: "wardrobe" });
+
+  return objects;
+}
+
 export const EXAMPLE_WORLDS = [
   { id: 'house', name: 'Cozy House', emoji: '🏠', objects: generateHouse() },
   { id: 'farm', name: 'Farm & Zoo', emoji: '🐄', objects: generateFarm() },
@@ -796,4 +914,5 @@ export const EXAMPLE_WORLDS = [
   { id: 'mansion', name: 'Modern Metropolis', emoji: '🏰', objects: generateMansion() },
   { id: 'bungalow', name: 'Tremendous Bungalow', emoji: '🏡', objects: generateBungalow() },
   { id: 'farmhouse', name: 'Modern Farmhouse', emoji: '🌾', objects: generateModernFarmhouse() },
+  { id: 'modern-villa', name: 'Modern Villa', emoji: '🏡', objects: generateModernVilla() },
 ];
