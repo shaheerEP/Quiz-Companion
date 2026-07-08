@@ -137,6 +137,10 @@ export async function GET() {
         newValue.mannersList = DEFAULT_SETTINGS.mannersList;
         updated = true;
       }
+      if (newValue.ratingTiers === undefined || newValue.ratingTiers.length === 0) {
+        newValue.ratingTiers = DEFAULT_SETTINGS.ratingTiers;
+        updated = true;
+      }
       if (updated) {
         config = await Settings.findOneAndUpdate({ key: "config", teacherId }, { value: newValue }, { new: true });
       }

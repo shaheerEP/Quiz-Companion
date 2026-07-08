@@ -461,12 +461,41 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-            <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Gamified Rating Tiers</h2>
+            <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+              <h2 className="text-2xl font-black text-gray-200">Gamified Rating Tiers</h2>
+              <button 
+                onClick={() => setSettings({...settings, ratingTiers: [...(settings.ratingTiers || []), { name: "New Tier", maxSeconds: 15, stars: 1, points: 10 }]})}
+                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+              >
+                + Add Tier
+              </button>
+            </div>
             <div className="flex flex-col gap-6">
-              {settings.ratingTiers?.map((tier: any, index: number) => (
+              {(settings.ratingTiers || []).map((tier: any, index: number) => (
                 <div key={index} className="bg-gray-950 p-6 rounded-2xl border border-gray-800">
                   <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                    <span className="font-black text-xl text-yellow-400">{tier.stars} Stars Output</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-xl text-yellow-400">Stars:</span>
+                      <input 
+                        type="number" value={tier.stars}
+                        onChange={e => {
+                          const newTiers = [...settings.ratingTiers];
+                          newTiers[index].stars = Number(e.target.value);
+                          setSettings({...settings, ratingTiers: newTiers});
+                        }}
+                        className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-yellow-400 font-bold outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        const newTiers = settings.ratingTiers.filter((_: any, i: number) => i !== index);
+                        setSettings({...settings, ratingTiers: newTiers});
+                      }}
+                      className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg transition-colors"
+                      title="Remove Tier"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-3">
