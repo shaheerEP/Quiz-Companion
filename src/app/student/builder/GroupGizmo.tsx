@@ -48,10 +48,10 @@ export const GroupGizmo = ({ objects, selectedIds, onUpdateObjects, isGizmoDragg
 
   return (
     <group>
-      <Line points={points} color="#d946ef" lineWidth={2} />
-      <Line points={[edges[0], edges[1]]} color="#d946ef" lineWidth={2} />
-      <Line points={[edges[2], edges[3]]} color="#d946ef" lineWidth={2} />
-      <Line points={[edges[4], edges[5]]} color="#d946ef" lineWidth={2} />
+      <Line points={points} color="#d946ef" lineWidth={2} raycast={() => null} />
+      <Line points={[edges[0], edges[1]]} color="#d946ef" lineWidth={2} raycast={() => null} />
+      <Line points={[edges[2], edges[3]]} color="#d946ef" lineWidth={2} raycast={() => null} />
+      <Line points={[edges[4], edges[5]]} color="#d946ef" lineWidth={2} raycast={() => null} />
     </group>
   );
 };

@@ -2550,6 +2550,11 @@ export default function VoxelBuilder() {
   const [showPrefabsDropdown, setShowPrefabsDropdown] = useState(false);
   const [isGizmoDragging, setIsGizmoDragging] = useState(false);
   const [activePrefabId, setActivePrefabId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (toolMode !== 'select') setPrefabSelectionIds([]);
+    if (toolMode !== 'build' && toolMode !== 'roof') setSelectedBlockIds([]);
+  }, [toolMode]);
   
   const getBlockId = (obj: PlacedObject) => `${obj.x},${obj.y},${obj.z}`;
 
