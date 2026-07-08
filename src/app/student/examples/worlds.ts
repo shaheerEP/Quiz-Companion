@@ -804,179 +804,181 @@ function generateModernVilla(): PlacedObject[] {
     objects.push({ x, y, z, color, type: "block", width: w, thickness: h, depth: d, materialType: mat as any, textureId: tex });
   };
 
-  // --- BASE TERRAIN (y: -0.4, sits on grid at -0.5) ---
+  // --- BASE TERRAIN (Bottom: -0.5 -> data.y = 0) ---
   for (let x = -25; x <= 0; x++) {
     for (let z = -15; z <= 15; z++) {
       if (Math.random() > 0.6) {
-        objects.push({ x, y: -0.5, z, color: "", type: "item", itemId: "grass_field" });
+        objects.push({ x, y: 0, z, color: "", type: "item", itemId: "grass_field" });
       } else {
-        objects.push({ x, y: -0.4, z, color: grassColor, type: "block", thickness: 0.2 });
+        objects.push({ x, y: 0, z, color: grassColor, type: "block", thickness: 0.2 });
       }
     }
   }
   
   // Driveway (stone)
-  objects.push({ x: 5, y: -0.4, z: 2, color: lightGrey, type: "block", width: 24, thickness: 0.2, depth: 28, materialType: "texture", textureId: "stone" });
+  objects.push({ x: 5, y: 0, z: 2, color: lightGrey, type: "block", width: 24, thickness: 0.2, depth: 28, materialType: "texture", textureId: "stone" });
   
-  // Foundation (y: -0.1, sits on driveway) -> Top is at y=0.1
-  objects.push({ x: 0, y: -0.1, z: -3, color: lightGrey, type: "block", width: 30, thickness: 0.4, depth: 16 });
+  // Foundation (Bottom: -0.3 -> data.y = 0.2) -> Top is at y=0.1
+  objects.push({ x: 0, y: 0.2, z: -3, color: lightGrey, type: "block", width: 30, thickness: 0.4, depth: 16 });
 
-  // ================= GROUND FLOOR =================
+  // ================= GROUND FLOOR (Bottom: 0.1 -> data.y = 0.6, Height: 3.0) =================
   
   // --- GARAGE (Right Wing) ---
-  // Back Wall
-  addWall(9, 1.6, -9.75, 10, 3, 0.5);
-  // Right Wall
-  addWall(13.75, 1.6, -3, 0.5, 3, 13);
+  addWall(9, 0.6, -9.75, 10, 3, 0.5); // Back Wall
+  addWall(13.75, 0.6, -3, 0.5, 3, 13); // Right Wall
   // Front Wall (Garage Doors)
-  addWall(4.5, 1.6, 3.75, 1, 3, 0.5);
-  addWall(9, 1.6, 3.75, 1, 3, 0.5);
-  addWall(13.5, 1.6, 3.75, 1, 3, 0.5);
-  addWall(6.75, 1.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
-  addWall(11.25, 1.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
+  addWall(4.5, 0.6, 3.75, 1, 3, 0.5);
+  addWall(9, 0.6, 3.75, 1, 3, 0.5);
+  addWall(13.5, 0.6, 3.75, 1, 3, 0.5);
+  addWall(6.75, 0.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
+  addWall(11.25, 0.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
   
-  // Left Wall Part 1 (Back to Door) Z: -9.5 to -1
-  addWall(4.25, 1.6, -5.25, 0.5, 3, 8.5);
-  // Doorway header (above door, y: 2.6 to 3.1)
-  addWall(4.25, 2.85, 0, 0.5, 0.5, 2);
-  // Left Wall Part 2 (Door to Front) Z: 1 to 3.5
-  addWall(4.25, 1.6, 2.25, 0.5, 3, 2.5);
+  // Left Wall (Shared with Atrium)
+  addWall(4.25, 0.6, -5.25, 0.5, 3, 8.5); // Part 1
+  addWall(4.25, 3.1, 0, 0.5, 0.5, 2);     // Header (Bottom: 2.6 -> data.y = 3.1)
+  addWall(4.25, 0.6, 2.25, 0.5, 3, 2.5);  // Part 2
 
-  // Garage Ceiling
-  addWall(9, 3.2, -3, 10, 0.2, 14);
+  // Garage Ceiling (Bottom: 3.1 -> data.y = 3.6, Height: 0.2)
+  addWall(9, 3.6, -3, 10, 0.2, 14);
 
   // --- LEFT WING ---
-  // Back Wall
-  addWall(-8, 1.6, -8.75, 10, 3, 0.5);
-  // Left Wall
-  addWall(-12.75, 1.6, -3, 0.5, 3, 11);
+  addWall(-8, 0.6, -8.75, 10, 3, 0.5);   // Back Wall
+  addWall(-12.75, 0.6, -3, 0.5, 3, 11);  // Left Wall
   // Front Wall (Wood slat feature)
-  addWall(-5.5, 1.6, 2.75, 5, 3, 0.5);
-  addWall(-10.5, 1.6, 2.85, 5, 3, 0.3, "#8B5A2B", "texture", "wood");
+  addWall(-5.5, 0.6, 2.75, 5, 3, 0.5);
+  addWall(-10.5, 0.6, 2.85, 5, 3, 0.3, "#8B5A2B", "texture", "wood");
   
-  // Right Wall Part 1
-  addWall(-3.25, 1.6, -4.75, 0.5, 3, 7.5);
-  // Doorway header
-  addWall(-3.25, 2.85, 0, 0.5, 0.5, 2);
-  // Right Wall Part 2
-  addWall(-3.25, 1.6, 1.75, 0.5, 3, 1.5);
+  // Right Wall (Shared with Atrium)
+  addWall(-3.25, 0.6, -4.75, 0.5, 3, 7.5); // Part 1
+  addWall(-3.25, 3.1, 0, 0.5, 0.5, 2);     // Header
+  addWall(-3.25, 0.6, 1.75, 0.5, 3, 1.5);  // Part 2
 
-  // Left Wing Ceiling (Dark trim)
-  addWall(-8, 3.2, -3, 11, 0.4, 13, darkGrey);
+  // Left Wing Ceiling (Bottom: 3.1 -> data.y = 3.6)
+  addWall(-8, 3.6, -3, 11, 0.4, 13, darkGrey);
 
   // --- ATRIUM ---
-  // Floor (White)
-  addWall(0.5, 0.15, -3, 7, 0.1, 14);
+  // Floor (White) - Let's put a white tile floor on top of foundation
+  // Bottom: 0.1 -> data.y = 0.6, Height: 0.1
+  addWall(0.5, 0.6, -3, 7, 0.1, 14);
   
-  // Front Glass Wall (Double height)
-  addWall(-1.75, 3.2, 2.5, 2.5, 6.2, 0.2, "#ADD8E6", "glass");
-  addWall(2.75, 3.2, 2.5, 2.5, 6.2, 0.2, "#ADD8E6", "glass");
-  addWall(0.5, 4.2, 2.5, 2, 4.2, 0.2, "#ADD8E6", "glass");
+  // Front Glass Wall (Double height) Bottom: 0.1 -> data.y = 0.6, Height: 6.4
+  addWall(-1.75, 0.6, 2.5, 2.5, 6.4, 0.2, "#ADD8E6", "glass");
+  addWall(2.75, 0.6, 2.5, 2.5, 6.4, 0.2, "#ADD8E6", "glass");
+  // Header above door (Bottom: 2.6 -> data.y = 3.1, Height: 3.9)
+  addWall(0.5, 3.1, 2.5, 2, 3.9, 0.2, "#ADD8E6", "glass");
   
-  // Stone Pillar at X=3.5 (in front of glass)
-  addWall(3.5, 3.2, 2.5, 1.5, 6.2, 2, "#808080", "texture", "stone");
+  // Stone Pillar at X=3.5
+  addWall(3.5, 0.6, 2.5, 1.5, 6.4, 2, "#808080", "texture", "stone");
 
   // Atrium Back Wall (Glass)
-  addWall(0.5, 3.2, -9.9, 7, 6.2, 0.2, "#ADD8E6", "glass");
+  addWall(0.5, 0.6, -9.9, 7, 6.4, 0.2, "#ADD8E6", "glass");
 
-  // Atrium Ceiling
-  addWall(0.5, 6.6, -3.5, 9, 0.4, 15, darkGrey);
+  // Atrium Ceiling (Bottom: 6.5 -> data.y = 7.0, Height: 0.4)
+  addWall(0.5, 7.0, -3.5, 9, 0.4, 15, darkGrey);
 
 
   // ================= STAIRCASE =================
-  // Stairs in Atrium, ascending along the back wall
   for (let i = 0; i < 12; i++) {
     const stepX = -2 + (i * 0.4); 
-    const stepY = 0.2 + (i * 0.25) + 0.125; 
+    const stepY = 0.6 + (i * 0.25); // Bottom goes from 0.1 up to 2.85
     addWall(stepX, stepY, -9, 0.4, 0.25, 1.5, darkGrey);
   }
-  // Landing at X=3, Z=-9 to Z=-3 (Catwalk)
-  addWall(3, 3.2, -6, 2, 0.2, 6, lightGrey);
+  // Landing at X=3 (Catwalk)
+  // Bottom: 3.1 -> data.y = 3.6, Height: 0.2
+  addWall(3, 3.6, -6, 2, 0.2, 6, lightGrey);
   // Catwalk stretching across Atrium 
-  addWall(0.5, 3.2, -2, 7, 0.2, 2, lightGrey);
-  // Glass railing for catwalk
-  addWall(0.5, 3.7, -0.9, 7, 1.0, 0.1, "#ADD8E6", "glass");
-  addWall(1.9, 3.7, -3.1, 4.2, 1.0, 0.1, "#ADD8E6", "glass");
+  addWall(0.5, 3.6, -2, 7, 0.2, 2, lightGrey);
+  // Glass railing for catwalk (Bottom: 3.3 -> data.y = 3.8, Height: 1.0)
+  addWall(0.5, 3.8, -0.9, 7, 1.0, 0.1, "#ADD8E6", "glass");
+  addWall(1.9, 3.8, -3.1, 4.2, 1.0, 0.1, "#ADD8E6", "glass");
 
 
-  // ================= UPPER FLOOR =================
+  // ================= UPPER FLOOR (Bottom: 3.3 -> data.y = 3.8, Height: 3.0) =================
 
   // --- RIGHT WING UPPER (Bedroom) ---
-  // Back Wall
-  addWall(9, 4.8, -9.75, 10, 3, 0.5);
-  // Right Wall
-  addWall(13.75, 4.8, -5.5, 0.5, 3, 8);
+  addWall(9, 3.8, -9.75, 10, 3, 0.5); // Back Wall
+  addWall(13.75, 3.8, -5.5, 0.5, 3, 8); // Right Wall
   // Left Wall (shared with atrium)
-  addWall(4.25, 4.8, -6.25, 0.5, 3, 6.5);
-  addWall(4.25, 6.0, -2, 0.5, 0.5, 2); // Header
-  addWall(4.25, 4.8, -1.25, 0.5, 3, 0.5);
+  addWall(4.25, 3.8, -6.25, 0.5, 3, 6.5);
+  addWall(4.25, 6.3, -2, 0.5, 0.5, 2); // Header
+  addWall(4.25, 3.8, -1.25, 0.5, 3, 0.5);
   // Front Wall (Glass wall to balcony)
-  addWall(9, 4.8, -1.5, 10, 3, 0.2, "#ADD8E6", "glass");
+  addWall(9, 3.8, -1.5, 10, 3, 0.2, "#ADD8E6", "glass");
   
   // Right Wing Balcony
-  addWall(9, 3.25, 1.25, 10, 0.3, 5.5, lightGrey); // Floor
-  addWall(9, 3.9, 3.9, 10, 1, 0.1, "#ADD8E6", "glass"); // Glass Railing
+  // Floor (Bottom: 3.1 -> data.y = 3.6)
+  addWall(9, 3.6, 1.25, 10, 0.3, 5.5, lightGrey);
+  // Glass Railing (Bottom: 3.4 -> data.y = 3.9)
+  addWall(9, 3.9, 3.9, 10, 1, 0.1, "#ADD8E6", "glass");
   addWall(13.9, 3.9, 1.25, 0.1, 1, 5.5, "#ADD8E6", "glass");
-  // Privacy wood slats
-  addWall(13.5, 4.8, 2.5, 0.5, 3, 3, "#8B5A2B", "texture", "wood");
-  addWall(12, 4.8, 3.8, 2, 3, 0.2, "#8B5A2B", "texture", "wood");
+  // Privacy wood slats (Bottom: 3.3 -> data.y = 3.8)
+  addWall(13.5, 3.8, 2.5, 0.5, 3, 3, "#8B5A2B", "texture", "wood");
+  addWall(12, 3.8, 3.8, 2, 3, 0.2, "#8B5A2B", "texture", "wood");
 
   // Right Wing Ceiling & Roof
-  addWall(9, 6.4, -5.5, 10, 0.2, 9); // Ceiling
-  addWall(9, 6.75, -2.5, 11, 0.5, 15, lightGrey); // White border
-  addWall(9, 7.1, -2.5, 10.5, 0.2, 14.5, darkGrey); // Dark top
+  // Ceiling (Bottom: 6.3 -> data.y = 6.8, Height: 0.2)
+  addWall(9, 6.8, -5.5, 10, 0.2, 9);
+  // Roof White Border (Bottom: 6.5 -> data.y = 7.0, Height: 0.5)
+  addWall(9, 7.0, -2.5, 11, 0.5, 15, lightGrey);
+  // Roof Dark Top (Bottom: 7.0 -> data.y = 7.5, Height: 0.2)
+  addWall(9, 7.5, -2.5, 10.5, 0.2, 14.5, darkGrey);
 
   // --- LEFT WING UPPER (Bedroom / Office) ---
-  // Back Wall
-  addWall(-8, 4.8, -8.75, 10, 3, 0.5);
-  // Left Wall
-  addWall(-12.75, 4.8, -4, 0.5, 3, 9);
+  addWall(-8, 3.8, -8.75, 10, 3, 0.5); // Back Wall
+  addWall(-12.75, 3.8, -4, 0.5, 3, 9); // Left Wall
   // Front Wall (White with Windows)
-  addWall(-11.5, 4.8, 0.75, 3, 3, 0.5); // Left solid
-  addWall(-9, 4.8, 0.75, 2, 3, 0.2, "#ADD8E6", "glass"); // Window 1
-  addWall(-6.5, 4.8, 0.75, 3, 3, 0.5); // Middle solid
-  addWall(-4.25, 4.8, 0.75, 1.5, 3, 0.2, "#ADD8E6", "glass"); // Window 2
-  addWall(-3.25, 4.8, 0.75, 0.5, 3, 0.5); // Right solid
+  addWall(-11.5, 3.8, 0.75, 3, 3, 0.5); // Left solid
+  addWall(-9, 3.8, 0.75, 2, 3, 0.2, "#ADD8E6", "glass"); // Window 1
+  addWall(-6.5, 3.8, 0.75, 3, 3, 0.5); // Middle solid
+  addWall(-4.25, 3.8, 0.75, 1.5, 3, 0.2, "#ADD8E6", "glass"); // Window 2
+  addWall(-3.25, 3.8, 0.75, 0.5, 3, 0.5); // Right solid
   // Window headers/sills
-  addWall(-9, 3.6, 0.75, 2, 0.6, 0.5);
-  addWall(-9, 6.0, 0.75, 2, 0.6, 0.5);
-  addWall(-4.25, 3.6, 0.75, 1.5, 0.6, 0.5);
-  addWall(-4.25, 6.0, 0.75, 1.5, 0.6, 0.5);
+  addWall(-9, 3.8, 0.75, 2, 0.6, 0.5); // Sill (Bottom: 3.3 -> data.y = 3.8)
+  addWall(-9, 6.2, 0.75, 2, 0.6, 0.5); // Header (Bottom: 5.7 -> data.y = 6.2)
+  addWall(-4.25, 3.8, 0.75, 1.5, 0.6, 0.5);
+  addWall(-4.25, 6.2, 0.75, 1.5, 0.6, 0.5);
 
   // Right Wall (Shared with Atrium)
-  addWall(-3.25, 4.8, -6.25, 0.5, 3, 6.5);
-  addWall(-3.25, 6.0, -2, 0.5, 0.5, 2); // Header
-  addWall(-3.25, 4.8, -0.25, 0.5, 3, 1.5);
+  addWall(-3.25, 3.8, -6.25, 0.5, 3, 6.5);
+  addWall(-3.25, 6.3, -2, 0.5, 0.5, 2); // Header
+  addWall(-3.25, 3.8, -0.25, 0.5, 3, 1.5);
 
   // Left Wing Ceiling & Roof
-  addWall(-8, 6.4, -4, 10, 0.2, 10); // Ceiling
-  addWall(-8, 6.7, -4, 10.5, 0.4, 11, lightGrey); // White border
-  addWall(-8, 7.0, -4, 10, 0.2, 10.5, darkGrey); // Dark top
+  // Ceiling (Bottom: 6.3 -> data.y = 6.8)
+  addWall(-8, 6.8, -4, 10, 0.2, 10);
+  // Roof White Border (Bottom: 6.5 -> data.y = 7.0)
+  addWall(-8, 7.0, -4, 10.5, 0.4, 11, lightGrey);
+  // Roof Dark Top (Bottom: 6.9 -> data.y = 7.4)
+  addWall(-8, 7.4, -4, 10, 0.2, 10.5, darkGrey);
 
   // ================= LIGHTING =================
   const addLight = (lx: number, ly: number, lz: number) => {
     objects.push({ x: lx, y: ly, z: lz, color: warmLight, type: "block", width: 0.4, thickness: 0.1, depth: 0.4 });
     objects.push({ x: lx, y: ly-0.5, z: lz, color: warmLight, type: "block", width: 0.8, thickness: 0.8, depth: 0.1, materialType: "glass" });
   };
-  addLight(-9, 3.1, 3.1);
-  addLight(-4.25, 3.1, 1.1);
+  addLight(-9, 4.1, 3.1);
+  addLight(-4.25, 4.1, 1.1);
 
   // ================= EXTERIOR ITEMS =================
-  objects.push({ x: -14, y: -0.4, z: 6, color: "", type: "item", itemId: "tree" });
-  objects.push({ x: -12, y: -0.4, z: 9, color: "", type: "item", itemId: "bush" });
-  objects.push({ x: -15, y: -0.4, z: 3, color: "", type: "item", itemId: "pine_tree_big" });
+  objects.push({ x: -14, y: -0.1, z: 6, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -12, y: -0.1, z: 9, color: "", type: "item", itemId: "bush" });
+  objects.push({ x: -15, y: -0.1, z: 3, color: "", type: "item", itemId: "pine_tree_big" });
   
   // ================= INTERIOR ITEMS =================
+  // Items don't have thickness applied to their position. 
+  // Floor top is at 0.1 (Base Terrain top is -0.3, Foundation is 0.1)
+  
   // Garage
   objects.push({ x: 9, y: 0.1, z: 0, color: "", type: "item", itemId: "car", rotationY: Math.PI });
   
   // Ground Floor Living Room (Left Wing)
-  objects.push({ x: -8, y: 0.1, z: -2, color: "", type: "item", itemId: "sofa", rotationY: Math.PI/2 });
-  objects.push({ x: -11, y: 0.1, z: -2, color: "", type: "item", itemId: "table" });
-  objects.push({ x: -11, y: 0.1, z: -4, color: "", type: "item", itemId: "chair", rotationY: -Math.PI/2 });
-  objects.push({ x: -5, y: 0.1, z: -7, color: "", type: "item", itemId: "lamp" });
+  objects.push({ x: -8, y: 0.2, z: -2, color: "", type: "item", itemId: "sofa", rotationY: Math.PI/2 });
+  objects.push({ x: -11, y: 0.2, z: -2, color: "", type: "item", itemId: "table" });
+  objects.push({ x: -11, y: 0.2, z: -4, color: "", type: "item", itemId: "chair", rotationY: -Math.PI/2 });
+  objects.push({ x: -5, y: 0.2, z: -7, color: "", type: "item", itemId: "lamp" });
 
   // Upper Floor Bedrooms
+  // Floor top is at 3.3
   // Right Wing Upper
   objects.push({ x: 9, y: 3.3, z: -8, color: "", type: "item", itemId: "bed" });
   objects.push({ x: 12, y: 3.3, z: -8, color: "", type: "item", itemId: "chest" });
