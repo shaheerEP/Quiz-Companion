@@ -32,6 +32,24 @@ export type PlacedObject = {
 
 /* ─── 3D Components (Read-Only) ─── */
 
+export const AVAILABLE_TEXTURES = [
+  { id: "wood", url: "/textures/wood.png", name: "Wood Planks" },
+  { id: "stone", url: "/textures/stone.png", name: "Stone Masonry" },
+  { id: "brick", url: "/textures/brick.png", name: "Red Brick" },
+  { id: "shingles", url: "/textures/shingles.png", name: "Roof Shingles" },
+  { id: "tile", url: "/textures/tile.png", name: "Tile" },
+];
+
+const textureLoader = typeof window !== 'undefined' ? new THREE.TextureLoader() : null;
+const TEXTURES: Record<string, THREE.Texture | null> = {};
+if (typeof window !== 'undefined') {
+  TEXTURES.wood = textureLoader!.load('/textures/wood.png');
+  TEXTURES.stone = textureLoader!.load('/textures/stone.png');
+  TEXTURES.brick = textureLoader!.load('/textures/brick.png');
+  TEXTURES.shingles = textureLoader!.load('/textures/shingles.png');
+  TEXTURES.tile = textureLoader!.load('/textures/tile.png');
+  Object.values(TEXTURES).forEach(t => { if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; } });
+}
 function Ground({ landSize = 50 }: { landSize?: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
@@ -2536,10 +2554,6 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
 
           {(() => {
             const validObjects = objects;
-            const opaqueBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color !== "#ADD8E6");
-            const glassBoxes = validObjects.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof') && o.color === "#ADD8E6");
-            const opaqueRoofs = validObjects.filter(o => o.type === 'roof' && o.color !== "#ADD8E6");
-            const glassRoofs = validObjects.filter(o => o.type === 'roof' && o.color === "#ADD8E6");
             const items = validObjects.filter(o => o.type === 'item');
 
             const getBoxProps = (data: any) => {
@@ -2565,185 +2579,110 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             const curvenessLevels = [0, 1, 2, 3, 4];
             const boxShapes = ['box', undefined];
 
+            const blockMaterials = [
+              { type: 'color', id: 'color', transparent: false, glass: false, texture: null },
+              { type: 'glass', id: 'glass', transparent: true, glass: true, texture: null },
+              { type: 'texture', id: 'wood', transparent: false, glass: false, texture: TEXTURES?.wood },
+              { type: 'texture', id: 'stone', transparent: false, glass: false, texture: TEXTURES?.stone },
+              { type: 'texture', id: 'brick', transparent: false, glass: false, texture: TEXTURES?.brick },
+              { type: 'texture', id: 'shingles', transparent: false, glass: false, texture: TEXTURES?.shingles },
+              { type: 'texture', id: 'tile', transparent: false, glass: false, texture: TEXTURES?.tile },
+            ];
+
             return (
               <>
-                {curvenessLevels.map(level => {
-                  const blocks = opaqueBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
-                  if (blocks.length === 0) return null;
+                {blockMaterials.map(mat => {
+                  let subset;
+                  if (mat.type === 'color') {
+                    subset = validObjects.filter(o => (o.materialType === 'color' || !o.materialType) && o.color !== "#ADD8E6");
+                  } else if (mat.type === 'glass') {
+                    subset = validObjects.filter(o => o.color === "#ADD8E6" || o.materialType === 'glass');
+                  } else {
+                    subset = validObjects.filter(o => o.materialType === 'texture' && o.textureId === mat.id);
+                  }
+                  
+                  if (subset.length === 0) return null;
+                  
+                  const boxes = subset.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof'));
+                  const roofs = subset.filter(o => o.type === 'roof');
+
                   return (
-                    <Instances key={`op-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
+                    <group key={`mat-${mat.id}`}>
+                      {/* Boxes */}
+                      {curvenessLevels.map(level => {
+                        const blocks = boxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
+                        if (blocks.length === 0) return null;
                         return (
-                          <Instance
-                            key={`ob-${level}-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
+                          <Instances key={`bx-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
+                            <primitive object={getCurvedGeometry(level)} attach="geometry" />
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`b-${level}-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color} />
+                              );
+                            })}
+                          </Instances>
                         );
                       })}
-                    </Instances>
-                  );
-                })}
 
-                {(() => {
-                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'wedge');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getWedgeGeometry()} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
+                      {/* Wedges */}
+                      {(() => {
+                        const blocks = boxes.filter(o => o.blockShape === 'wedge');
+                        if (blocks.length === 0) return null;
                         return (
-                          <Instance
-                            key={`ow-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
+                          <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                            <primitive object={getWedgeGeometry()} attach="geometry" />
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`w-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color} />
+                              );
+                            })}
+                          </Instances>
+                        );
+                      })()}
+
+                      {/* Pyramids */}
+                      {(() => {
+                        const blocks = boxes.filter(o => o.blockShape === 'pyramid');
+                        if (blocks.length === 0) return null;
+                        return (
+                          <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
+                            <primitive object={getPyramidGeometry()} attach="geometry" />
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
+                            {blocks.map((data, idx) => {
+                              const props = getBoxProps(data);
+                              return (
+                                <Instance key={`p-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color} />
+                              );
+                            })}
+                          </Instances>
+                        );
+                      })()}
+                      
+                      {/* Roofs */}
+                      {curvenessLevels.map(level => {
+                        const rfs = roofs.filter(o => Math.round(o.curveness || 0) === level);
+                        if (rfs.length === 0) return null;
+                        const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
+                        return (
+                          <Instances key={`rf-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
+                            <primitive object={getRoofGeometry(segments)} attach="geometry" />
+                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
+                            {rfs.map((data, idx) => (
+                              <Instance key={`r-${level}-${idx}`}
+                                position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
+                                rotation={[0, Math.PI / 4, 0]}
+                                scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
+                                color={mat.type === 'texture' ? "#ffffff" : data.color}
+                              />
+                            ))}
+                          </Instances>
                         );
                       })}
-                    </Instances>
-                  );
-                })()}
-
-                {(() => {
-                  const blocks = opaqueBoxes.filter(o => o.blockShape === 'pyramid');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getPyramidGeometry()} attach="geometry" />
-                      <meshStandardMaterial />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`op-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {curvenessLevels.map(level => {
-                  const blocks = glassBoxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances key={`gl-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gb-${level}-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })}
-
-                {(() => {
-                  const blocks = glassBoxes.filter(o => o.blockShape === 'wedge');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getWedgeGeometry()} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gw-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {(() => {
-                  const blocks = glassBoxes.filter(o => o.blockShape === 'pyramid');
-                  if (blocks.length === 0) return null;
-                  return (
-                    <Instances limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getPyramidGeometry()} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {blocks.map((data, idx) => {
-                        const props = getBoxProps(data);
-                        return (
-                          <Instance
-                            key={`gp-${idx}`}
-                            position={props.position}
-                            scale={props.scale}
-                            rotation={props.rotation}
-                            color={data.color}
-                          />
-                        );
-                      })}
-                    </Instances>
-                  );
-                })()}
-
-                {curvenessLevels.map(level => {
-                  const roofs = opaqueRoofs.filter(o => Math.round(o.curveness || 0) === level);
-                  if (roofs.length === 0) return null;
-                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
-                  return (
-                    <Instances key={`op-roof-inst-${level}`} limit={100000} castShadow receiveShadow frustumCulled={false}>
-                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                      <meshStandardMaterial />
-                      {roofs.map((data, idx) => (
-                        <Instance
-                          key={`or-${level}-${idx}`}
-                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
-                          rotation={[0, Math.PI / 4, 0]}
-                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                          color={data.color}
-                        />
-                      ))}
-                    </Instances>
-                  );
-                })}
-
-                {curvenessLevels.map(level => {
-                  const roofs = glassRoofs.filter(o => Math.round(o.curveness || 0) === level);
-                  if (roofs.length === 0) return null;
-                  const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
-                  return (
-                    <Instances key={`gl-roof-inst-${level}`} limit={100000} castShadow receiveShadow>
-                      <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                      <meshStandardMaterial transparent opacity={0.6} />
-                      {roofs.map((data, idx) => (
-                        <Instance
-                          key={`gr-${level}-${idx}`}
-                          position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
-                          rotation={[0, Math.PI / 4, 0]}
-                          scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                          color={data.color}
-                        />
-                      ))}
-                    </Instances>
+                    </group>
                   );
                 })}
 

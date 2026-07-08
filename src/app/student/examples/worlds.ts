@@ -798,111 +798,192 @@ function generateModernVilla(): PlacedObject[] {
   const lightGrey = "#e2e8f0";
   const warmLight = "#fef08a";
   const grassColor = "#4ade80";
-  
-  // Base Terrain
-  // Left side: grass
-  for (let x = -15; x <= -2; x++) {
-    for (let z = -10; z <= 12; z++) {
-      if (Math.random() > 0.4) {
-        objects.push({ x, y: 0, z, color: "", type: "item", itemId: "grass_field" });
+
+  // Helper to add walls
+  const addWall = (x: number, y: number, z: number, w: number, h: number, d: number, color: string = white, mat: string = "color", tex?: string) => {
+    objects.push({ x, y, z, color, type: "block", width: w, thickness: h, depth: d, materialType: mat as any, textureId: tex });
+  };
+
+  // --- BASE TERRAIN (y: -0.4, sits on grid at -0.5) ---
+  for (let x = -25; x <= 0; x++) {
+    for (let z = -15; z <= 15; z++) {
+      if (Math.random() > 0.6) {
+        objects.push({ x, y: -0.5, z, color: "", type: "item", itemId: "grass_field" });
       } else {
-        objects.push({ x, y: 0, z, color: grassColor, type: "block", thickness: 0.2 });
+        objects.push({ x, y: -0.4, z, color: grassColor, type: "block", thickness: 0.2 });
       }
     }
   }
   
-  // Right side & front: driveway (stone)
-  objects.push({ x: 5, y: 0, z: 2, color: lightGrey, type: "block", width: 20, thickness: 0.2, depth: 24, materialType: "texture", textureId: "stone" });
+  // Driveway (stone)
+  objects.push({ x: 5, y: -0.4, z: 2, color: lightGrey, type: "block", width: 24, thickness: 0.2, depth: 28, materialType: "texture", textureId: "stone" });
   
-  // Foundation
-  objects.push({ x: 0, y: 0.1, z: -3, color: lightGrey, type: "block", width: 28, thickness: 0.4, depth: 14 });
+  // Foundation (y: -0.1, sits on driveway) -> Top is at y=0.1
+  objects.push({ x: 0, y: -0.1, z: -3, color: lightGrey, type: "block", width: 30, thickness: 0.4, depth: 16 });
 
-  // --- RIGHT WING (Garage & Balcony) ---
-  // Garage level (y: 0.5 to 3.5)
-  objects.push({ x: 9, y: 2, z: -3, color: white, type: "block", width: 10, thickness: 3.5, depth: 14 });
-  // Garage Doors (Wood texture)
-  objects.push({ x: 6, y: 2, z: 4.1, color: "#8B5A2B", type: "block", width: 4.5, thickness: 3, depth: 0.2, materialType: "texture", textureId: "wood" });
-  objects.push({ x: 11, y: 2, z: 4.1, color: "#8B5A2B", type: "block", width: 4.5, thickness: 3, depth: 0.2, materialType: "texture", textureId: "wood" });
+  // ================= GROUND FLOOR =================
   
-  // Right Wing Upper Floor (y: 4 to 7)
-  // Back & Side walls
-  objects.push({ x: 9, y: 5.5, z: -9, color: white, type: "block", width: 10, thickness: 3.5, depth: 2 });
-  objects.push({ x: 13.5, y: 5.5, z: -3, color: white, type: "block", width: 1, thickness: 3.5, depth: 10 });
+  // --- GARAGE (Right Wing) ---
+  // Back Wall
+  addWall(9, 1.6, -9.75, 10, 3, 0.5);
+  // Right Wall
+  addWall(13.75, 1.6, -3, 0.5, 3, 13);
+  // Front Wall (Garage Doors)
+  addWall(4.5, 1.6, 3.75, 1, 3, 0.5);
+  addWall(9, 1.6, 3.75, 1, 3, 0.5);
+  addWall(13.5, 1.6, 3.75, 1, 3, 0.5);
+  addWall(6.75, 1.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
+  addWall(11.25, 1.6, 3.85, 3.5, 2.8, 0.2, "#8B5A2B", "texture", "wood");
   
-  // Right Wing Balcony (y: 3.75 floor)
-  objects.push({ x: 9, y: 3.85, z: -2, color: lightGrey, type: "block", width: 10, thickness: 0.3, depth: 12 });
-  
-  // Balcony Glass Railing
-  objects.push({ x: 9, y: 4.5, z: 3.9, color: "#ADD8E6", type: "block", width: 10, thickness: 1, depth: 0.1, materialType: "glass" });
-  
-  // Privacy wood slats on balcony
-  objects.push({ x: 13.5, y: 5.5, z: 2.5, color: "#8B5A2B", type: "block", width: 0.5, thickness: 3.5, depth: 3, materialType: "texture", textureId: "wood" });
-  objects.push({ x: 12, y: 5.5, z: 4, color: "#8B5A2B", type: "block", width: 2, thickness: 3.5, depth: 0.2, materialType: "texture", textureId: "wood" });
-  
-  // Upper floor inner walls (Glass)
-  objects.push({ x: 9, y: 5.5, z: -2, color: "#ADD8E6", type: "block", width: 8, thickness: 3.5, depth: 0.2, materialType: "glass" });
-  objects.push({ x: 4.5, y: 5.5, z: -2, color: "#ADD8E6", type: "block", width: 0.2, thickness: 3.5, depth: 12, materialType: "glass" });
+  // Left Wall Part 1 (Back to Door) Z: -9.5 to -1
+  addWall(4.25, 1.6, -5.25, 0.5, 3, 8.5);
+  // Doorway header (above door, y: 2.6 to 3.1)
+  addWall(4.25, 2.85, 0, 0.5, 0.5, 2);
+  // Left Wall Part 2 (Door to Front) Z: 1 to 3.5
+  addWall(4.25, 1.6, 2.25, 0.5, 3, 2.5);
 
-  // Right Wing Roof
-  objects.push({ x: 9, y: 7.25, z: -2.5, color: lightGrey, type: "block", width: 11, thickness: 0.5, depth: 15 }); // White border
-  objects.push({ x: 9, y: 7.6, z: -2.5, color: darkGrey, type: "block", width: 10.5, thickness: 0.2, depth: 14.5 }); // Dark top
-
-  // --- CENTRAL ATRIUM ---
-  // Double-height glass entrance
-  objects.push({ x: 0, y: 3.5, z: 0.5, color: "#ADD8E6", type: "block", width: 6, thickness: 6.5, depth: 0.2, materialType: "glass" });
-  // Stone pillar on the right of entrance
-  objects.push({ x: 3.5, y: 3.5, z: 0.5, color: "#808080", type: "block", width: 1.5, thickness: 7, depth: 2, materialType: "texture", textureId: "stone" });
-  
-  // Atrium floor & ceiling
-  objects.push({ x: 0, y: 0.5, z: -4.5, color: white, type: "block", width: 6, thickness: 0.2, depth: 10 });
-  objects.push({ x: 0, y: 7.25, z: -1, color: darkGrey, type: "block", width: 8, thickness: 0.8, depth: 8 });
-
-  // Inside atrium catwalk (floor 2)
-  objects.push({ x: 0, y: 3.85, z: -3, color: lightGrey, type: "block", width: 6, thickness: 0.3, depth: 3 });
-  objects.push({ x: 0, y: 4.5, z: -1.6, color: "#ADD8E6", type: "block", width: 6, thickness: 1, depth: 0.1, materialType: "glass" });
+  // Garage Ceiling
+  addWall(9, 3.2, -3, 10, 0.2, 14);
 
   // --- LEFT WING ---
-  // Left Wing Ground Floor (y: 0.5 to 3.5)
-  objects.push({ x: -8, y: 2, z: -4, color: white, type: "block", width: 10, thickness: 3.5, depth: 12 });
-  // Wood slat feature on front left
-  objects.push({ x: -9.5, y: 2, z: 2.1, color: "#8B5A2B", type: "block", width: 5, thickness: 3.5, depth: 0.3, materialType: "texture", textureId: "wood" });
-  // Left side ground window
-  objects.push({ x: -13.1, y: 2, z: -2, color: "#ADD8E6", type: "block", width: 0.3, thickness: 2, depth: 4, materialType: "glass" });
-
-  // Ground floor dark trim/roof between floors
-  objects.push({ x: -8, y: 4, z: -3, color: darkGrey, type: "block", width: 11, thickness: 0.6, depth: 14 });
-
-  // Left Wing Upper Floor (y: 4.5 to 7)
-  objects.push({ x: -8, y: 5.75, z: -5, color: white, type: "block", width: 9, thickness: 3, depth: 10 });
-  // Top floor windows
-  objects.push({ x: -11, y: 5.75, z: 0.1, color: "#ADD8E6", type: "block", width: 2, thickness: 2, depth: 0.3, materialType: "glass" });
-  objects.push({ x: -5, y: 5.75, z: 0.1, color: "#ADD8E6", type: "block", width: 1.5, thickness: 2, depth: 0.3, materialType: "glass" });
+  // Back Wall
+  addWall(-8, 1.6, -8.75, 10, 3, 0.5);
+  // Left Wall
+  addWall(-12.75, 1.6, -3, 0.5, 3, 11);
+  // Front Wall (Wood slat feature)
+  addWall(-5.5, 1.6, 2.75, 5, 3, 0.5);
+  addWall(-10.5, 1.6, 2.85, 5, 3, 0.3, "#8B5A2B", "texture", "wood");
   
-  // Left Wing Roof
-  objects.push({ x: -8, y: 7.4, z: -5, color: lightGrey, type: "block", width: 10, thickness: 0.4, depth: 11 }); // White border
-  objects.push({ x: -8, y: 7.7, z: -5, color: darkGrey, type: "block", width: 9.5, thickness: 0.2, depth: 10.5 }); // Dark top
+  // Right Wall Part 1
+  addWall(-3.25, 1.6, -4.75, 0.5, 3, 7.5);
+  // Doorway header
+  addWall(-3.25, 2.85, 0, 0.5, 0.5, 2);
+  // Right Wall Part 2
+  addWall(-3.25, 1.6, 1.75, 0.5, 3, 1.5);
 
-  // --- LIGHTING ---
+  // Left Wing Ceiling (Dark trim)
+  addWall(-8, 3.2, -3, 11, 0.4, 13, darkGrey);
+
+  // --- ATRIUM ---
+  // Floor (White)
+  addWall(0.5, 0.15, -3, 7, 0.1, 14);
+  
+  // Front Glass Wall (Double height)
+  addWall(-1.75, 3.2, 2.5, 2.5, 6.2, 0.2, "#ADD8E6", "glass");
+  addWall(2.75, 3.2, 2.5, 2.5, 6.2, 0.2, "#ADD8E6", "glass");
+  addWall(0.5, 4.2, 2.5, 2, 4.2, 0.2, "#ADD8E6", "glass");
+  
+  // Stone Pillar at X=3.5 (in front of glass)
+  addWall(3.5, 3.2, 2.5, 1.5, 6.2, 2, "#808080", "texture", "stone");
+
+  // Atrium Back Wall (Glass)
+  addWall(0.5, 3.2, -9.9, 7, 6.2, 0.2, "#ADD8E6", "glass");
+
+  // Atrium Ceiling
+  addWall(0.5, 6.6, -3.5, 9, 0.4, 15, darkGrey);
+
+
+  // ================= STAIRCASE =================
+  // Stairs in Atrium, ascending along the back wall
+  for (let i = 0; i < 12; i++) {
+    const stepX = -2 + (i * 0.4); 
+    const stepY = 0.2 + (i * 0.25) + 0.125; 
+    addWall(stepX, stepY, -9, 0.4, 0.25, 1.5, darkGrey);
+  }
+  // Landing at X=3, Z=-9 to Z=-3 (Catwalk)
+  addWall(3, 3.2, -6, 2, 0.2, 6, lightGrey);
+  // Catwalk stretching across Atrium 
+  addWall(0.5, 3.2, -2, 7, 0.2, 2, lightGrey);
+  // Glass railing for catwalk
+  addWall(0.5, 3.7, -0.9, 7, 1.0, 0.1, "#ADD8E6", "glass");
+  addWall(1.9, 3.7, -3.1, 4.2, 1.0, 0.1, "#ADD8E6", "glass");
+
+
+  // ================= UPPER FLOOR =================
+
+  // --- RIGHT WING UPPER (Bedroom) ---
+  // Back Wall
+  addWall(9, 4.8, -9.75, 10, 3, 0.5);
+  // Right Wall
+  addWall(13.75, 4.8, -5.5, 0.5, 3, 8);
+  // Left Wall (shared with atrium)
+  addWall(4.25, 4.8, -6.25, 0.5, 3, 6.5);
+  addWall(4.25, 6.0, -2, 0.5, 0.5, 2); // Header
+  addWall(4.25, 4.8, -1.25, 0.5, 3, 0.5);
+  // Front Wall (Glass wall to balcony)
+  addWall(9, 4.8, -1.5, 10, 3, 0.2, "#ADD8E6", "glass");
+  
+  // Right Wing Balcony
+  addWall(9, 3.25, 1.25, 10, 0.3, 5.5, lightGrey); // Floor
+  addWall(9, 3.9, 3.9, 10, 1, 0.1, "#ADD8E6", "glass"); // Glass Railing
+  addWall(13.9, 3.9, 1.25, 0.1, 1, 5.5, "#ADD8E6", "glass");
+  // Privacy wood slats
+  addWall(13.5, 4.8, 2.5, 0.5, 3, 3, "#8B5A2B", "texture", "wood");
+  addWall(12, 4.8, 3.8, 2, 3, 0.2, "#8B5A2B", "texture", "wood");
+
+  // Right Wing Ceiling & Roof
+  addWall(9, 6.4, -5.5, 10, 0.2, 9); // Ceiling
+  addWall(9, 6.75, -2.5, 11, 0.5, 15, lightGrey); // White border
+  addWall(9, 7.1, -2.5, 10.5, 0.2, 14.5, darkGrey); // Dark top
+
+  // --- LEFT WING UPPER (Bedroom / Office) ---
+  // Back Wall
+  addWall(-8, 4.8, -8.75, 10, 3, 0.5);
+  // Left Wall
+  addWall(-12.75, 4.8, -4, 0.5, 3, 9);
+  // Front Wall (White with Windows)
+  addWall(-11.5, 4.8, 0.75, 3, 3, 0.5); // Left solid
+  addWall(-9, 4.8, 0.75, 2, 3, 0.2, "#ADD8E6", "glass"); // Window 1
+  addWall(-6.5, 4.8, 0.75, 3, 3, 0.5); // Middle solid
+  addWall(-4.25, 4.8, 0.75, 1.5, 3, 0.2, "#ADD8E6", "glass"); // Window 2
+  addWall(-3.25, 4.8, 0.75, 0.5, 3, 0.5); // Right solid
+  // Window headers/sills
+  addWall(-9, 3.6, 0.75, 2, 0.6, 0.5);
+  addWall(-9, 6.0, 0.75, 2, 0.6, 0.5);
+  addWall(-4.25, 3.6, 0.75, 1.5, 0.6, 0.5);
+  addWall(-4.25, 6.0, 0.75, 1.5, 0.6, 0.5);
+
+  // Right Wall (Shared with Atrium)
+  addWall(-3.25, 4.8, -6.25, 0.5, 3, 6.5);
+  addWall(-3.25, 6.0, -2, 0.5, 0.5, 2); // Header
+  addWall(-3.25, 4.8, -0.25, 0.5, 3, 1.5);
+
+  // Left Wing Ceiling & Roof
+  addWall(-8, 6.4, -4, 10, 0.2, 10); // Ceiling
+  addWall(-8, 6.7, -4, 10.5, 0.4, 11, lightGrey); // White border
+  addWall(-8, 7.0, -4, 10, 0.2, 10.5, darkGrey); // Dark top
+
+  // ================= LIGHTING =================
   const addLight = (lx: number, ly: number, lz: number) => {
     objects.push({ x: lx, y: ly, z: lz, color: warmLight, type: "block", width: 0.4, thickness: 0.1, depth: 0.4 });
-    // Simulate glow on the wall below
     objects.push({ x: lx, y: ly-0.5, z: lz, color: warmLight, type: "block", width: 0.8, thickness: 0.8, depth: 0.1, materialType: "glass" });
   };
-  addLight(-11, 3.6, 2.1); // Above wood slats
-  addLight(-5, 3.6, 0.1);  // Above right window
+  addLight(-9, 3.1, 3.1);
+  addLight(-4.25, 3.1, 1.1);
 
-  // --- EXTERIOR ITEMS ---
-  objects.push({ x: -14, y: 0, z: 5, color: "", type: "item", itemId: "tree" });
-  objects.push({ x: -12, y: 0, z: 8, color: "", type: "item", itemId: "bush" });
-  objects.push({ x: -15, y: 0, z: 2, color: "", type: "item", itemId: "pine_tree_big" });
+  // ================= EXTERIOR ITEMS =================
+  objects.push({ x: -14, y: -0.4, z: 6, color: "", type: "item", itemId: "tree" });
+  objects.push({ x: -12, y: -0.4, z: 9, color: "", type: "item", itemId: "bush" });
+  objects.push({ x: -15, y: -0.4, z: 3, color: "", type: "item", itemId: "pine_tree_big" });
   
-  // --- INTERIOR ITEMS ---
-  // Car in garage
-  objects.push({ x: 10, y: 0.5, z: 1, color: "", type: "item", itemId: "car", rotationY: Math.PI });
-  // Furniture visible through glass
-  objects.push({ x: 0, y: 0.5, z: -2, color: "", type: "item", itemId: "sofa" });
-  objects.push({ x: 9, y: 4.5, z: 0, color: "", type: "item", itemId: "bed", rotationY: -Math.PI/2 });
-  objects.push({ x: -9, y: 4.5, z: -2, color: "", type: "item", itemId: "wardrobe" });
+  // ================= INTERIOR ITEMS =================
+  // Garage
+  objects.push({ x: 9, y: 0.1, z: 0, color: "", type: "item", itemId: "car", rotationY: Math.PI });
+  
+  // Ground Floor Living Room (Left Wing)
+  objects.push({ x: -8, y: 0.1, z: -2, color: "", type: "item", itemId: "sofa", rotationY: Math.PI/2 });
+  objects.push({ x: -11, y: 0.1, z: -2, color: "", type: "item", itemId: "table" });
+  objects.push({ x: -11, y: 0.1, z: -4, color: "", type: "item", itemId: "chair", rotationY: -Math.PI/2 });
+  objects.push({ x: -5, y: 0.1, z: -7, color: "", type: "item", itemId: "lamp" });
+
+  // Upper Floor Bedrooms
+  // Right Wing Upper
+  objects.push({ x: 9, y: 3.3, z: -8, color: "", type: "item", itemId: "bed" });
+  objects.push({ x: 12, y: 3.3, z: -8, color: "", type: "item", itemId: "chest" });
+  
+  // Left Wing Upper
+  objects.push({ x: -8, y: 3.3, z: -6, color: "", type: "item", itemId: "bed", rotationY: -Math.PI/2 });
+  objects.push({ x: -12, y: 3.3, z: -4, color: "", type: "item", itemId: "wardrobe", rotationY: Math.PI/2 });
 
   return objects;
 }
