@@ -280,53 +280,67 @@ export default function TeacherDashboard() {
 
     let matchedTier = { name: "Incorrect!", stars: 0, points: 0, maxSeconds: 999 };
     if (isCorrect) {
-      const sortedTiers = [...settings.ratingTiers].sort((a: any, b: any) => a.maxSeconds - b.maxSeconds);
-      matchedTier = sortedTiers[sortedTiers.length - 1];
-      for (const tier of sortedTiers) {
-        if (seconds <= tier.maxSeconds) {
-          matchedTier = tier;
-          break;
+      const sortedTiers = [...(settings.ratingTiers || [])].sort((a: any, b: any) => a.maxSeconds - b.maxSeconds);
+      if (sortedTiers.length > 0) {
+        matchedTier = sortedTiers[sortedTiers.length - 1];
+        for (const tier of sortedTiers) {
+          if (seconds <= tier.maxSeconds) {
+            matchedTier = tier;
+            break;
+          }
         }
       }
     }
 
     if (isCorrect) {
       setShowRating({
-        stars: matchedTier.stars,
-        compliment: matchedTier.name,
-        points: matchedTier.points
+        stars: matchedTier.stars || 0,
+        compliment: matchedTier.name || "Correct!",
+        points: matchedTier.points || 0
       });
     }
 
-    const res = await fetch(`/api/sessions/${activeSession._id}/questions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        questionNumber: activeSession.totalQuestions + 1,
-        responseTime: seconds,
-        starsAwarded: matchedTier.stars,
-        points: matchedTier.points,
-        isCorrect,
-        compliment: matchedTier.name
-      })
+    try {
+      const res = await fetch(`/api/sessions/${activeSession._id}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionNumber: (activeSession.totalQuestions || 0) + 1,
+          responseTime: seconds,
+          starsAwarded: matchedTier.stars || 0,
+          points: matchedTier.points || 0,
+          isCorrect,
+          compliment: matchedTier.name || "Correct!"
+        })
+      });
+      if (!res.ok) {
+        console.error("Failed to post question score", await res.text());
+      }
+    } catch (e) {
+      console.error("Error posting score", e);
+    }
+
+    const actualPoints = isCorrect ? (matchedTier.points || 0) : 0;
+
+    setActiveSession((prev: any) => {
+      const prevTotal = prev.totalQuestions || 0;
+      const prevAvg = prev.averageSpeed || 0;
+      const newTotal = prevTotal + 1;
+      return {
+        ...prev,
+        totalQuestions: newTotal,
+        finalScore: (prev.finalScore || 0) + actualPoints,
+        averageSpeed: ((prevAvg * prevTotal) + seconds) / newTotal,
+        isTimerRunning: false,
+        stoppedByStudent: false,
+        studentStopTime: null
+      };
     });
-    const result = await res.json();
-
-    const actualPoints = isCorrect ? matchedTier.points : 0;
-
-    setActiveSession((prev: any) => ({
-      ...prev,
-      totalQuestions: prev.totalQuestions + 1,
-      finalScore: prev.finalScore + actualPoints,
-      averageSpeed: ((prev.averageSpeed * prev.totalQuestions) + seconds) / (prev.totalQuestions + 1),
-      isTimerRunning: false,
-      stoppedByStudent: false,
-      studentStopTime: null
-    }));
+    
     setActiveStudent((prev: any) => ({
       ...prev,
-      lifetimePoints: prev.lifetimePoints + actualPoints,
-      pointsBalance: prev.pointsBalance + actualPoints,
+      lifetimePoints: (prev.lifetimePoints || 0) + actualPoints,
+      pointsBalance: (prev.pointsBalance || 0) + actualPoints,
       dailyPoints: (prev.dailyPoints || 0) + actualPoints
     }));
 
@@ -334,8 +348,14 @@ export default function TeacherDashboard() {
       setShowWrong(true);
     }
 
-    const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
-    setHistoryItems(await historyRes.json());
+    try {
+      const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
+      if (historyRes.ok) {
+        setHistoryItems(await historyRes.json());
+      }
+    } catch (e) {
+      console.error("Error fetching history", e);
+    }
   };
 
   const handleRatingComplete = () => {
