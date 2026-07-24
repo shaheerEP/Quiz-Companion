@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { CheckCircle, XCircle, BookOpen, Flame, ChevronRight } from "lucide-react";
+import { CheckCircle, XCircle, BookOpen, Flame, ChevronRight, HelpCircle, X, Copy, Check } from "lucide-react";
 
 interface DueCard {
   reviewId: string;
   noteId: string;
   front: string;
   back: string;
+  explanation?: string;
   subject: string;
   intervalIndex: number;
   currentInterval: number;
@@ -27,6 +28,8 @@ export default function StudentRevisionPage() {
   const [done, setDone] = useState(0);
   const [loading, setLoading] = useState(true);
   const [finished, setFinished] = useState(false);
+  const [showExplanationModal, setShowExplanationModal] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const studentId = user?.student?._id || user?.id;
 
@@ -65,6 +68,7 @@ export default function StudentRevisionPage() {
 
   const advanceCard = () => {
     setFlipped(false);
+    setShowExplanationModal(false);
     const next = current + 1;
     if (next >= cards.length) {
       setFinished(true);
@@ -187,13 +191,42 @@ export default function StudentRevisionPage() {
 
             {/* Back */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-violet-950 to-indigo-950 border border-violet-800/60 rounded-3xl flex flex-col items-center justify-center p-8 shadow-2xl"
+              className="absolute inset-0 bg-gradient-to-br from-violet-950 to-indigo-950 border border-violet-800/60 rounded-3xl flex flex-col justify-between p-7 shadow-2xl overflow-hidden"
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
-              <p className="text-violet-100 text-xl font-semibold text-center leading-snug">
-                {card?.back}
-              </p>
-              <p className="mt-6 text-violet-400/50 text-sm">Tap to flip back</p>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">Answer</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowExplanationModal(true);
+                    }}
+                    title="View Explanation"
+                    className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/40 text-violet-200 border border-violet-400/30 rounded-lg transition-all"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-violet-300" />
+                    <span>Explanation</span>
+                  </button>
+                </div>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowExplanationModal(true);
+                  }}
+                  className="rounded-xl p-3 bg-violet-900/30 hover:bg-violet-900/50 border border-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
+                  title="Click to view explanation"
+                >
+                  <p className="text-violet-100 text-lg font-semibold leading-snug font-mono line-clamp-3">
+                    {card?.back}
+                  </p>
+                  <p className="mt-2 text-violet-300/70 text-xs flex items-center gap-1 font-sans">
+                    <HelpCircle className="w-3 h-3 text-violet-400" />
+                    Click for full explanation
+                  </p>
+                </div>
+              </div>
+              <p className="text-center text-violet-400/50 text-xs">Tap outside answer box to flip back</p>
             </div>
           </div>
         </div>
@@ -233,6 +266,97 @@ export default function StudentRevisionPage() {
           )}
         </div>
       </div>
+
+      {/* Explanation Dialog Box Modal */}
+      {showExplanationModal && card && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowExplanationModal(false)}
+        >
+          <div
+            className="bg-gray-900 border border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-violet-600/20 text-violet-400 p-2.5 rounded-xl border border-violet-500/30">
+                  <HelpCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">
+                    {card.subject || "General"} · Answer Explanation
+                  </span>
+                  <h3 className="text-lg font-bold text-white leading-snug line-clamp-1 mt-0.5">
+                    {card.front}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowExplanationModal(false)}
+                className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto pr-1 space-y-4 flex-1">
+              {/* Short Answer / Code */}
+              <div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  Answer / Key Code
+                </span>
+                <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
+                  {card.back}
+                </div>
+              </div>
+
+              {/* Detailed Explanation */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                    Detailed Explanation
+                  </span>
+                  {card.explanation && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(card.explanation || "");
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 font-semibold px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                    >
+                      {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCode ? "Copied!" : "Copy Explanation"}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
+                  {card.explanation ? (
+                    card.explanation
+                  ) : (
+                    <div className="text-gray-500 italic text-xs font-sans">
+                      No additional detailed explanation was added for this card. The primary answer is displayed above.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-800 pt-4 mt-4 flex justify-end shrink-0">
+              <button
+                onClick={() => setShowExplanationModal(false)}
+                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

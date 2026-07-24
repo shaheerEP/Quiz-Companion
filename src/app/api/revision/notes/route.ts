@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   const teacherId = await getTeacherId();
   if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { front, back, subject, studentId } = await req.json();
+  const { front, back, subject, explanation, studentId } = await req.json();
   if (!front?.trim() || !back?.trim()) {
     return NextResponse.json({ error: "front and back are required" }, { status: 400 });
   }
@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
     front: front.trim(),
     back: back.trim(),
     subject: subject?.trim() || "General",
+    explanation: explanation?.trim() || undefined,
   });
 
   // Seed review schedule for the specific student (if provided and enabled),

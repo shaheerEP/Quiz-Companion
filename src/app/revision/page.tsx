@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { Plus, Trash2, BookOpen, ChevronDown, ChevronUp, Layers, ArrowLeft, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, BookOpen, ChevronDown, ChevronUp, Layers, ArrowLeft, Clock, CheckCircle2, AlertCircle, HelpCircle, X, Copy, Check } from "lucide-react";
 
 interface ReviewState {
   status: "due" | "upcoming" | "done";
@@ -17,6 +17,7 @@ interface RevisionNote {
   _id: string;
   front: string;
   back: string;
+  explanation?: string;
   subject: string;
   createdAt: string;
   review: ReviewState | null;
@@ -50,20 +51,24 @@ function RevisionPageInner() {
   const studentId = searchParams.get("studentId");
 
   const [studentName, setStudentName] = useState<string | null>(null);
+  const [studentRewindDays, setStudentRewindDays] = useState<number[] | null>(null);
   const [notes, setNotes] = useState<RevisionNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [explanation, setExplanation] = useState("");
   const [subject, setSubject] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [activeModalNote, setActiveModalNote] = useState<RevisionNote | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const [cards, setCards] = useState<FlipCard[]>([]);
   const [filterSubject, setFilterSubject] = useState("All");
   const [filterStatus, setFilterStatus] = useState<"all" | "due" | "upcoming" | "done">("all");
 
-  // Fetch student name
+  // Fetch student details
   useEffect(() => {
     if (!studentId) return;
     fetch("/api/students")
@@ -71,6 +76,7 @@ function RevisionPageInner() {
       .then((students: any[]) => {
         const s = students.find((s) => String(s._id) === studentId);
         setStudentName(s?.name ?? null);
+        setStudentRewindDays(s?.revisionRewindDays ?? null);
       })
       .catch(() => {});
   }, [studentId]);
@@ -94,10 +100,17 @@ function RevisionPageInner() {
     await fetch("/api/revision/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ front, back, subject: subject || "General", studentId }),
+      body: JSON.stringify({
+        front,
+        back,
+        explanation: explanation || undefined,
+        subject: subject || "General",
+        studentId,
+      }),
     });
     setFront("");
     setBack("");
+    setExplanation("");
     setSubject("");
     setShowForm(false);
     setSaving(false);
@@ -173,7 +186,7 @@ function RevisionPageInner() {
                 <p className="text-gray-400 text-sm ml-11">
                   for <span className="text-violet-400 font-semibold capitalize">{studentName}</span>
                   <span className="mx-2 text-gray-700">·</span>
-                  <span className="text-gray-500">1 → 2 → 7 → 14 → 30 → 90 days</span>
+                  <span className="text-gray-500">{(studentRewindDays || [1, 2, 7, 14, 30, 90]).join(" → ")} days</span>
                 </p>
               )}
             </div>
@@ -222,21 +235,34 @@ function RevisionPageInner() {
                   onChange={(e) => setFront(e.target.value)}
                   rows={4}
                   placeholder="What is photosynthesis?"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  Back (Answer / Definition)
+                  Back (Answer / Code Key)
                 </label>
                 <textarea
                   value={back}
                   onChange={(e) => setBack(e.target.value)}
                   rows={4}
                   placeholder="The process by which plants convert sunlight..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
                 />
               </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>Explanation (Optional detailed code / solution breakdown)</span>
+                <span className="text-[11px] text-violet-400 font-normal">Clicking answer opens explanation dialog</span>
+              </label>
+              <textarea
+                value={explanation}
+                onChange={(e) => setExplanation(e.target.value)}
+                rows={3}
+                placeholder="e.g. Detailed step-by-step explanation or complete code example..."
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+              />
             </div>
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -376,19 +402,46 @@ function RevisionPageInner() {
 
                     {/* Back face */}
                     <div
-                      className="absolute inset-0 bg-violet-950/60 border border-violet-800/50 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
+                      className="absolute inset-0 bg-violet-950/70 border border-violet-800/60 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
                       style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                     >
                       <div>
-                        <span className="inline-block px-2 py-0.5 bg-violet-500/20 text-violet-300 text-xs font-bold rounded-full mb-3">
-                          Answer
-                        </span>
-                        <p className="text-violet-100 font-medium text-base leading-snug line-clamp-4">
-                          {card.note.back}
-                        </p>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="inline-block px-2 py-0.5 bg-violet-500/20 text-violet-300 text-xs font-bold rounded-full">
+                            Answer
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveModalNote(card.note);
+                            }}
+                            title="View Explanation"
+                            className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-violet-500/25 hover:bg-violet-500/40 text-violet-200 border border-violet-400/40 rounded-lg transition-all shadow-sm active:scale-95"
+                          >
+                            <HelpCircle className="w-3.5 h-3.5 text-violet-300" />
+                            <span>Explanation</span>
+                          </button>
+                        </div>
+
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveModalNote(card.note);
+                          }}
+                          className="group/answer rounded-xl p-2 bg-violet-900/30 hover:bg-violet-900/50 border border-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
+                          title="Click to view explanation dialog"
+                        >
+                          <p className="text-violet-100 font-medium text-sm leading-snug line-clamp-3 font-mono">
+                            {card.note.back}
+                          </p>
+                          <div className="mt-1.5 flex items-center gap-1 text-[11px] text-violet-300/80 group-hover/answer:text-violet-200 font-sans font-semibold">
+                            <HelpCircle className="w-3 h-3 text-violet-400" />
+                            <span>Click for full explanation</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-violet-400/60">Click to flip back</span>
+                        <span className="text-xs text-violet-400/60">Click card to flip back</span>
                         <ChevronUp className="w-4 h-4 text-violet-400/60" />
                       </div>
                     </div>
@@ -412,6 +465,97 @@ function RevisionPageInner() {
           </div>
         )}
       </div>
+
+        {/* Explanation Dialog Box Modal */}
+        {activeModalNote && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setActiveModalNote(null)}
+          >
+            <div
+              className="bg-gray-900 border border-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="bg-violet-600/20 text-violet-400 p-2.5 rounded-xl border border-violet-500/30">
+                    <HelpCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">
+                      {activeModalNote.subject || "General"} · Answer & Explanation
+                    </span>
+                    <h3 className="text-lg font-bold text-white leading-snug line-clamp-1 mt-0.5">
+                      {activeModalNote.front}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveModalNote(null)}
+                  className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="overflow-y-auto pr-1 space-y-4 flex-1">
+                {/* Short Answer / Code */}
+                <div>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    Answer / Code Key
+                  </span>
+                  <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
+                    {activeModalNote.back}
+                  </div>
+                </div>
+
+                {/* Detailed Explanation */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                      Detailed Explanation
+                    </span>
+                    {activeModalNote.explanation && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(activeModalNote.explanation || "");
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                        className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 font-semibold px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                      >
+                        {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedCode ? "Copied!" : "Copy Explanation"}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
+                    {activeModalNote.explanation ? (
+                      activeModalNote.explanation
+                    ) : (
+                      <div className="text-gray-500 italic text-xs font-sans">
+                        No additional detailed explanation was added for this card. The primary answer is displayed above.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-gray-800 pt-4 mt-4 flex justify-end shrink-0">
+                <button
+                  onClick={() => setActiveModalNote(null)}
+                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ export interface IRevisionNote extends Document {
   front: string;
   back: string;
   subject?: string;
+  explanation?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +16,7 @@ const RevisionNoteSchema = new Schema<IRevisionNote>(
     front: { type: String, required: true, trim: true },
     back: { type: String, required: true, trim: true },
     subject: { type: String, trim: true, default: "General" },
+    explanation: { type: String, trim: true },
   },
   { timestamps: true }
 );
