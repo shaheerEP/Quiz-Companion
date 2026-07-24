@@ -148,10 +148,9 @@ export default function CountdownTimer() {
             strokeWidth="6" strokeLinecap="round"
             strokeDasharray={`${2 * Math.PI * 52}`}
             strokeDashoffset={`${2 * Math.PI * 52 * (1 - progress / 100)}`}
-            className="transition-all duration-200"
           />
         </svg>
-        <div className={`absolute inset-0 flex items-center justify-center text-5xl sm:text-6xl font-mono font-black text-white tracking-tight ${glowColor} transition-all duration-300`}>
+        <div className={`absolute inset-0 flex items-center justify-center text-5xl sm:text-6xl font-mono font-black text-white tracking-tight ${glowColor}`}>
           {formatTime(Math.ceil(remaining))}
         </div>
       </div>
