@@ -218,7 +218,13 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!user || !settings) return;
-    
+
+    if (user.student?.rewardSystem === 'tiered') {
+      setPrevBundles(null);
+      initialLoadCompleteRef.current = true;
+      return;
+    }
+
     const bundles = Math.floor((user.student?.lifetimePoints || 0) / (settings.bundleLimit || 1000));
 
     if (!initialLoadCompleteRef.current) {
@@ -231,7 +237,7 @@ export default function StudentDashboard() {
     } else if (prevBundles !== bundles) {
       setPrevBundles(bundles);
     }
-  }, [user?.student?.lifetimePoints, settings?.bundleLimit, prevBundles, user]);
+  }, [user?.student?.lifetimePoints, user?.student?.rewardSystem, settings?.bundleLimit, prevBundles, user]);
 
   const groupedHistory = historyItems.reduce((acc: any, item: any) => {
     const dateObj = new Date(item.date);

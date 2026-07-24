@@ -394,6 +394,12 @@ export default function TeacherDashboard() {
       return;
     }
 
+    if (activeStudent.rewardSystem === 'tiered') {
+      prevActiveStudentIdRef.current = activeStudent._id;
+      setPrevBundles(null);
+      return;
+    }
+
     const bundles = Math.floor((activeStudent.lifetimePoints || 0) / (settings.bundleLimit || 1000));
 
     if (prevActiveStudentIdRef.current !== activeStudent._id) {
@@ -406,7 +412,7 @@ export default function TeacherDashboard() {
     } else if (prevBundles !== bundles) {
       setPrevBundles(bundles);
     }
-  }, [activeStudent?._id, activeStudent?.lifetimePoints, settings?.bundleLimit, prevBundles]);
+  }, [activeStudent?._id, activeStudent?.lifetimePoints, activeStudent?.rewardSystem, settings?.bundleLimit, prevBundles]);
 
   const groupedHistory = historyItems.reduce((acc: any, item: any) => {
     const dateObj = new Date(item.date);
