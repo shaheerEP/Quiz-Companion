@@ -213,8 +213,6 @@ function RevisionPageInner() {
               {studentName && (
                 <p className="text-gray-400 text-sm ml-11">
                   for <span className="text-violet-400 font-semibold capitalize">{studentName}</span>
-                  <span className="mx-2 text-gray-700">·</span>
-                  <span className="text-gray-500">{(studentRewindDays || [1, 2, 7, 14, 30, 90]).join(" → ")} days</span>
                 </p>
               )}
             </div>
