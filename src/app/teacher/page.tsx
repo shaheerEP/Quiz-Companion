@@ -572,6 +572,15 @@ export default function TeacherDashboard() {
                   <Globe className="w-5 h-5" /> Explore Built World
                 </a>
 
+                {activeStudent.revisionEnabled && (
+                  <Link
+                    href={`/revision?studentId=${activeStudent._id}`}
+                    className="w-full bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 font-bold py-3 rounded-xl border border-violet-500/30 transition-all flex justify-center items-center gap-2"
+                  >
+                    <BookOpen className="w-5 h-5" /> Revision Cards
+                  </Link>
+                )}
+
                 {activeStudent.mannersEnabled && (
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
                     <div className="flex items-center justify-between">
@@ -659,13 +668,6 @@ export default function TeacherDashboard() {
                 </div>
                 <h3 className="text-2xl font-black text-gray-300 mb-2">Teacher Dashboard</h3>
                 <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
-                <Link
-                  href="/revision"
-                  className="mt-6 flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Manage Revision Cards
-                </Link>
               </div>
             ) : (
               <div className="w-full flex flex-col h-full items-center justify-center gap-8">

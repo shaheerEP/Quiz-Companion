@@ -4,16 +4,60 @@ import { getTeacherId } from "@/lib/auth-helpers";
 import { RevisionNote } from "@/models/RevisionNote";
 import { RevisionReview, INTERVALS } from "@/models/RevisionReview";
 import { Student } from "@/models/Student";
-import mongoose from "mongoose";
 
-// GET /api/revision/notes — list all notes for teacher
+// GET /api/revision/notes?studentId=xxx — notes with per-card review state for that student
 export async function GET(req: NextRequest) {
   const teacherId = await getTeacherId();
   if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const studentId = req.nextUrl.searchParams.get("studentId");
+
   await connectToDatabase();
   const notes = await RevisionNote.find({ teacherId }).sort({ createdAt: -1 }).lean();
-  return NextResponse.json(notes);
+
+  if (!studentId) return NextResponse.json(notes);
+
+  // Attach per-card review status for the selected student
+  const reviews = await RevisionReview.find({ teacherId, studentId }).lean();
+  const reviewByNote = new Map(reviews.map((r) => [String(r.noteId), r]));
+  const now = new Date();
+
+  const enriched = notes.map((n) => {
+    const r = reviewByNote.get(String(n._id));
+    let status: "due" | "upcoming" | "done" = "upcoming";
+    let nextDueDate: Date | null = null;
+    let intervalIndex = 0;
+
+    if (r) {
+      intervalIndex = r.intervalIndex;
+      nextDueDate = r.nextDueDate;
+      if (r.completed) {
+        status = "done";
+      } else if (new Date(r.nextDueDate) <= now) {
+        status = "due";
+      } else {
+        status = "upcoming";
+      }
+    } else {
+      // No review record yet — not seeded for this student
+      status = "upcoming";
+    }
+
+    return {
+      ...n,
+      review: r
+        ? {
+            status,
+            intervalIndex,
+            currentInterval: INTERVALS[intervalIndex],
+            nextDueDate,
+            completed: r.completed,
+          }
+        : null,
+    };
+  });
+
+  return NextResponse.json(enriched);
 }
 
 // POST /api/revision/notes — create a note and seed reviews for enabled students
@@ -21,27 +65,46 @@ export async function POST(req: NextRequest) {
   const teacherId = await getTeacherId();
   if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { front, back, subject } = await req.json();
+  const { front, back, subject, studentId } = await req.json();
   if (!front?.trim() || !back?.trim()) {
     return NextResponse.json({ error: "front and back are required" }, { status: 400 });
   }
 
   await connectToDatabase();
 
-  const note = await RevisionNote.create({ teacherId, front: front.trim(), back: back.trim(), subject: subject?.trim() || "General" });
+  const note = await RevisionNote.create({
+    teacherId,
+    front: front.trim(),
+    back: back.trim(),
+    subject: subject?.trim() || "General",
+  });
 
-  // Seed review schedules for all students with revision enabled
-  const enabledStudents = await Student.find({ teacherId, revisionEnabled: true }, "_id").lean();
+  // Seed review schedule for the specific student (if provided and enabled),
+  // otherwise seed all enabled students
   const now = new Date();
-  if (enabledStudents.length > 0) {
-    const reviews = enabledStudents.map((s) => ({
-      studentId: s._id,
-      noteId: note._id,
-      teacherId,
-      intervalIndex: 0,
-      nextDueDate: addDays(now, INTERVALS[0]),
-    }));
-    await RevisionReview.insertMany(reviews, { ordered: false }).catch(() => {});
+  if (studentId) {
+    const student = await Student.findOne({ _id: studentId, teacherId, revisionEnabled: true }, "_id").lean();
+    if (student) {
+      await RevisionReview.create({
+        studentId,
+        noteId: note._id,
+        teacherId,
+        intervalIndex: 0,
+        nextDueDate: addDays(now, INTERVALS[0]),
+      }).catch(() => {});
+    }
+  } else {
+    const enabledStudents = await Student.find({ teacherId, revisionEnabled: true }, "_id").lean();
+    if (enabledStudents.length > 0) {
+      const reviews = enabledStudents.map((s) => ({
+        studentId: s._id,
+        noteId: note._id,
+        teacherId,
+        intervalIndex: 0,
+        nextDueDate: addDays(now, INTERVALS[0]),
+      }));
+      await RevisionReview.insertMany(reviews, { ordered: false }).catch(() => {});
+    }
   }
 
   return NextResponse.json(note, { status: 201 });

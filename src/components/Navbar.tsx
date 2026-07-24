@@ -57,13 +57,6 @@ export default function Navbar() {
                 <Settings className="w-4 h-4" />
                 Settings
               </Link>
-              <Link
-                href="/revision"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/revision' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
-              >
-                <BookOpen className="w-4 h-4" />
-                Revision
-              </Link>
             </>
           )}
           {user.role === "student" && (
@@ -139,14 +132,6 @@ export default function Navbar() {
               >
                 <Settings className="w-5 h-5" />
                 Settings
-              </Link>
-              <Link
-                href="/revision"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/revision' ? 'bg-violet-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
-              >
-                <BookOpen className="w-5 h-5" />
-                Revision
               </Link>
             </>
           )}
