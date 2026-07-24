@@ -111,6 +111,33 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(note, { status: 201 });
 }
 
+// PUT /api/revision/notes — update an existing note
+export async function PUT(req: NextRequest) {
+  const teacherId = await getTeacherId();
+  if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { noteId, front, back, subject, explanation } = await req.json();
+  if (!noteId || !front?.trim() || !back?.trim()) {
+    return NextResponse.json({ error: "noteId, front, and back are required" }, { status: 400 });
+  }
+
+  await connectToDatabase();
+
+  const note = await RevisionNote.findOneAndUpdate(
+    { _id: noteId, teacherId },
+    {
+      front: front.trim(),
+      back: back.trim(),
+      subject: subject?.trim() || "General",
+      explanation: explanation?.trim() || undefined,
+    },
+    { new: true }
+  );
+
+  if (!note) return NextResponse.json({ error: "Note not found" }, { status: 404 });
+  return NextResponse.json(note);
+}
+
 // DELETE /api/revision/notes — delete a note and its reviews
 export async function DELETE(req: NextRequest) {
   const teacherId = await getTeacherId();

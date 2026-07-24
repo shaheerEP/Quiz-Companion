@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { Plus, Trash2, BookOpen, ChevronDown, ChevronUp, Layers, ArrowLeft, Clock, CheckCircle2, AlertCircle, HelpCircle, X, Copy, Check } from "lucide-react";
+import { Plus, Trash2, BookOpen, Layers, ArrowLeft, Clock, CheckCircle2, AlertCircle, HelpCircle, X, Copy, Check, MoreVertical, Edit3 } from "lucide-react";
 
 interface ReviewState {
   status: "due" | "upcoming" | "done";
@@ -63,6 +63,15 @@ function RevisionPageInner() {
   const [showForm, setShowForm] = useState(false);
   const [activeModalNote, setActiveModalNote] = useState<RevisionNote | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Edit card state
+  const [editingNote, setEditingNote] = useState<RevisionNote | null>(null);
+  const [editFront, setEditFront] = useState("");
+  const [editBack, setEditBack] = useState("");
+  const [editExplanation, setEditExplanation] = useState("");
+  const [editSubject, setEditSubject] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [activeMenuNoteId, setActiveMenuNoteId] = useState<string | null>(null);
 
   const [cards, setCards] = useState<FlipCard[]>([]);
   const [filterSubject, setFilterSubject] = useState("All");
@@ -124,6 +133,25 @@ function RevisionPageInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ noteId }),
     });
+    fetchNotes();
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNote || !editFront.trim() || !editBack.trim()) return;
+    setSavingEdit(true);
+    await fetch("/api/revision/notes", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        noteId: editingNote._id,
+        front: editFront.trim(),
+        back: editBack.trim(),
+        explanation: editExplanation.trim() || undefined,
+        subject: editSubject.trim() || "General",
+      }),
+    });
+    setEditingNote(null);
+    setSavingEdit(false);
     fetchNotes();
   };
 
@@ -359,11 +387,61 @@ function RevisionPageInner() {
               const review = card.note.review;
               const isDue = review?.status === "due";
               const isDone = review?.status === "done";
+              const hasExplanation = Boolean(card.note.explanation?.trim());
 
               return (
-                <div key={card.note._id} className="group relative" style={{ perspective: "1000px" }}>
+                <div key={card.note._id} className="relative" style={{ perspective: "1000px" }}>
+                  {/* Options 3-dots menu button */}
+                  <div className="absolute top-3 right-3 z-30">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuNoteId((prev) => (prev === card.note._id ? null : card.note._id));
+                      }}
+                      className="p-1.5 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-800 transition-colors shadow-sm"
+                      title="Card options"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+
+                    {activeMenuNoteId === card.note._id && (
+                      <div
+                        className="absolute right-0 mt-1 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => {
+                            setActiveMenuNoteId(null);
+                            setEditingNote(card.note);
+                            setEditFront(card.note.front);
+                            setEditBack(card.note.back);
+                            setEditExplanation(card.note.explanation || "");
+                            setEditSubject(card.note.subject || "");
+                          }}
+                          className="w-full px-3 py-2 text-left text-xs font-semibold text-gray-200 hover:bg-violet-600/20 hover:text-violet-300 flex items-center gap-2 transition-colors"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Edit Card
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveMenuNoteId(null);
+                            handleDelete(card.note._id);
+                          }}
+                          className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 flex items-center gap-2 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete Card
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div
-                    onClick={() => toggleFlip(realIdx)}
+                    onClick={() => {
+                      setActiveMenuNoteId(null);
+                      toggleFlip(realIdx);
+                    }}
                     className="relative w-full cursor-pointer"
                     style={{
                       height: "220px",
@@ -384,7 +462,7 @@ function RevisionPageInner() {
                       style={{ backfaceVisibility: "hidden" }}
                     >
                       <div>
-                        <div className="flex items-start justify-between mb-2 gap-2">
+                        <div className="flex items-start justify-between mb-2 gap-2 pr-7">
                           <span className="inline-block px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-bold rounded-full">
                             {card.note.subject || "General"}
                           </span>
@@ -394,9 +472,6 @@ function RevisionPageInner() {
                           {card.note.front}
                         </p>
                       </div>
-                      <div className="flex justify-end">
-                        <ChevronDown className="w-4 h-4 text-gray-600 group-hover:text-violet-400 transition-colors" />
-                      </div>
                     </div>
 
                     {/* Back face */}
@@ -405,37 +480,28 @@ function RevisionPageInner() {
                       style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                     >
                       <div className="flex-1 flex flex-col">
-                        <div className="flex justify-end mb-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveModalNote(card.note);
-                            }}
-                            title="Detailed Explanation"
-                            className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
-                          >
-                            <HelpCircle className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {hasExplanation && (
+                          <div className="flex justify-end mb-1 pr-7">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveModalNote(card.note);
+                              }}
+                              title="Detailed Explanation"
+                              className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
+                            >
+                              <HelpCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                         <div className="flex-1 flex items-center">
                           <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full">
                             {card.note.back}
                           </p>
                         </div>
                       </div>
-                      <div className="flex justify-end mt-1">
-                        <ChevronUp className="w-4 h-4 text-violet-400/60" />
-                      </div>
                     </div>
                   </div>
-
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(card.note._id); }}
-                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg transition-all z-10"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
 
                   {/* Due indicator glow */}
                   {isDue && (
@@ -533,6 +599,97 @@ function RevisionPageInner() {
                   className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Card Modal */}
+        {editingNote && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setEditingNote(null)}
+          >
+            <div
+              className="bg-gray-900 border border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-violet-400" />
+                  Edit Revision Card
+                </h3>
+                <button
+                  onClick={() => setEditingNote(null)}
+                  className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto pr-1 flex-1">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Front (Question / Term)
+                  </label>
+                  <textarea
+                    value={editFront}
+                    onChange={(e) => setEditFront(e.target.value)}
+                    rows={3}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Back (Answer / Code Key)
+                  </label>
+                  <textarea
+                    value={editBack}
+                    onChange={(e) => setEditBack(e.target.value)}
+                    rows={3}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Explanation (Optional detailed code / solution breakdown)
+                  </label>
+                  <textarea
+                    value={editExplanation}
+                    onChange={(e) => setEditExplanation(e.target.value)}
+                    rows={3}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Subject / Topic
+                  </label>
+                  <input
+                    value={editSubject}
+                    onChange={(e) => setEditSubject(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-800 pt-4 mt-4 flex justify-end gap-2 shrink-0">
+                <button
+                  onClick={() => setEditingNote(null)}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-semibold transition-all text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit || !editFront.trim() || !editBack.trim()}
+                  className="px-5 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all text-sm active:scale-95"
+                >
+                  {savingEdit ? "Saving…" : "Save Changes"}
                 </button>
               </div>
             </div>
