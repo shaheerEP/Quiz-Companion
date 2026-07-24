@@ -186,7 +186,6 @@ export default function StudentRevisionPage() {
               <p className="text-white text-xl font-bold text-center leading-snug">
                 {card?.front}
               </p>
-              <p className="mt-6 text-gray-600 text-sm">Tap to reveal answer</p>
             </div>
 
             {/* Back */}
@@ -194,39 +193,25 @@ export default function StudentRevisionPage() {
               className="absolute inset-0 bg-gradient-to-br from-violet-950 to-indigo-950 border border-violet-800/60 rounded-3xl flex flex-col justify-between p-7 shadow-2xl overflow-hidden"
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">Answer</span>
+              <div className="flex-1 flex flex-col">
+                <div className="flex justify-end mb-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowExplanationModal(true);
                     }}
-                    title="View Explanation"
-                    className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/40 text-violet-200 border border-violet-400/30 rounded-lg transition-all"
+                    title="Detailed Explanation"
+                    className="p-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
                   >
-                    <HelpCircle className="w-3.5 h-3.5 text-violet-300" />
-                    <span>Explanation</span>
+                    <HelpCircle className="w-4 h-4" />
                   </button>
                 </div>
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowExplanationModal(true);
-                  }}
-                  className="rounded-xl p-3 bg-violet-900/30 hover:bg-violet-900/50 border border-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
-                  title="Click to view explanation"
-                >
-                  <p className="text-violet-100 text-lg font-semibold leading-snug font-mono line-clamp-3">
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-violet-100 text-lg font-medium text-center leading-relaxed font-mono line-clamp-6 w-full">
                     {card?.back}
-                  </p>
-                  <p className="mt-2 text-violet-300/70 text-xs flex items-center gap-1 font-sans">
-                    <HelpCircle className="w-3 h-3 text-violet-400" />
-                    Click for full explanation
                   </p>
                 </div>
               </div>
-              <p className="text-center text-violet-400/50 text-xs">Tap outside answer box to flip back</p>
             </div>
           </div>
         </div>

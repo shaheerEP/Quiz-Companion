@@ -390,12 +390,11 @@ function RevisionPageInner() {
                           </span>
                           {statusBadge(review)}
                         </div>
-                        <p className="text-white font-semibold text-base leading-snug line-clamp-4 mt-2">
+                        <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2">
                           {card.note.front}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-600">Click to reveal</span>
+                      <div className="flex justify-end">
                         <ChevronDown className="w-4 h-4 text-gray-600 group-hover:text-violet-400 transition-colors" />
                       </div>
                     </div>
@@ -405,43 +404,26 @@ function RevisionPageInner() {
                       className="absolute inset-0 bg-violet-950/70 border border-violet-800/60 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
                       style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="inline-block px-2 py-0.5 bg-violet-500/20 text-violet-300 text-xs font-bold rounded-full">
-                            Answer
-                          </span>
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex justify-end mb-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveModalNote(card.note);
                             }}
-                            title="View Explanation"
-                            className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-violet-500/25 hover:bg-violet-500/40 text-violet-200 border border-violet-400/40 rounded-lg transition-all shadow-sm active:scale-95"
+                            title="Detailed Explanation"
+                            className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
                           >
-                            <HelpCircle className="w-3.5 h-3.5 text-violet-300" />
-                            <span>Explanation</span>
+                            <HelpCircle className="w-4 h-4" />
                           </button>
                         </div>
-
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveModalNote(card.note);
-                          }}
-                          className="group/answer rounded-xl p-2 bg-violet-900/30 hover:bg-violet-900/50 border border-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
-                          title="Click to view explanation dialog"
-                        >
-                          <p className="text-violet-100 font-medium text-sm leading-snug line-clamp-3 font-mono">
+                        <div className="flex-1 flex items-center">
+                          <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full">
                             {card.note.back}
                           </p>
-                          <div className="mt-1.5 flex items-center gap-1 text-[11px] text-violet-300/80 group-hover/answer:text-violet-200 font-sans font-semibold">
-                            <HelpCircle className="w-3 h-3 text-violet-400" />
-                            <span>Click for full explanation</span>
-                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-violet-400/60">Click card to flip back</span>
+                      <div className="flex justify-end mt-1">
                         <ChevronUp className="w-4 h-4 text-violet-400/60" />
                       </div>
                     </div>
