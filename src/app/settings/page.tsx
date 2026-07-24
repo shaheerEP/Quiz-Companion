@@ -155,7 +155,8 @@ export default function SettingsPage() {
         rewardSystem: editingStudent.rewardSystem,
         profileImageUrl: editingStudent.profileImageUrl,
         mannersEnabled: editingStudent.mannersEnabled,
-        mannersList: editingStudent.mannersList
+        mannersList: editingStudent.mannersList,
+        revisionRewindDays: editingStudent.revisionRewindDays,
       })
     });
     setEditingStudent(null);
@@ -362,6 +363,58 @@ export default function SettingsPage() {
                               </div>
                             </div>
                           )}
+                          {/* Revision Feature */}
+                          <div className="col-span-2 bg-gray-900 border border-violet-900/40 p-5 rounded-2xl mt-2">
+                            <div className="flex items-center justify-between mb-3">
+                              <label className="text-xs text-violet-400 font-bold uppercase tracking-wider">Revision / Spaced Repetition</label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={editingStudent.revisionEnabled || false}
+                                  onChange={async e => {
+                                    const enabled = e.target.checked;
+                                    setEditingStudent({ ...editingStudent, revisionEnabled: enabled });
+                                    await fetch("/api/revision/student-settings", {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ studentId: editingStudent._id, revisionEnabled: enabled }),
+                                    });
+                                  }}
+                                  className="w-5 h-5 rounded focus:ring-violet-500 focus:ring-2 bg-gray-900 border-gray-700"
+                                />
+                                <span className="text-sm font-bold text-gray-300">Enable Revision</span>
+                              </label>
+                            </div>
+                            {editingStudent.revisionEnabled && (
+                              <div>
+                                <label className="block text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">
+                                  Review Intervals (days)
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                  {(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).map((day: number, i: number) => (
+                                    <div key={i} className="flex items-center gap-1">
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={day}
+                                        onChange={e => {
+                                          const days = [...(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90])];
+                                          days[i] = Number(e.target.value);
+                                          setEditingStudent({ ...editingStudent, revisionRewindDays: days });
+                                        }}
+                                        className="w-16 bg-gray-800 border border-violet-800/50 rounded-lg px-2 py-1.5 text-violet-300 text-sm font-bold outline-none focus:border-violet-500"
+                                      />
+                                      <span className="text-gray-600 text-xs">d</span>
+                                      {i < (editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).length - 1 && (
+                                        <span className="text-gray-700 text-xs mx-0.5">→</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-gray-600 mt-2">Cards repeat on these days after being taught. Changes save with the student.</p>
+                              </div>
+                            )}
+                          </div>
                           <div className="col-span-2">
                             <label className="text-xs text-cyan-400 font-bold mb-1 block">Profile Image URL (or upload via Cloudinary)</label>
                             <div className="flex gap-2">

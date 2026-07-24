@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, PlayCircle, LogOut, Menu, X } from "lucide-react";
+import { Settings, PlayCircle, LogOut, Menu, X, BookOpen } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
@@ -50,12 +50,19 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
-              <Link 
-                href="/settings" 
+              <Link
+                href="/settings"
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
               >
                 <Settings className="w-4 h-4" />
                 Settings
+              </Link>
+              <Link
+                href="/revision"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/revision' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+              >
+                <BookOpen className="w-4 h-4" />
+                Revision
               </Link>
             </>
           )}
@@ -74,11 +81,20 @@ export default function Navbar() {
                 {user.student?.assignedGame === 'builder' ? 'World Builder' : 'My Pet'}
               </Link>
               {user.student?.assignedGame === 'builder' && (
-                <Link 
+                <Link
                   href="/student/examples"
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname.includes('/examples') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
                 >
                   Example Worlds
+                </Link>
+              )}
+              {(user.student as any)?.revisionEnabled && (
+                <Link
+                  href="/student/revision"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/student/revision' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Revision
                 </Link>
               )}
             </>
@@ -116,13 +132,21 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
-              <Link 
-                href="/settings" 
+              <Link
+                href="/settings"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
               >
                 <Settings className="w-5 h-5" />
                 Settings
+              </Link>
+              <Link
+                href="/revision"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/revision' ? 'bg-violet-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+              >
+                <BookOpen className="w-5 h-5" />
+                Revision
               </Link>
             </>
           )}
@@ -143,12 +167,22 @@ export default function Navbar() {
                 {user.student?.assignedGame === 'builder' ? 'World Builder' : 'My Pet'}
               </Link>
               {user.student?.assignedGame === 'builder' && (
-                <Link 
+                <Link
                   href="/student/examples"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 rounded-lg font-medium transition-colors ${pathname.includes('/examples') ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
                 >
                   Example Worlds
+                </Link>
+              )}
+              {(user.student as any)?.revisionEnabled && (
+                <Link
+                  href="/student/revision"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/student/revision' ? 'bg-violet-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Revision
                 </Link>
               )}
             </>

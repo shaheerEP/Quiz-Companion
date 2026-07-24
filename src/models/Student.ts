@@ -48,6 +48,8 @@ export interface IStudent extends Document {
   }>;
   mannersEnabled?: boolean;
   mannersList?: { task: string; maxStars: number; id: string }[];
+  revisionEnabled?: boolean;
+  revisionRewindDays?: number[];
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -105,7 +107,9 @@ const StudentSchema = new Schema<IStudent>(
       default: []
     },
     mannersEnabled: { type: Boolean, default: false },
-    mannersList: { type: [{ task: String, maxStars: Number, id: String }], default: [] }
+    mannersList: { type: [{ task: String, maxStars: Number, id: String }], default: [] },
+    revisionEnabled: { type: Boolean, default: false },
+    revisionRewindDays: { type: [Number], default: [1, 2, 7, 14, 30, 90] },
   },
   { timestamps: true }
 );

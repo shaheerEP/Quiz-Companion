@@ -6,10 +6,11 @@ export function middleware(request: NextRequest) {
   const authSession = request.cookies.get('auth_session');
 
   // List of protected routes that require authentication
-  const isProtectedRoute = pathname.startsWith('/student') || 
-                           pathname.startsWith('/teacher') || 
-                           pathname.startsWith('/admin') || 
-                           pathname.startsWith('/settings');
+  const isProtectedRoute = pathname.startsWith('/student') ||
+                           pathname.startsWith('/teacher') ||
+                           pathname.startsWith('/admin') ||
+                           pathname.startsWith('/settings') ||
+                           pathname.startsWith('/revision');
 
   if (isProtectedRoute && !authSession) {
     return NextResponse.redirect(new URL('/login', request.url));

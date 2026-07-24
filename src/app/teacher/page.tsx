@@ -9,7 +9,8 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer, BookOpen } from "lucide-react";
+import Link from "next/link";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
 
 export default function TeacherDashboard() {
@@ -658,6 +659,13 @@ export default function TeacherDashboard() {
                 </div>
                 <h3 className="text-2xl font-black text-gray-300 mb-2">Teacher Dashboard</h3>
                 <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
+                <Link
+                  href="/revision"
+                  className="mt-6 flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Manage Revision Cards
+                </Link>
               </div>
             ) : (
               <div className="w-full flex flex-col h-full items-center justify-center gap-8">
