@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Stopwatch from "@/components/Stopwatch";
+import CountdownTimer from "@/components/CountdownTimer";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer } from "lucide-react";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
 
 export default function TeacherDashboard() {
@@ -27,6 +28,7 @@ export default function TeacherDashboard() {
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [resetTimerKey, setResetTimerKey] = useState(0);
+  const [timerTab, setTimerTab] = useState<'quiz' | 'countdown'>('quiz');
   const [mannersLogs, setMannersLogs] = useState<any[]>([]);
   const [showMannersHistory, setShowMannersHistory] = useState(false);
 
@@ -692,15 +694,41 @@ export default function TeacherDashboard() {
                     <h1 className="text-5xl font-black text-white tracking-tight capitalize drop-shadow-lg">{activeStudent.name}</h1>
                   </div>
                 </div>
-                <div className="flex items-center justify-center w-full mt-4">
-                  <Stopwatch
-                    key={resetTimerKey}
-                    isRunning={isRunning}
-                    setIsRunning={handleTimerRunningState}
-                    onScore={handleScore}
-                    onCancel={handleCancel}
-                    studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
-                  />
+                <div className="flex flex-col items-center w-full mt-4 gap-4">
+                  <div className="flex bg-gray-800/60 rounded-xl p-1 border border-gray-700/50">
+                    <button
+                      onClick={() => setTimerTab('quiz')}
+                      className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
+                        timerTab === 'quiz'
+                          ? 'bg-gray-700 text-white shadow-md'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" /> Quiz Timer
+                    </button>
+                    <button
+                      onClick={() => setTimerTab('countdown')}
+                      className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
+                        timerTab === 'countdown'
+                          ? 'bg-violet-500/30 text-violet-300 shadow-md'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      <Timer className="w-4 h-4" /> Countdown
+                    </button>
+                  </div>
+                  {timerTab === 'quiz' ? (
+                    <Stopwatch
+                      key={resetTimerKey}
+                      isRunning={isRunning}
+                      setIsRunning={handleTimerRunningState}
+                      onScore={handleScore}
+                      onCancel={handleCancel}
+                      studentStopTime={activeSession?.stoppedByStudent ? activeSession.studentStopTime : null}
+                    />
+                  ) : (
+                    <CountdownTimer />
+                  )}
                 </div>
               </div>
             )}
