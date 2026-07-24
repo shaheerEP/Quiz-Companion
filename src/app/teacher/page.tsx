@@ -148,11 +148,33 @@ export default function TeacherDashboard() {
     return () => clearInterval(interval);
   }, [isRunning, activeSession, activeStudent]);
 
+  const getOrCreateSession = async () => {
+    if (activeSession) return activeSession;
+    if (!activeStudent) return null;
+    const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
+    if (!res.ok) return null;
+    const sessions = await res.json();
+    const open = sessions.find((s: any) => !s.isCompleted);
+    if (open) { setActiveSession(open); return open; }
+    const newRes = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId: activeStudent._id })
+    });
+    if (!newRes.ok) return null;
+    const newSession = await newRes.json();
+    setActiveSession(newSession);
+    return newSession;
+  };
+
   const handleAddBonus = async () => {
     const amount = prompt("Enter bonus points to add:");
-    if (!amount || isNaN(Number(amount)) || !activeSession) return;
+    if (!amount || isNaN(Number(amount)) || !activeStudent) return;
 
-    await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
+    const session = await getOrCreateSession();
+    if (!session) return;
+
+    await fetch(`/api/sessions/${session._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ logType: 'bonus', points: Number(amount) })
@@ -165,7 +187,7 @@ export default function TeacherDashboard() {
 
     setManualAnim({ type: 'bonus', amount: Number(amount) });
 
-    fetch(`/api/sessions/${activeSession._id}/questions`)
+    fetch(`/api/sessions/${session._id}/questions`)
       .then(res => res.json())
       .then(setQuestionLogs);
 
@@ -176,9 +198,12 @@ export default function TeacherDashboard() {
 
   const handleDeductPoints = async () => {
     const amount = prompt("Enter points to deduct:");
-    if (!amount || isNaN(Number(amount)) || !activeSession) return;
+    if (!amount || isNaN(Number(amount)) || !activeStudent) return;
 
-    await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
+    const session = await getOrCreateSession();
+    if (!session) return;
+
+    await fetch(`/api/sessions/${session._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ logType: 'deduction', points: Number(amount) })
@@ -191,7 +216,7 @@ export default function TeacherDashboard() {
 
     setManualAnim({ type: 'deduction', amount: Number(amount) });
 
-    fetch(`/api/sessions/${activeSession._id}/questions`)
+    fetch(`/api/sessions/${session._id}/questions`)
       .then(res => res.json())
       .then(setQuestionLogs);
 
@@ -202,7 +227,10 @@ export default function TeacherDashboard() {
 
   const handleHistoryManualLog = async (dayString: string, logType: 'bonus' | 'deduction') => {
     const amount = prompt(`Enter points to ${logType === 'bonus' ? 'add' : 'deduct'} for ${dayString}:`);
-    if (!amount || isNaN(Number(amount)) || !activeSession) return;
+    if (!amount || isNaN(Number(amount)) || !activeStudent) return;
+
+    const session = await getOrCreateSession();
+    if (!session) return;
 
     let targetDate = new Date();
     if (dayString === "Yesterday") {
@@ -211,7 +239,7 @@ export default function TeacherDashboard() {
       targetDate = new Date(dayString);
     }
 
-    await fetch(`/api/sessions/${activeSession._id}/manual-log`, {
+    await fetch(`/api/sessions/${session._id}/manual-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ logType, points: Number(amount), date: targetDate.toISOString() })
@@ -230,7 +258,7 @@ export default function TeacherDashboard() {
 
     setManualAnim({ type: logType, amount: Number(amount) });
 
-    fetch(`/api/sessions/${activeSession._id}/questions`)
+    fetch(`/api/sessions/${session._id}/questions`)
       .then(res => res.json())
       .then(setQuestionLogs);
 
@@ -599,7 +627,7 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
-                {activeSession && (
+                {activeStudent && (
                   <div className="flex gap-2 w-full">
                     <button
                       onClick={handleAddBonus}
@@ -777,7 +805,7 @@ export default function TeacherDashboard() {
       </main>
 
       {/* Mobile Action Bar */}
-      {activeSession && activeStudent && (
+      {activeStudent && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-gray-950 border-t border-gray-800 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <button
             onClick={handleAddBonus}
