@@ -520,6 +520,22 @@ function RevisionPageInner() {
                     </div>
                   )}
 
+                  {/* Tick mark button (ONLY shown when viewing 'due' tab) */}
+                  {filterStatus === "due" && review?._id && (
+                    <div className="absolute bottom-3 right-3 z-30">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTickCard(review._id!);
+                        }}
+                        title="Tick if read (removes from Due)"
+                        className="p-2 rounded-xl bg-emerald-950/90 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/50 shadow-lg hover:scale-110 active:scale-95 transition-all"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
                   <div
                     onClick={() => {
                       setActiveMenuNoteId(null);
@@ -559,20 +575,6 @@ function RevisionPageInner() {
                           {renderTextWithLinks(card.note.front)}
                         </p>
                       </div>
-                      {isDue && review?._id && (
-                        <div className="flex justify-end">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTickCard(review._id!);
-                            }}
-                            title="Tick if read (removes from Due)"
-                            className="p-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 shadow-md transition-all active:scale-95 flex items-center gap-1 text-xs font-bold"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
                     </div>
 
                     {/* Back face */}
@@ -601,20 +603,6 @@ function RevisionPageInner() {
                           </p>
                         </div>
                       </div>
-                      {isDue && review?._id && (
-                        <div className="flex justify-end mt-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTickCard(review._id!);
-                            }}
-                            title="Tick if read (removes from Due)"
-                            className="p-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 shadow-md transition-all active:scale-95 flex items-center gap-1 text-xs font-bold"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
 
