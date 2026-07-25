@@ -194,18 +194,25 @@ export default function StudentRevisionPage() {
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
               <div className="flex-1 flex flex-col">
-                <div className="flex justify-end mb-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowExplanationModal(true);
-                    }}
-                    title="Detailed Explanation"
-                    className="p-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                  </button>
-                </div>
+                {(() => {
+                  const lineCount = (card?.back || "").split("\n").length;
+                  const isLongAnswer = lineCount > 5;
+                  const hasExplanation = Boolean(card?.explanation?.trim());
+                  return (hasExplanation || isLongAnswer) ? (
+                    <div className="flex justify-end mb-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowExplanationModal(true);
+                        }}
+                        title="Detailed Explanation"
+                        className="p-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex-1 flex items-center justify-center">
                   <p className="text-violet-100 text-lg font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
                     {card?.back}
@@ -263,19 +270,14 @@ export default function StudentRevisionPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="bg-violet-600/20 text-violet-400 p-2.5 rounded-xl border border-violet-500/30">
-                  <HelpCircle className="w-6 h-6" />
+                  <HelpCircle className="w-5 h-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">
-                    {card.subject || "General"} · Answer Explanation
-                  </span>
-                  <h3 className="text-lg font-bold text-white leading-snug line-clamp-1 mt-0.5">
-                    {card.front}
-                  </h3>
-                </div>
+                <h3 className="text-lg font-bold text-white leading-snug line-clamp-1">
+                  {card.front}
+                </h3>
               </div>
               <button
                 onClick={() => setShowExplanationModal(false)}
@@ -286,37 +288,29 @@ export default function StudentRevisionPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="overflow-y-auto pr-1 space-y-4 flex-1">
+            <div className="overflow-y-auto pr-1 space-y-3 flex-1">
               {/* Short Answer / Code */}
-              <div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                  Answer / Key Code
-                </span>
-                <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
-                  {card.back}
-                </div>
+              <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
+                {card.back}
               </div>
 
               {/* Detailed Explanation */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
-                    Detailed Explanation
-                  </span>
-                  {card.explanation && (
+              <div className="relative">
+                {card.explanation && (
+                  <div className="flex justify-end mb-1">
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(card.explanation || "");
                         setCopiedCode(true);
                         setTimeout(() => setCopiedCode(false), 2000);
                       }}
-                      className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 font-semibold px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                      className="p-1.5 text-violet-400 hover:text-violet-300 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                      title="Copy Explanation"
                     >
-                      {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedCode ? "Copied!" : "Copy Explanation"}</span>
+                      {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
                   {card.explanation ? (
@@ -328,16 +322,6 @@ export default function StudentRevisionPage() {
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-800 pt-4 mt-4 flex justify-end shrink-0">
-              <button
-                onClick={() => setShowExplanationModal(false)}
-                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
