@@ -389,14 +389,14 @@ function RevisionPageInner() {
 
               return (
                 <div key={card.note._id} className="relative" style={{ perspective: "1000px" }}>
-                  {/* Options 3-dots menu button */}
-                  <div className="absolute top-3 right-3 z-30">
+                  {/* Options 3-dots menu button (positioned outside card top-right boundary) */}
+                  <div className="absolute -top-3 -right-2 z-30">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuNoteId((prev) => (prev === card.note._id ? null : card.note._id));
                       }}
-                      className="p-1.5 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-800 transition-colors shadow-sm"
+                      className="p-1.5 rounded-full bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-700 transition-all shadow-lg hover:scale-110 active:scale-95"
                       title="Card options"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
@@ -404,7 +404,7 @@ function RevisionPageInner() {
 
                     {activeMenuNoteId === card.note._id && (
                       <div
-                        className="absolute right-0 mt-1 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
+                        className="absolute right-0 mt-1.5 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -460,7 +460,7 @@ function RevisionPageInner() {
                       style={{ backfaceVisibility: "hidden" }}
                     >
                       <div>
-                        <div className="flex items-start justify-between mb-2 gap-2 pr-7">
+                        <div className="flex items-start justify-between mb-2 gap-2">
                           <span className="inline-block px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-bold rounded-full">
                             {card.note.subject || "General"}
                           </span>
@@ -479,7 +479,7 @@ function RevisionPageInner() {
                     >
                       <div className="flex-1 flex flex-col">
                         {hasExplanation && (
-                          <div className="flex justify-end mb-1 pr-7">
+                          <div className="flex justify-end mb-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
