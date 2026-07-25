@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { Plus, Trash2, BookOpen, Layers, ArrowLeft, Clock, CheckCircle2, AlertCircle, HelpCircle, X, Copy, Check, MoreVertical, Edit3 } from "lucide-react";
 
 interface ReviewState {
+  _id?: string;
   status: "due" | "upcoming" | "done";
   intervalIndex: number;
   currentInterval: number;
@@ -182,6 +183,35 @@ function RevisionPageInner() {
 
   const toggleFlip = (idx: number) => {
     setCards((prev) => prev.map((c, i) => (i === idx ? { ...c, flipped: !c.flipped } : c)));
+  };
+
+  const handleTickCard = async (reviewId: string) => {
+    if (!reviewId) return;
+    setCards((prev) =>
+      prev.map((c) => {
+        if (c.note.review && String(c.note.review._id) === String(reviewId)) {
+          return {
+            ...c,
+            note: {
+              ...c.note,
+              review: {
+                ...c.note.review,
+                status: "upcoming",
+              },
+            },
+          };
+        }
+        return c;
+      })
+    );
+
+    await fetch("/api/revision/due", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewId }),
+    });
+
+    fetchNotes();
   };
 
   if (!studentId) {
@@ -442,51 +472,53 @@ function RevisionPageInner() {
 
               return (
                 <div key={card.note._id} className="relative" style={{ perspective: "1000px" }}>
-                  {/* Options 3-dots menu button (positioned outside card top-right boundary) */}
-                  <div className="absolute -top-3 -right-2 z-30">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveMenuNoteId((prev) => (prev === card.note._id ? null : card.note._id));
-                      }}
-                      className="p-1.5 rounded-full bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-700 transition-all shadow-lg hover:scale-110 active:scale-95"
-                      title="Card options"
-                    >
-                      <MoreVertical className="w-3.5 h-3.5" />
-                    </button>
-
-                    {activeMenuNoteId === card.note._id && (
-                      <div
-                        className="absolute right-0 mt-1.5 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
-                        onClick={(e) => e.stopPropagation()}
+                  {/* Options 3-dots menu button (hidden in due tab) */}
+                  {filterStatus !== "due" && (
+                    <div className="absolute -top-3 -right-2 z-30">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuNoteId((prev) => (prev === card.note._id ? null : card.note._id));
+                        }}
+                        className="p-1.5 rounded-full bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-700 transition-all shadow-lg hover:scale-110 active:scale-95"
+                        title="Card options"
                       >
-                        <button
-                          onClick={() => {
-                            setActiveMenuNoteId(null);
-                            setEditingNote(card.note);
-                            setEditFront(card.note.front);
-                            setEditBack(card.note.back);
-                            setEditExplanation(card.note.explanation || "");
-                            setEditSubject(card.note.subject || "");
-                          }}
-                          className="w-full px-3 py-2 text-left text-xs font-semibold text-gray-200 hover:bg-violet-600/20 hover:text-violet-300 flex items-center gap-2 transition-colors"
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+
+                      {activeMenuNoteId === card.note._id && (
+                        <div
+                          className="absolute right-0 mt-1.5 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Edit Card
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveMenuNoteId(null);
-                            handleDelete(card.note._id);
-                          }}
-                          className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 flex items-center gap-2 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Delete Card
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                          <button
+                            onClick={() => {
+                              setActiveMenuNoteId(null);
+                              setEditingNote(card.note);
+                              setEditFront(card.note.front);
+                              setEditBack(card.note.back);
+                              setEditExplanation(card.note.explanation || "");
+                              setEditSubject(card.note.subject || "");
+                            }}
+                            className="w-full px-3 py-2 text-left text-xs font-semibold text-gray-200 hover:bg-violet-600/20 hover:text-violet-300 flex items-center gap-2 transition-colors"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Edit Card
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuNoteId(null);
+                              handleDelete(card.note._id);
+                            }}
+                            className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 flex items-center gap-2 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete Card
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div
                     onClick={() => {
@@ -514,15 +546,33 @@ function RevisionPageInner() {
                     >
                       <div>
                         <div className="flex items-start justify-between mb-2 gap-2">
-                          <span className="inline-block px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-bold rounded-full">
-                            {card.note.subject || "General"}
-                          </span>
-                          {statusBadge(review)}
+                          {card.note.subject?.trim() ? (
+                            <span className="inline-block px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-bold rounded-full">
+                              {card.note.subject}
+                            </span>
+                          ) : (
+                            <span />
+                          )}
+                          {filterStatus !== "due" && statusBadge(review)}
                         </div>
                         <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2 whitespace-pre-wrap">
                           {renderTextWithLinks(card.note.front)}
                         </p>
                       </div>
+                      {isDue && review?._id && (
+                        <div className="flex justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTickCard(review._id!);
+                            }}
+                            title="Tick if read (removes from Due)"
+                            className="p-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 shadow-md transition-all active:scale-95 flex items-center gap-1 text-xs font-bold"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Back face */}
@@ -551,6 +601,20 @@ function RevisionPageInner() {
                           </p>
                         </div>
                       </div>
+                      {isDue && review?._id && (
+                        <div className="flex justify-end mt-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTickCard(review._id!);
+                            }}
+                            title="Tick if read (removes from Due)"
+                            className="p-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 shadow-md transition-all active:scale-95 flex items-center gap-1 text-xs font-bold"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 

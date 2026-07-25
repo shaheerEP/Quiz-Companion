@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
       ...n,
       review: r
         ? {
+            _id: r._id,
             status,
             intervalIndex,
             currentInterval: INTERVALS[intervalIndex],
