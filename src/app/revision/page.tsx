@@ -557,22 +557,7 @@ function RevisionPageInner() {
                     </div>
                   )}
 
-                  {/* Start Revision button (ONLY shown when viewing 'due' tab) */}
-                  {filterStatus === "due" && review?._id && (
-                    <div className="absolute bottom-3 right-3 z-30">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startRevisionDeck(card.note._id);
-                        }}
-                        title="Start interactive revision session for this card"
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>Revise</span>
-                      </button>
-                    </div>
-                  )}
+
 
                   <div
                     onClick={() => {
@@ -656,163 +641,173 @@ function RevisionPageInner() {
       </div>
 
         {/* Interactive Revision Deck Player Modal */}
-        {showDeckModal && deckCards.length > 0 && deckCards[deckIndex] && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
-            onClick={() => setShowDeckModal(false)}
-          >
+        {showDeckModal && deckCards.length > 0 && deckCards[deckIndex] && (() => {
+          const ratingIntervals = studentRewindDays?.length ? studentRewindDays : [1, 2, 7, 14, 30, 90];
+          const curIdx = deckCards[deckIndex]?.review?.intervalIndex ?? 0;
+
+          const badDays = `${ratingIntervals[0]}d`;
+
+          const gIdx = curIdx + 1;
+          const goodDays = gIdx >= ratingIntervals.length ? "Done" : `${ratingIntervals[gIdx]}d`;
+
+          const aIdx = curIdx + 2;
+          const awesomeDays = aIdx >= ratingIntervals.length ? "Done" : `${ratingIntervals[aIdx]}d`;
+
+          const eIdx = curIdx + 3;
+          const excellentDays = eIdx >= ratingIntervals.length ? "Done" : `${ratingIntervals[eIdx]}d`;
+
+          return (
             <div
-              className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative flex flex-col items-center overflow-hidden text-white"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+              onClick={() => setShowDeckModal(false)}
             >
-              {/* Modal Top Bar */}
-              <div className="w-full flex items-center justify-between border-b border-gray-800 pb-3 mb-4 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-600/20 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/30">
-                    <Play className="w-4 h-4 fill-emerald-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">Interactive Revision Session</h3>
-                    <p className="text-xs text-gray-400">
-                      Card {deckIndex + 1} of {deckCards.length}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowDeckModal(false)}
-                  className="p-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mb-5">
-                <div
-                  className="bg-emerald-500 h-full transition-all duration-300"
-                  style={{ width: `${((deckIndex + 1) / deckCards.length) * 100}%` }}
-                />
-              </div>
-
-              {/* Interactive 3D Flashcard */}
               <div
-                className="w-full relative cursor-pointer mb-6"
-                style={{ perspective: "1000px", height: "230px" }}
-                onClick={() => setDeckFlipped((prev) => !prev)}
+                className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative flex flex-col items-center overflow-hidden text-white"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="w-full h-full relative"
-                  style={{
-                    transformStyle: "preserve-3d",
-                    transform: deckFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                    transition: "transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1)",
-                  }}
-                >
-                  {/* Card Front */}
-                  <div
-                    className="absolute inset-0 bg-gray-950 border border-gray-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
-                    style={{ backfaceVisibility: "hidden" }}
-                  >
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span className="px-2.5 py-1 bg-violet-500/10 text-violet-400 font-bold rounded-full">
-                        {deckCards[deckIndex].subject || "Question"}
-                      </span>
-                      <span className="text-gray-500 text-[11px] italic">Click card to reveal answer</span>
+                {/* Modal Top Bar */}
+                <div className="w-full flex items-center justify-between border-b border-gray-800 pb-3 mb-4 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald-600/20 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/30">
+                      <Play className="w-4 h-4 fill-emerald-400" />
                     </div>
-                    <p className="text-white text-lg font-bold text-center leading-relaxed whitespace-pre-wrap my-auto">
-                      {renderTextWithLinks(deckCards[deckIndex].front)}
-                    </p>
-                    <div className="text-center text-xs text-violet-400 font-medium">
-                      Tap card to flip ↷
-                    </div>
-                  </div>
-
-                  {/* Card Back */}
-                  <div
-                    className="absolute inset-0 bg-gradient-to-br from-violet-950/90 to-indigo-950/90 border border-violet-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
-                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                  >
-                    <div className="flex justify-end">
-                      {(Boolean(deckCards[deckIndex].explanation?.trim()) ||
-                        (deckCards[deckIndex].back || "").split("\n").length > 5) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveModalNote(deckCards[deckIndex]);
-                          }}
-                          title="Detailed Explanation"
-                          className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm"
-                        >
-                          <HelpCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex-1 flex items-center justify-center">
-                      <p className="text-violet-100 text-base font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
-                        {renderTextWithLinks(deckCards[deckIndex].back)}
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Interactive Revision Session</h3>
+                      <p className="text-xs text-gray-400">
+                        Card {deckIndex + 1} of {deckCards.length}
                       </p>
                     </div>
-                    <div className="text-center text-xs text-violet-300/60 font-medium">
-                      Rate memory performance below
+                  </div>
+                  <button
+                    onClick={() => setShowDeckModal(false)}
+                    className="p-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mb-5">
+                  <div
+                    className="bg-emerald-500 h-full transition-all duration-300"
+                    style={{ width: `${((deckIndex + 1) / deckCards.length) * 100}%` }}
+                  />
+                </div>
+
+                {/* Interactive 3D Flashcard */}
+                <div
+                  className="w-full relative cursor-pointer mb-6"
+                  style={{ perspective: "1000px", height: "230px" }}
+                  onClick={() => setDeckFlipped((prev) => !prev)}
+                >
+                  <div
+                    className="w-full h-full relative"
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transform: deckFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                      transition: "transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1)",
+                    }}
+                  >
+                    {/* Card Front */}
+                    <div
+                      className="absolute inset-0 bg-gray-950 border border-gray-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
+                      style={{ backfaceVisibility: "hidden" }}
+                    >
+                      <div className="flex items-center justify-between text-xs text-gray-400">
+                        <span className="px-2.5 py-1 bg-violet-500/10 text-violet-400 font-bold rounded-full">
+                          {deckCards[deckIndex].subject || "Question"}
+                        </span>
+                      </div>
+                      <p className="text-white text-lg font-bold text-center leading-relaxed whitespace-pre-wrap my-auto">
+                        {renderTextWithLinks(deckCards[deckIndex].front)}
+                      </p>
+                    </div>
+
+                    {/* Card Back */}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-br from-violet-950/90 to-indigo-950/90 border border-violet-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
+                      style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                    >
+                      <div className="flex justify-end">
+                        {(Boolean(deckCards[deckIndex].explanation?.trim()) ||
+                          (deckCards[deckIndex].back || "").split("\n").length > 5) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveModalNote(deckCards[deckIndex]);
+                            }}
+                            title="Detailed Explanation"
+                            className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm"
+                          >
+                            <HelpCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <p className="text-violet-100 text-base font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
+                          {renderTextWithLinks(deckCards[deckIndex].back)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Memory Rating Buttons (Shown when flipped) */}
-              <div className="w-full flex flex-col items-center">
-                {!deckFlipped ? (
-                  <button
-                    onClick={() => setDeckFlipped(true)}
-                    className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-violet-500/20 active:scale-95 text-sm"
-                  >
-                    Flip Card / Reveal Answer
-                  </button>
-                ) : (
-                  <div className="w-full">
-                    <p className="text-center text-xs text-gray-400 mb-2.5 font-semibold">
-                      How well did you remember?
-                    </p>
-                    <div className="grid grid-cols-4 gap-2 w-full">
-                      <button
-                        onClick={() => handleRateCard("bad")}
-                        disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-rose-600/10 hover:bg-rose-600 border border-rose-500/40 text-rose-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        <span className="text-base">🔴</span>
-                        <span className="text-xs mt-0.5">Bad</span>
-                      </button>
-                      <button
-                        onClick={() => handleRateCard("good")}
-                        disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-600/10 hover:bg-amber-600 border border-amber-500/40 text-amber-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        <span className="text-base">🟡</span>
-                        <span className="text-xs mt-0.5">Good</span>
-                      </button>
-                      <button
-                        onClick={() => handleRateCard("awesome")}
-                        disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/40 text-indigo-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        <span className="text-base">⚡</span>
-                        <span className="text-xs mt-0.5">Awesome</span>
-                      </button>
-                      <button
-                        onClick={() => handleRateCard("excellent")}
-                        disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/40 text-emerald-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        <span className="text-base">🌟</span>
-                        <span className="text-xs mt-0.5">Excellent</span>
-                      </button>
+                {/* Memory Rating Buttons (Shown when flipped) */}
+                <div className="w-full flex flex-col items-center">
+                  {!deckFlipped ? (
+                    <button
+                      onClick={() => setDeckFlipped(true)}
+                      className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-violet-500/20 active:scale-95 text-sm"
+                    >
+                      Flip Card / Reveal Answer
+                    </button>
+                  ) : (
+                    <div className="w-full">
+                      <div className="grid grid-cols-4 gap-2 w-full">
+                        <button
+                          onClick={() => handleRateCard("bad")}
+                          disabled={submittingRating}
+                          className="flex flex-col items-center justify-center py-2.5 px-2 bg-rose-600/10 hover:bg-rose-600 border border-rose-500/40 text-rose-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          <span className="text-sm">🔴</span>
+                          <span className="text-xs font-extrabold mt-0.5">Bad</span>
+                          <span className="text-[10px] opacity-75 font-mono">{badDays}</span>
+                        </button>
+                        <button
+                          onClick={() => handleRateCard("good")}
+                          disabled={submittingRating}
+                          className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-600/10 hover:bg-amber-600 border border-amber-500/40 text-amber-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          <span className="text-sm">🟡</span>
+                          <span className="text-xs font-extrabold mt-0.5">Good</span>
+                          <span className="text-[10px] opacity-75 font-mono">{goodDays}</span>
+                        </button>
+                        <button
+                          onClick={() => handleRateCard("awesome")}
+                          disabled={submittingRating}
+                          className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/40 text-indigo-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          <span className="text-sm">⚡</span>
+                          <span className="text-xs font-extrabold mt-0.5">Awesome</span>
+                          <span className="text-[10px] opacity-75 font-mono">{awesomeDays}</span>
+                        </button>
+                        <button
+                          onClick={() => handleRateCard("excellent")}
+                          disabled={submittingRating}
+                          className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/40 text-emerald-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          <span className="text-sm">🌟</span>
+                          <span className="text-xs font-extrabold mt-0.5">Excellent</span>
+                          <span className="text-[10px] opacity-75 font-mono">{excellentDays}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Explanation Dialog Box Modal */}
         {activeModalNote && (
