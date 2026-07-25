@@ -30,6 +30,31 @@ interface FlipCard {
 
 const INTERVALS = [1, 2, 7, 14, 30, 90];
 
+function renderTextWithLinks(text?: string) {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      const href = part.startsWith("www.") ? `https://${part}` : part;
+      return (
+        <a
+          key={index}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-violet-400 hover:text-violet-300 underline underline-offset-2 break-all font-semibold"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 function statusBadge(review: ReviewState | null) {
   if (!review) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-500 font-bold">Not started</span>;
   if (review.status === "done") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Complete</span>;
@@ -113,7 +138,7 @@ function RevisionPageInner() {
         front,
         back,
         explanation: explanation || undefined,
-        subject: subject || "General",
+        subject: subject.trim() || undefined,
         studentId,
       }),
     });
@@ -147,7 +172,7 @@ function RevisionPageInner() {
         front: editFront.trim(),
         back: editBack.trim(),
         explanation: editExplanation.trim() || undefined,
-        subject: editSubject.trim() || "General",
+        subject: editSubject.trim() || undefined,
       }),
     });
     setEditingNote(null);
@@ -174,13 +199,13 @@ function RevisionPageInner() {
     );
   }
 
-  const subjects = ["All", ...Array.from(new Set(notes.map((n) => n.subject || "General")))];
+  const subjects = ["All", ...Array.from(new Set(notes.map((n) => n.subject?.trim()).filter(Boolean))) as string[]];
 
   const dueCount = notes.filter((n) => n.review?.status === "due").length;
   const doneCount = notes.filter((n) => n.review?.status === "done").length;
 
   const filteredCards = cards.filter((c) => {
-    const subjectMatch = filterSubject === "All" || (c.note.subject || "General") === filterSubject;
+    const subjectMatch = filterSubject === "All" || c.note.subject === filterSubject;
     const statusMatch =
       filterStatus === "all" ||
       (filterStatus === "due" && c.note.review?.status === "due") ||
@@ -470,7 +495,7 @@ function RevisionPageInner() {
                           {statusBadge(review)}
                         </div>
                         <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2 whitespace-pre-wrap">
-                          {card.note.front}
+                          {renderTextWithLinks(card.note.front)}
                         </p>
                       </div>
                     </div>
@@ -497,7 +522,7 @@ function RevisionPageInner() {
                         )}
                         <div className="flex-1 flex items-center">
                           <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full whitespace-pre-wrap">
-                            {card.note.back}
+                            {renderTextWithLinks(card.note.back)}
                           </p>
                         </div>
                       </div>
@@ -532,7 +557,7 @@ function RevisionPageInner() {
                     <HelpCircle className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold text-white leading-snug line-clamp-1">
-                    {activeModalNote.front}
+                    {renderTextWithLinks(activeModalNote.front)}
                   </h3>
                 </div>
                 <button
@@ -547,37 +572,15 @@ function RevisionPageInner() {
               <div className="overflow-y-auto pr-1 space-y-3 flex-1">
                 {/* Short Answer / Code */}
                 <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
-                  {activeModalNote.back}
+                  {renderTextWithLinks(activeModalNote.back)}
                 </div>
 
                 {/* Detailed Explanation */}
-                <div className="relative">
-                  {activeModalNote.explanation && (
-                    <div className="flex justify-end mb-1">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(activeModalNote.explanation || "");
-                          setCopiedCode(true);
-                          setTimeout(() => setCopiedCode(false), 2000);
-                        }}
-                        className="p-1.5 text-violet-400 hover:text-violet-300 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
-                        title="Copy Explanation"
-                      >
-                        {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  )}
-
+                {activeModalNote.explanation && (
                   <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
-                    {activeModalNote.explanation ? (
-                      activeModalNote.explanation
-                    ) : (
-                      <div className="text-gray-500 italic text-xs font-sans">
-                        No additional detailed explanation was added for this card. The primary answer is displayed above.
-                      </div>
-                    )}
+                    {renderTextWithLinks(activeModalNote.explanation)}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

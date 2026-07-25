@@ -33,13 +33,13 @@ export async function GET(req: NextRequest) {
       nextDueDate = r.nextDueDate;
       if (r.completed) {
         status = "done";
-      } else if (new Date(r.nextDueDate) <= now) {
+      } else if (!r.lastReviewedAt || new Date(r.nextDueDate) <= now) {
         status = "due";
       } else {
         status = "upcoming";
       }
     } else {
-      // No review record yet — not seeded for this student
+      // No review record yet
       status = "upcoming";
     }
 
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     teacherId,
     front: front.trim(),
     back: back.trim(),
-    subject: subject?.trim() || "General",
+    subject: subject?.trim() || undefined,
     explanation: explanation?.trim() || undefined,
   });
 
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         noteId: note._id,
         teacherId,
         intervalIndex: 0,
-        nextDueDate: addDays(now, INTERVALS[0]),
+        nextDueDate: now, // Due immediately for initial review
       }).catch(() => {});
     }
   } else {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         noteId: note._id,
         teacherId,
         intervalIndex: 0,
-        nextDueDate: addDays(now, INTERVALS[0]),
+        nextDueDate: now, // Due immediately for initial review
       }));
       await RevisionReview.insertMany(reviews, { ordered: false }).catch(() => {});
     }
@@ -128,7 +128,7 @@ export async function PUT(req: NextRequest) {
     {
       front: front.trim(),
       back: back.trim(),
-      subject: subject?.trim() || "General",
+      subject: subject?.trim() || undefined,
       explanation: explanation?.trim() || undefined,
     },
     { new: true }

@@ -22,7 +22,11 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const reviews = await RevisionReview.find({
     studentId,
-    nextDueDate: { $lte: now },
+    $or: [
+      { nextDueDate: { $lte: now } },
+      { lastReviewedAt: { $exists: false } },
+      { lastReviewedAt: null }
+    ],
     completed: false,
   })
     .populate("noteId")

@@ -15,7 +15,7 @@ const RevisionNoteSchema = new Schema<IRevisionNote>(
     teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
     front: { type: String, required: true, trim: true },
     back: { type: String, required: true, trim: true },
-    subject: { type: String, trim: true, default: "General" },
+    subject: { type: String, trim: true },
     explanation: { type: String, trim: true },
   },
   { timestamps: true }

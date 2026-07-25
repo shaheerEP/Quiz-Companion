@@ -19,6 +19,31 @@ interface DueCard {
 
 const INTERVAL_LABELS = [1, 2, 7, 14, 30, 90];
 
+function renderTextWithLinks(text?: string) {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      const href = part.startsWith("www.") ? `https://${part}` : part;
+      return (
+        <a
+          key={index}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-violet-400 hover:text-violet-300 underline underline-offset-2 break-all font-semibold"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 export default function StudentRevisionPage() {
   const { user } = useAuth();
   const [cards, setCards] = useState<DueCard[]>([]);
@@ -184,7 +209,7 @@ export default function StudentRevisionPage() {
               style={{ backfaceVisibility: "hidden" }}
             >
               <p className="text-white text-xl font-bold text-center leading-snug whitespace-pre-wrap">
-                {card?.front}
+                {renderTextWithLinks(card?.front)}
               </p>
             </div>
 
@@ -215,7 +240,7 @@ export default function StudentRevisionPage() {
                 })()}
                 <div className="flex-1 flex items-center justify-center">
                   <p className="text-violet-100 text-lg font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
-                    {card?.back}
+                    {renderTextWithLinks(card?.back)}
                   </p>
                 </div>
               </div>
@@ -276,7 +301,7 @@ export default function StudentRevisionPage() {
                   <HelpCircle className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-white leading-snug line-clamp-1">
-                  {card.front}
+                  {renderTextWithLinks(card.front)}
                 </h3>
               </div>
               <button
@@ -291,37 +316,15 @@ export default function StudentRevisionPage() {
             <div className="overflow-y-auto pr-1 space-y-3 flex-1">
               {/* Short Answer / Code */}
               <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
-                {card.back}
+                {renderTextWithLinks(card.back)}
               </div>
 
               {/* Detailed Explanation */}
-              <div className="relative">
-                {card.explanation && (
-                  <div className="flex justify-end mb-1">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(card.explanation || "");
-                        setCopiedCode(true);
-                        setTimeout(() => setCopiedCode(false), 2000);
-                      }}
-                      className="p-1.5 text-violet-400 hover:text-violet-300 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
-                      title="Copy Explanation"
-                    >
-                      {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  </div>
-                )}
-
+              {card.explanation && (
                 <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
-                  {card.explanation ? (
-                    card.explanation
-                  ) : (
-                    <div className="text-gray-500 italic text-xs font-sans">
-                      No additional detailed explanation was added for this card. The primary answer is displayed above.
-                    </div>
-                  )}
+                  {renderTextWithLinks(card.explanation)}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
