@@ -199,7 +199,8 @@ function RevisionPageInner() {
     );
   }
 
-  const subjects = ["All", ...Array.from(new Set(notes.map((n) => n.subject?.trim()).filter(Boolean))) as string[]];
+  const existingSubjects = Array.from(new Set(notes.map((n) => n.subject?.trim()).filter(Boolean))) as string[];
+  const subjects = ["All", ...existingSubjects];
 
   const dueCount = notes.filter((n) => n.review?.status === "due").length;
   const doneCount = notes.filter((n) => n.review?.status === "done").length;
@@ -321,11 +322,35 @@ function RevisionPageInner() {
                   Subject / Topic (optional)
                 </label>
                 <input
+                  list="existing-subjects-add"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g. Biology, Maths, General"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  placeholder="Select existing subject or type a new one..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
                 />
+                <datalist id="existing-subjects-add">
+                  {existingSubjects.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+                {existingSubjects.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {existingSubjects.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setSubject(s)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                          subject === s
+                            ? "bg-violet-600 border-violet-500 text-white font-bold"
+                            : "bg-gray-800/80 hover:bg-gray-700 text-gray-300 border-gray-700"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 pt-6">
                 <button
@@ -651,10 +676,35 @@ function RevisionPageInner() {
                     Subject / Topic
                   </label>
                   <input
+                    list="existing-subjects-edit"
                     value={editSubject}
                     onChange={(e) => setEditSubject(e.target.value)}
+                    placeholder="Select existing subject or type a new one..."
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
                   />
+                  <datalist id="existing-subjects-edit">
+                    {existingSubjects.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
+                  {existingSubjects.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {existingSubjects.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setEditSubject(s)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                            editSubject === s
+                              ? "bg-violet-600 border-violet-500 text-white font-bold"
+                              : "bg-gray-800/80 hover:bg-gray-700 text-gray-300 border-gray-700"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
