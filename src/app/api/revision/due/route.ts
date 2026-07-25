@@ -49,12 +49,12 @@ export async function GET(req: NextRequest) {
   );
 }
 
-// POST /api/revision/due — mark a review as done, advance to next interval
+// POST /api/revision/due — mark a review as done with rating ("bad" | "good" | "awesome" | "excellent")
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { reviewId } = await req.json();
+  const { reviewId, rating } = await req.json();
   if (!reviewId) return NextResponse.json({ error: "reviewId required" }, { status: 400 });
 
   await connectToDatabase();
@@ -66,19 +66,36 @@ export async function POST(req: NextRequest) {
   const intervals = student?.revisionRewindDays?.length ? student.revisionRewindDays : INTERVALS;
 
   const now = new Date();
-  const nextIndex = review.intervalIndex + 1;
 
-  if (nextIndex >= intervals.length) {
-    review.completed = true;
+  let stepAdvance = 1;
+  if (rating === "bad") {
+    stepAdvance = 0;
+  } else if (rating === "good") {
+    stepAdvance = 1;
+  } else if (rating === "awesome") {
+    stepAdvance = 2;
+  } else if (rating === "excellent") {
+    stepAdvance = 3;
+  }
+
+  if (rating === "bad") {
+    review.intervalIndex = 0;
+    review.nextDueDate = addDays(now, intervals[0] || 1);
     review.lastReviewedAt = now;
   } else {
-    review.intervalIndex = nextIndex;
-    review.nextDueDate = addDays(now, intervals[nextIndex]);
-    review.lastReviewedAt = now;
+    const nextIndex = Math.min(review.intervalIndex + stepAdvance, intervals.length - 1);
+    if (review.intervalIndex + stepAdvance >= intervals.length) {
+      review.completed = true;
+      review.lastReviewedAt = now;
+    } else {
+      review.intervalIndex = nextIndex;
+      review.nextDueDate = addDays(now, intervals[nextIndex]);
+      review.lastReviewedAt = now;
+    }
   }
 
   await review.save();
-  return NextResponse.json({ ok: true, completed: review.completed });
+  return NextResponse.json({ ok: true, completed: review.completed, nextDueDate: review.nextDueDate });
 }
 
 function addDays(date: Date, days: number): Date {
