@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   if (!studentId) return NextResponse.json({ error: "studentId required" }, { status: 400 });
 
   await connectToDatabase();
+  // Ensure RevisionNote model is registered in Mongoose
+  const _ensureNoteSchema = RevisionNote;
 
   const student = await Student.findById(studentId).lean();
   const intervals = student?.revisionRewindDays?.length ? student.revisionRewindDays : INTERVALS;

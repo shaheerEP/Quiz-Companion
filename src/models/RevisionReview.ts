@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import "@/models/RevisionNote";
+import "@/models/Student";
 
 // Tracks per-student spaced-repetition state for each revision note.
 // Intervals follow the pattern: 1, 2, 7, 14, 30, 90 days.
