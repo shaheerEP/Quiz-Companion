@@ -183,7 +183,7 @@ export default function StudentRevisionPage() {
               className="absolute inset-0 bg-gray-900 border border-gray-800 rounded-3xl flex flex-col items-center justify-center p-8 shadow-2xl"
               style={{ backfaceVisibility: "hidden" }}
             >
-              <p className="text-white text-xl font-bold text-center leading-snug">
+              <p className="text-white text-xl font-bold text-center leading-snug whitespace-pre-wrap">
                 {card?.front}
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function StudentRevisionPage() {
                   </button>
                 </div>
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-violet-100 text-lg font-medium text-center leading-relaxed font-mono line-clamp-6 w-full">
+                  <p className="text-violet-100 text-lg font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
                     {card?.back}
                   </p>
                 </div>

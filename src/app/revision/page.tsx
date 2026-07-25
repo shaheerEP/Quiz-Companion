@@ -466,7 +466,7 @@ function RevisionPageInner() {
                           </span>
                           {statusBadge(review)}
                         </div>
-                        <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2">
+                        <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2 whitespace-pre-wrap">
                           {card.note.front}
                         </p>
                       </div>
@@ -493,7 +493,7 @@ function RevisionPageInner() {
                           </div>
                         )}
                         <div className="flex-1 flex items-center">
-                          <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full">
+                          <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full whitespace-pre-wrap">
                             {card.note.back}
                           </p>
                         </div>
