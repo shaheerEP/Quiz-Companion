@@ -938,10 +938,10 @@ export default function SettingsPage() {
                 </AppleGroupedRow>
               </AppleGroupedSection>
 
-              {/* Tiered Reward Levels */}
+              {/* Unlimited Weekly Scoring & Records (★ Top week) */}
               <AppleGroupedSection
-                title="Tiered Reward Levels"
-                description="Cumulative milestone goals students work towards over a weekly period."
+                title="Unlimited Weekly Scoring & Records (★ Top week)"
+                description="Students score unlimited points each week. Differences against Last Week and ★ Top week records are automatically tracked and compared across teacher and student dashboards."
               >
                 <AppleGroupedRow
                   icon={<Sparkles className="w-4 h-4" />}
@@ -1630,12 +1630,12 @@ export default function SettingsPage() {
                   icon={<Package className="w-4 h-4 text-purple-400" />}
                   iconBg="bg-purple-600/30"
                   title="Reward Progression System"
-                  subtitle="Choose whether rewards follow bundles or levels"
+                  subtitle="Choose whether rewards follow classic bundles or unlimited weekly tracking"
                 >
                   <AppleSegmentedControl
                     options={[
                       { value: "classic", label: "Classic Bundles" },
-                      { value: "tiered", label: "Tiered Levels" },
+                      { value: "tiered", label: "Unlimited (★ Top week)" },
                     ]}
                     value={editingStudent.rewardSystem || "classic"}
                     onChange={(val) =>

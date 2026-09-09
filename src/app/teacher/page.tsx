@@ -28,6 +28,20 @@ export default function TeacherDashboard() {
   const [showBundleAnim, setShowBundleAnim] = useState(false);
   const [questionLogs, setQuestionLogs] = useState<any[]>([]);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [historyStats, setHistoryStats] = useState<any>(null);
+  const [dailyHistory, setDailyHistory] = useState<any[]>([]);
+  const [dailyDaysLimit, setDailyDaysLimit] = useState(5);
+  const [hasMoreDaily, setHasMoreDaily] = useState(false);
+  const [totalDailyDays, setTotalDailyDays] = useState(0);
+  const [weeklyHistory, setWeeklyHistory] = useState<any[]>([]);
+  const [weeklyWeeksLimit, setWeeklyWeeksLimit] = useState(4);
+  const [hasMoreWeekly, setHasMoreWeekly] = useState(false);
+  const [totalWeeks, setTotalWeeks] = useState(0);
+  const [activeHistoryTab, setActiveHistoryTab] = useState<"daily" | "weekly">("daily");
+  const [loadingMoreDaily, setLoadingMoreDaily] = useState(false);
+  const [loadingMoreWeekly, setLoadingMoreWeekly] = useState(false);
+  const dailyLimitRef = useRef(5);
+  const weeklyLimitRef = useRef(4);
   const [resetTimerKey, setResetTimerKey] = useState(0);
   const [timerTab, setTimerTab] = useState<'quiz' | 'countdown'>('quiz');
   const [mannersLogs, setMannersLogs] = useState<any[]>([]);
@@ -42,6 +56,50 @@ export default function TeacherDashboard() {
       setQuestionLogs([]);
     }
   }, [activeSession?._id, activeSession?.totalQuestions, activeSession?.finalScore]);
+
+  const fetchStudentHistory = async (
+    studentId: string,
+    dLimit = dailyLimitRef.current,
+    wLimit = weeklyLimitRef.current
+  ) => {
+    try {
+      const historyRes = await fetch(
+        `/api/history?studentId=${studentId}&dailyLimit=${dLimit}&weeklyLimit=${wLimit}`
+      );
+      if (!historyRes.ok) return;
+      const histData = await historyRes.json();
+      if (histData.stats) setHistoryStats(histData.stats);
+      if (histData.daily) setDailyHistory(histData.daily);
+      setHasMoreDaily(Boolean(histData.hasMoreDaily));
+      setTotalDailyDays(histData.totalDailyDays || 0);
+      if (histData.weekly) setWeeklyHistory(histData.weekly);
+      setHasMoreWeekly(Boolean(histData.hasMoreWeekly));
+      setTotalWeeks(histData.totalWeeks || 0);
+      if (histData.items) setHistoryItems(histData.items);
+    } catch (err) {
+      console.error("Failed to fetch history:", err);
+    }
+  };
+
+  const handleShowMoreDaily = async () => {
+    if (loadingMoreDaily || !hasMoreDaily || !activeStudent) return;
+    setLoadingMoreDaily(true);
+    const nextLimit = dailyDaysLimit + 5;
+    dailyLimitRef.current = nextLimit;
+    setDailyDaysLimit(nextLimit);
+    await fetchStudentHistory(activeStudent._id, nextLimit, weeklyLimitRef.current);
+    setLoadingMoreDaily(false);
+  };
+
+  const handleShowMoreWeekly = async () => {
+    if (loadingMoreWeekly || !hasMoreWeekly || !activeStudent) return;
+    setLoadingMoreWeekly(true);
+    const nextLimit = weeklyWeeksLimit + 4;
+    weeklyLimitRef.current = nextLimit;
+    setWeeklyWeeksLimit(nextLimit);
+    await fetchStudentHistory(activeStudent._id, dailyLimitRef.current, nextLimit);
+    setLoadingMoreWeekly(false);
+  };
 
   const selectStudent = async (studentId: string, currentStudents: any[]) => {
     try {
@@ -65,9 +123,7 @@ export default function TeacherDashboard() {
       if (!res.ok) throw new Error("Failed to fetch sessions");
       const sessions = await res.json();
 
-      const historyRes = await fetch(`/api/history?studentId=${studentId}`);
-      if (!historyRes.ok) throw new Error("Failed to fetch history");
-      setHistoryItems(await historyRes.json());
+      fetchStudentHistory(studentId);
 
       const mannersRes = await fetch(`/api/manners?studentId=${studentId}`);
       if (mannersRes.ok) setMannersLogs(await mannersRes.json());
@@ -130,8 +186,7 @@ export default function TeacherDashboard() {
 
           const active = sessions.find((s: any) => !s.isCompleted);
 
-          const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
-          setHistoryItems(await historyRes.json());
+          fetchStudentHistory(activeStudent._id);
 
           const mannersRes = await fetch(`/api/manners?studentId=${activeStudent._id}`);
           if (mannersRes.ok) setMannersLogs(await mannersRes.json());
@@ -192,9 +247,7 @@ export default function TeacherDashboard() {
       .then(res => res.json())
       .then(setQuestionLogs);
 
-    fetch(`/api/history?studentId=${activeStudent._id}`)
-      .then(res => res.json())
-      .then(setHistoryItems);
+    fetchStudentHistory(activeStudent._id);
   };
 
   const handleDeductPoints = async () => {
@@ -221,9 +274,7 @@ export default function TeacherDashboard() {
       .then(res => res.json())
       .then(setQuestionLogs);
 
-    fetch(`/api/history?studentId=${activeStudent._id}`)
-      .then(res => res.json())
-      .then(setHistoryItems);
+    fetchStudentHistory(activeStudent._id);
   };
 
   const handleHistoryManualLog = async (dayString: string, logType: 'bonus' | 'deduction') => {
@@ -263,9 +314,7 @@ export default function TeacherDashboard() {
       .then(res => res.json())
       .then(setQuestionLogs);
 
-    fetch(`/api/history?studentId=${activeStudent._id}`)
-      .then(res => res.json())
-      .then(setHistoryItems);
+    fetchStudentHistory(activeStudent._id);
   };
 
   const handleTimerRunningState = async (run: boolean, teacherStopTime?: number, teacherStartTime?: number) => {
@@ -379,14 +428,7 @@ export default function TeacherDashboard() {
       setShowWrong(true);
     }
 
-    try {
-      const historyRes = await fetch(`/api/history?studentId=${activeStudent._id}`);
-      if (historyRes.ok) {
-        setHistoryItems(await historyRes.json());
-      }
-    } catch (e) {
-      console.error("Error fetching history", e);
-    }
+    fetchStudentHistory(activeStudent._id);
   };
 
   const handleRatingComplete = () => {
@@ -445,72 +487,169 @@ export default function TeacherDashboard() {
     }
   }, [activeStudent?._id, activeStudent?.lifetimePoints, activeStudent?.rewardSystem, settings?.bundleLimit, prevBundles]);
 
-  const groupedHistory = historyItems.reduce((acc: any, item: any) => {
-    const dateObj = new Date(item.date);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let dayString = dateObj.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-    if (dateObj.toDateString() === today.toDateString()) dayString = "Today";
-    else if (dateObj.toDateString() === yesterday.toDateString()) dayString = "Yesterday";
-
-    if (!acc[dayString]) acc[dayString] = [];
-    acc[dayString].push(item);
-    return acc;
-  }, {});
-
   const renderDailyHistory = () => (
-    <section className="w-full bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 xl:p-8">
-      <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-        <History className="w-6 h-6 text-indigo-400" />
-        Daily History
-      </h3>
-      <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-        {Object.keys(groupedHistory).map(day => {
-          const dailyTotal = groupedHistory[day].reduce((total: number, item: any) => total + (item.type === 'deduction' ? -item.points : item.points), 0);
-          return (
-            <div key={day} className="flex flex-col gap-2">
-              <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{day}</p>
-                <div className="flex gap-2 items-center">
-                  <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100)).toFixed(0)}% of daily goal`}>
-                    <div className="flex text-gray-700">★★★★★</div>
-                    <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dailyTotal / 1000) * 100))}%` }}>
-                      ★★★★★
-                    </div>
-                  </div>
-                  <p className={`text-xs font-bold mr-2 ${dailyTotal > 0 ? 'text-emerald-400' : dailyTotal < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
-                    {dailyTotal > 0 ? '+' : ''}{dailyTotal} pts
-                  </p>
-                  <button title="Add points for this day" onClick={() => handleHistoryManualLog(day, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center hover:bg-indigo-500/40 transition-colors"><PlusCircle className="w-4 h-4" /></button>
-                  <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(day, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center hover:bg-rose-500/40 transition-colors"><MinusCircle className="w-4 h-4" /></button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {groupedHistory[day].map((item: any) => (
-                  <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
-                      {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
-                      {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
-                      <div>
-                        <p className="font-bold text-gray-200 text-base">{item.title}</p>
-                        {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+    <section className="w-full bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 xl:p-8 flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-4">
+        <div className="flex items-center gap-2">
+          <History className="w-6 h-6 text-indigo-400" />
+          <h3 className="text-xl font-black text-white">Score History</h3>
+        </div>
+
+        {/* Segmented Tab Controls */}
+        <div className="inline-flex p-1 bg-gray-950 border border-white/10 rounded-2xl self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setActiveHistoryTab("daily")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeHistoryTab === "daily"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Daily ({totalDailyDays})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveHistoryTab("weekly")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeHistoryTab === "weekly"
+                ? "bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Weekly ({totalWeeks})
+          </button>
+        </div>
+      </div>
+
+      {activeHistoryTab === "daily" ? (
+        <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {dailyHistory.length === 0 ? (
+            <p className="text-gray-500 italic text-sm text-center py-6">No daily history recorded yet.</p>
+          ) : (
+            dailyHistory.map((dayGroup) => (
+              <div key={dayGroup.dayString} className="flex flex-col gap-2">
+                <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{dayGroup.dayString}</p>
+                  <div className="flex gap-2 items-center">
+                    <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}% of daily goal`}>
+                      <div className="flex text-gray-700">★★★★★</div>
+                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
+                        ★★★★★
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {item.type === 'deduction' ? '-' : '+'}{item.points}
-                      </p>
+                    <p className={`text-xs font-bold mr-2 ${dayGroup.totalPoints > 0 ? 'text-emerald-400' : dayGroup.totalPoints < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                      {dayGroup.totalPoints > 0 ? '+' : ''}{dayGroup.totalPoints} pts
+                    </p>
+                    <button title="Add points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center hover:bg-indigo-500/40 transition-colors"><PlusCircle className="w-4 h-4" /></button>
+                    <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center hover:bg-rose-500/40 transition-colors"><MinusCircle className="w-4 h-4" /></button>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {dayGroup.items?.map((item: any) => (
+                    <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
+                        {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
+                        {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                        <div>
+                          <p className="font-bold text-gray-200 text-base">{item.title}</p>
+                          {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          {item.type === 'deduction' ? '-' : '+'}{item.points}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Show More Days Button */}
+          {hasMoreDaily && (
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={handleShowMoreDaily}
+                disabled={loadingMoreDaily}
+                className="px-5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              >
+                {loadingMoreDaily ? "Fetching days..." : `Show More Days (${dailyHistory.length} of ${totalDailyDays})`}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Weekly History Tab */
+        <div className="flex flex-col gap-3 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {weeklyHistory.length === 0 ? (
+            <p className="text-gray-500 italic text-sm text-center py-6">No weekly history recorded yet.</p>
+          ) : (
+            weeklyHistory.map((week: any) => (
+              <div
+                key={week.weekKey}
+                className="bg-gray-950 p-4 rounded-2xl border border-gray-800/70 flex flex-col gap-2 hover:border-fuchsia-500/30 transition-all"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-fuchsia-500/20 text-fuchsia-300 flex items-center justify-center text-xs font-black shrink-0">
+                      📆
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white text-sm">{week.weekLabel}</h4>
+                        {week.isBestWeek && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black">
+                            ★ Top week
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-500">{week.itemsCount} total events</p>
                     </div>
                   </div>
-                ))}
+
+                  <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                    {week.diffPrevWeek !== undefined && (
+                      <span
+                        className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
+                          week.diffPrevWeek > 0
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : week.diffPrevWeek < 0
+                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                            : 'bg-gray-800 text-gray-500'
+                        }`}
+                      >
+                        {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek} vs prev
+                      </span>
+                    )}
+                    <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 to-pink-400">
+                      {week.totalPoints > 0 ? `+${week.totalPoints}` : week.totalPoints} pts
+                    </span>
+                  </div>
+                </div>
               </div>
+            ))
+          )}
+
+          {/* Show More Weeks Button */}
+          {hasMoreWeekly && (
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={handleShowMoreWeekly}
+                disabled={loadingMoreWeekly}
+                className="px-5 py-2 rounded-xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 hover:text-white border border-fuchsia-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              >
+                {loadingMoreWeekly ? "Fetching weeks..." : `Show More Weeks (${weeklyHistory.length} of ${totalWeeks})`}
+              </button>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
     </section>
   );
 
@@ -605,37 +744,120 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
-                {settings && (
-                  <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400 font-bold flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-fuchsia-400" />
-                        Weekly Goal
+                {/* Unlimited Weekly Progress & Comparisons (replaces Tiered Reward Levels) */}
+                <div className="flex flex-col gap-3 pt-4 border-t border-gray-800 mt-2 bg-gray-950/60 p-4 rounded-2xl border border-gray-800/60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-bold flex items-center gap-2 text-sm">
+                      <Zap className="w-4 h-4 text-fuchsia-400" />
+                      Weekly Progress
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">
+                      Resets Mon
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-400">
+                        {historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)}
                       </span>
-                      <span className="text-2xl font-black text-fuchsia-400">
-                        {activeStudent.weeklyPoints || 0} pts
-                      </span>
+                      <span className="text-xs font-bold text-gray-400 ml-1.5">pts this week</span>
                     </div>
-                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden relative">
-                      <div
-                        className="bg-gradient-to-r from-fuchsia-500 to-pink-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, ((activeStudent.weeklyPoints || 0) / (settings.weeklyTargetPoints || 5000)) * 100)}%` }}
-                      ></div>
-                      {/* Tier Markers if on tiered system */}
-                      {activeStudent.rewardSystem === 'tiered' && settings.tieredRewards?.map((tier: any, i: number) => {
-                        const pos = (tier.points / (settings.weeklyTargetPoints || 5000)) * 100;
-                        if (pos > 100) return null;
+                    {historyStats?.isNewRecord && (
+                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black animate-pulse">
+                        ★ Top week!
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Comparisons: vs Last Week & vs ★ Top week */}
+                  <div className="flex flex-col gap-2 pt-1">
+                    {/* vs Last Week */}
+                    <div className="bg-gray-900/90 p-3 rounded-xl border border-gray-800/80 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">vs. Last Week</span>
+                        <span className="text-[11px] text-gray-500">
+                          Last: <strong className="text-gray-300">{historyStats?.lastWeekPoints ?? 0} pts</strong>
+                        </span>
+                      </div>
+                      {(() => {
+                        const diff = historyStats?.diffLastWeek ?? 0;
+                        if (diff > 0) {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black">
+                              +{diff} pts ↗
+                            </span>
+                          );
+                        } else if (diff < 0) {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-black">
+                              {diff} pts ↘
+                            </span>
+                          );
+                        }
                         return (
-                          <div key={i} className="absolute top-0 bottom-0 w-1 bg-white/20" style={{ left: `${pos}%` }} title={`${tier.name} (${tier.points} pts)`}></div>
+                          <span className="px-2.5 py-0.5 rounded-lg bg-gray-800 text-gray-400 text-[11px] font-bold">
+                            Equal (0)
+                          </span>
                         );
-                      })}
+                      })()}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 font-bold">
-                      <span>{activeStudent.weeklyPoints || 0}</span>
-                      <span>{settings.weeklyTargetPoints || 5000}</span>
+
+                    {/* vs ★ Top week */}
+                    <div className="bg-gray-900/90 p-3 rounded-xl border border-gray-800/80 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                          vs. ★ Top week
+                        </span>
+                        <span className="text-[11px] text-gray-500">
+                          Top: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
+                          {historyStats?.bestWeekLabel && historyStats.bestWeekLabel !== "None" && (
+                            <span className="text-[9px] text-gray-500 block">{historyStats.bestWeekLabel}</span>
+                          )}
+                        </span>
+                      </div>
+                      {(() => {
+                        const diffBest = historyStats?.diffBestWeek ?? 0;
+                        if (historyStats?.isNewRecord) {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black">
+                              ★ Top week
+                            </span>
+                          );
+                        } else if (diffBest < 0) {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300 text-xs font-bold">
+                              {diffBest} pts vs top
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="px-2.5 py-0.5 rounded-lg bg-gray-800 text-gray-400 text-[11px] font-bold">
+                            0 pts
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
-                )}
+
+                  {/* Relative progress towards ★ Top week */}
+                  {historyStats && historyStats.bestWeekPoints > 0 && (
+                    <div className="flex flex-col gap-1 pt-1">
+                      <div className="w-full bg-gray-900 rounded-full h-2 border border-gray-800 overflow-hidden relative">
+                        <div
+                          className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, Math.max(3, (historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100))}%`
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-gray-500 font-bold px-0.5">
+                        <span>{((historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100).toFixed(0)}% of ★ Top week</span>
+                        <span>{historyStats.bestWeekPoints} pts</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {activeStudent && (
                   <div className="flex gap-2 w-full">
@@ -773,13 +995,13 @@ export default function TeacherDashboard() {
           </section>
 
           <div className="hidden md:block w-full">
-            {activeStudent && Object.keys(groupedHistory).length > 0 && renderDailyHistory()}
+            {activeStudent && renderDailyHistory()}
           </div>
         </div>
 
         {/* Daily History for Mobile (moves outside middle column) */}
         <div className="block md:hidden w-full order-3">
-          {activeStudent && Object.keys(groupedHistory).length > 0 && renderDailyHistory()}
+          {activeStudent && renderDailyHistory()}
         </div>
         {/* Right Sidebar */}
         {activeSession && (
