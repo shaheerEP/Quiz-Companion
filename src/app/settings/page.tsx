@@ -207,11 +207,11 @@ function AppleGroupedRow({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between px-4 py-3.5 gap-4 min-h-[52px] ${
+      className={`flex flex-wrap sm:flex-nowrap items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 gap-3 sm:gap-4 min-h-[52px] ${
         onClick ? "cursor-pointer hover:bg-white/[0.03] transition-colors" : ""
       }`}
     >
-      <div className="flex items-center gap-3.5 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         {icon && (
           <div
             className={`w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm ${iconBg}`}
@@ -220,11 +220,11 @@ function AppleGroupedRow({
           </div>
         )}
         <div className="flex flex-col min-w-0">
-          <span className="text-[14px] font-medium text-[#f5f5f7] tracking-tight truncate">
+          <span className="text-[13px] sm:text-[14px] font-medium text-[#f5f5f7] tracking-tight truncate">
             {title}
           </span>
           {subtitle && (
-            <span className="text-[12px] text-[#8e8e93] leading-tight">
+            <span className="text-[11px] sm:text-[12px] text-[#8e8e93] leading-tight">
               {subtitle}
             </span>
           )}
@@ -429,37 +429,37 @@ export default function SettingsPage() {
       )}
 
       {/* --- Liquid Glass Sticky Header Bar --- */}
-      <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#121214]/80 border-b border-white/[0.08] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white border border-white/10 shadow-sm">
+      <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#121214]/90 border-b border-white/[0.08] transition-all">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white border border-white/10 shadow-sm shrink-0">
               <Sliders className="w-4 h-4 text-[#0A84FF]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-[#8e8e93]">QuizCompanion</span>
+            <div className="min-w-0">
+              <div className="hidden xs:flex items-center gap-1.5 text-[11px] text-[#8e8e93]">
+                <span>QuizCompanion</span>
                 <span className="text-[10px] text-neutral-600">/</span>
-                <span className="text-xs font-semibold text-white">System Settings</span>
+                <span className="text-neutral-400 font-medium">Settings</span>
               </div>
-              <h1 className="text-lg font-bold text-white tracking-tight">
+              <h1 className="text-sm sm:text-lg font-bold text-white tracking-tight truncate">
                 {navItems.find((item) => item.id === activePane)?.label}
               </h1>
             </div>
           </div>
 
           {/* Right functional controls: Unsaved status and Save / Revert buttons */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {hasChanges && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>Unsaved Changes</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-semibold animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                <span className="hidden md:inline">Unsaved Changes</span>
               </div>
             )}
             {hasChanges && (
               <button
                 type="button"
                 onClick={handleRevert}
-                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8e8e93] hover:text-white bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 border border-white/10"
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8e8e93] hover:text-white bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 border border-white/10"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Revert</span>
@@ -469,20 +469,21 @@ export default function SettingsPage() {
               type="button"
               onClick={handleSave}
               disabled={loading || !hasChanges}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm ${
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 sm:gap-2 shadow-sm ${
                 hasChanges
                   ? "bg-[#0A84FF] hover:bg-[#0071e3] text-white shadow-[0_2px_12px_rgba(10,132,255,0.4)] active:scale-95"
                   : "bg-white/5 text-neutral-500 cursor-not-allowed border border-white/5"
               }`}
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{loading ? "Saving…" : "Save Changes"}</span>
+              <span>{loading ? "Saving…" : "Save"}</span>
+              <span className="hidden sm:inline">{!loading && " Changes"}</span>
             </button>
           </div>
         </div>
 
         {/* Mobile Horizontal Pane Selector */}
-        <div className="lg:hidden px-4 pb-2.5 overflow-x-auto flex items-center gap-2 scrollbar-none">
+        <div className="lg:hidden px-3 sm:px-4 pb-2.5 overflow-x-auto flex items-center gap-2 no-scrollbar scroll-smooth">
           {navItems.map((item) => {
             const isActive = activePane === item.id;
             return (
@@ -490,16 +491,16 @@ export default function SettingsPage() {
                 key={item.id}
                 type="button"
                 onClick={() => setActivePane(item.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all ${
                   isActive
-                    ? "bg-[#0A84FF] text-white shadow-sm"
+                    ? "bg-[#0A84FF] text-white shadow-sm font-semibold"
                     : "bg-white/5 text-[#8e8e93] hover:text-white border border-white/5"
                 }`}
               >
                 <span>{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                       isActive ? "bg-black/30 text-white" : "bg-white/10 text-neutral-400"
                     }`}
                   >
@@ -624,67 +625,123 @@ export default function SettingsPage() {
                   filteredStudents.map((student) => (
                     <div
                       key={student._id}
-                      className="flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.02] transition-colors group"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 gap-3 hover:bg-white/[0.02] transition-colors"
                     >
-                      <div
-                        onClick={() => setEditingStudent(student)}
-                        className="flex items-center gap-3.5 cursor-pointer min-w-0 flex-1"
-                      >
-                        {student.profileImageUrl ? (
-                          <img
-                            src={student.profileImageUrl}
-                            alt={student.name}
-                            className="w-10 h-10 rounded-full object-cover border border-white/10"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-                            {student.name ? student.name.charAt(0).toUpperCase() : "S"}
-                          </div>
-                        )}
-                        <div className="flex flex-col min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-semibold text-white group-hover:text-[#0A84FF] transition-colors truncate">
-                              {student.name}
-                            </span>
-                            {student.revisionEnabled && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                                Revision Active
+                      {/* Top / Main Info Row */}
+                      <div className="flex items-start sm:items-center justify-between gap-3 min-w-0 flex-1">
+                        <div
+                          onClick={() => setEditingStudent(student)}
+                          className="flex items-center gap-3 cursor-pointer min-w-0 flex-1 group"
+                        >
+                          {student.profileImageUrl ? (
+                            <img
+                              src={student.profileImageUrl}
+                              alt={student.name}
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover border border-white/15 shrink-0 shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-sm sm:text-base shrink-0 shadow-sm">
+                              {student.name ? student.name.charAt(0).toUpperCase() : "S"}
+                            </div>
+                          )}
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <span className="text-sm sm:text-[15px] font-bold text-white group-hover:text-[#0A84FF] transition-colors truncate">
+                                {student.name}
                               </span>
-                            )}
-                            {student.mannersEnabled && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                ⭐ Manners
+                              {student.revisionEnabled && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
+                                  📖 Revision Active
+                                </span>
+                              )}
+                              {student.mannersEnabled && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                                  ⭐ Manners
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Desktop inline badges */}
+                            <div className="hidden md:flex items-center gap-2 text-xs text-[#8e8e93] mt-1 flex-wrap">
+                              <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">
+                                <span className="text-[10px] text-neutral-400">Pass:</span>
+                                <code className="text-neutral-200 font-mono text-[11px]">{student.password}</code>
                               </span>
-                            )}
+                              <span className="flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20 text-emerald-400 font-semibold">
+                                <span>💎</span> {(student.pointsBalance ?? 0).toLocaleString()} pts
+                              </span>
+                              <span className="flex items-center gap-1 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20 text-blue-400 font-semibold">
+                                <span>🏆</span> {(student.lifetimePoints ?? 0).toLocaleString()} pts
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-[#8e8e93] mt-0.5">
-                            <span>
-                              Password:{" "}
-                              <code className="bg-white/5 px-1.5 py-0.5 rounded text-neutral-300 font-mono text-[11px]">
-                                {student.password}
-                              </code>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Balance:{" "}
-                              <strong className="text-[#34C759] font-semibold">
-                                {student.pointsBalance ?? 0} pts
-                              </strong>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Lifetime:{" "}
-                              <strong className="text-[#0A84FF] font-semibold">
-                                {student.lifetimePoints ?? 0} pts
-                              </strong>
-                            </span>
-                          </div>
+                        </div>
+
+                        {/* Mobile action buttons on the top right */}
+                        <div className="flex sm:hidden items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const token = btoa(student._id.toString());
+                              const url = `${window.location.origin}/api/auth/magic?token=${token}`;
+                              navigator.clipboard.writeText(url);
+                              showToast(`Magic login link for ${student.name} copied!`);
+                            }}
+                            title="Copy Student Login Link"
+                            className="w-8 h-8 rounded-xl text-[#8e8e93] hover:text-white bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                          >
+                            <LinkIcon className="w-3.5 h-3.5" />
+                          </button>
+                          {student.mannersEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const token = btoa(student._id.toString());
+                                const url = `${window.location.origin}/manners/${token}`;
+                                navigator.clipboard.writeText(url);
+                                showToast(`Manners sheet link copied!`);
+                              }}
+                              title="Copy Manners Link"
+                              className="w-8 h-8 rounded-xl text-amber-400 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setEditingStudent(student)}
+                            title="Edit Student"
+                            className="w-8 h-8 rounded-xl text-[#8e8e93] hover:text-white bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStudent(student._id)}
+                            title="Delete Student"
+                            className="w-8 h-8 rounded-xl text-rose-500/70 hover:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 flex items-center justify-center transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
-                      {/* Quick Action Badges & Buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {/* Copy Magic Login Link */}
+                      {/* Mobile / Tablet Stats Chips (second row with no overlap) */}
+                      <div className="flex md:hidden items-center gap-2 flex-wrap pt-0.5">
+                        <span className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-xl border border-white/10 text-xs">
+                          <span className="text-[10px] text-neutral-400">Pass:</span>
+                          <code className="text-neutral-200 font-mono text-[11px] font-bold">{student.password}</code>
+                        </span>
+                        <span className="flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <span>💎</span> {(student.pointsBalance ?? 0).toLocaleString()} pts
+                        </span>
+                        <span className="flex items-center gap-1 bg-blue-500/10 px-2.5 py-1 rounded-xl border border-blue-500/20 text-blue-400 text-xs font-bold">
+                          <span>🏆</span> {(student.lifetimePoints ?? 0).toLocaleString()} pts
+                        </span>
+                      </div>
+
+                      {/* Desktop Action Buttons */}
+                      <div className="hidden sm:flex items-center gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -694,12 +751,10 @@ export default function SettingsPage() {
                             showToast(`Magic login link for ${student.name} copied!`);
                           }}
                           title="Copy Student Login Link"
-                          className="p-2 rounded-lg text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
+                          className="p-2 rounded-xl text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
                         >
                           <LinkIcon className="w-4 h-4" />
                         </button>
-
-                        {/* Copy Manners Link */}
                         {student.mannersEnabled && (
                           <button
                             type="button"
@@ -710,28 +765,24 @@ export default function SettingsPage() {
                               showToast(`Manners sheet link for parents copied!`);
                             }}
                             title="Copy Manners Link for Parents"
-                            className="p-2 rounded-lg text-amber-400 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
+                            className="p-2 rounded-xl text-amber-400 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
                           >
                             <Sparkles className="w-4 h-4" />
                           </button>
                         )}
-
-                        {/* Edit Button */}
                         <button
                           type="button"
                           onClick={() => setEditingStudent(student)}
                           title="Edit Student Profile"
-                          className="p-2 rounded-lg text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
+                          className="p-2 rounded-xl text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-
-                        {/* Delete Button */}
                         <button
                           type="button"
                           onClick={() => handleDeleteStudent(student._id)}
                           title="Delete Student"
-                          className="p-2 rounded-lg text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          className="p-2 rounded-xl text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1482,8 +1533,8 @@ export default function SettingsPage() {
             <div className="p-6 overflow-y-auto flex flex-col gap-6">
               {/* Avatar & Basic Credentials */}
               <AppleGroupedSection title="Student Identity">
-                <div className="p-4 flex items-center gap-5">
-                  <div className="relative group shrink-0">
+                <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+                  <div className="relative group shrink-0 self-center sm:self-auto">
                     {editingStudent.profileImageUrl ? (
                       <img
                         src={editingStudent.profileImageUrl}
@@ -1533,7 +1584,7 @@ export default function SettingsPage() {
                     </label>
                   </div>
 
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                     <div>
                       <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
                         Full Name
@@ -1563,7 +1614,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="px-4 py-3 flex items-center justify-between">
+                <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <span className="text-xs text-neutral-400">Custom Avatar URL</span>
                   <input
                     type="text"
@@ -1575,7 +1626,7 @@ export default function SettingsPage() {
                       })
                     }
                     placeholder="https://…"
-                    className="w-64 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-neutral-300 font-mono outline-none focus:border-[#0A84FF]"
+                    className="w-full sm:w-64 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-neutral-300 font-mono outline-none focus:border-[#0A84FF]"
                   />
                 </div>
               </AppleGroupedSection>

@@ -488,36 +488,41 @@ export default function TeacherDashboard() {
   }, [activeStudent?._id, activeStudent?.lifetimePoints, activeStudent?.rewardSystem, settings?.bundleLimit, prevBundles]);
 
   const renderDailyHistory = () => (
-    <section className="w-full bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-6 xl:p-8 flex flex-col gap-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-4">
-        <div className="flex items-center gap-2">
-          <History className="w-6 h-6 text-indigo-400" />
-          <h3 className="text-xl font-black text-white">Score History</h3>
+    <section className="w-full bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-[2.5rem] shadow-xl p-6 xl:p-8 flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <History className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-white">Score History</h3>
+            <p className="text-[11px] text-slate-400">Past quiz rounds and rewards</p>
+          </div>
         </div>
 
         {/* Segmented Tab Controls */}
-        <div className="inline-flex p-1 bg-gray-950 border border-white/10 rounded-2xl self-start sm:self-auto">
+        <div className="inline-flex p-1 bg-black/40 border border-white/10 rounded-2xl self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveHistoryTab("daily")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "daily"
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                : "text-gray-400 hover:text-white"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30"
+                : "text-slate-400 hover:text-white"
             }`}
           >
-            Daily ({totalDailyDays})
+            📅 Daily ({totalDailyDays})
           </button>
           <button
             type="button"
             onClick={() => setActiveHistoryTab("weekly")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "weekly"
-                ? "bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/20"
-                : "text-gray-400 hover:text-white"
+                ? "bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/30"
+                : "text-slate-400 hover:text-white"
             }`}
           >
-            Weekly ({totalWeeks})
+            🗓️ Weekly ({totalWeeks})
           </button>
         </div>
       </div>
@@ -525,40 +530,40 @@ export default function TeacherDashboard() {
       {activeHistoryTab === "daily" ? (
         <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
           {dailyHistory.length === 0 ? (
-            <p className="text-gray-500 italic text-sm text-center py-6">No daily history recorded yet.</p>
+            <p className="text-slate-500 italic text-sm text-center py-6">No daily history recorded yet.</p>
           ) : (
             dailyHistory.map((dayGroup) => (
               <div key={dayGroup.dayString} className="flex flex-col gap-2">
-                <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500/50">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{dayGroup.dayString}</p>
+                <div className="flex justify-between items-center pl-2.5 border-l-2 border-indigo-500/60">
+                  <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">{dayGroup.dayString}</p>
                   <div className="flex gap-2 items-center">
                     <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}% of daily goal`}>
                       <div className="flex text-gray-700">★★★★★</div>
-                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
+                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_6px_rgba(250,204,21,0.85)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
                         ★★★★★
                       </div>
                     </div>
-                    <p className={`text-xs font-bold mr-2 ${dayGroup.totalPoints > 0 ? 'text-emerald-400' : dayGroup.totalPoints < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
+                    <p className={`text-xs font-black mr-1 ${dayGroup.totalPoints > 0 ? 'text-emerald-400' : dayGroup.totalPoints < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                       {dayGroup.totalPoints > 0 ? '+' : ''}{dayGroup.totalPoints} pts
                     </p>
-                    <button title="Add points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center hover:bg-indigo-500/40 transition-colors"><PlusCircle className="w-4 h-4" /></button>
-                    <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center hover:bg-rose-500/40 transition-colors"><MinusCircle className="w-4 h-4" /></button>
+                    <button title="Add points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 hover:text-white hover:bg-indigo-500 rounded-lg flex items-center justify-center transition-colors"><PlusCircle className="w-3.5 h-3.5" /></button>
+                    <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 hover:text-white hover:bg-rose-500 rounded-lg flex items-center justify-center transition-colors"><MinusCircle className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   {dayGroup.items?.map((item: any) => (
-                    <div key={item._id} className="flex justify-between items-center bg-gray-950 p-4 rounded-2xl border border-gray-800/50 hover:bg-gray-800/50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        {item.type === 'quiz' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-5 h-5" /></div>}
-                        {item.type === 'bonus' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-5 h-5" /></div>}
-                        {item.type === 'deduction' && <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-5 h-5" /></div>}
+                    <div key={item._id} className="flex justify-between items-center bg-slate-950/60 p-3.5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="flex items-center gap-3.5">
+                        {item.type === 'quiz' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-4 h-4" /></div>}
+                        {item.type === 'bonus' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-4 h-4" /></div>}
+                        {item.type === 'deduction' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-4 h-4" /></div>}
                         <div>
-                          <p className="font-bold text-gray-200 text-base">{item.title}</p>
-                          {item.details && <p className="text-xs text-gray-500 font-medium">{item.details}</p>}
+                          <p className="font-bold text-white text-sm sm:text-base">{item.title}</p>
+                          {item.details && <p className="text-xs text-slate-400 font-medium">{item.details}</p>}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className={`font-black text-xl ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        <p className={`font-black text-lg ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
                           {item.type === 'deduction' ? '-' : '+'}{item.points}
                         </p>
                       </div>
@@ -576,7 +581,7 @@ export default function TeacherDashboard() {
                 type="button"
                 onClick={handleShowMoreDaily}
                 disabled={loadingMoreDaily}
-                className="px-5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
               >
                 {loadingMoreDaily ? "Fetching days..." : `Show More Days (${dailyHistory.length} of ${totalDailyDays})`}
               </button>
@@ -587,16 +592,16 @@ export default function TeacherDashboard() {
         /* Weekly History Tab */
         <div className="flex flex-col gap-3 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
           {weeklyHistory.length === 0 ? (
-            <p className="text-gray-500 italic text-sm text-center py-6">No weekly history recorded yet.</p>
+            <p className="text-slate-500 italic text-sm text-center py-6">No weekly history recorded yet.</p>
           ) : (
             weeklyHistory.map((week: any) => (
               <div
                 key={week.weekKey}
-                className="bg-gray-950 p-4 rounded-2xl border border-gray-800/70 flex flex-col gap-2 hover:border-fuchsia-500/30 transition-all"
+                className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-2 hover:border-fuchsia-500/30 transition-all"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-fuchsia-500/20 text-fuchsia-300 flex items-center justify-center text-xs font-black shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 text-fuchsia-300 flex items-center justify-center text-xs font-black shrink-0">
                       📆
                     </div>
                     <div>
@@ -608,7 +613,7 @@ export default function TeacherDashboard() {
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-500">{week.itemsCount} total events</p>
+                      <p className="text-[11px] text-slate-400">{week.itemsCount} total events</p>
                     </div>
                   </div>
 
@@ -620,7 +625,7 @@ export default function TeacherDashboard() {
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : week.diffPrevWeek < 0
                             ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                            : 'bg-gray-800 text-gray-500'
+                            : 'bg-slate-800 text-slate-400'
                         }`}
                       >
                         {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek} vs prev
@@ -642,7 +647,7 @@ export default function TeacherDashboard() {
                 type="button"
                 onClick={handleShowMoreWeekly}
                 disabled={loadingMoreWeekly}
-                className="px-5 py-2 rounded-xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 hover:text-white border border-fuchsia-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-2xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 hover:text-white border border-fuchsia-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
               >
                 {loadingMoreWeekly ? "Fetching weeks..." : `Show More Weeks (${weeklyHistory.length} of ${totalWeeks})`}
               </button>
@@ -654,88 +659,131 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-gray-100 flex flex-col relative selection:bg-indigo-500 selection:text-white">
       <Navbar />
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 p-4 md:p-6 gap-4 md:gap-6 max-w-[1600px] mx-auto w-full pb-28 md:pb-6">
+      {/* Ambient background glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-emerald-600/10 rounded-full blur-[140px]" />
+      </div>
+
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 p-3 sm:p-5 md:p-6 gap-4 md:gap-6 max-w-[1600px] mx-auto w-full pb-28 md:pb-6 relative z-10">
+        {/* Left Sidebar: Student Profile & Gamification Stats */}
         <aside className={`w-full md:col-span-1 lg:col-span-4 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit ${activeStudent ? 'order-2' : 'order-1'} md:order-1`}>
+          <div className="bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-indigo-950/40 border border-white/10 p-5 sm:p-6 rounded-[2.5rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-white tracking-tight">Student Champion</h2>
+                  <p className="text-[11px] text-indigo-300 font-semibold">Active Quiz Player</p>
+                </div>
+              </div>
+              {activeStudent && (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center gap-1 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live
+                </span>
+              )}
+            </div>
 
-
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-            <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
-              <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
-              Student Profile
-            </h2>
-            <select
-              className="w-full bg-gray-950 border border-gray-800 text-white font-bold rounded-xl px-4 py-4 outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none shadow-inner"
-              onChange={handleStudentChange}
-              value={activeStudent?._id || ""}
-            >
-              <option value="">Select a student...</option>
-              {students.map(s => (
-                <option key={s._id} value={s._id}>{s.name}</option>
-              ))}
-            </select>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Select Challenger
+              </label>
+              <select
+                className="w-full bg-slate-950/90 border border-white/10 text-white font-bold rounded-2xl px-4 py-3.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer shadow-inner appearance-none text-sm"
+                onChange={handleStudentChange}
+                value={activeStudent?._id || ""}
+              >
+                <option value="">Choose a student...</option>
+                {students.map(s => (
+                  <option key={s._id} value={s._id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
 
             {activeStudent && (
-              <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col gap-5">
-                <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50">
-                  <span className="text-gray-400 font-bold">Points Balance</span>
-                  <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-500">
-                    {activeStudent.pointsBalance?.toLocaleString() || 0}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between px-4 mt-2">
-                  <span className="text-gray-500 font-medium">Lifetime Points</span>
-                  <span className="text-xl font-bold text-gray-300">{activeStudent.lifetimePoints?.toLocaleString() || 0}</span>
+              <div className="pt-2 flex flex-col gap-4">
+                {/* Points Treasure */}
+                <div className="flex items-center justify-between bg-gradient-to-r from-emerald-950/40 via-slate-950/70 to-slate-950/70 p-4 rounded-2xl border border-emerald-500/20 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">
+                      💎
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Points Balance</span>
+                      <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-green-300">
+                        {activeStudent.pointsBalance?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800/50 mt-2">
-                  <span className="text-gray-400 font-bold">Class Time (Read-Only)</span>
+                {/* Lifetime Points */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/50 rounded-2xl border border-white/5">
+                  <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" /> Lifetime Earned
+                  </span>
+                  <span className="text-sm font-black text-white">{activeStudent.lifetimePoints?.toLocaleString() || 0} pts</span>
+                </div>
+
+                {/* Class Time Toggle */}
+                <div className="flex items-center justify-between bg-slate-950/50 p-3.5 rounded-2xl border border-white/5">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <span>📚</span> Class Quiz Mode
+                    </span>
+                    <span className="text-[10px] text-slate-500">{activeStudent.isClassTime ? "Student restricted" : "Free play active"}</span>
+                  </div>
                   <button
+                    type="button"
                     onClick={handleToggleClassTime}
-                    className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-gray-700'}`}
+                    className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-slate-700'}`}
                   >
                     <div className={`w-6 h-6 bg-white rounded-full transition-transform shadow-md ${activeStudent.isClassTime ? 'translate-x-6' : 'translate-x-0'}`}></div>
                   </button>
                 </div>
 
-
-
+                {/* Game / Revision Links */}
                 <a
                   href={`/world/${activeStudent._id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-bold py-3 rounded-xl border border-blue-500/30 transition-all flex justify-center items-center gap-2 mt-2"
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-all flex justify-center items-center gap-2 text-sm"
                 >
-                  <Globe className="w-5 h-5" /> Explore Built World
+                  <Globe className="w-4 h-4" /> Explore Built World 🌍
                 </a>
 
                 {activeStudent.revisionEnabled && (
                   <Link
                     href={`/revision?studentId=${activeStudent._id}`}
-                    className="w-full bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 font-bold py-3 rounded-xl border border-violet-500/30 transition-all flex justify-center items-center gap-2"
+                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex justify-center items-center gap-2 text-sm"
                   >
-                    <BookOpen className="w-5 h-5" /> Revision Cards
+                    <BookOpen className="w-4 h-4" /> Revision Cards 📖
                   </Link>
                 )}
 
+                {/* Today's Manners */}
                 {activeStudent.mannersEnabled && (
-                  <div className="flex flex-col gap-2 pt-4 border-t border-gray-800 mt-2">
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-400 font-bold flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-400" />
+                      <span className="text-xs text-slate-300 font-bold flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
                         Today's Manners
                       </span>
-                      <button onClick={() => setShowMannersHistory(true)} className="text-xs text-gray-500 font-bold hover:text-white transition-colors">History</button>
+                      <button onClick={() => setShowMannersHistory(true)} className="text-[11px] text-amber-400 font-bold hover:underline">History &rarr;</button>
                     </div>
-                    <div className="relative inline-block text-4xl text-center mt-2">
-                      <div className="flex justify-center text-gray-800">★★★★★</div>
+                    <div className="relative inline-block text-3xl text-center py-1">
+                      <div className="flex justify-center text-slate-800">★★★★★</div>
                       {(() => {
                         const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
                         const pct = todayLog ? todayLog.percentage : 0;
                         return (
-                          <div className="flex text-yellow-400 absolute top-0 left-0 right-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] mx-auto justify-center" style={{ width: `${pct}%`, marginLeft: 'calc(50% - 60px)' }}>
+                          <div className="flex text-yellow-400 absolute top-0 left-0 right-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.85)] mx-auto justify-center" style={{ width: `${pct}%`, marginLeft: 'calc(50% - 50px)' }}>
                             ★★★★★
                           </div>
                         );
@@ -744,24 +792,23 @@ export default function TeacherDashboard() {
                   </div>
                 )}
 
-                {/* Unlimited Weekly Progress & Comparisons (replaces Tiered Reward Levels) */}
-                <div className="flex flex-col gap-3 pt-4 border-t border-gray-800 mt-2 bg-gray-950/60 p-4 rounded-2xl border border-gray-800/60">
+                {/* Unlimited Weekly Progress & Comparisons */}
+                <div className="flex flex-col gap-3 pt-3 border-t border-white/10 bg-slate-950/60 p-4 rounded-2xl border border-white/5">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300 font-bold flex items-center gap-2 text-sm">
-                      <Zap className="w-4 h-4 text-fuchsia-400" />
-                      Weekly Progress
+                    <span className="text-white font-bold flex items-center gap-1.5 text-xs">
+                      <span>🚀</span> Weekly Progress
                     </span>
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">
+                    <span className="text-[9px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-white/5">
                       Resets Mon
                     </span>
                   </div>
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-400">
+                      <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-300 to-rose-400">
                         {historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)}
                       </span>
-                      <span className="text-xs font-bold text-gray-400 ml-1.5">pts this week</span>
+                      <span className="text-xs font-bold text-slate-400 ml-1.5">pts this week</span>
                     </div>
                     {historyStats?.isNewRecord && (
                       <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black animate-pulse">
@@ -771,13 +818,13 @@ export default function TeacherDashboard() {
                   </div>
 
                   {/* Comparisons: vs Last Week & vs ★ Top week */}
-                  <div className="flex flex-col gap-2 pt-1">
+                  <div className="flex flex-col gap-2 pt-0.5">
                     {/* vs Last Week */}
-                    <div className="bg-gray-900/90 p-3 rounded-xl border border-gray-800/80 flex items-center justify-between">
+                    <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">vs. Last Week</span>
-                        <span className="text-[11px] text-gray-500">
-                          Last: <strong className="text-gray-300">{historyStats?.lastWeekPoints ?? 0} pts</strong>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">vs. Last Week</span>
+                        <span className="text-[10px] text-slate-500">
+                          Last: <strong className="text-slate-300">{historyStats?.lastWeekPoints ?? 0} pts</strong>
                         </span>
                       </div>
                       {(() => {
@@ -796,7 +843,7 @@ export default function TeacherDashboard() {
                           );
                         }
                         return (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-gray-800 text-gray-400 text-[11px] font-bold">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] font-bold">
                             Equal (0)
                           </span>
                         );
@@ -804,15 +851,15 @@ export default function TeacherDashboard() {
                     </div>
 
                     {/* vs ★ Top week */}
-                    <div className="bg-gray-900/90 p-3 rounded-xl border border-gray-800/80 flex items-center justify-between">
+                    <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                        <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
                           vs. ★ Top week
                         </span>
-                        <span className="text-[11px] text-gray-500">
+                        <span className="text-[10px] text-slate-500">
                           Top: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
                           {historyStats?.bestWeekLabel && historyStats.bestWeekLabel !== "None" && (
-                            <span className="text-[9px] text-gray-500 block">{historyStats.bestWeekLabel}</span>
+                            <span className="text-[9px] text-slate-500 block">{historyStats.bestWeekLabel}</span>
                           )}
                         </span>
                       </div>
@@ -832,7 +879,7 @@ export default function TeacherDashboard() {
                           );
                         }
                         return (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-gray-800 text-gray-400 text-[11px] font-bold">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] font-bold">
                             0 pts
                           </span>
                         );
@@ -843,7 +890,7 @@ export default function TeacherDashboard() {
                   {/* Relative progress towards ★ Top week */}
                   {historyStats && historyStats.bestWeekPoints > 0 && (
                     <div className="flex flex-col gap-1 pt-1">
-                      <div className="w-full bg-gray-900 rounded-full h-2 border border-gray-800 overflow-hidden relative">
+                      <div className="w-full bg-slate-900 rounded-full h-2 border border-white/5 overflow-hidden relative">
                         <div
                           className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
                           style={{
@@ -851,7 +898,7 @@ export default function TeacherDashboard() {
                           }}
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] text-gray-500 font-bold px-0.5">
+                      <div className="flex justify-between text-[10px] text-slate-500 font-bold px-0.5">
                         <span>{((historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100).toFixed(0)}% of ★ Top week</span>
                         <span>{historyStats.bestWeekPoints} pts</span>
                       </div>
@@ -859,124 +906,153 @@ export default function TeacherDashboard() {
                   )}
                 </div>
 
-                {activeStudent && (
-                  <div className="flex gap-2 w-full">
-                    <button
-                      onClick={handleAddBonus}
-                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-2.5 px-2 text-sm rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-1.5"
-                    >
-                      <PlusCircle className="w-4 h-4" /> Add Points
-                    </button>
-                    <button
-                      onClick={handleDeductPoints}
-                      className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-2.5 px-2 text-sm rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-1.5"
-                    >
-                      <MinusCircle className="w-4 h-4" /> Deduct
-                    </button>
-                  </div>
-                )}
+                {/* Quick Add / Deduct Points */}
+                <div className="flex gap-2 w-full pt-1">
+                  <button
+                    onClick={handleAddBonus}
+                    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-3 text-xs sm:text-sm rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex justify-center items-center gap-1.5 active:scale-95"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Add Points 🌟
+                  </button>
+                  <button
+                    onClick={handleDeductPoints}
+                    className="flex-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold py-3 px-3 text-xs sm:text-sm rounded-2xl border border-rose-500/25 transition-all flex justify-center items-center gap-1.5 active:scale-95"
+                  >
+                    <MinusCircle className="w-4 h-4" /> Deduct
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </aside>
 
-        {/* Main Interaction Area */}
+        {/* Main Interaction Area: Quiz Arena */}
         <div className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex flex-col gap-6 ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
-          <section className="w-full flex flex-col items-center justify-center bg-gray-900 border border-gray-800 rounded-[2rem] shadow-lg p-8 relative overflow-hidden min-h-[400px] md:min-h-[500px]">
+          <section className="w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900/90 via-indigo-950/30 to-purple-950/20 border border-white/10 rounded-[2.5rem] shadow-2xl p-6 sm:p-8 relative overflow-hidden min-h-[420px] md:min-h-[520px]">
+            {/* Ambient Background Glows */}
+            <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-500/15 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-500/15 rounded-full blur-[100px] pointer-events-none" />
+
             {!activeStudent ? (
-              <div className="text-center text-gray-500 flex flex-col items-center max-w-sm">
-                <div className="w-32 h-32 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-gray-700/50">
-                  <User className="w-16 h-16 text-gray-600" />
+              <div className="text-center text-slate-400 flex flex-col items-center max-w-md z-10 py-10">
+                <div className="w-28 h-28 bg-gradient-to-tr from-indigo-600/30 to-purple-600/30 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/30 shadow-xl shadow-indigo-500/10">
+                  <span className="text-5xl">🎯</span>
                 </div>
-                <h3 className="text-2xl font-black text-gray-300 mb-2">Teacher Dashboard</h3>
-                <p className="text-lg font-medium text-gray-500">Select a student from the sidebar to begin the live class quiz session.</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">Quiz Time Arena! 🚀</h3>
+                <p className="text-sm sm:text-base font-medium text-slate-400 leading-relaxed">
+                  Select a student champion from the left panel to begin today's live quiz round and earn stars!
+                </p>
               </div>
             ) : (
-              <div className="w-full flex flex-col h-full items-center justify-center gap-8">
+              <div className="w-full flex flex-col h-full items-center justify-center gap-6 sm:gap-8 z-10">
+                {/* Desktop Student Header */}
                 <div className="w-full flex-col hidden md:flex items-start">
                   <div className="flex justify-between items-center w-full mb-4">
-                    <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Active Student</p>
-                    <div className="flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-xl border border-indigo-500/20 shadow-inner">
-                      <Zap className="w-4 h-4 text-indigo-400" />
-                      <span className="text-indigo-400 font-bold">Today's Points: </span>
-                      <span className="text-xl font-black text-indigo-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider">
+                      <span>🌟</span> Active Challenger
+                    </div>
+                    <div className="flex items-center gap-2 bg-emerald-500/15 px-4 py-2 rounded-2xl border border-emerald-500/30 shadow-inner">
+                      <Zap className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-300 font-bold text-sm">Today's Points: </span>
+                      <span className="text-xl font-black text-emerald-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row items-center gap-10">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl relative z-10">
+
+                  <div className="flex items-center gap-8 w-full">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-indigo-400/60 bg-slate-800 flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.35)] relative z-10">
                         {activeStudent.profileImageUrl ? (
                           <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
+                          <User className="w-16 h-16 md:w-20 md:h-20 text-slate-400" />
                         )}
                       </div>
 
                       {/* 5 Star Daily Fill */}
                       <div className="relative inline-block text-3xl md:text-4xl">
-                        <div className="flex text-gray-700">★★★★★</div>
-                        <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}>
+                        <div className="flex text-slate-800">★★★★★</div>
+                        <div
+                          className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+                          style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
+                        >
                           ★★★★★
                         </div>
                       </div>
                     </div>
-                    <h1 className="text-5xl lg:text-8xl font-black text-white tracking-tight capitalize drop-shadow-lg text-center md:text-left mt-6 md:mt-0">{activeStudent.name}</h1>
+
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-300">Ready to score</span>
+                      <h1 className="text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-amber-200 tracking-tight capitalize drop-shadow-md">
+                        {activeStudent.name}
+                      </h1>
+                    </div>
                   </div>
                 </div>
 
+                {/* Mobile Student Header */}
                 <div className="w-full md:hidden flex flex-col items-center">
-                  <div className="flex flex-col items-center gap-2 mb-4">
-                    <p className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Active Student</p>
-                    <div className="flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-xl border border-indigo-500/20 shadow-inner">
-                      <Zap className="w-4 h-4 text-indigo-400" />
-                      <span className="text-indigo-400 font-bold">Today's Points: </span>
-                      <span className="text-xl font-black text-indigo-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
+                  <div className="flex justify-between items-center w-full mb-3 gap-2">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold">
+                      <span>🌟</span> Challenger
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-emerald-500/15 px-3 py-1 rounded-xl border border-emerald-500/30">
+                      <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-300 text-xs font-bold">Today: </span>
+                      <span className="text-base font-black text-emerald-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-center gap-6 mt-4">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-32 h-32 rounded-full overflow-hidden border-[4px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-xl relative z-10">
-                        {activeStudent.profileImageUrl ? (
-                          <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-16 h-16 text-gray-500" />
-                        )}
-                      </div>
 
-                      {/* 5 Star Daily Fill (Mobile) */}
-                      <div className="relative inline-block text-4xl mt-2">
-                        <div className="flex text-gray-700">★★★★★</div>
-                        <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}>
-                          ★★★★★
-                        </div>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-400/60 bg-slate-800 flex items-center justify-center shadow-xl relative z-10">
+                      {activeStudent.profileImageUrl ? (
+                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-14 h-14 text-slate-400" />
+                      )}
+                    </div>
+
+                    <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md text-center">
+                      {activeStudent.name}
+                    </h1>
+
+                    {/* 5 Star Daily Fill (Mobile) */}
+                    <div className="relative inline-block text-3xl">
+                      <div className="flex text-slate-800">★★★★★</div>
+                      <div
+                        className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+                        style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
+                      >
+                        ★★★★★
                       </div>
                     </div>
-                    <h1 className="text-5xl font-black text-white tracking-tight capitalize drop-shadow-lg">{activeStudent.name}</h1>
                   </div>
                 </div>
-                <div className="flex flex-col items-center w-full mt-4 gap-4">
-                  <div className="flex bg-gray-800/60 rounded-xl p-1 border border-gray-700/50">
+
+                {/* Timer Controls & Display */}
+                <div className="flex flex-col items-center w-full mt-2 gap-4">
+                  <div className="flex bg-black/40 rounded-2xl p-1 border border-white/10 shadow-inner">
                     <button
                       onClick={() => setTimerTab('quiz')}
-                      className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
                         timerTab === 'quiz'
-                          ? 'bg-gray-700 text-white shadow-md'
-                          : 'text-gray-400 hover:text-gray-200'
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Activity className="w-4 h-4" /> Quiz Timer
+                      <Activity className="w-4 h-4" /> ⚡ Quiz Stopwatch
                     </button>
                     <button
                       onClick={() => setTimerTab('countdown')}
-                      className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
                         timerTab === 'countdown'
-                          ? 'bg-violet-500/30 text-violet-300 shadow-md'
-                          : 'text-gray-400 hover:text-gray-200'
+                          ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Timer className="w-4 h-4" /> Countdown
+                      <Timer className="w-4 h-4" /> ⏳ Countdown
                     </button>
                   </div>
+
                   {timerTab === 'quiz' ? (
                     <Stopwatch
                       key={resetTimerKey}
@@ -1003,53 +1079,53 @@ export default function TeacherDashboard() {
         <div className="block md:hidden w-full order-3">
           {activeStudent && renderDailyHistory()}
         </div>
+
         {/* Right Sidebar */}
         {activeSession && (
           <aside className="w-full md:col-span-2 lg:col-span-12 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit order-3">
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-              <h2 className="text-xl font-black text-gray-200 mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <div className="bg-rose-500/20 p-2 rounded-lg"><Activity className="w-5 h-5 text-rose-400" /></div>
-                Live Session
+            <div className="bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-rose-950/25 border border-white/10 p-5 sm:p-6 rounded-[2.5rem] shadow-xl">
+              <h2 className="text-base font-black text-white mb-5 flex items-center gap-2.5 border-b border-white/10 pb-4">
+                <div className="bg-rose-500/20 p-2 rounded-xl text-rose-400"><Activity className="w-4 h-4" /></div>
+                Live Quiz Mission 🎯
               </h2>
 
               <div className="flex flex-col gap-4">
-
-
-                <div className="bg-gray-950 p-5 rounded-2xl border border-gray-800/50 shadow-inner">
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Avg. Speed</p>
-                  <p className="text-4xl font-black text-indigo-400 flex items-center gap-2">
-                    <Zap className="w-7 h-7 text-indigo-500" />
+                <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 shadow-inner">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <span>⚡</span> Average Speed
+                  </p>
+                  <p className="text-3xl sm:text-4xl font-black text-indigo-400 flex items-center gap-2">
+                    <Zap className="w-6 h-6 text-indigo-400" />
                     {activeSession.averageSpeed.toFixed(1)}s
                   </p>
                 </div>
                 {activeSession.isCompleted && (
-                  <div className="mt-8 bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl text-center">
-                    <h3 className="text-xl font-bold text-amber-400 mb-2">Quiz Completed</h3>
-                    <p className="text-amber-200">Final Score: <span className="font-black text-white">{activeSession.finalScore} pts</span></p>
+                  <div className="mt-4 bg-gradient-to-tr from-amber-500/20 to-yellow-500/10 border border-amber-500/30 p-5 rounded-2xl text-center">
+                    <div className="text-3xl mb-1">🏆</div>
+                    <h3 className="text-lg font-black text-amber-300 mb-1">Quiz Completed!</h3>
+                    <p className="text-xs text-amber-200">Final Score: <span className="font-black text-white text-sm">{activeSession.finalScore} pts</span></p>
                   </div>
                 )}
               </div>
             </div>
-
-
           </aside>
         )}
       </main>
 
       {/* Mobile Action Bar */}
       {activeStudent && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-gray-950 border-t border-gray-800 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
           <button
             onClick={handleAddBonus}
-            className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 font-bold py-4 rounded-xl border border-indigo-500/30 transition-all flex justify-center items-center gap-2"
+            className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex justify-center items-center gap-2 text-sm active:scale-95"
           >
-            <PlusCircle className="w-6 h-6" /> Add Points
+            <PlusCircle className="w-5 h-5" /> Add Points 🌟
           </button>
           <button
             onClick={handleDeductPoints}
-            className="flex-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold py-4 rounded-xl border border-rose-500/30 transition-all flex justify-center items-center gap-2"
+            className="flex-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold py-3.5 rounded-2xl border border-rose-500/25 transition-all flex justify-center items-center gap-2 text-sm active:scale-95"
           >
-            <MinusCircle className="w-6 h-6" /> Deduct
+            <MinusCircle className="w-5 h-5" /> Deduct
           </button>
         </div>
       )}
