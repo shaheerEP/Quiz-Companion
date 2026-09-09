@@ -1,9 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
-import { User, Save, Trash2, Edit2, Link as LinkIcon, Package, Plus, X } from "lucide-react";
+import {
+  Users,
+  Save,
+  Trash2,
+  Edit2,
+  Link as LinkIcon,
+  Package,
+  Plus,
+  X,
+  Search,
+  Sparkles,
+  Sliders,
+  Boxes,
+  Gift,
+  Award,
+  Camera,
+  RotateCcw,
+  CheckCircle2,
+  Clock,
+  Palette,
+  Compass,
+  Zap,
+} from "lucide-react";
 
+// --- Image Compression Utility ---
 const compressImage = async (file: File, maxSize: number = 800): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -49,27 +72,209 @@ const compressImage = async (file: File, maxSize: number = 800): Promise<File> =
   });
 };
 
+// --- Apple Cupertino Switch Component ---
+interface CupertinoSwitchProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  size?: "sm" | "md";
+  id?: string;
+  ariaLabel?: string;
+}
+
+function CupertinoSwitch({
+  checked,
+  onChange,
+  disabled = false,
+  size = "md",
+  id,
+  ariaLabel,
+}: CupertinoSwitchProps) {
+  const isMd = size === "md";
+  const trackClass = isMd ? "w-12 h-7" : "w-9 h-5";
+  const knobClass = isMd ? "w-6 h-6" : "w-4 h-4";
+  const translateClass = isMd ? "translate-x-5" : "translate-x-4";
+
+  return (
+    <button
+      type="button"
+      id={id}
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative inline-flex items-center shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${trackClass} ${
+        checked ? "bg-[#34C759]" : "bg-[#39393d]"
+      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    >
+      <span
+        className={`pointer-events-none inline-block rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.35)] transform transition-transform duration-200 ease-in-out ${knobClass} ${
+          checked ? translateClass : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+// --- Apple Segmented Control ---
+interface SegmentedControlProps<T extends string> {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+}
+
+function AppleSegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: SegmentedControlProps<T>) {
+  return (
+    <div className="inline-flex p-1 bg-black/40 border border-white/10 rounded-xl relative">
+      {options.map((option) => {
+        const isSelected = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`relative px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 z-10 ${
+              isSelected
+                ? "bg-[#2c2c2e] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-white/10"
+                : "text-neutral-400 hover:text-neutral-200"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Apple Grouped Inset Card Wrapper ---
+function AppleGroupedSection({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {(title || action) && (
+        <div className="flex items-center justify-between px-3">
+          {title && (
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93]">
+              {title}
+            </h3>
+          )}
+          {action && <div>{action}</div>}
+        </div>
+      )}
+      <div className="rounded-2xl bg-[#1c1c1e]/90 border border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4)] divide-y divide-white/[0.06] overflow-hidden">
+        {children}
+      </div>
+      {description && (
+        <p className="text-[12px] text-[#8e8e93] px-3 mt-1 leading-relaxed">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// --- Apple Grouped Row Item ---
+function AppleGroupedRow({
+  icon,
+  iconBg = "bg-blue-500",
+  title,
+  subtitle,
+  children,
+  onClick,
+}: {
+  icon?: React.ReactNode;
+  iconBg?: string;
+  title: string;
+  subtitle?: string;
+  children?: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={`flex items-center justify-between px-4 py-3.5 gap-4 min-h-[52px] ${
+        onClick ? "cursor-pointer hover:bg-white/[0.03] transition-colors" : ""
+      }`}
+    >
+      <div className="flex items-center gap-3.5 min-w-0">
+        {icon && (
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm ${iconBg}`}
+          >
+            {icon}
+          </div>
+        )}
+        <div className="flex flex-col min-w-0">
+          <span className="text-[14px] font-medium text-[#f5f5f7] tracking-tight truncate">
+            {title}
+          </span>
+          {subtitle && (
+            <span className="text-[12px] text-[#8e8e93] leading-tight">
+              {subtitle}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="shrink-0 flex items-center gap-2">{children}</div>
+    </div>
+  );
+}
+
+type SettingsPane = "students" | "rating" | "rewards" | "builder" | "general";
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [originalSettings, setOriginalSettings] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activePane, setActivePane] = useState<SettingsPane>("students");
+  const [searchQuery, setSearchQuery] = useState("");
 
+  // Student creation & editing state
   const [newStudentName, setNewStudentName] = useState("");
   const [newStudentPassword, setNewStudentPassword] = useState("");
-
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
 
+  // Dynamic Island / Capsule Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 3200);
+  };
+
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(data => {
-      setSettings(data);
-      setOriginalSettings(JSON.parse(JSON.stringify(data)));
-    });
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setSettings(data);
+        setOriginalSettings(JSON.parse(JSON.stringify(data)));
+      });
     fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
-    fetch("/api/students").then(res => res.json()).then(setStudents);
+    fetch("/api/students")
+      .then((res) => res.json())
+      .then(setStudents);
   };
 
   const handleSave = async () => {
@@ -77,14 +282,24 @@ export default function SettingsPage() {
     await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
     });
     setOriginalSettings(JSON.parse(JSON.stringify(settings)));
     setLoading(false);
-    alert("Settings saved successfully!");
+    showToast("Settings saved successfully");
   };
 
-  const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
+  const handleRevert = () => {
+    if (confirm("Discard all unsaved changes in this session?")) {
+      setSettings(JSON.parse(JSON.stringify(originalSettings)));
+      showToast("Changes reverted");
+    }
+  };
+
+  const hasChanges =
+    settings && originalSettings
+      ? JSON.stringify(settings) !== JSON.stringify(originalSettings)
+      : false;
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,21 +308,26 @@ export default function SettingsPage() {
     await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newStudentName, password: newStudentPassword })
+      body: JSON.stringify({ name: newStudentName, password: newStudentPassword }),
     });
     setNewStudentName("");
     setNewStudentPassword("");
+    setIsAddStudentOpen(false);
     await fetchStudents();
     setLoading(false);
-    alert("Student added successfully!");
+    showToast("Student created successfully");
   };
 
   const handleDeleteStudent = async (id: string) => {
     if (!confirm("Are you sure you want to completely delete this student?")) return;
     setLoading(true);
     await fetch(`/api/students?id=${id}`, { method: "DELETE" });
+    if (editingStudent?._id === id) {
+      setEditingStudent(null);
+    }
     await fetchStudents();
     setLoading(false);
+    showToast("Student deleted");
   };
 
   const handleUpdateStudent = async (e: React.FormEvent) => {
@@ -125,718 +345,1543 @@ export default function SettingsPage() {
         assignedGame: editingStudent.assignedGame,
         revisionEnabled: editingStudent.revisionEnabled,
         revisionRewindDays: editingStudent.revisionRewindDays,
-      })
+        rewardSystem: editingStudent.rewardSystem,
+        mannersEnabled: editingStudent.mannersEnabled,
+        mannersList: editingStudent.mannersList,
+        profileImageUrl: editingStudent.profileImageUrl,
+      }),
     });
     setEditingStudent(null);
     await fetchStudents();
     setLoading(false);
-    alert("Student updated successfully!");
+    showToast("Student profile updated");
   };
 
-  const handleAvatarUpload = async (file: File) => {
-    try {
-      const compressed = await compressImage(file);
-      const formData = new FormData();
-      formData.append("file", compressed);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url && editingStudent) {
-        setEditingStudent({ ...editingStudent, customAvatarUrl: data.url });
-      }
-    } catch (e) {
-      alert("Failed to upload avatar image");
-    }
-  };
+  // Filter students based on search query
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) return students;
+    const query = searchQuery.toLowerCase();
+    return students.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(query) ||
+        s.password?.toLowerCase().includes(query)
+    );
+  }, [students, searchQuery]);
 
-  if (!settings) return <div className="p-8 text-white">Loading Settings...</div>;
+  if (!settings) {
+    return (
+      <div className="min-h-screen bg-black text-[#86868b] flex flex-col items-center justify-center font-sans">
+        <div className="w-8 h-8 rounded-full border-2 border-[#0A84FF] border-t-transparent animate-spin mb-4" />
+        <span className="text-sm font-medium tracking-tight">Loading System Settings…</span>
+      </div>
+    );
+  }
+
+  // Sidebar navigation items definitions
+  const navItems = [
+    {
+      id: "students" as SettingsPane,
+      label: "Students & Accounts",
+      icon: <Users className="w-4 h-4" />,
+      color: "bg-[#0A84FF]",
+      count: students.length,
+    },
+    {
+      id: "rating" as SettingsPane,
+      label: "Gamified Rating Tiers",
+      icon: <Award className="w-4 h-4" />,
+      color: "bg-[#FF9F0A]",
+      count: settings.ratingTiers?.length || 0,
+    },
+    {
+      id: "rewards" as SettingsPane,
+      label: "Rewards & Incentives",
+      icon: <Gift className="w-4 h-4" />,
+      color: "bg-[#BF5AF2]",
+    },
+    {
+      id: "builder" as SettingsPane,
+      label: "World Builder & Items",
+      icon: <Boxes className="w-4 h-4" />,
+      color: "bg-[#30D158]",
+      count: settings.builderItems?.length || 0,
+    },
+    {
+      id: "general" as SettingsPane,
+      label: "General & Timers",
+      icon: <Sliders className="w-4 h-4" />,
+      color: "bg-[#636366]",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col font-sans selection:bg-[#0A84FF]/30">
       <Navbar />
 
-      {/* Floating Save Button */}
-      {hasChanges && (
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 transition-all hover:scale-105 border border-emerald-400/30"
-        >
-          <Save className="w-5 h-5" />
-          {loading ? "Saving..." : "Save App Settings"}
-        </button>
+      {/* --- Dynamic Capsule Floating Toast (Apple Dynamic Island style) --- */}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+          <div className="backdrop-blur-2xl bg-[#1c1c1e]/90 border border-white/15 px-5 py-2.5 rounded-full shadow-[0_12px_32px_rgba(0,0,0,0.6)] flex items-center gap-2.5 text-[13px] font-medium text-white tracking-tight">
+            <CheckCircle2 className="w-4 h-4 text-[#34C759]" />
+            <span>{toastMessage}</span>
+          </div>
+        </div>
       )}
 
-      <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
-
-        {/* STUDENT MANAGEMENT */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-          <div className="flex flex-col gap-8">
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-                <div className="bg-indigo-500/20 p-2 rounded-lg"><User className="w-5 h-5 text-indigo-400" /></div>
-                Create Student
-              </h2>
-              <form onSubmit={handleAddStudent} className="flex flex-col gap-5">
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
-                  <input
-                    type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} required
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Login Password</label>
-                  <input
-                    type="text" value={newStudentPassword} onChange={e => setNewStudentPassword(e.target.value)} required
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-                <button disabled={loading} type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 rounded-xl font-black transition-colors w-full mt-2 shadow-lg shadow-indigo-500/20">
-                  Create Student
-                </button>
-              </form>
+      {/* --- Liquid Glass Sticky Header Bar --- */}
+      <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#121214]/80 border-b border-white/[0.08] transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white border border-white/10 shadow-sm">
+              <Sliders className="w-4 h-4 text-[#0A84FF]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[#8e8e93]">QuizCompanion</span>
+                <span className="text-[10px] text-neutral-600">/</span>
+                <span className="text-xs font-semibold text-white">System Settings</span>
+              </div>
+              <h1 className="text-lg font-bold text-white tracking-tight">
+                {navItems.find((item) => item.id === activePane)?.label}
+              </h1>
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg max-h-[850px] overflow-y-auto">
-            <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Existing Students</h2>
-            {students.length === 0 ? (
-              <p className="text-gray-500 italic text-center py-4">No students added yet.</p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {students?.map(student => (
-                  <div key={student._id} className="bg-gray-950 border border-gray-800 p-5 rounded-2xl">
-                    {editingStudent?._id === student._id ? (
-                      <form onSubmit={handleUpdateStudent} className="flex flex-col gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs text-gray-500 font-bold mb-1 block">Name</label>
-                            <input
-                              type="text" value={editingStudent.name} onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })} required
-                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
-                            />
+          {/* Right functional controls: Unsaved status and Save / Revert buttons */}
+          <div className="flex items-center gap-2.5">
+            {hasChanges && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>Unsaved Changes</span>
+              </div>
+            )}
+            {hasChanges && (
+              <button
+                type="button"
+                onClick={handleRevert}
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8e8e93] hover:text-white bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 border border-white/10"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Revert</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={loading || !hasChanges}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm ${
+                hasChanges
+                  ? "bg-[#0A84FF] hover:bg-[#0071e3] text-white shadow-[0_2px_12px_rgba(10,132,255,0.4)] active:scale-95"
+                  : "bg-white/5 text-neutral-500 cursor-not-allowed border border-white/5"
+              }`}
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{loading ? "Saving…" : "Save Changes"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Horizontal Pane Selector */}
+        <div className="lg:hidden px-4 pb-2.5 overflow-x-auto flex items-center gap-2 scrollbar-none">
+          {navItems.map((item) => {
+            const isActive = activePane === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActivePane(item.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                  isActive
+                    ? "bg-[#0A84FF] text-white shadow-sm"
+                    : "bg-white/5 text-[#8e8e93] hover:text-white border border-white/5"
+                }`}
+              >
+                <span>{item.label}</span>
+                {item.count !== undefined && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                      isActive ? "bg-black/30 text-white" : "bg-white/10 text-neutral-400"
+                    }`}
+                  >
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* --- Main Settings Stage: macOS Master-Detail Layout --- */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex gap-8">
+        {/* Left Sidebar (Desktop macOS Style) */}
+        <aside className="hidden lg:flex flex-col w-72 shrink-0 gap-4">
+          {/* Quick Search within Settings */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search settings…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#1c1c1e]/80 border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-neutral-500 outline-none focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/20 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Navigation Group */}
+          <div className="rounded-2xl bg-[#1c1c1e]/60 border border-white/[0.08] p-1.5 flex flex-col gap-1">
+            {navItems.map((item) => {
+              const isActive = activePane === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActivePane(item.id)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-all ${
+                    isActive
+                      ? "bg-[#0A84FF] text-white shadow-sm font-semibold"
+                      : "text-[#8e8e93] hover:text-white hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center text-white ${
+                        isActive ? "bg-white/20" : item.color
+                      }`}
+                    >
+                      {item.icon}
+                    </div>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.count !== undefined && (
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                        isActive ? "bg-black/25 text-white" : "bg-white/10 text-neutral-400"
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Bottom System Info Widget */}
+          <div className="mt-auto p-4 rounded-2xl bg-[#1c1c1e]/40 border border-white/[0.05] text-[11px] text-[#8e8e93] flex flex-col gap-1">
+            <span className="font-semibold text-neutral-400">Interactive Quiz Companion</span>
+            <span>HIG-Compliant Architecture</span>
+            <span className="text-[10px] text-neutral-600 mt-1">Apple Human Interface Guidelines</span>
+          </div>
+        </aside>
+
+        {/* Right Detail Pane */}
+        <section className="flex-1 min-w-0 flex flex-col gap-8">
+          {/* ===================== PANE 1: STUDENTS ===================== */}
+          {activePane === "students" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              {/* Header with Search and Create Student Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">
+                    Student Accounts
+                  </h2>
+                  <p className="text-sm text-[#8e8e93]">
+                    Manage student logins, balances, manners tasks, and spaced repetition schedules.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddStudentOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0A84FF] hover:bg-[#0071e3] text-white text-xs font-semibold transition-all shadow-[0_2px_10px_rgba(10,132,255,0.3)] active:scale-95 shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Student</span>
+                </button>
+              </div>
+
+              {/* Student List Section */}
+              <AppleGroupedSection
+                title={`Configured Students (${filteredStudents.length})`}
+                description="Click any student to inspect account details, adjust point balances, or customize spaced repetition intervals."
+              >
+                {filteredStudents.length === 0 ? (
+                  <div className="px-6 py-12 text-center text-[#8e8e93] text-sm">
+                    {searchQuery
+                      ? "No students match your search query."
+                      : "No student accounts created yet. Click 'Add Student' above."}
+                  </div>
+                ) : (
+                  filteredStudents.map((student) => (
+                    <div
+                      key={student._id}
+                      className="flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.02] transition-colors group"
+                    >
+                      <div
+                        onClick={() => setEditingStudent(student)}
+                        className="flex items-center gap-3.5 cursor-pointer min-w-0 flex-1"
+                      >
+                        {student.profileImageUrl ? (
+                          <img
+                            src={student.profileImageUrl}
+                            alt={student.name}
+                            className="w-10 h-10 rounded-full object-cover border border-white/10"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                            {student.name ? student.name.charAt(0).toUpperCase() : "S"}
                           </div>
-                          <div>
-                            <label className="text-xs text-gray-500 font-bold mb-1 block">Password</label>
-                            <input
-                              type="text" value={editingStudent.password} onChange={e => setEditingStudent({ ...editingStudent, password: e.target.value })} required
-                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-emerald-500 font-bold mb-1 block">Balance (pts)</label>
-                            <input
-                              type="number" value={editingStudent.pointsBalance} onChange={e => setEditingStudent({ ...editingStudent, pointsBalance: e.target.value })} required
-                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-emerald-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-indigo-400 font-bold mb-1 block">Lifetime (pts)</label>
-                            <input
-                              type="number" value={editingStudent.lifetimePoints} onChange={e => setEditingStudent({ ...editingStudent, lifetimePoints: e.target.value })} required
-                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-purple-400 font-bold mb-1 block">Reward System</label>
-                            <select
-                              value={editingStudent.rewardSystem || 'classic'} onChange={e => setEditingStudent({ ...editingStudent, rewardSystem: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-purple-500 appearance-none"
-                            >
-                              <option value="classic">Classic (Bundles)</option>
-                              <option value="tiered">Tiered (Levels)</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-yellow-400 font-bold mb-1 block">Manners Feature</label>
-                            <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                              <input
-                                type="checkbox" checked={editingStudent.mannersEnabled || false}
-                                onChange={e => setEditingStudent({ ...editingStudent, mannersEnabled: e.target.checked })}
-                                className="w-5 h-5 text-yellow-500 rounded focus:ring-yellow-500 focus:ring-2 bg-gray-900 border-gray-700"
-                              />
-                              <span className="text-sm font-bold text-gray-300">Enable</span>
-                            </label>
-                          </div>
-                          {editingStudent.mannersEnabled && (
-                            <div className="col-span-2 bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-2">
-                              <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                                <h3 className="text-lg font-black text-yellow-400 flex items-center gap-2">
-                                  ⭐ Manners Tasks
-                                </h3>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingStudent({ ...editingStudent, mannersList: [...(editingStudent.mannersList || []), { id: `task-${Date.now()}`, task: "New Task", maxStars: 1 }] })}
-                                  className="bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
-                                >
-                                  + Add Task
-                                </button>
-                              </div>
-                              <div className="flex flex-col gap-3">
-                                {editingStudent.mannersList?.map((task: any, index: number) => (
-                                  <div key={index} className="flex flex-wrap items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-800">
-                                    <input
-                                      type="text" value={task.task} placeholder="Task Name"
-                                      onChange={e => {
-                                        const tasks = [...editingStudent.mannersList];
-                                        tasks[index].task = e.target.value;
-                                        setEditingStudent({ ...editingStudent, mannersList: tasks });
-                                      }}
-                                      className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
-                                    />
-                                    <div>
-                                      <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Max Stars</label>
-                                      <input type="number" value={task.maxStars} min="1" max="10"
-                                        onChange={e => { const tasks = [...editingStudent.mannersList]; tasks[index].maxStars = Number(e.target.value); setEditingStudent({ ...editingStudent, mannersList: tasks }); }}
-                                        className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-yellow-400 text-sm font-bold outline-none focus:border-yellow-500"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const tasks = editingStudent.mannersList.filter((_: any, i: number) => i !== index);
-                                        setEditingStudent({ ...editingStudent, mannersList: tasks });
-                                      }}
-                                      className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg mt-4"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                ))}
-                                {(!editingStudent.mannersList || editingStudent.mannersList.length === 0) && (
-                                  <p className="text-gray-500 text-sm italic">No custom manners tasks added.</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          {/* Revision Feature */}
-                          <div className="col-span-2 bg-gray-900 border border-violet-900/40 p-5 rounded-2xl mt-2">
-                            <div className="flex items-center justify-between mb-3">
-                              <label className="text-xs text-violet-400 font-bold uppercase tracking-wider">Revision / Spaced Repetition</label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={editingStudent.revisionEnabled || false}
-                                  onChange={async e => {
-                                    const enabled = e.target.checked;
-                                    setEditingStudent({ ...editingStudent, revisionEnabled: enabled });
-                                    await fetch("/api/revision/student-settings", {
-                                      method: "PUT",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ studentId: editingStudent._id, revisionEnabled: enabled }),
-                                    });
-                                  }}
-                                  className="w-5 h-5 rounded focus:ring-violet-500 focus:ring-2 bg-gray-900 border-gray-700"
-                                />
-                                <span className="text-sm font-bold text-gray-300">Enable Revision</span>
-                              </label>
-                            </div>
-                            {editingStudent.revisionEnabled && (
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="block text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                                    Review Intervals (days)
-                                  </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const currentDays = editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90];
-                                      const lastVal = currentDays.length > 0 ? currentDays[currentDays.length - 1] : 30;
-                                      const nextVal = lastVal < 30 ? lastVal + 7 : lastVal < 90 ? lastVal + 30 : lastVal + 90;
-                                      const updated = [...currentDays, nextVal];
-                                      setEditingStudent({ ...editingStudent, revisionRewindDays: updated });
-                                    }}
-                                    className="flex items-center gap-1 text-xs font-bold text-violet-400 hover:text-violet-300 bg-violet-950/50 hover:bg-violet-900/60 border border-violet-800/50 px-2.5 py-1 rounded-lg transition-all"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    Add Day
-                                  </button>
-                                </div>
-                                <div className="flex flex-wrap gap-2.5 items-center">
-                                  {(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).map((day: number, i: number) => (
-                                    <div key={i} className="flex items-center gap-1 group/interval">
-                                      <div className="relative flex items-center">
-                                        <input
-                                          type="number"
-                                          min="1"
-                                          value={day}
-                                          onChange={e => {
-                                            const days = [...(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90])];
-                                            days[i] = Math.max(1, Number(e.target.value));
-                                            setEditingStudent({ ...editingStudent, revisionRewindDays: days });
-                                          }}
-                                          className="w-16 bg-gray-800 border border-violet-800/50 rounded-lg px-2 py-1.5 text-violet-300 text-sm font-bold outline-none focus:border-violet-500"
-                                        />
-                                        {(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).length > 1 && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const days = (editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).filter((_: number, idx: number) => idx !== i);
-                                              setEditingStudent({ ...editingStudent, revisionRewindDays: days });
-                                            }}
-                                            className="opacity-0 group-hover/interval:opacity-100 absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-0.5 text-[10px] transition-all shadow-md"
-                                            title="Remove interval"
-                                          >
-                                            <X className="w-3 h-3" />
-                                          </button>
-                                        )}
-                                      </div>
-                                      <span className="text-gray-600 text-xs">d</span>
-                                      {i < (editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).length - 1 && (
-                                        <span className="text-gray-700 text-xs mx-0.5">→</span>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                                <p className="text-xs text-gray-600 mt-2.5">Cards repeat on these days after being taught. You can add as many review interval steps as needed.</p>
-                              </div>
+                        )}
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[14px] font-semibold text-white group-hover:text-[#0A84FF] transition-colors truncate">
+                              {student.name}
+                            </span>
+                            {student.revisionEnabled && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                                Revision Active
+                              </span>
+                            )}
+                            {student.mannersEnabled && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                ⭐ Manners
+                              </span>
                             )}
                           </div>
-                          <div className="col-span-2">
-                            <label className="text-xs text-cyan-400 font-bold mb-1 block">Profile Image URL (or upload via Cloudinary)</label>
-                            <div className="flex gap-2">
-                              <input
-                                type="text" value={editingStudent.profileImageUrl || ''} onChange={e => setEditingStudent({ ...editingStudent, profileImageUrl: e.target.value })} placeholder="https://..."
-                                className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-cyan-500"
-                              />
-                              <label className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-xl cursor-pointer flex items-center justify-center transition-colors">
-                                Upload
-                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-
-                                  try {
-                                    setLoading(true);
-                                    const compressedFile = await compressImage(file, 800);
-
-                                    const formData = new FormData();
-                                    formData.append("file", compressedFile);
-
-                                    const res = await fetch(`/api/upload`, { method: "POST", body: formData });
-                                    const data = await res.json();
-
-                                    if (data.secure_url) {
-                                      setEditingStudent({ ...editingStudent, profileImageUrl: data.secure_url });
-                                    } else {
-                                      alert("Upload failed: " + (data.error || "Unknown error"));
-                                    }
-                                  } catch (err) {
-                                    alert("Upload failed. Check console.");
-                                    console.error(err);
-                                  } finally {
-                                    setLoading(false);
-                                  }
-                                }} />
-                              </label>
-                            </div>
+                          <div className="flex items-center gap-2 text-xs text-[#8e8e93] mt-0.5">
+                            <span>
+                              Password:{" "}
+                              <code className="bg-white/5 px-1.5 py-0.5 rounded text-neutral-300 font-mono text-[11px]">
+                                {student.password}
+                              </code>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Balance:{" "}
+                              <strong className="text-[#34C759] font-semibold">
+                                {student.pointsBalance ?? 0} pts
+                              </strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Lifetime:{" "}
+                              <strong className="text-[#0A84FF] font-semibold">
+                                {student.lifetimePoints ?? 0} pts
+                              </strong>
+                            </span>
                           </div>
                         </div>
-                        <div className="flex gap-2 mt-2">
-                          <button type="submit" disabled={loading} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2">
-                            <Save className="w-4 h-4" /> Save
-                          </button>
-                          <button type="button" onClick={() => setEditingStudent(null)} className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-xl">
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-lg font-black text-white">{student.name}</p>
-                          <p className="text-sm text-gray-500 font-bold">Pass: <span className="text-gray-300">{student.password}</span></p>
-                          <p className="text-sm text-gray-500 font-bold mt-1">
-                            Balance: <span className="text-emerald-400">{student.pointsBalance} pts</span> <span className="mx-1">•</span> Lifetime: <span className="text-indigo-400">{student.lifetimePoints} pts</span>
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <button onClick={() => {
+                      </div>
+
+                      {/* Quick Action Badges & Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Copy Magic Login Link */}
+                        <button
+                          type="button"
+                          onClick={() => {
                             const token = btoa(student._id.toString());
                             const url = `${window.location.origin}/api/auth/magic?token=${token}`;
                             navigator.clipboard.writeText(url);
-                            alert("Login Magic Link Copied! Send this to the student.");
-                          }} className="bg-indigo-500/10 hover:bg-indigo-600 text-indigo-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Login Magic Link">
-                            <LinkIcon className="w-4 h-4" />
-                          </button>
-                          {student.mannersEnabled && (
-                            <button onClick={() => {
+                            showToast(`Magic login link for ${student.name} copied!`);
+                          }}
+                          title="Copy Student Login Link"
+                          className="p-2 rounded-lg text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <LinkIcon className="w-4 h-4" />
+                        </button>
+
+                        {/* Copy Manners Link */}
+                        {student.mannersEnabled && (
+                          <button
+                            type="button"
+                            onClick={() => {
                               const token = btoa(student._id.toString());
                               const url = `${window.location.origin}/manners/${token}`;
                               navigator.clipboard.writeText(url);
-                              alert("Manners Magic Link Copied! Send this to the parents.");
-                            }} className="bg-yellow-500/10 hover:bg-yellow-600 text-yellow-400 hover:text-white p-2 rounded-lg transition-colors" title="Copy Manners Magic Link">
-                              <span className="font-bold text-xs">⭐</span>
-                            </button>
-                          )}
-                          <button onClick={() => setEditingStudent(student)} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg transition-colors" title="Edit Student">
-                            <Edit2 className="w-4 h-4" />
+                              showToast(`Manners sheet link for parents copied!`);
+                            }}
+                            title="Copy Manners Link for Parents"
+                            className="p-2 rounded-lg text-amber-400 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
+                          >
+                            <Sparkles className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteStudent(student._id)} className="bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white p-2 rounded-lg transition-colors" title="Delete Student">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        )}
+
+                        {/* Edit Button */}
+                        <button
+                          type="button"
+                          onClick={() => setEditingStudent(student)}
+                          title="Edit Student Profile"
+                          className="p-2 rounded-lg text-[#8e8e93] hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+
+                        {/* Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStudent(student._id)}
+                          title="Delete Student"
+                          className="p-2 rounded-lg text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* EXISTING CONFIGURATION SETTINGS */}
-        <div className="flex items-center justify-between bg-gray-900 border border-gray-800 p-6 rounded-[2rem] shadow-lg mt-4">
-          <h1 className="text-3xl font-black text-white ml-2">App Configuration</h1>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-              <h2 className="text-2xl font-black text-gray-200">Gamified Rating Tiers</h2>
-              <button
-                onClick={() => setSettings({ ...settings, ratingTiers: [...(settings.ratingTiers || []), { name: "New Tier", maxSeconds: 15, stars: 1, points: 10 }] })}
-                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
-              >
-                + Add Tier
-              </button>
+                    </div>
+                  ))
+                )}
+              </AppleGroupedSection>
             </div>
-            <div className="flex flex-col gap-6">
-              {(settings.ratingTiers || []).map((tier: any, index: number) => (
-                <div key={index} className="bg-gray-950 p-6 rounded-2xl border border-gray-800">
-                  <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-xl text-yellow-400">Stars:</span>
-                      <input
-                        type="number" value={tier.stars}
-                        onChange={e => {
-                          const newTiers = [...settings.ratingTiers];
-                          newTiers[index].stars = Number(e.target.value);
+          )}
+
+          {/* ===================== PANE 2: RATING TIERS ===================== */}
+          {activePane === "rating" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">
+                    Gamified Rating Tiers
+                  </h2>
+                  <p className="text-sm text-[#8e8e93]">
+                    Configure stars, compliment titles, speed thresholds, and point rewards awarded upon quiz completion.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      ratingTiers: [
+                        ...(settings.ratingTiers || []),
+                        { name: "New Speed Tier", maxSeconds: 15, stars: 1, points: 10 },
+                      ],
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/10"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Tier</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {(settings.ratingTiers || []).map((tier: any, index: number) => (
+                  <AppleGroupedSection
+                    key={index}
+                    title={`Tier #${index + 1}`}
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTiers = settings.ratingTiers.filter(
+                            (_: any, i: number) => i !== index
+                          );
                           setSettings({ ...settings, ratingTiers: newTiers });
                         }}
-                        className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-yellow-400 font-bold outline-none focus:border-indigo-500 transition-colors"
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        const newTiers = settings.ratingTiers.filter((_: any, i: number) => i !== index);
-                        setSettings({ ...settings, ratingTiers: newTiers });
-                      }}
-                      className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg transition-colors"
-                      title="Remove Tier"
+                        className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Remove</span>
+                      </button>
+                    }
+                  >
+                    <AppleGroupedRow
+                      icon={<Award className="w-4 h-4" />}
+                      iconBg="bg-amber-500"
+                      title="Compliment & Title"
+                      subtitle="Displayed dynamically upon answer speed"
                     >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="sm:col-span-3">
-                      <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Compliment / Title</label>
                       <input
-                        type="text" value={tier.name}
-                        onChange={e => {
+                        type="text"
+                        value={tier.name}
+                        onChange={(e) => {
                           const newTiers = [...settings.ratingTiers];
                           newTiers[index].name = e.target.value;
                           setSettings({ ...settings, ratingTiers: newTiers });
                         }}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-medium outline-none focus:border-[#0A84FF] w-48 sm:w-64"
                       />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Max Time (sec)</label>
-                      <input
-                        type="number" value={tier.maxSeconds}
-                        onChange={e => {
-                          const newTiers = [...settings.ratingTiers];
-                          newTiers[index].maxSeconds = Number(e.target.value);
-                          setSettings({ ...settings, ratingTiers: newTiers });
-                        }}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-2 block">Reward Points</label>
-                      <input
-                        type="number" value={tier.points}
-                        onChange={e => {
-                          const newTiers = [...settings.ratingTiers];
-                          newTiers[index].points = Number(e.target.value);
-                          setSettings({ ...settings, ratingTiers: newTiers });
-                        }}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                    </AppleGroupedRow>
 
-          <div className="flex flex-col gap-8">
+                    <AppleGroupedRow
+                      icon={<Sparkles className="w-4 h-4 text-amber-300" />}
+                      iconBg="bg-amber-600/30"
+                      title="Stars Rating"
+                      subtitle="Number of stars awarded to the student"
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={tier.stars}
+                          onChange={(e) => {
+                            const newTiers = [...settings.ratingTiers];
+                            newTiers[index].stars = Number(e.target.value);
+                            setSettings({ ...settings, ratingTiers: newTiers });
+                          }}
+                          className="w-16 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-amber-400 font-bold text-center outline-none focus:border-amber-400"
+                        />
+                        <span className="text-xs text-neutral-500">⭐</span>
+                      </div>
+                    </AppleGroupedRow>
 
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4">Mystery Gifts Inventory</h2>
-              <textarea
-                rows={6} value={(settings.mysteryGifts || []).join("\n")}
-                onChange={e => setSettings({ ...settings, mysteryGifts: e.target.value.split("\n") })}
-                className="w-full bg-gray-950 border border-gray-700 rounded-2xl px-5 py-4 text-white font-medium outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
-                placeholder="e.g. 10 mins free game time"
-              />
-            </div>
+                    <AppleGroupedRow
+                      icon={<Clock className="w-4 h-4" />}
+                      iconBg="bg-blue-500"
+                      title="Max Answer Time"
+                      subtitle="Threshold in seconds to achieve this tier"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="1"
+                          value={tier.maxSeconds}
+                          onChange={(e) => {
+                            const newTiers = [...settings.ratingTiers];
+                            newTiers[index].maxSeconds = Number(e.target.value);
+                            setSettings({ ...settings, ratingTiers: newTiers });
+                          }}
+                          className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold text-center outline-none focus:border-[#0A84FF]"
+                        />
+                        <span className="text-xs text-neutral-400">sec</span>
+                      </div>
+                    </AppleGroupedRow>
 
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-                <div className="bg-purple-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-purple-400" /></div>
-                Point Bundles & Controls
-              </h2>
-              <div className="flex flex-col gap-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Limit (pts)</label>
-                    <input
-                      type="number" value={settings.bundleLimit}
-                      onChange={e => setSettings({ ...settings, bundleLimit: Number(e.target.value) })}
-                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-purple-500 transition-colors text-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Bundle Item</label>
-                    <input
-                      type="text" value={settings.bundleItemName}
-                      onChange={e => setSettings({ ...settings, bundleItemName: e.target.value })}
-                      placeholder="e.g. 🍫 Chocolate"
-                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-purple-500 transition-colors text-xl"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-950 p-4 rounded-xl border border-gray-700">
-                  <input
-                    type="checkbox" checked={settings.allowStudentToStopTimer}
-                    onChange={e => setSettings({ ...settings, allowStudentToStopTimer: e.target.checked })}
-                    className="w-6 h-6 text-indigo-500 rounded focus:ring-indigo-500 focus:ring-2 bg-gray-900 border-gray-700 cursor-pointer"
-                  />
-                  <label className="text-sm text-gray-300 font-bold">Allow Students to Stop Timer Remotely</label>
-                </div>
+                    <AppleGroupedRow
+                      icon={<Zap className="w-4 h-4 text-[#34C759]" />}
+                      iconBg="bg-emerald-600/30"
+                      title="Reward Points"
+                      subtitle="Points credited immediately to balance"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={tier.points}
+                          onChange={(e) => {
+                            const newTiers = [...settings.ratingTiers];
+                            newTiers[index].points = Number(e.target.value);
+                            setSettings({ ...settings, ratingTiers: newTiers });
+                          }}
+                          className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#34C759] font-bold text-center outline-none focus:border-[#34C759]"
+                        />
+                        <span className="text-xs text-[#34C759]">pts</span>
+                      </div>
+                    </AppleGroupedRow>
+                  </AppleGroupedSection>
+                ))}
               </div>
             </div>
+          )}
 
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-                <div className="bg-fuchsia-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-fuchsia-400" /></div>
-                Tiered Reward Levels
-              </h2>
-              <div className="flex flex-col gap-6">
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Weekly Target Points</label>
+          {/* ===================== PANE 3: REWARDS & BUNDLES ===================== */}
+          {activePane === "rewards" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  Rewards & Incentives
+                </h2>
+                <p className="text-sm text-[#8e8e93]">
+                  Configure reward bundles, tiered milestone levels, and mystery gift prize pool.
+                </p>
+              </div>
+
+              {/* Point Bundles Section */}
+              <AppleGroupedSection
+                title="Classic Point Bundles"
+                description="Students redeem points in increments of this bundle limit to earn physical or classroom incentives."
+              >
+                <AppleGroupedRow
+                  icon={<Package className="w-4 h-4" />}
+                  iconBg="bg-purple-500"
+                  title="Bundle Target Limit"
+                  subtitle="Points required to unlock one bundle"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.bundleLimit}
+                      onChange={(e) =>
+                        setSettings({ ...settings, bundleLimit: Number(e.target.value) })
+                      }
+                      className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-purple-300 font-bold text-right outline-none focus:border-purple-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
+
+                <AppleGroupedRow
+                  icon={<Gift className="w-4 h-4" />}
+                  iconBg="bg-fuchsia-500"
+                  title="Bundle Incentive Item"
+                  subtitle="Name or emoji of the item granted upon reaching target"
+                >
                   <input
-                    type="number" value={settings.weeklyTargetPoints ?? 5000}
-                    onChange={e => setSettings({ ...settings, weeklyTargetPoints: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-fuchsia-500 transition-colors text-xl"
+                    type="text"
+                    value={settings.bundleItemName}
+                    onChange={(e) =>
+                      setSettings({ ...settings, bundleItemName: e.target.value })
+                    }
+                    placeholder="e.g. 🍫 Chocolate"
+                    className="w-48 sm:w-64 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-medium outline-none focus:border-purple-400"
                   />
-                </div>
-                {settings.tieredRewards?.map((reward: any, index: number) => (
-                  <div key={index} className="grid grid-cols-2 gap-4 bg-gray-950 p-4 rounded-xl border border-gray-800">
-                    <div>
-                      <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Level {index + 1} Name</label>
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+
+              {/* Tiered Reward Levels */}
+              <AppleGroupedSection
+                title="Tiered Reward Levels"
+                description="Cumulative milestone goals students work towards over a weekly period."
+              >
+                <AppleGroupedRow
+                  icon={<Sparkles className="w-4 h-4" />}
+                  iconBg="bg-amber-500"
+                  title="Weekly Target Points"
+                  subtitle="Standard weekly target milestone"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.weeklyTargetPoints ?? 5000}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          weeklyTargetPoints: Number(e.target.value),
+                        })
+                      }
+                      className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-bold text-right outline-none focus:border-amber-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
+
+                {(settings.tieredRewards || []).map((reward: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-neutral-800 text-neutral-300 flex items-center justify-center text-xs font-bold shrink-0">
+                        {index + 1}
+                      </div>
                       <input
-                        type="text" value={reward.name}
-                        onChange={e => {
+                        type="text"
+                        value={reward.name}
+                        onChange={(e) => {
                           const newRewards = [...(settings.tieredRewards || [])];
                           newRewards[index] = { ...newRewards[index], name: e.target.value };
                           setSettings({ ...settings, tieredRewards: newRewards });
                         }}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
+                        placeholder={`Level ${index + 1} Name`}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-medium outline-none focus:border-fuchsia-400 w-48"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs text-fuchsia-400 font-bold uppercase mb-1 block">Points Required</label>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <span className="text-xs text-neutral-400">Requires:</span>
                       <input
-                        type="number" value={reward.points}
-                        onChange={e => {
+                        type="number"
+                        value={reward.points}
+                        onChange={(e) => {
                           const newRewards = [...(settings.tieredRewards || [])];
-                          newRewards[index] = { ...newRewards[index], points: Number(e.target.value) };
+                          newRewards[index] = {
+                            ...newRewards[index],
+                            points: Number(e.target.value),
+                          };
                           setSettings({ ...settings, tieredRewards: newRewards });
                         }}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-fuchsia-500"
+                        className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-fuchsia-300 font-bold text-right outline-none focus:border-fuchsia-400"
                       />
+                      <span className="text-xs text-neutral-400">pts</span>
                     </div>
                   </div>
                 ))}
-              </div>
+              </AppleGroupedSection>
+
+              {/* Mystery Gifts Inventory */}
+              <AppleGroupedSection
+                title="Mystery Gifts Inventory"
+                description="List of random rewards students can draw from mystery boxes (one prize per line)."
+              >
+                <div className="p-4">
+                  <textarea
+                    rows={5}
+                    value={(settings.mysteryGifts || []).join("\n")}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        mysteryGifts: e.target.value.split("\n"),
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-neutral-200 font-mono leading-relaxed outline-none focus:border-[#0A84FF] transition-all resize-none"
+                    placeholder="e.g. 10 mins free game time&#10;Choose today's playlist&#10;Special avatar badge"
+                  />
+                </div>
+              </AppleGroupedSection>
             </div>
+          )}
 
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-                <div className="bg-cyan-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-cyan-400" /></div>
-                World Builder Settings
-              </h2>
-              <div className="flex flex-col gap-6">
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Placement Cost (pts)</label>
-                  <input
-                    type="number" value={settings.builderBlockCost}
-                    onChange={e => setSettings({ ...settings, builderBlockCost: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
-                  />
-                </div>
+          {/* ===================== PANE 4: WORLD BUILDER ===================== */}
+          {activePane === "builder" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  World Builder Settings
+                </h2>
+                <p className="text-sm text-[#8e8e93]">
+                  Configure block placement costs, land upgrades, custom quotes, and placeable 3D decorative items.
+                </p>
+              </div>
 
-                <div className="mt-4">
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Large Roof Cost (pts)</label>
-                  <p className="text-xs text-gray-400 mb-2">Points required for a student to build a large roof.</p>
-                  <input
-                    type="number" value={settings.builderRoofCost ?? 100}
-                    onChange={e => setSettings({ ...settings, builderRoofCost: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-cyan-500 transition-colors text-xl"
-                  />
-                </div>
+              {/* Economy & Placement Costs */}
+              <AppleGroupedSection
+                title="Construction Economy & Costs"
+                description="Defines point consumption when students build structures in the 3D World Builder."
+              >
+                <AppleGroupedRow
+                  icon={<Boxes className="w-4 h-4" />}
+                  iconBg="bg-teal-500"
+                  title="Block Placement Cost"
+                  subtitle="Points deducted for placing a standard voxel block"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.builderBlockCost}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          builderBlockCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#34C759] font-bold text-right outline-none focus:border-teal-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
 
-                <div className="mt-4">
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Custom Color Cost (pts)</label>
-                  <p className="text-xs text-gray-400 mb-2">Points required for a student to buy any custom hex color.</p>
-                  <input
-                    type="number" value={settings.customColorCost}
-                    onChange={e => setSettings({ ...settings, customColorCost: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
-                  />
-                </div>
+                <AppleGroupedRow
+                  icon={<Boxes className="w-4 h-4" />}
+                  iconBg="bg-teal-600"
+                  title="Large Roof Structure Cost"
+                  subtitle="Points deducted when deploying a large pre-fabricated roof"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.builderRoofCost ?? 100}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          builderRoofCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#34C759] font-bold text-right outline-none focus:border-teal-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
 
-                <div className="mt-4">
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Land Upgrade Amount (blocks)</label>
-                  <p className="text-xs text-gray-400 mb-2">How much land size increases per upgrade.</p>
-                  <input
-                    type="number" value={settings.landUpgradeAmount ?? 50}
-                    onChange={e => setSettings({ ...settings, landUpgradeAmount: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
-                  />
-                </div>
+                <AppleGroupedRow
+                  icon={<Palette className="w-4 h-4" />}
+                  iconBg="bg-pink-500"
+                  title="Custom Hex Color Cost"
+                  subtitle="Points required to unlock custom hex palette picker"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.customColorCost}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          customColorCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-pink-300 font-bold text-right outline-none focus:border-pink-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
 
-                <div className="mt-4">
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Land Upgrade Cost (pts)</label>
-                  <p className="text-xs text-gray-400 mb-2">Points required for a student to expand their land.</p>
-                  <input
-                    type="number" value={settings.landUpgradeCost ?? 1000}
-                    onChange={e => setSettings({ ...settings, landUpgradeCost: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-emerald-400 font-black outline-none focus:border-cyan-500 transition-colors text-xl"
-                  />
-                </div>
+                <AppleGroupedRow
+                  icon={<Compass className="w-4 h-4" />}
+                  iconBg="bg-emerald-500"
+                  title="Land Upgrade Size & Cost"
+                  subtitle="Block increment and points price per land expansion"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={settings.landUpgradeAmount ?? 50}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            landUpgradeAmount: Number(e.target.value),
+                          })
+                        }
+                        className="w-16 bg-black/40 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white font-bold text-center outline-none focus:border-emerald-400"
+                      />
+                      <span className="text-[11px] text-neutral-400">blocks</span>
+                    </div>
+                    <span className="text-neutral-500">/</span>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={settings.landUpgradeCost ?? 1000}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            landUpgradeCost: Number(e.target.value),
+                          })
+                        }
+                        className="w-20 bg-black/40 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-right outline-none focus:border-emerald-400"
+                      />
+                      <span className="text-[11px] text-neutral-400">pts</span>
+                    </div>
+                  </div>
+                </AppleGroupedRow>
 
-                <div className="mt-4">
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Motivational Quote</label>
-                  <p className="text-xs text-gray-400 mb-2">A 3D text displayed near the builder scene (e.g. 'For my beloved Parents ❤️👨‍👩‍👧‍👦✨').</p>
+                <AppleGroupedRow
+                  icon={<Sparkles className="w-4 h-4" />}
+                  iconBg="bg-indigo-500"
+                  title="3D Scene Motivational Quote"
+                  subtitle="Floating text billboard displayed in the builder world"
+                >
                   <input
-                    type="text" value={settings.builderQuote || ''}
-                    onChange={e => setSettings({ ...settings, builderQuote: e.target.value })}
+                    type="text"
+                    value={settings.builderQuote || ""}
+                    onChange={(e) =>
+                      setSettings({ ...settings, builderQuote: e.target.value })
+                    }
                     placeholder="e.g. For my beloved Parents ❤️👨‍👩‍👧‍👦✨"
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-cyan-500 transition-colors text-xl"
+                    className="w-48 sm:w-72 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-medium outline-none focus:border-indigo-400"
                   />
-                </div>
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+
+              {/* Decorative Items & Refund System */}
+              <AppleGroupedSection
+                title="Decorative 3D Items"
+                description="Custom assets and placeable items students can purchase in the builder catalog."
+                action={
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        builderItems: [
+                          ...(settings.builderItems || []),
+                          {
+                            id: `item-${Date.now()}`,
+                            name: "New Item",
+                            emoji: "📦",
+                            cost: 100,
+                            refundOnErase: 50,
+                            width: 1,
+                            height: 1,
+                            depth: 1,
+                          },
+                        ],
+                      })
+                    }
+                    className="text-xs text-[#0A84FF] hover:text-[#0071e3] font-semibold flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item</span>
+                  </button>
+                }
+              >
+                <AppleGroupedRow
+                  icon={<RotateCcw className="w-4 h-4" />}
+                  iconBg="bg-amber-600"
+                  title="Erase Block Refund"
+                  subtitle="Points returned when erasing an existing block"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={settings.builderBlockRefund ?? 0}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          builderBlockRefund: Number(e.target.value),
+                        })
+                      }
+                      className="w-20 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-bold text-right outline-none focus:border-amber-400"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
+
+                {(settings.builderItems || []).map((item: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={item.emoji}
+                        onChange={(e) => {
+                          const items = [...settings.builderItems];
+                          items[index].emoji = e.target.value;
+                          setSettings({ ...settings, builderItems: items });
+                        }}
+                        className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 text-center text-lg outline-none focus:border-[#0A84FF]"
+                      />
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => {
+                          const items = [...settings.builderItems];
+                          items[index].name = e.target.value;
+                          setSettings({ ...settings, builderItems: items });
+                        }}
+                        placeholder="Item Name"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-medium outline-none focus:border-[#0A84FF]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const items = settings.builderItems.filter(
+                            (_: any, i: number) => i !== index
+                          );
+                          setSettings({ ...settings, builderItems: items });
+                        }}
+                        className="p-2 rounded-lg text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+                      <div>
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                          Cost (pts)
+                        </span>
+                        <input
+                          type="number"
+                          value={item.cost}
+                          onChange={(e) => {
+                            const items = [...settings.builderItems];
+                            items[index].cost = Number(e.target.value);
+                            setSettings({ ...settings, builderItems: items });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-[#34C759] font-bold outline-none focus:border-[#34C759]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                          Erase Refund
+                        </span>
+                        <input
+                          type="number"
+                          value={item.refundOnErase}
+                          onChange={(e) => {
+                            const items = [...settings.builderItems];
+                            items[index].refundOnErase = Number(e.target.value);
+                            setSettings({ ...settings, builderItems: items });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-amber-300 font-bold outline-none focus:border-amber-400"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                          Width (W)
+                        </span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={item.width}
+                          onChange={(e) => {
+                            const items = [...settings.builderItems];
+                            items[index].width = Number(e.target.value);
+                            setSettings({ ...settings, builderItems: items });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-medium outline-none focus:border-[#0A84FF]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                          Height (H)
+                        </span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={item.height}
+                          onChange={(e) => {
+                            const items = [...settings.builderItems];
+                            items[index].height = Number(e.target.value);
+                            setSettings({ ...settings, builderItems: items });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-medium outline-none focus:border-[#0A84FF]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                          Depth (D)
+                        </span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={item.depth}
+                          onChange={(e) => {
+                            const items = [...settings.builderItems];
+                            items[index].depth = Number(e.target.value);
+                            setSettings({ ...settings, builderItems: items });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-medium outline-none focus:border-[#0A84FF]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </AppleGroupedSection>
+            </div>
+          )}
+
+          {/* ===================== PANE 5: GENERAL & TIMERS ===================== */}
+          {activePane === "general" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  General & Session Controls
+                </h2>
+                <p className="text-sm text-[#8e8e93]">
+                  System-wide session privileges and interaction permissions.
+                </p>
               </div>
+
+              <AppleGroupedSection
+                title="Timer & Remote Controls"
+                description="When enabled, students can directly stop or pause question countdown timers from their client device."
+              >
+                <AppleGroupedRow
+                  icon={<Clock className="w-4 h-4" />}
+                  iconBg="bg-blue-500"
+                  title="Allow Students to Stop Timer Remotely"
+                  subtitle="Permits students to interactively pause quiz clock"
+                >
+                  <CupertinoSwitch
+                    checked={settings.allowStudentToStopTimer || false}
+                    onChange={(val) =>
+                      setSettings({ ...settings, allowStudentToStopTimer: val })
+                    }
+                    ariaLabel="Allow Students to Stop Timer Remotely"
+                  />
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* --- APPLE MODAL SHEET: ADD STUDENT --- */}
+      {/* ========================================================================= */}
+      {isAddStudentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-[#1c1c1e] border border-white/15 shadow-[0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+            {/* Sheet Navigation Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#252528]/80">
+              <button
+                type="button"
+                onClick={() => setIsAddStudentOpen(false)}
+                className="text-xs font-medium text-[#8e8e93] hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <h3 className="text-sm font-semibold text-white">New Student</h3>
+              <button
+                type="button"
+                onClick={handleAddStudent}
+                disabled={loading || !newStudentName || !newStudentPassword}
+                className="text-xs font-semibold text-[#0A84FF] hover:text-[#0071e3] disabled:opacity-40 transition-colors"
+              >
+                Create
+              </button>
             </div>
 
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[2rem] shadow-lg mt-2">
-              <h2 className="text-2xl font-black text-gray-200 mb-6 border-b border-gray-800 pb-4 flex items-center gap-3">
-                <div className="bg-amber-500/20 p-2 rounded-lg"><Package className="w-5 h-5 text-amber-400" /></div>
-                Decorative Items & Eraser
-              </h2>
-              <div className="flex flex-col gap-6">
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Block Erase Refund (pts returned when erasing a block)</label>
+            {/* Sheet Body */}
+            <form onSubmit={handleAddStudent} className="p-6 flex flex-col gap-4">
+              <AppleGroupedSection title="Account Credentials">
+                <div className="px-4 py-3 flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                    Student Name
+                  </label>
                   <input
-                    type="number" value={settings.builderBlockRefund ?? 0}
-                    onChange={e => setSettings({ ...settings, builderBlockRefund: Number(e.target.value) })}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-black outline-none focus:border-amber-500 transition-colors text-xl"
+                    type="text"
+                    value={newStudentName}
+                    onChange={(e) => setNewStudentName(e.target.value)}
+                    placeholder="e.g. Alex Johnson"
+                    required
+                    autoFocus
+                    className="bg-transparent text-sm text-white font-medium outline-none placeholder-neutral-600"
                   />
                 </div>
+                <div className="px-4 py-3 flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                    Login Password
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudentPassword}
+                    onChange={(e) => setNewStudentPassword(e.target.value)}
+                    placeholder="e.g. 1234"
+                    required
+                    className="bg-transparent text-sm text-white font-medium outline-none placeholder-neutral-600"
+                  />
+                </div>
+              </AppleGroupedSection>
+            </form>
+          </div>
+        </div>
+      )}
 
-                <div className="mt-2">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-300">Placeable Items</h3>
-                    <button
-                      onClick={() => setSettings({ ...settings, builderItems: [...(settings.builderItems || []), { id: `item-${Date.now()}`, name: "New Item", emoji: "📦", cost: 100, refundOnErase: 50, width: 1, height: 1, depth: 1 }] })}
-                      className="bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 px-3 py-1 rounded-lg text-sm font-bold transition-colors"
-                    >
-                      + Add Item
-                    </button>
+      {/* ========================================================================= */}
+      {/* --- APPLE MODAL SHEET: EDIT STUDENT INSPECTOR --- */}
+      {/* ========================================================================= */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-lg animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl max-h-[92vh] rounded-[2rem] bg-[#1c1c1e] border border-white/15 shadow-[0_32px_64px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col">
+            {/* Sheet Navigation Bar */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#242426]/90 sticky top-0 z-10">
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="text-xs font-medium text-[#8e8e93] hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <div className="text-center">
+                <h3 className="text-sm font-semibold text-white">Student Profile</h3>
+                <span className="text-[11px] text-[#8e8e93]">{editingStudent.name}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleUpdateStudent}
+                disabled={loading}
+                className="text-xs font-bold text-[#0A84FF] hover:text-[#0071e3] transition-colors"
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Sheet Body Scrollable Content */}
+            <div className="p-6 overflow-y-auto flex flex-col gap-6">
+              {/* Avatar & Basic Credentials */}
+              <AppleGroupedSection title="Student Identity">
+                <div className="p-4 flex items-center gap-5">
+                  <div className="relative group shrink-0">
+                    {editingStudent.profileImageUrl ? (
+                      <img
+                        src={editingStudent.profileImageUrl}
+                        alt={editingStudent.name}
+                        className="w-16 h-16 rounded-full object-cover border-2 border-white/20 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-inner">
+                        {editingStudent.name ? editingStudent.name.charAt(0).toUpperCase() : "S"}
+                      </div>
+                    )}
+                    <label className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+                      <Camera className="w-5 h-5 text-white" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            setLoading(true);
+                            const compressedFile = await compressImage(file, 800);
+                            const formData = new FormData();
+                            formData.append("file", compressedFile);
+                            const res = await fetch("/api/upload", {
+                              method: "POST",
+                              body: formData,
+                            });
+                            const data = await res.json();
+                            if (data.secure_url) {
+                              setEditingStudent({
+                                ...editingStudent,
+                                profileImageUrl: data.secure_url,
+                              });
+                              showToast("Profile image uploaded");
+                            } else {
+                              alert("Upload failed: " + (data.error || "Unknown error"));
+                            }
+                          } catch (err) {
+                            alert("Failed to upload image.");
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                      />
+                    </label>
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    {settings.builderItems?.map((item: any, index: number) => (
-                      <div key={index} className="bg-gray-950 p-4 rounded-xl border border-gray-800">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                        Full Name
+                      </span>
+                      <input
+                        type="text"
+                        value={editingStudent.name}
+                        onChange={(e) =>
+                          setEditingStudent({ ...editingStudent, name: e.target.value })
+                        }
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-semibold outline-none focus:border-[#0A84FF]"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                        Password
+                      </span>
+                      <input
+                        type="text"
+                        value={editingStudent.password}
+                        onChange={(e) =>
+                          setEditingStudent({ ...editingStudent, password: e.target.value })
+                        }
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-semibold outline-none focus:border-[#0A84FF]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <span className="text-xs text-neutral-400">Custom Avatar URL</span>
+                  <input
+                    type="text"
+                    value={editingStudent.profileImageUrl || ""}
+                    onChange={(e) =>
+                      setEditingStudent({
+                        ...editingStudent,
+                        profileImageUrl: e.target.value,
+                      })
+                    }
+                    placeholder="https://…"
+                    className="w-64 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-neutral-300 font-mono outline-none focus:border-[#0A84FF]"
+                  />
+                </div>
+              </AppleGroupedSection>
+
+              {/* Point Balances & Reward Mode */}
+              <AppleGroupedSection title="Gamification & Economy">
+                <AppleGroupedRow
+                  icon={<Zap className="w-4 h-4 text-[#34C759]" />}
+                  iconBg="bg-emerald-600/30"
+                  title="Current Point Balance"
+                  subtitle="Spendable points balance in builder & pet"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={editingStudent.pointsBalance}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          pointsBalance: Number(e.target.value),
+                        })
+                      }
+                      className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-[#34C759] font-bold text-right outline-none focus:border-[#34C759]"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
+
+                <AppleGroupedRow
+                  icon={<Award className="w-4 h-4 text-[#0A84FF]" />}
+                  iconBg="bg-blue-600/30"
+                  title="Lifetime Points"
+                  subtitle="Total career points accumulated"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={editingStudent.lifetimePoints}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          lifetimePoints: Number(e.target.value),
+                        })
+                      }
+                      className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-[#0A84FF] font-bold text-right outline-none focus:border-[#0A84FF]"
+                    />
+                    <span className="text-xs text-neutral-400">pts</span>
+                  </div>
+                </AppleGroupedRow>
+
+                <AppleGroupedRow
+                  icon={<Package className="w-4 h-4 text-purple-400" />}
+                  iconBg="bg-purple-600/30"
+                  title="Reward Progression System"
+                  subtitle="Choose whether rewards follow bundles or levels"
+                >
+                  <AppleSegmentedControl
+                    options={[
+                      { value: "classic", label: "Classic Bundles" },
+                      { value: "tiered", label: "Tiered Levels" },
+                    ]}
+                    value={editingStudent.rewardSystem || "classic"}
+                    onChange={(val) =>
+                      setEditingStudent({ ...editingStudent, rewardSystem: val })
+                    }
+                  />
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+
+              {/* Manners Feature */}
+              <AppleGroupedSection
+                title="Good Manners Feature"
+                description="Allows parents to evaluate homework, manners, and daily goals via a dedicated tokenized link."
+              >
+                <AppleGroupedRow
+                  icon={<Sparkles className="w-4 h-4 text-amber-300" />}
+                  iconBg="bg-amber-600/30"
+                  title="Enable Manners Tracking"
+                  subtitle="Enables star rating sheet for this student"
+                >
+                  <CupertinoSwitch
+                    checked={editingStudent.mannersEnabled || false}
+                    onChange={(checked) =>
+                      setEditingStudent({ ...editingStudent, mannersEnabled: checked })
+                    }
+                    ariaLabel="Enable Manners Tracking"
+                  />
+                </AppleGroupedRow>
+
+                {editingStudent.mannersEnabled && (
+                  <div className="p-4 flex flex-col gap-3 bg-black/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-amber-300">
+                        ⭐ Manners Tasks Checklist
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingStudent({
+                            ...editingStudent,
+                            mannersList: [
+                              ...(editingStudent.mannersList || []),
+                              { id: `task-${Date.now()}`, task: "New Task", maxStars: 1 },
+                            ],
+                          })
+                        }
+                        className="text-xs font-medium text-amber-400 hover:text-amber-200 bg-amber-500/10 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Task</span>
+                      </button>
+                    </div>
+
+                    {(editingStudent.mannersList || []).map((task: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 bg-[#242426] p-2.5 rounded-xl border border-white/[0.06]"
+                      >
+                        <input
+                          type="text"
+                          value={task.task}
+                          placeholder="Task Description"
+                          onChange={(e) => {
+                            const tasks = [...editingStudent.mannersList];
+                            tasks[index].task = e.target.value;
+                            setEditingStudent({ ...editingStudent, mannersList: tasks });
+                          }}
+                          className="flex-1 bg-transparent text-xs text-white font-medium outline-none"
+                        />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] text-neutral-400 font-semibold uppercase">
+                            Max:
+                          </span>
                           <input
-                            type="text" value={item.emoji} placeholder="Emoji"
-                            onChange={e => {
-                              const items = [...settings.builderItems];
-                              items[index].emoji = e.target.value;
-                              setSettings({ ...settings, builderItems: items });
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={task.maxStars}
+                            onChange={(e) => {
+                              const tasks = [...editingStudent.mannersList];
+                              tasks[index].maxStars = Number(e.target.value);
+                              setEditingStudent({ ...editingStudent, mannersList: tasks });
                             }}
-                            className="w-14 bg-gray-900 border border-gray-700 rounded-lg px-2 py-2 text-white text-center text-xl outline-none focus:border-amber-500"
+                            className="w-12 bg-black/40 border border-white/10 rounded-lg px-1.5 py-1 text-xs text-amber-300 font-bold text-center outline-none"
                           />
-                          <input
-                            type="text" value={item.name} placeholder="Item Name"
-                            onChange={e => {
-                              const items = [...settings.builderItems];
-                              items[index].name = e.target.value;
-                              setSettings({ ...settings, builderItems: items });
-                            }}
-                            className="flex-1 min-w-[100px] bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-amber-500"
-                          />
-                          <button
-                            onClick={() => {
-                              const items = settings.builderItems.filter((_: any, i: number) => i !== index);
-                              setSettings({ ...settings, builderItems: items });
-                            }}
-                            className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 p-2 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <span className="text-xs text-neutral-400">⭐</span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Cost</label>
-                            <input type="number" value={item.cost}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].cost = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-emerald-400 text-sm font-bold outline-none focus:border-amber-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Erase Refund</label>
-                            <input type="number" value={item.refundOnErase}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].refundOnErase = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-amber-400 text-sm font-bold outline-none focus:border-amber-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Width</label>
-                            <input type="number" step="0.1" value={item.width}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].width = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Height</label>
-                            <input type="number" step="0.1" value={item.height}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].height = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold uppercase block mb-1">Depth</label>
-                            <input type="number" step="0.1" value={item.depth}
-                              onChange={e => { const items = [...settings.builderItems]; items[index].depth = Number(e.target.value); setSettings({ ...settings, builderItems: items }); }}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-amber-500"
-                            />
-                          </div>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tasks = editingStudent.mannersList.filter(
+                              (_: any, i: number) => i !== index
+                            );
+                            setEditingStudent({ ...editingStudent, mannersList: tasks });
+                          }}
+                          className="text-neutral-500 hover:text-rose-400 p-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-            </div>
+                )}
+              </AppleGroupedSection>
 
+              {/* Spaced Repetition / Revision Feature */}
+              <AppleGroupedSection
+                title="Spaced Repetition & Revision"
+                description="Automatically schedules periodic revision flashcards to reinforce memory over expanding day intervals."
+              >
+                <AppleGroupedRow
+                  icon={<Clock className="w-4 h-4 text-violet-400" />}
+                  iconBg="bg-violet-600/30"
+                  title="Enable Spaced Repetition"
+                  subtitle="Activate repetition review queue for this student"
+                >
+                  <CupertinoSwitch
+                    checked={editingStudent.revisionEnabled || false}
+                    onChange={async (enabled) => {
+                      setEditingStudent({ ...editingStudent, revisionEnabled: enabled });
+                      await fetch("/api/revision/student-settings", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          studentId: editingStudent._id,
+                          revisionEnabled: enabled,
+                        }),
+                      });
+                      showToast(
+                        enabled
+                          ? "Revision active for student"
+                          : "Revision paused for student"
+                      );
+                    }}
+                    ariaLabel="Enable Spaced Repetition"
+                  />
+                </AppleGroupedRow>
+
+                {editingStudent.revisionEnabled && (
+                  <div className="p-4 flex flex-col gap-3 bg-black/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-violet-300">
+                        Review Intervals (day sequence)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentDays =
+                            editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90];
+                          const lastVal =
+                            currentDays.length > 0
+                              ? currentDays[currentDays.length - 1]
+                              : 30;
+                          const nextVal =
+                            lastVal < 30
+                              ? lastVal + 7
+                              : lastVal < 90
+                              ? lastVal + 30
+                              : lastVal + 90;
+                          setEditingStudent({
+                            ...editingStudent,
+                            revisionRewindDays: [...currentDays, nextVal],
+                          });
+                        }}
+                        className="text-xs font-medium text-violet-400 hover:text-violet-200 bg-violet-500/10 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Interval</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90]).map(
+                        (day: number, i: number) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-[#252528] rounded-xl border border-white/10 group"
+                          >
+                            <input
+                              type="number"
+                              min="1"
+                              value={day}
+                              onChange={(e) => {
+                                const days = [
+                                  ...(editingStudent.revisionRewindDays || [
+                                    1, 2, 7, 14, 30, 90,
+                                  ]),
+                                ];
+                                days[i] = Math.max(1, Number(e.target.value));
+                                setEditingStudent({
+                                  ...editingStudent,
+                                  revisionRewindDays: days,
+                                });
+                              }}
+                              className="w-12 bg-transparent text-xs text-violet-300 font-bold text-center outline-none"
+                            />
+                            <span className="text-[11px] text-neutral-500">days</span>
+                            {(editingStudent.revisionRewindDays || [1, 2, 7, 14, 30, 90])
+                              .length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const days = (
+                                    editingStudent.revisionRewindDays || [
+                                      1, 2, 7, 14, 30, 90,
+                                    ]
+                                  ).filter((_: number, idx: number) => idx !== i);
+                                  setEditingStudent({
+                                    ...editingStudent,
+                                    revisionRewindDays: days,
+                                  });
+                                }}
+                                className="text-neutral-500 hover:text-rose-400 ml-1"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </AppleGroupedSection>
+
+              {/* Danger Zone */}
+              <AppleGroupedSection title="Danger Zone">
+                <AppleGroupedRow
+                  icon={<Trash2 className="w-4 h-4 text-rose-500" />}
+                  iconBg="bg-rose-500/20"
+                  title="Delete Student Account"
+                  subtitle="Permanently deletes account and quiz history"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteStudent(editingStudent._id)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-semibold transition-colors"
+                  >
+                    Delete Account
+                  </button>
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+            </div>
           </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }
