@@ -858,9 +858,6 @@ export default function TeacherDashboard() {
                         </span>
                         <span className="text-[10px] text-slate-500">
                           Top: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
-                          {historyStats?.bestWeekLabel && historyStats.bestWeekLabel !== "None" && (
-                            <span className="text-[9px] text-slate-500 block">{historyStats.bestWeekLabel}</span>
-                          )}
                         </span>
                       </div>
                       {(() => {

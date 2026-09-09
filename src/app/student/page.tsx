@@ -729,9 +729,6 @@ export default function StudentDashboard() {
                         </span>
                         <span className="text-xs text-gray-500">
                           Top record: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
-                          {historyStats?.bestWeekLabel && historyStats.bestWeekLabel !== "None" && (
-                            <span className="text-[10px] text-gray-600 block">{historyStats.bestWeekLabel}</span>
-                          )}
                         </span>
                       </div>
                       {(() => {
