@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User, Star } from "lucide-react";
+import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User, Star, Check, CheckCircle2, Repeat, Sparkles, Award } from "lucide-react";
+import confetti from "canvas-confetti";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
@@ -15,6 +16,9 @@ export default function StudentDashboard() {
   const { user, refreshAuth } = useAuth();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [taskSuccessToast, setTaskSuccessToast] = useState<string | null>(null);
   const [liveTime, setLiveTime] = useState(0);
   const [frozenTime, setFrozenTime] = useState<number | null>(null);
   const [lastResult, setLastResult] = useState<any>(null);
@@ -112,6 +116,12 @@ export default function StudentDashboard() {
       
         const mannersRes = await fetch(`/api/manners?studentId=${user.id}`);
         if (mannersRes.ok) setMannersLogs(await mannersRes.json());
+
+        const tasksRes = await fetch(`/api/tasks?studentId=${user.id}`);
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          setTasks(tasksData.tasks || []);
+        }
       
       // Fetch withdrawals
       const logsRes = await fetch(`/api/withdrawals?studentId=${user.id}`);
@@ -233,6 +243,62 @@ export default function StudentDashboard() {
       })
     });
     setActiveSession({ ...activeSession, isTimerRunning: false });
+  };
+
+  const handleCompleteTask = async (task: any) => {
+    if (completingTaskId || !user?.id) return;
+    if (!task.isRepeatable && task.completed) return;
+
+    setCompletingTaskId(task.id);
+    try {
+      const res = await fetch("/api/tasks/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: user.id,
+          taskId: task.id,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        confetti({
+          particleCount: 110,
+          spread: 80,
+          origin: { y: 0.6 },
+        });
+
+        setTaskSuccessToast(data.message || `+${task.points} pts added! 🎉`);
+        setTimeout(() => setTaskSuccessToast(null), 4000);
+
+        // Instantly refresh student auth / points
+        await refreshAuth();
+
+        // Refresh tasks and history
+        const tasksRes = await fetch(`/api/tasks?studentId=${user.id}`);
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          setTasks(tasksData.tasks || []);
+        }
+
+        const historyRes = await fetch(
+          `/api/history?studentId=${user.id}&dailyLimit=${dailyLimitRef.current}&weeklyLimit=${weeklyLimitRef.current}`
+        );
+        if (historyRes.ok) {
+          const histData = await historyRes.json();
+          if (histData.stats) setHistoryStats(histData.stats);
+          if (histData.daily) setDailyHistory(histData.daily);
+          if (histData.weekly) setWeeklyHistory(histData.weekly);
+        }
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to complete task");
+      }
+    } catch (err) {
+      console.error("Error completing task:", err);
+    } finally {
+      setCompletingTaskId(null);
+    }
   };
 
   const bundleLimit = settings?.bundleLimit || 1000;
@@ -662,6 +728,117 @@ export default function StudentDashboard() {
                     </div>
                   </div>
                 )}
+
+                {/* My Tasks & Points Missions */}
+                <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-black flex items-center gap-2 text-base">
+                      <Award className="w-5 h-5 text-indigo-400" />
+                      Tasks & Points Missions
+                    </span>
+                    <span className="text-xs font-bold text-indigo-300 bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-500/30">
+                      {tasks.filter((t) => (!t.isRepeatable && !t.completed) || (t.isRepeatable && !t.completedToday)).length} To-Do
+                    </span>
+                  </div>
+
+                  {taskSuccessToast && (
+                    <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs font-black flex items-center gap-2 animate-in fade-in duration-200">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{taskSuccessToast}</span>
+                    </div>
+                  )}
+
+                  {tasks.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 flex flex-col items-center gap-2">
+                      <Sparkles className="w-7 h-7 text-gray-600" />
+                      <p className="text-xs font-bold">No tasks assigned yet.</p>
+                      <p className="text-[11px] text-gray-600">Your teacher will assign exciting tasks here!</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5">
+                      {tasks.map((task) => {
+                        const isCompleted = !task.isRepeatable && task.completed;
+                        const isCompletedToday = task.isRepeatable && task.completedToday;
+                        const isBusy = completingTaskId === task.id;
+
+                        return (
+                          <div
+                            key={task.id}
+                            className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                              isCompleted
+                                ? "bg-gray-950/50 border-gray-800/40 opacity-60"
+                                : isCompletedToday
+                                ? "bg-indigo-950/30 border-indigo-500/30"
+                                : "bg-gray-950 border-gray-800 hover:border-indigo-500/40 shadow-sm"
+                            }`}
+                          >
+                            {/* Tick mark button */}
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteTask(task)}
+                              disabled={isCompleted || isBusy}
+                              title={
+                                isCompleted
+                                  ? "Task Completed"
+                                  : isCompletedToday
+                                  ? "Completed today (Click to complete again)"
+                                  : `Click to complete and claim +${task.points} pts!`
+                              }
+                              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                                isCompleted
+                                  ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 cursor-default"
+                                  : isCompletedToday
+                                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:scale-105 active:scale-95"
+                                  : "bg-gray-800 hover:bg-emerald-600 border border-gray-700 hover:border-emerald-400 text-gray-400 hover:text-white shadow-md active:scale-95 hover:shadow-emerald-500/20"
+                              }`}
+                            >
+                              <Check className={`w-5 h-5 ${isCompleted ? "stroke-[3]" : "stroke-[2.5]"}`} />
+                            </button>
+
+                            {/* Task details */}
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={`text-sm sm:text-base font-bold ${
+                                  isCompleted ? "line-through text-gray-500" : "text-gray-200"
+                                }`}
+                              >
+                                {task.title}
+                              </p>
+
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-black">
+                                  +{task.points} pts
+                                </span>
+
+                                {task.isRepeatable ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold flex items-center gap-1">
+                                    <Repeat className="w-2.5 h-2.5" /> Repeatable
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-[10px] font-bold">
+                                    ⭐ One-Time
+                                  </span>
+                                )}
+
+                                {isCompleted && (
+                                  <span className="text-[11px] font-black text-emerald-400">
+                                    ✓ Claimed
+                                  </span>
+                                )}
+                                {isCompletedToday && (
+                                  <span className="text-[11px] font-bold text-cyan-400">
+                                    ✓ Done Today ({task.completedCount || 1}x)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
                 {/* Unlimited Weekly Progress & Comparisons (replaces Tiered Reward Levels) */}
                 <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
                   <div className="flex items-center justify-between">

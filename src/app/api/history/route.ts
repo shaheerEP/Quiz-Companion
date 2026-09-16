@@ -21,7 +21,7 @@ function getSunday(monday: Date): Date {
   return sunday;
 }
 
-function formatWeekLabel(monday: Date, isCurrentWeek: boolean, isLastWeek: boolean): string {
+function formatWeekLabel(monday: Date, isCurrentWeek: boolean, isLastWeek: boolean, isTwoWeeksAgo = false): string {
   const sunday = getSunday(monday);
   const startMonth = monday.toLocaleDateString("en-US", { month: "short" });
   const endMonth = sunday.toLocaleDateString("en-US", { month: "short" });
@@ -31,6 +31,7 @@ function formatWeekLabel(monday: Date, isCurrentWeek: boolean, isLastWeek: boole
 
   if (isCurrentWeek) return `This Week (${startMonth} ${startDay} – ${endDay})`;
   if (isLastWeek) return `Last Week (${startMonth} ${startDay} – ${endDay})`;
+  if (isTwoWeeksAgo) return `2 Weeks Ago (${startMonth} ${startDay} – ${endDay})`;
   if (startMonth === endMonth) {
     return `Week of ${startMonth} ${startDay} – ${endDay}, ${year}`;
   }
@@ -148,6 +149,8 @@ export async function GET(req: Request) {
     const currentWeekMonday = getMonday(now);
     const lastWeekMonday = new Date(currentWeekMonday);
     lastWeekMonday.setDate(lastWeekMonday.getDate() - 7);
+    const twoWeeksAgoMonday = new Date(currentWeekMonday);
+    twoWeeksAgoMonday.setDate(twoWeeksAgoMonday.getDate() - 14);
 
     const weeklyMap: {
       [mondayKey: string]: {
@@ -167,12 +170,13 @@ export async function GET(req: Request) {
 
       const isCurrentWeek = mon.getTime() === currentWeekMonday.getTime();
       const isLastWeek = mon.getTime() === lastWeekMonday.getTime();
+      const isTwoWeeksAgo = mon.getTime() === twoWeeksAgoMonday.getTime();
 
       if (!weeklyMap[monKey]) {
         weeklyMap[monKey] = {
           mondayDate: mon,
           weekKey: monKey,
-          weekLabel: formatWeekLabel(mon, isCurrentWeek, isLastWeek),
+          weekLabel: formatWeekLabel(mon, isCurrentWeek, isLastWeek, isTwoWeeksAgo),
           totalPoints: 0,
           itemsCount: 0,
           days: []
@@ -228,10 +232,19 @@ export async function GET(req: Request) {
       (w as any).isBestWeek = w.totalPoints > 0 && w.weekKey === bestWeekKey;
     }
 
-    // This week and last week points
+    // This week, last week, and 2 weeks ago points
     const thisWeekPoints = weeklyMap[currentWeekKey]?.totalPoints || 0;
+    const thisWeekLabel = weeklyMap[currentWeekKey]?.weekLabel || formatWeekLabel(currentWeekMonday, true, false, false);
+
     const lastWeekKey = lastWeekMonday.toISOString().split("T")[0];
     const lastWeekPoints = weeklyMap[lastWeekKey]?.totalPoints || 0;
+    const lastWeekLabel = weeklyMap[lastWeekKey]?.weekLabel || formatWeekLabel(lastWeekMonday, false, true, false);
+
+    const twoWeeksAgoKey = twoWeeksAgoMonday.toISOString().split("T")[0];
+    const twoWeeksAgoPoints = weeklyMap[twoWeeksAgoKey]?.totalPoints || 0;
+    const twoWeeksAgoLabel = weeklyMap[twoWeeksAgoKey]?.weekLabel || formatWeekLabel(twoWeeksAgoMonday, false, false, true);
+
+    const prevTwoWeeksTotalPoints = lastWeekPoints + twoWeeksAgoPoints;
     const diffLastWeek = thisWeekPoints - lastWeekPoints;
 
     // Difference between most scored week and this week
@@ -245,7 +258,12 @@ export async function GET(req: Request) {
     const responsePayload = {
       stats: {
         thisWeekPoints,
+        thisWeekLabel,
         lastWeekPoints,
+        lastWeekLabel,
+        twoWeeksAgoPoints,
+        twoWeeksAgoLabel,
+        prevTwoWeeksTotalPoints,
         diffLastWeek,
         bestWeekPoints,
         bestWeekLabel,

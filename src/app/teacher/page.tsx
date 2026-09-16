@@ -9,15 +9,19 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer, BookOpen } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer, BookOpen, Award } from "lucide-react";
 import Link from "next/link";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
+import StudentEPosterModal from "@/components/StudentEPosterModal";
+import TeacherTasksModal from "@/components/TeacherTasksModal";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [activeStudent, setActiveStudent] = useState<any>(null);
   const [activeSession, setActiveSession] = useState<any>(null);
+  const [showPosterModal, setShowPosterModal] = useState(false);
+  const [showTasksModal, setShowTasksModal] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [showRating, setShowRating] = useState<{ stars: number, compliment: string, points: number } | null>(null);
@@ -767,6 +771,20 @@ export default function TeacherDashboard() {
                   </Link>
                 )}
 
+                {/* Tasks & Points */}
+                <button
+                  type="button"
+                  onClick={() => setShowTasksModal(true)}
+                  className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/35 transition-all flex justify-center items-center gap-2 text-sm cursor-pointer active:scale-[0.98]"
+                >
+                  <Award className="w-4 h-4" /> Tasks & Points 🎯
+                  {activeStudent.tasks && activeStudent.tasks.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-black">
+                      {activeStudent.tasks.length}
+                    </span>
+                  )}
+                </button>
+
                 {/* Today's Manners */}
                 {activeStudent.mannersEnabled && (
                   <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
@@ -901,6 +919,16 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
                   )}
+
+                  {/* E-Poster Generation Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPosterModal(true)}
+                    className="w-full mt-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 hover:from-amber-500/30 hover:via-indigo-500/30 hover:to-purple-500/30 border border-amber-500/35 hover:border-amber-500/50 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98]"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Get Achievement E-Poster 🖼️</span>
+                  </button>
                 </div>
 
                 {/* Quick Add / Deduct Points */}
@@ -979,9 +1007,20 @@ export default function TeacherDashboard() {
 
                     <div className="flex flex-col">
                       <span className="text-xs font-bold uppercase tracking-widest text-indigo-300">Ready to score</span>
-                      <h1 className="text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-amber-200 tracking-tight capitalize drop-shadow-md">
-                        {activeStudent.name}
-                      </h1>
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <h1 className="text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-amber-200 tracking-tight capitalize drop-shadow-md">
+                          {activeStudent.name}
+                        </h1>
+                        <button
+                          type="button"
+                          onClick={() => setShowPosterModal(true)}
+                          className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                          title="Generate Student Achievement E-Poster"
+                        >
+                          <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Get E-Poster 🖼️</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1011,6 +1050,15 @@ export default function TeacherDashboard() {
                     <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md text-center">
                       {activeStudent.name}
                     </h1>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPosterModal(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                    >
+                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Get E-Poster 🖼️</span>
+                    </button>
 
                     {/* 5 Star Daily Fill (Mobile) */}
                     <div className="relative inline-block text-3xl">
@@ -1167,6 +1215,27 @@ export default function TeacherDashboard() {
 
       {showMannersHistory && activeStudent && (
         <MannersHistoryModal studentId={activeStudent._id} onClose={() => setShowMannersHistory(false)} />
+      )}
+
+      {showPosterModal && activeStudent && (
+        <StudentEPosterModal
+          isOpen={showPosterModal}
+          onClose={() => setShowPosterModal(false)}
+          student={activeStudent}
+          historyStats={historyStats}
+        />
+      )}
+
+      {showTasksModal && activeStudent && (
+        <TeacherTasksModal
+          isOpen={showTasksModal}
+          onClose={() => setShowTasksModal(false)}
+          student={activeStudent}
+          onStudentUpdated={(updatedStudent) => {
+            setActiveStudent(updatedStudent);
+            fetchStudentHistory(updatedStudent._id);
+          }}
+        />
       )}
     </div>
   );

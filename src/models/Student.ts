@@ -50,6 +50,18 @@ export interface IStudent extends Document {
   mannersList?: { task: string; maxStars: number; id: string }[];
   revisionEnabled?: boolean;
   revisionRewindDays?: number[];
+  tasks?: ITaskItem[];
+}
+
+export interface ITaskItem {
+  id: string;
+  title: string;
+  points: number;
+  isRepeatable: boolean;
+  completed: boolean;
+  completedCount?: number;
+  lastCompletedAt?: Date;
+  createdAt?: Date;
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -110,6 +122,21 @@ const StudentSchema = new Schema<IStudent>(
     mannersList: { type: [{ task: String, maxStars: Number, id: String }], default: [] },
     revisionEnabled: { type: Boolean, default: false },
     revisionRewindDays: { type: [Number], default: [1, 2, 7, 14, 30, 90] },
+    tasks: {
+      type: [
+        {
+          id: { type: String, required: true },
+          title: { type: String, required: true },
+          points: { type: Number, required: true, default: 10 },
+          isRepeatable: { type: Boolean, default: false },
+          completed: { type: Boolean, default: false },
+          completedCount: { type: Number, default: 0 },
+          lastCompletedAt: { type: Date },
+          createdAt: { type: Date, default: Date.now },
+        }
+      ],
+      default: []
+    },
   },
   { timestamps: true }
 );
