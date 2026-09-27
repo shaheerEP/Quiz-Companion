@@ -471,7 +471,7 @@ const DEFAULT_SETTINGS = {
     {
       "id": "wardrobe",
       "name": "Wardrobe",
-      "emoji": "🚪",
+      "emoji": "🗄️",
       "cost": 200,
       "refundOnErase": 100,
       "width": 2,
@@ -723,6 +723,11 @@ export async function GET() {
             newValue.builderItems.push(defaultItem);
             updated = true;
           }
+        }
+        const existingWardrobe = newValue.builderItems.find((i: any) => i.id === "wardrobe");
+        if (existingWardrobe && existingWardrobe.emoji === "🚪") {
+          existingWardrobe.emoji = "🗄️";
+          updated = true;
         }
       }
       if (newValue.prefabs === undefined) {

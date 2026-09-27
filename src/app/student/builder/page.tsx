@@ -180,13 +180,17 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
   const swing = isOpen ? Math.PI / 2 : 0;
 
   return (
-    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onClick={handleClick} onDoubleClick={handleDoubleClick}>
+    <group position={[data.x, data.y - 0.5, data.z]} rotation={[0, baseRotation, 0]} onClick={isExploreMode ? handleToggle : handleClick} onDoubleClick={handleDoubleClick}>
       <group position={[-0.4, 0, 0]} rotation={[0, swing, 0]}>
         <mesh position={[0.4, 0.9, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.8, 1.8, 0.1]} />
           <meshStandardMaterial color="#8B5A2B" />
         </mesh>
         <mesh position={[0.7, 0.9, 0.08]} castShadow receiveShadow>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+        <mesh position={[0.7, 0.9, -0.08]} castShadow receiveShadow>
           <sphereGeometry args={[0.05, 16, 16]} />
           <meshStandardMaterial color="#fbbf24" />
         </mesh>
@@ -1349,7 +1353,11 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
-  if (isMatch("wardrobe", "wardrobe", "🚪")) {
+  if (itemId === "door" || (!isMatch("wardrobe") && isMatch("door", "door", "🚪"))) {
+    return <InteractiveDoor data={data} handleClick={handleClick} isExploreMode={isExploreMode} />;
+  }
+
+  if (itemId === "wardrobe" || (itemId !== "door" && !name.includes("door") && isMatch("wardrobe", "wardrobe", "🗄️"))) {
     return (
       <ModelWrapper>
         {/* Frame */}
@@ -1395,10 +1403,6 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         ))}
       </ModelWrapper>
     );
-  }
-
-  if (isMatch("door", "door", "🚪")) {
-    return <InteractiveDoor data={data} handleClick={handleClick} isExploreMode={isExploreMode} />;
   }
 
   if (isMatch("window", "window", "🪟")) {
