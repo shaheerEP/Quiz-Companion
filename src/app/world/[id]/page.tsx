@@ -2607,6 +2607,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             enablePan={!isExploreMode} 
             rotateSpeed={0.5} 
             maxDistance={(worldData.landSize ?? 50) * 1.5}
+            enabled={!isExploreMode}
           />
         </Canvas>
       </main>

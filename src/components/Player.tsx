@@ -258,6 +258,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
+  const currentYaw = useRef(0);
+  const currentPitch = useRef(0.2);
 
   // Memoize spatial collision grid so it only rebuilds when objects change
   const spatialGrid = useMemo(() => new SpatialCollisionGrid(objects), [objects]);
@@ -271,13 +273,72 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         groupRef.current.rotation.y = vehicleRot;
       }
       targetRotation.current = vehicleRot;
+      currentYaw.current = vehicleRot;
       playerState.rotation = vehicleRot;
       logicalY.current = drivingVehicle.y;
     }
   }, [drivingVehicle]);
 
+  // Pointer drag listener to look around in explore mode
+  useEffect(() => {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    const DRAG_THRESHOLD = 4;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.closest('button, input, select, textarea, .pointer-events-auto')) {
+        return;
+      }
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const totalDist = Math.hypot(e.clientX - startX, e.clientY - startY);
+      if (totalDist < DRAG_THRESHOLD) return;
+
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      currentYaw.current -= dx * 0.005;
+      currentPitch.current = THREE.MathUtils.clamp(
+        currentPitch.current - dy * 0.003,
+        -0.15,
+        0.65
+      );
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+    };
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, []);
+
   useFrame((state, delta) => {
     if (!groupRef.current) return;
+
+    // Keep MapControls strictly disabled throughout explore mode
+    if (state.controls && (state.controls as any).enabled) {
+      (state.controls as any).enabled = false;
+    }
 
     // ─── Initial Spawn: Corner of Bottom Surface (No falling from sky) ───
     if (!initialized.current) {
@@ -303,6 +364,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
       pos.current.set(startX, startY, startZ);
       logicalY.current = startY;
+      currentYaw.current = startRot;
+      currentPitch.current = 0.2;
       targetRotation.current = startRot;
       groupRef.current.position.set(startX, startY, startZ);
       groupRef.current.rotation.y = startRot;
@@ -310,70 +373,66 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       playerState.rotation = startRot;
 
       // Snap camera directly behind player at ground level (prevents falling from the sky)
-      const initCamDist = drivingVehicle ? 6 : 2.5;
-      const initCamHeight = drivingVehicle ? 3 : 1.5;
-      const initCamX = startX - Math.sin(startRot) * initCamDist;
-      const initCamZ = startZ - Math.cos(startRot) * initCamDist;
-      const initCamY = startY + initCamHeight;
-      const initLookAt = new THREE.Vector3(startX, startY + 1, startZ);
+      const initCamDist = drivingVehicle ? 6.0 : 2.8;
+      const initCamHeight = drivingVehicle ? 2.5 : 1.35;
+      const cosPitch = Math.cos(0.2);
+      const sinPitch = Math.sin(0.2);
+      const initCamX = startX - Math.sin(startRot) * initCamDist * cosPitch;
+      const initCamZ = startZ - Math.cos(startRot) * initCamDist * cosPitch;
+      const initCamY = startY + initCamHeight + initCamDist * sinPitch;
+      const initLookAt = new THREE.Vector3(startX, startY + 1.1, startZ);
 
       state.camera.position.set(initCamX, initCamY, initCamZ);
       state.camera.lookAt(initLookAt);
 
       if (state.controls) {
-        const controls = state.controls as any;
-        controls.target.copy(initLookAt);
-        controls.update();
+        (state.controls as any).enabled = false;
       }
 
       initialized.current = true;
     }
 
-    let dirX = 0;
-    let dirZ = 0;
-    if (controlsRef.forward) dirZ -= 1;
-    if (controlsRef.backward) dirZ += 1;
-    if (controlsRef.left) dirX -= 1;
-    if (controlsRef.right) dirX += 1;
+    // Steering & Yaw adjustment:
+    if (controlsRef.left) {
+      currentYaw.current += (drivingVehicle ? 1.8 : 2.5) * delta;
+    }
+    if (controlsRef.right) {
+      currentYaw.current -= (drivingVehicle ? 1.8 : 2.5) * delta;
+    }
 
     let moving = false;
 
     if (drivingVehicle) {
       let moveSpeed = 0;
       if (controlsRef.forward) moveSpeed = speed;
-      else if (controlsRef.backward) moveSpeed = -speed;
+      else if (controlsRef.backward) moveSpeed = -speed * 0.7;
 
       if (moveSpeed !== 0) {
         moving = true;
-        let turnAmount = 0;
-        if (controlsRef.left) turnAmount = 0.5;
-        if (controlsRef.right) turnAmount = -0.5;
-        groupRef.current.rotation.y += turnAmount * delta * Math.sign(moveSpeed);
       }
 
-      velocity.current.x = Math.sin(groupRef.current.rotation.y) * moveSpeed;
-      velocity.current.z = Math.cos(groupRef.current.rotation.y) * moveSpeed;
-      targetRotation.current = groupRef.current.rotation.y;
+      groupRef.current.rotation.y = currentYaw.current;
+      targetRotation.current = currentYaw.current;
+      velocity.current.x = Math.sin(currentYaw.current) * moveSpeed;
+      velocity.current.z = Math.cos(currentYaw.current) * moveSpeed;
     } else {
-      if (dirX !== 0 || dirZ !== 0) {
-        moving = true;
-        const inputAngle = Math.atan2(dirX, dirZ);
-        const camVec = new THREE.Vector3();
-        state.camera.getWorldDirection(camVec);
-        const camAngle = Math.atan2(-camVec.x, -camVec.z);
-        targetRotation.current = camAngle + inputAngle;
+      let moveSpeed = 0;
+      if (controlsRef.forward) moveSpeed += speed;
+      if (controlsRef.backward) moveSpeed -= speed * 0.75;
 
-        velocity.current.x = Math.sin(targetRotation.current) * speed;
-        velocity.current.z = Math.cos(targetRotation.current) * speed;
+      if (moveSpeed !== 0) {
+        moving = true;
         walkTime.current += delta * 15;
       } else {
-        velocity.current.set(0, 0, 0);
         walkTime.current = 0;
       }
 
-      const diff = ((targetRotation.current - groupRef.current.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
-      const wrappedDiff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
-      groupRef.current.rotation.y += wrappedDiff * delta * 3;
+      // Avatar smoothly faces the current yaw
+      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, currentYaw.current, 20, delta);
+      targetRotation.current = groupRef.current.rotation.y;
+
+      velocity.current.x = Math.sin(currentYaw.current) * moveSpeed;
+      velocity.current.z = Math.cos(currentYaw.current) * moveSpeed;
     }
 
     // ─── Fast O(1) Local Collision Check ───
@@ -517,44 +576,20 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     }
 
     // ─── Responsive Chase Camera Logic ───
-    const targetLookAt = new THREE.Vector3(pos.current.x, pos.current.y + 1, pos.current.z);
+    const camDist = drivingVehicle ? 6.0 : 2.8;
+    const camHeight = drivingVehicle ? 2.5 : 1.35;
+    const cosPitch = Math.cos(currentPitch.current);
+    const sinPitch = Math.sin(currentPitch.current);
 
-    if (moving) {
-      if (state.controls) {
-        const controls = state.controls as any;
-        controls.enabled = false;
-      }
+    const idealCamX = pos.current.x - Math.sin(currentYaw.current) * camDist * cosPitch;
+    const idealCamZ = pos.current.z - Math.cos(currentYaw.current) * camDist * cosPitch;
+    const idealCamY = pos.current.y + camHeight + camDist * sinPitch;
 
-      const distance = drivingVehicle ? 6 : 2.5;
-      const height = drivingVehicle ? 3 : 1.5;
-      const angle = groupRef.current.rotation.y;
+    const targetLookAt = new THREE.Vector3(pos.current.x, pos.current.y + 1.1, pos.current.z);
+    const idealCamPos = new THREE.Vector3(idealCamX, idealCamY, idealCamZ);
 
-      const offsetX = -Math.sin(angle) * distance;
-      const offsetZ = -Math.cos(angle) * distance;
-
-      const idealCamPos = new THREE.Vector3(
-        pos.current.x + offsetX,
-        pos.current.y + height,
-        pos.current.z + offsetZ
-      );
-
-      state.camera.position.lerp(idealCamPos, delta * 6);
-      state.camera.lookAt(targetLookAt);
-
-      if (state.controls) {
-        const controls = state.controls as any;
-        controls.target.copy(targetLookAt);
-      }
-    } else {
-      if (state.controls) {
-        const controls = state.controls as any;
-        controls.enabled = true;
-        controls.target.lerp(targetLookAt, delta * 10);
-        controls.update();
-      } else {
-        state.camera.lookAt(targetLookAt);
-      }
-    }
+    state.camera.position.lerp(idealCamPos, delta * 12);
+    state.camera.lookAt(targetLookAt);
   });
 
   return (

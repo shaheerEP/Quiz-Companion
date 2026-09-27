@@ -2513,7 +2513,16 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
 
 export default function VoxelBuilder() {
   const { user } = useAuth();
-  const [studentData, setStudentData] = useState<any>(null);
+  const [studentDataState, setStudentDataState] = useState<any>(null);
+  const studentDataRef = useRef<any>(null);
+  const studentData = studentDataState;
+  const setStudentData = useCallback((valOrFn: any) => {
+    setStudentDataState((prev: any) => {
+      const next = typeof valOrFn === 'function' ? valOrFn(prev) : valOrFn;
+      studentDataRef.current = next;
+      return next;
+    });
+  }, []);
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeColor, setActiveColor] = useState<string>("#8B5A2B");
@@ -2523,13 +2532,22 @@ export default function VoxelBuilder() {
   const objectsRef = useRef<PlacedObject[]>([]);
   const objects = objectsState;
   const setObjects = useCallback((objs: PlacedObject[]) => {
-    setObjectsState(objs);
     objectsRef.current = objs;
+    setObjectsState(objs);
   }, []);
   const [actionMessage, setActionMessage] = useState<{text: string, type: 'error'|'success'} | null>(null);
   const [undosRemaining, setUndosRemaining] = useState(3);
   const [sessionPlaced, setSessionPlaced] = useState<PlacedObject[]>([]);
   const isSavingRef = useRef(false);
+  const initialLoadedRef = useRef(false);
+  const pendingSaveRef = useRef<{
+    objects: PlacedObject[];
+    balance: number;
+    desc: string[];
+    pointsDeducted: number;
+  } | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const pointerDownPos = useRef<{x: number; y: number} | null>(null);
 
   // Stable ref-based isDragging check used by 3D components
@@ -2552,6 +2570,14 @@ export default function VoxelBuilder() {
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
+  const mapControlsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!isExploreMode && mapControlsRef.current && playerState.pos && (playerState.pos.x !== 0 || playerState.pos.z !== 0)) {
+      mapControlsRef.current.target.set(playerState.pos.x, 0, playerState.pos.z);
+      mapControlsRef.current.update();
+    }
+  }, [isExploreMode]);
   const [activeWidth, setActiveWidth] = useState<number>(1);
   const [activeThickness, setActiveThickness] = useState<number>(1);
   const [activeDepth, setActiveDepth] = useState<number>(1);
@@ -2581,7 +2607,7 @@ export default function VoxelBuilder() {
     if (selectedBlockIds.length === 0) return null;
     
     const hasHeightUpdate = updates.thickness !== undefined || updates.h !== undefined;
-    let newObjects = [...objects];
+    let newObjects = [...objectsRef.current];
     
     const selectedIndices = newObjects
       .map((o, idx) => selectedBlockIds.includes(getBlockId(o)) ? idx : -1)
@@ -2833,14 +2859,38 @@ export default function VoxelBuilder() {
       const currentStudent = students.find((s: any) => s._id === user.id);
       const config = await settingsRes.json();
       setSettings(config);
-      if (currentStudent && !isSavingRef.current && !isEditingRef.current && !drivingVehicleRef.current) {
-        setStudentData(currentStudent);
-        setObjects(currentStudent.worldBlocks || []);
-        if (!activeColor) {
-          setActiveColor(BASE_COLORS[0].color);
+
+      if (currentStudent) {
+        if (!initialLoadedRef.current) {
+          initialLoadedRef.current = true;
+          setStudentData(currentStudent);
+          studentDataRef.current = currentStudent;
+          setObjects(currentStudent.worldBlocks || []);
+          if (!activeColor) {
+            setActiveColor(BASE_COLORS[0].color);
+          }
+        } else {
+          // Never overwrite objects on background polling! Only sync class time, custom colors, etc.
+          setStudentData((prev: any) => {
+            if (!prev) return currentStudent;
+            const updated = {
+              ...prev,
+              isClassTime: currentStudent.isClassTime,
+              customColors: currentStudent.customColors || prev.customColors,
+              unlockedAvatars: currentStudent.unlockedAvatars || prev.unlockedAvatars,
+              pointsBalance: pendingSaveRef.current ? prev.pointsBalance : currentStudent.pointsBalance,
+              landSize: currentStudent.landSize ?? prev.landSize,
+            };
+            studentDataRef.current = updated;
+            return updated;
+          });
         }
       }
-    } catch (e) {} finally { if (!isSavingRef.current) setLoading(false); }
+    } catch (e) {
+      console.error("fetchData error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -2853,7 +2903,6 @@ export default function VoxelBuilder() {
     const newPos = playerState.pos;
     const newRot = playerState.rotation + Math.PI / 2;
     
-    // Use original ID to match since objects array might have been recreated by interval fetch
     const origId = getBlockId(drivingVehicle);
     let found = false;
     const updatedObjects = objectsRef.current.map(o => {
@@ -2869,11 +2918,11 @@ export default function VoxelBuilder() {
     }
 
     setObjects(updatedObjects);
-    saveObjects(updatedObjects, studentData?.pointsBalance || 0, "Exited vehicle", 0);
+    saveObjects(updatedObjects, studentDataRef.current?.pointsBalance || 0, "Exited vehicle", 0);
     setDrivingVehicle(null);
   };
 
-  useEffect(() => { fetchData(); const i = setInterval(fetchData, 5000); return () => clearInterval(i); }, [user]);
+  useEffect(() => { fetchData(); const i = setInterval(fetchData, 15000); return () => clearInterval(i); }, [user]);
 
   const showMessage = (text: string, type: 'error'|'success') => {
     setActionMessage({ text, type }); setTimeout(() => setActionMessage(null), 3000);
@@ -2888,15 +2937,19 @@ export default function VoxelBuilder() {
   const actualRoofCost = isCustomColor ? 0 : (settings?.builderRoofCost ?? 100);
 
   const handleAvatarPurchase = async (avatarId: string, cost: number) => {
-    if (!studentData) return;
-    if (studentData.pointsBalance < cost) {
+    await flushSave();
+    const curBalance = studentDataRef.current?.pointsBalance ?? 0;
+    if (curBalance < cost) {
       showMessage("Not enough points!", "error");
       return;
     }
-    const newUnlocked = [...(studentData.unlockedAvatars || ['boy']), avatarId];
-    const newBalance = studentData.pointsBalance - cost;
+    const newUnlocked = [...(studentDataRef.current?.unlockedAvatars || ['boy']), avatarId];
+    const newBalance = curBalance - cost;
     
-    setStudentData({ ...studentData, pointsBalance: newBalance, unlockedAvatars: newUnlocked, activeAvatar: avatarId });
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance, unlockedAvatars: newUnlocked, activeAvatar: avatarId } : prev);
+    if (studentDataRef.current) {
+      studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance, unlockedAvatars: newUnlocked, activeAvatar: avatarId };
+    }
     
     try {
       const res = await fetch("/api/students", {
@@ -2918,8 +2971,10 @@ export default function VoxelBuilder() {
   };
 
   const handleAvatarEquip = async (avatarId: string) => {
-    if (!studentData) return;
-    setStudentData({ ...studentData, activeAvatar: avatarId });
+    setStudentData((prev: any) => prev ? { ...prev, activeAvatar: avatarId } : prev);
+    if (studentDataRef.current) {
+      studentDataRef.current = { ...studentDataRef.current, activeAvatar: avatarId };
+    }
     try {
       await fetch("/api/students", {
         method: "PUT", headers: { "Content-Type": "application/json" },
@@ -2931,17 +2986,18 @@ export default function VoxelBuilder() {
   };
 
   const handleLandPurchase = async () => {
-    if (!studentData) return;
+    await flushSave();
+    const curBalance = studentDataRef.current?.pointsBalance ?? 0;
     const cost = settings?.landUpgradeCost ?? 1000;
-    if (studentData.pointsBalance < cost) {
+    if (curBalance < cost) {
       showMessage(`Need ${cost} points to buy more land!`, "error");
       return;
     }
 
     setLoading(true);
     try {
-      const newBalance = studentData.pointsBalance - cost;
-      const currentLandSize = studentData.landSize ?? 50;
+      const newBalance = curBalance - cost;
+      const currentLandSize = studentDataRef.current?.landSize ?? 50;
       const amount = settings?.landUpgradeAmount ?? 50;
       const newLandSize = currentLandSize + amount;
       
@@ -2956,34 +3012,108 @@ export default function VoxelBuilder() {
         body: JSON.stringify({ studentId: user?.id, pointsDeducted: cost, rewardDescription: `Expanded land to ${newLandSize}x${newLandSize}` })
       });
 
-      setStudentData({ ...studentData, pointsBalance: newBalance, landSize: newLandSize });
+      setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance, landSize: newLandSize } : prev);
+      if (studentDataRef.current) {
+        studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance, landSize: newLandSize };
+      }
       showMessage("Land expanded!", "success");
     } catch (e) { showMessage("Failed to expand land", "error"); } finally { setLoading(false); }
   };
 
-  /* ─── Save helper ─── */
+  /* ─── Save helper (Minecraft-grade Debounced FIFO Saver) ─── */
 
-  const saveObjects = async (newObjects: PlacedObject[], newBalance: number, desc: string, pointsDeducted: number) => {
+  const executeSave = useCallback(async (data: { objects: PlacedObject[], balance: number, desc: string[], pointsDeducted: number }) => {
     isSavingRef.current = true;
+    setSaveStatus('saving');
     try {
       const res = await fetch("/api/students", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: user?.id, pointsBalance: newBalance, worldBlocks: newObjects })
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user?.id, pointsBalance: data.balance, worldBlocks: data.objects })
       });
       if (!res.ok) throw new Error("Save failed");
-      if (pointsDeducted > 0) {
+
+      if (data.pointsDeducted > 0) {
         await fetch("/api/withdrawals", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentId: user?.id, pointsDeducted, rewardDescription: desc })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId: user?.id,
+            pointsDeducted: data.pointsDeducted,
+            rewardDescription: data.desc.filter(Boolean).slice(-3).join("; ") || "Building action"
+          })
         });
       }
-      setTimeout(() => { isSavingRef.current = false; }, 500);
-    } catch (e) { isSavingRef.current = false; showMessage("Failed to save. Check connection.", "error"); fetchData(); }
-  };
+      setSaveStatus('saved');
+      setTimeout(() => {
+        setSaveStatus((prev) => (prev === 'saved' ? 'idle' : prev));
+      }, 2000);
+    } catch (e) {
+      console.error("Save error:", e);
+      setSaveStatus('idle');
+      showMessage("Save failed. Will retry.", "error");
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [user?.id]);
+
+  const flushSave = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const pending = pendingSaveRef.current;
+    if (!pending) return;
+    pendingSaveRef.current = null;
+    await executeSave(pending);
+  }, [executeSave]);
+
+  const saveObjects = useCallback((newObjects: PlacedObject[], newBalance: number, desc: string, pointsDeducted: number) => {
+    const prev = pendingSaveRef.current;
+    pendingSaveRef.current = {
+      objects: newObjects,
+      balance: newBalance,
+      desc: prev ? [...prev.desc, desc] : [desc],
+      pointsDeducted: (prev ? prev.pointsDeducted : 0) + (pointsDeducted || 0)
+    };
+    setSaveStatus('saving');
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      flushSave();
+    }, 1200);
+  }, [flushSave]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (pendingSaveRef.current && user?.id) {
+        const data = pendingSaveRef.current;
+        const blob = new Blob([JSON.stringify({ id: user.id, pointsBalance: data.balance, worldBlocks: data.objects })], { type: 'application/json' });
+        navigator.sendBeacon("/api/students", blob);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSaveRef.current) {
+        flushSave();
+      }
+    };
+  }, [flushSave, user?.id]);
+
+  const toggleExploreMode = useCallback(async () => {
+    await flushSave();
+    setIsExploreMode(prev => !prev);
+  }, [flushSave]);
 
   const placePrefab = (anchorX: number, anchorY: number, anchorZ: number) => {
     const prefab = settings?.prefabs?.find((p: any) => p.id === activePrefabId);
-    if (!prefab) return;
+    if (!prefab || !studentDataRef.current) return;
 
     let cost = 0;
     prefab.objects.forEach((o: any) => {
@@ -2991,13 +3121,14 @@ export default function VoxelBuilder() {
         const iDef = shopItems.find(i => i.id === o.itemId);
         cost += iDef ? iDef.price : 0;
       } else if (o.type === 'large-roof') {
-        cost += (studentData?.customColors?.includes(o.color) ? 0 : (settings?.builderRoofCost ?? 100));
+        cost += (studentDataRef.current?.customColors?.includes(o.color) ? 0 : (settings?.builderRoofCost ?? 100));
       } else {
-        cost += (studentData?.customColors?.includes(o.color) ? 0 : actualBlockCost);
+        cost += (studentDataRef.current?.customColors?.includes(o.color) ? 0 : actualBlockCost);
       }
     });
 
-    if (studentData.pointsBalance < cost) {
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    if (curBalance < cost) {
       setActionMessage({text: `Need ${cost} pts to place prefab!`, type: "error"});
       setTimeout(() => setActionMessage(null), 3000);
       return;
@@ -3010,9 +3141,16 @@ export default function VoxelBuilder() {
       z: anchorZ + o.z,
     }));
     
-    const newWorld = [...objects, ...newObjs];
+    const currentObjects = objectsRef.current;
+    const newWorld = [...currentObjects, ...newObjs];
+    const newBalance = curBalance - cost;
+
+    objectsRef.current = newWorld;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newWorld);
-    saveObjects(newWorld, studentData.pointsBalance - cost, `Placed prefab ${prefab.name}`, cost);
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
+    saveObjects(newWorld, newBalance, `Placed prefab ${prefab.name}`, cost);
   };
 
   /* ─── Click Handlers ─── */
@@ -3042,9 +3180,11 @@ export default function VoxelBuilder() {
   const paintObject = (obj: PlacedObject) => {
     if (obj.type === 'item') return;
     if (obj.color === activeColor && obj.materialType === activeMaterialType && obj.textureId === activeTexture) return;
-    const newObjects = objects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor, materialType: activeMaterialType, textureId: activeTexture } : o);
+    const currentObjects = objectsRef.current;
+    const newObjects = currentObjects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor, materialType: activeMaterialType, textureId: activeTexture } : o);
+    objectsRef.current = newObjects;
     setObjects(newObjects);
-    saveObjects(newObjects, studentData.pointsBalance, `Painted block/roof`, 0);
+    saveObjects(newObjects, studentDataRef.current?.pointsBalance || 0, `Painted block/roof`, 0);
   };
 
   const rotateObject = (obj: PlacedObject) => {
@@ -3057,8 +3197,9 @@ export default function VoxelBuilder() {
       }
       return o;
     });
+    objectsRef.current = newObjects;
     setObjects(newObjects);
-    saveObjects(newObjects, studentData?.pointsBalance || 0, `Rotated object`, 0);
+    saveObjects(newObjects, studentDataRef.current?.pointsBalance || 0, `Rotated object`, 0);
   };
 
   const handleRoofSelection = (obj: PlacedObject) => {
@@ -3163,45 +3304,57 @@ export default function VoxelBuilder() {
   /* ─── Place Block ─── */
 
   const placeLargeRoof = (x: number, y: number, z: number, w: number, d: number, h: number, curveness: number) => {
-    if (!studentData) return;
+    if (!studentDataRef.current) return;
     const cost = actualRoofCost;
-    if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    if (curBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: activeColor, type: 'large-roof', w, d, h, curveness };
-    const newObjects = [...objects, obj];
-    const newBalance = studentData.pointsBalance - cost;
+    const currentObjects = objectsRef.current;
+    const newObjects = [...currentObjects, obj];
+    const newBalance = curBalance - cost;
+
+    objectsRef.current = newObjects;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newObjects);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
-    const newSession = [...sessionPlaced, obj].slice(-3);
-    setSessionPlaced(newSession);
-    setUndosRemaining(newSession.length);
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
+    setSessionPlaced(prev => [...prev, obj].slice(-3));
+    setUndosRemaining(prev => Math.min(3, prev + 1));
     saveObjects(newObjects, newBalance, "Placed a large roof", cost);
   };
 
   const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
-    if (!studentData) return;
-    const overlaps = objects.filter(o => o.x === x && o.y === y && o.z === z);
+    if (!studentDataRef.current) return;
+    const currentObjects = objectsRef.current;
+    const overlaps = currentObjects.filter(o => o.x === x && o.y === y && o.z === z);
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
-    if (studentData.pointsBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
+    
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    if (curBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape, materialType: activeMaterialType, textureId: activeTexture };
-    const newObjects = [...objects, obj];
-    const newBalance = studentData.pointsBalance - actualBlockCost;
+    const newObjects = [...currentObjects, obj];
+    const newBalance = curBalance - actualBlockCost;
+
+    objectsRef.current = newObjects;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newObjects);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
-    const newSession = [...sessionPlaced, obj].slice(-3);
-    setSessionPlaced(newSession);
-    setUndosRemaining(newSession.length);
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
+    setSessionPlaced(prev => [...prev, obj].slice(-3));
+    setUndosRemaining(prev => Math.min(3, prev + 1));
     saveObjects(newObjects, newBalance, "Placed a block in World Builder", actualBlockCost);
   };
 
   /* ─── Place Item ─── */
 
   const placeItem = (x: number, y: number, z: number) => {
-    if (!studentData || !activeItemId) { showMessage("Select an item first!", "error"); return; }
+    if (!studentDataRef.current || !activeItemId) { showMessage("Select an item first!", "error"); return; }
     const itemDef = shopItems.find((i: any) => i.id === activeItemId);
     if (!itemDef) return;
-    const overlaps = objects.filter(o => o.x === x && o.y === y && o.z === z);
+    const currentObjects = objectsRef.current;
+    const overlaps = currentObjects.filter(o => o.x === x && o.y === y && o.z === z);
     if (overlaps.length >= 2) return;
     if (overlaps.length === 1) {
       if (activeItemId === 'grass_field' && overlaps[0].itemId !== 'grass_field') {
@@ -3212,24 +3365,29 @@ export default function VoxelBuilder() {
         return;
       }
     }
-    if (studentData.pointsBalance < itemDef.cost) { showMessage(`Need ${itemDef.cost} pts for ${itemDef.name}!`, "error"); return; }
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    if (curBalance < itemDef.cost) { showMessage(`Need ${itemDef.cost} pts for ${itemDef.name}!`, "error"); return; }
 
     const obj: PlacedObject = { x, y, z, color: '', type: 'item', itemId: activeItemId };
-    const newObjects = [...objects, obj];
-    const newBalance = studentData.pointsBalance - itemDef.cost;
+    const newObjects = [...currentObjects, obj];
+    const newBalance = curBalance - itemDef.cost;
+
+    objectsRef.current = newObjects;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newObjects);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
-    const newSession = [...sessionPlaced, obj].slice(-3);
-    setSessionPlaced(newSession);
-    setUndosRemaining(newSession.length);
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
+    setSessionPlaced(prev => [...prev, obj].slice(-3));
+    setUndosRemaining(prev => Math.min(3, prev + 1));
     saveObjects(newObjects, newBalance, `Placed ${itemDef.name} in World Builder`, itemDef.cost);
   };
 
   /* ─── Erase ─── */
 
   const eraseObject = (obj: PlacedObject) => {
-    if (!studentData) return;
-    const newObjects = objects.filter(o => o !== obj);
+    if (!studentDataRef.current) return;
+    const currentObjects = objectsRef.current;
+    const newObjects = currentObjects.filter(o => o !== obj && !(o.x === obj.x && o.y === obj.y && o.z === obj.z));
     let refund = 0;
     if (obj.type === 'item' && obj.itemId) {
       const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
@@ -3237,9 +3395,14 @@ export default function VoxelBuilder() {
     } else {
       refund = blockRefund;
     }
-    const newBalance = studentData.pointsBalance + refund;
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    const newBalance = curBalance + refund;
+
+    objectsRef.current = newObjects;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newObjects);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
     showMessage(refund > 0 ? `Erased! +${refund} pts refunded.` : "Erased!", "success");
     saveObjects(newObjects, newBalance, refund > 0 ? `Erased object, refunded ${refund} pts` : "Erased object", 0);
   };
@@ -3247,24 +3410,30 @@ export default function VoxelBuilder() {
   /* ─── Undo ─── */
 
   const handleUndo = () => {
-    if (undosRemaining <= 0 || sessionPlaced.length === 0) { showMessage("No undos available.", "error"); return; }
+    if (undosRemaining <= 0 || sessionPlaced.length === 0 || !studentDataRef.current) { showMessage("No undos available.", "error"); return; }
     const last = sessionPlaced[sessionPlaced.length - 1];
-    const newObjects = objects.filter(o => o.x !== last.x || o.y !== last.y || o.z !== last.z);
+    const currentObjects = objectsRef.current;
+    const newObjects = currentObjects.filter(o => o.x !== last.x || o.y !== last.y || o.z !== last.z);
     
     let refund = 0;
     if (last.type === 'item' && last.itemId) {
       const itemDef = shopItems.find((i: any) => i.id === last.itemId);
       refund = itemDef?.cost ?? 0;
     } else if (last.type === 'large-roof') {
-      refund = studentData.customColors?.includes(last.color) ? 0 : (settings?.builderRoofCost ?? 100);
+      refund = studentDataRef.current.customColors?.includes(last.color) ? 0 : (settings?.builderRoofCost ?? 100);
     } else {
-      refund = studentData.customColors?.includes(last.color) ? 0 : blockCost;
+      refund = studentDataRef.current.customColors?.includes(last.color) ? 0 : blockCost;
     }
     
-    const newBalance = studentData.pointsBalance + refund;
+    const curBalance = studentDataRef.current.pointsBalance ?? 0;
+    const newBalance = curBalance + refund;
     const newSession = sessionPlaced.slice(0, -1);
+
+    objectsRef.current = newObjects;
+    if (studentDataRef.current) studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance };
+
     setObjects(newObjects);
-    setStudentData({ ...studentData, pointsBalance: newBalance });
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance } : prev);
     setSessionPlaced(newSession);
     setUndosRemaining(prev => prev - 1);
     showMessage(`Undone! +${refund} pts refunded.`, "success");
@@ -3274,16 +3443,21 @@ export default function VoxelBuilder() {
   /* ─── Buy Color ─── */
 
   const handleBuyColor = async (hexColor: string) => {
+    await flushSave();
+    const curBalance = studentDataRef.current?.pointsBalance ?? 0;
     const cost = settings?.customColorCost ?? 100;
-    if (studentData.pointsBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
-    if (studentData.customColors?.includes(hexColor) || BASE_COLORS.some(c => c.color.toLowerCase() === hexColor.toLowerCase())) {
+    if (curBalance < cost) { showMessage(`Need ${cost} pts!`, "error"); return; }
+    if (studentDataRef.current?.customColors?.includes(hexColor) || BASE_COLORS.some(c => c.color.toLowerCase() === hexColor.toLowerCase())) {
       showMessage("You already have this color!", "error"); return;
     }
     
     isSavingRef.current = true;
-    const newBalance = studentData.pointsBalance - cost;
-    const newCustomColors = [...(studentData.customColors || []), hexColor];
-    setStudentData({ ...studentData, pointsBalance: newBalance, customColors: newCustomColors });
+    const newBalance = curBalance - cost;
+    const newCustomColors = [...(studentDataRef.current?.customColors || []), hexColor];
+    setStudentData((prev: any) => prev ? { ...prev, pointsBalance: newBalance, customColors: newCustomColors } : prev);
+    if (studentDataRef.current) {
+      studentDataRef.current = { ...studentDataRef.current, pointsBalance: newBalance, customColors: newCustomColors };
+    }
     setActiveColor(hexColor);
     setIsAddingColor(false);
     showMessage(`Unlocked color!`, "success");
@@ -3293,7 +3467,7 @@ export default function VoxelBuilder() {
       await fetch("/api/withdrawals", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId: user?.id, pointsDeducted: cost, rewardDescription: `Unlocked Custom Color: ${hexColor}` }) });
       setTimeout(() => { isSavingRef.current = false; }, 500);
-    } catch (e) { isSavingRef.current = false; showMessage("Failed to unlock.", "error"); fetchData(); }
+    } catch (e) { isSavingRef.current = false; showMessage("Failed to unlock.", "error"); }
   };
 
   /* ─── Share ─── */
@@ -3351,9 +3525,21 @@ export default function VoxelBuilder() {
       {(!studentData?.isClassTime && !isExploreMode) && (
         <div className="absolute top-24 left-4 md:left-6 z-10 flex flex-col gap-3 pointer-events-none max-h-[calc(100vh-7rem)] overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden">
         {/* Points */}
-        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto shrink-0">
-          <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
-          <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0}</p>
+        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white pointer-events-auto shrink-0 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-sky-600 font-bold uppercase tracking-wider">Points</p>
+            <p className="text-3xl font-black text-amber-500">{studentData?.pointsBalance || 0}</p>
+          </div>
+          {saveStatus === 'saving' && (
+            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 animate-pulse">
+              Saving...
+            </span>
+          )}
+          {saveStatus === 'saved' && (
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              Saved ✓
+            </span>
+          )}
         </div>
 
         {/* Tool Selector */}
@@ -3870,7 +4056,7 @@ export default function VoxelBuilder() {
             <button onClick={() => setShowLandUpgrade(!showLandUpgrade)} className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg text-emerald-600 hover:text-emerald-800 transition-colors pointer-events-auto flex items-center justify-center" title="Expand Land">
               <span className="text-xl leading-none">🗺️</span>
             </button>
-            <button onClick={() => setIsExploreMode(!isExploreMode)} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
+            <button onClick={toggleExploreMode} className={`bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center ${isExploreMode ? 'text-amber-600 hover:text-amber-800 border-2 border-amber-400' : 'text-slate-600 hover:text-slate-800'}`} title="Toggle Explore Mode">
               {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
             </button>
           </>
@@ -4001,7 +4187,7 @@ export default function VoxelBuilder() {
           pointerDownPos.current = null;
         }}
       >
-        <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
+        <Canvas shadows camera={{ position: [0, 18, 24], fov: 50 }}>
           <Sky sunPosition={[100, 20, 100]} />
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
@@ -4023,7 +4209,6 @@ export default function VoxelBuilder() {
 
           <CameraBounds landSize={studentData?.landSize ?? 50} />
           <Ground landSize={studentData?.landSize ?? 50} onClick={handleGroundClick} isDragging={isDraggingFn} />
-          {isExploreMode && <BakeShadows />}
           
           {(() => {
             const validObjects = objects.filter(o => o !== drivingVehicle);
@@ -4041,7 +4226,7 @@ export default function VoxelBuilder() {
                 />
 
                 {/* Selected Highlights */}
-                {validObjects.map((data, idx) => {
+                {(selectedBlockIds.length > 0 || prefabSelectionIds.length > 0) && validObjects.map((data, idx) => {
                   const isBlockEdited = selectedBlockIds.includes(getBlockId(data));
                   const isPrefabSelected = prefabSelectionIds.includes(getBlockId(data));
                   if (!isBlockEdited && !isPrefabSelected) return null;
@@ -4112,6 +4297,7 @@ export default function VoxelBuilder() {
           )}
 
           <MapControls 
+            ref={mapControlsRef}
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.05} 
             enablePan={!isExploreMode && !isGizmoDragging} 
