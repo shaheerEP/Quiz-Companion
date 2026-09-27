@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -107,6 +107,143 @@ export function MobileDPad() {
 
 export const playerState = { pos: new THREE.Vector3(), rotation: 0 };
 
+/* ─── Spatial Hash Grid for Minecraft-grade O(1) Collision Detection ─── */
+interface CachedBlock {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  topY: number;
+  bottomY: number;
+  origX: number;
+  origY: number;
+  origZ: number;
+  w: number;
+  d: number;
+  h: number;
+  rotY: number;
+  sinRot: number;
+  cosRot: number;
+  blockShape?: 'box' | 'wedge' | 'pyramid';
+  type?: string;
+  curveness?: number;
+  checkId: number;
+}
+
+const COLLISION_CELL_SIZE = 3;
+
+class SpatialCollisionGrid {
+  private cells = new Map<string, CachedBlock[]>();
+  private queryId = 0;
+
+  constructor(objects: any[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const o = objects[i];
+      if (o.isOpen) continue; // Walk through open doors
+
+      const w = o.w || o.width || 1;
+      const d = o.d || o.depth || 1;
+      const h = o.h || o.thickness || 1;
+      const rotY = o.rotationY || 0;
+      const hw = w / 2;
+      const hd = d / 2;
+
+      let minX: number, maxX: number, minZ: number, maxZ: number;
+      if (rotY !== 0) {
+        const cos = Math.abs(Math.cos(rotY));
+        const sin = Math.abs(Math.sin(rotY));
+        const extentX = hw * cos + hd * sin;
+        const extentZ = hw * sin + hd * cos;
+        minX = o.x - extentX;
+        maxX = o.x + extentX;
+        minZ = o.z - extentZ;
+        maxZ = o.z + extentZ;
+      } else {
+        minX = o.x - hw;
+        maxX = o.x + hw;
+        minZ = o.z - hd;
+        maxZ = o.z + hd;
+      }
+
+      const cached: CachedBlock = {
+        minX,
+        maxX,
+        minZ,
+        maxZ,
+        topY: o.y + h,
+        bottomY: o.y,
+        origX: o.x,
+        origY: o.y,
+        origZ: o.z,
+        w,
+        d,
+        h,
+        rotY,
+        sinRot: Math.sin(-rotY),
+        cosRot: Math.cos(-rotY),
+        blockShape: o.blockShape,
+        type: o.type,
+        curveness: o.curveness,
+        checkId: 0,
+      };
+
+      const minCX = Math.floor(minX / COLLISION_CELL_SIZE);
+      const maxCX = Math.floor(maxX / COLLISION_CELL_SIZE);
+      const minCZ = Math.floor(minZ / COLLISION_CELL_SIZE);
+      const maxCZ = Math.floor(maxZ / COLLISION_CELL_SIZE);
+
+      for (let cx = minCX; cx <= maxCX; cx++) {
+        for (let cz = minCZ; cz <= maxCZ; cz++) {
+          const key = `${cx}_${cz}`;
+          let cell = this.cells.get(key);
+          if (!cell) {
+            cell = [];
+            this.cells.set(key, cell);
+          }
+          cell.push(cached);
+        }
+      }
+    }
+  }
+
+  public query(x: number, z: number, radius = 0.5): CachedBlock[] {
+    this.queryId++;
+    const curId = this.queryId;
+    const minCX = Math.floor((x - radius) / COLLISION_CELL_SIZE);
+    const maxCX = Math.floor((x + radius) / COLLISION_CELL_SIZE);
+    const minCZ = Math.floor((z - radius) / COLLISION_CELL_SIZE);
+    const maxCZ = Math.floor((z + radius) / COLLISION_CELL_SIZE);
+
+    const result: CachedBlock[] = [];
+    for (let cx = minCX; cx <= maxCX; cx++) {
+      for (let cz = minCZ; cz <= maxCZ; cz++) {
+        const cell = this.cells.get(`${cx}_${cz}`);
+        if (!cell) continue;
+        for (let i = 0; i < cell.length; i++) {
+          const b = cell[i];
+          if (b.checkId !== curId) {
+            b.checkId = curId;
+            result.push(b);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  public getTopSurfaceAt(x: number, z: number): number {
+    const blocks = this.query(x, z, 0.5);
+    let top = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i];
+      if (x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) {
+        if (b.topY > top) top = b.topY;
+      }
+    }
+    return top;
+  }
+}
+
 export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleMesh, landSize = 50 }: { objects: any[], activeAvatar?: string, drivingVehicle?: any | null, vehicleMesh?: React.ReactNode, landSize?: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const leftLegRef = useRef<THREE.Group>(null);
@@ -121,6 +258,9 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
+
+  // Memoize spatial collision grid so it only rebuilds when objects change
+  const spatialGrid = useMemo(() => new SpatialCollisionGrid(objects), [objects]);
 
   useEffect(() => {
     if (drivingVehicle) {
@@ -139,20 +279,53 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
+    // ─── Initial Spawn: Corner of Bottom Surface (No falling from sky) ───
     if (!initialized.current) {
+      let startX = 0;
+      let startZ = 0;
       let startY = 0;
-      objects.forEach(o => {
+      let startRot = 0;
 
-        const hw = (o.w || o.width || 1) / 2;
-        const hd = (o.d || o.depth || 1) / 2;
-        if (pos.current.x >= o.x - hw && pos.current.x <= o.x + hw &&
-          pos.current.z >= o.z - hd && pos.current.z <= o.z + hd) {
-          const topY = o.y + (o.h || o.thickness || 1);
-          if (topY > startY) startY = topY;
-        }
-      });
+      if (drivingVehicle) {
+        startX = drivingVehicle.x;
+        startY = drivingVehicle.y;
+        startZ = drivingVehicle.z;
+        startRot = (drivingVehicle.rotationY || 0) - Math.PI / 2;
+      } else {
+        const halfLand = (landSize ?? 50) / 2;
+        // Exact corner block space in bottom surface:
+        startX = Math.round(-halfLand + 3);
+        startZ = Math.round(halfLand - 3);
+        startY = spatialGrid.getTopSurfaceAt(startX, startZ);
+        // Face inward toward the center of the world
+        startRot = Math.atan2(-startX, -startZ);
+      }
+
+      pos.current.set(startX, startY, startZ);
       logicalY.current = startY;
-      pos.current.y = startY;
+      targetRotation.current = startRot;
+      groupRef.current.position.set(startX, startY, startZ);
+      groupRef.current.rotation.y = startRot;
+      playerState.pos.copy(pos.current);
+      playerState.rotation = startRot;
+
+      // Snap camera directly behind player at ground level (prevents falling from the sky)
+      const initCamDist = drivingVehicle ? 6 : 2.5;
+      const initCamHeight = drivingVehicle ? 3 : 1.5;
+      const initCamX = startX - Math.sin(startRot) * initCamDist;
+      const initCamZ = startZ - Math.cos(startRot) * initCamDist;
+      const initCamY = startY + initCamHeight;
+      const initLookAt = new THREE.Vector3(startX, startY + 1, startZ);
+
+      state.camera.position.set(initCamX, initCamY, initCamZ);
+      state.camera.lookAt(initLookAt);
+
+      if (state.controls) {
+        const controls = state.controls as any;
+        controls.target.copy(initLookAt);
+        controls.update();
+      }
+
       initialized.current = true;
     }
 
@@ -173,11 +346,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       if (moveSpeed !== 0) {
         moving = true;
         let turnAmount = 0;
-        // The virtual joystick allows left/right simultaneously with forward/backward
         if (controlsRef.left) turnAmount = 0.5;
         if (controlsRef.right) turnAmount = -0.5;
-
-        // When reversing, turning left makes the front go right
         groupRef.current.rotation.y += turnAmount * delta * Math.sign(moveSpeed);
       }
 
@@ -206,6 +376,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       groupRef.current.rotation.y += wrappedDiff * delta * 3;
     }
 
+    // ─── Fast O(1) Local Collision Check ───
     const checkCollision = (x: number, z: number, currentY: number) => {
       const r = 0.25;
       const stepHeight = 1.1;
@@ -213,52 +384,44 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       let floorY = 0;
       let wallHit = false;
 
-      objects.forEach(o => {
-        if (o.isOpen) return; // Allow walking through open doors
+      const nearby = spatialGrid.query(x, z, r + 0.5);
 
-        const hw = (o.w || o.width || 1) / 2;
-        const hd = (o.d || o.depth || 1) / 2;
-        const blockMinX = o.x - hw;
-        const blockMaxX = o.x + hw;
-        const blockMinZ = o.z - hd;
-        const blockMaxZ = o.z + hd;
+      for (let i = 0; i < nearby.length; i++) {
+        const b = nearby[i];
 
         const playerMinX = x - r;
         const playerMaxX = x + r;
         const playerMinZ = z - r;
         const playerMaxZ = z + r;
 
-        if (playerMaxX > blockMinX && playerMinX < blockMaxX &&
-          playerMaxZ > blockMinZ && playerMinZ < blockMaxZ) {
+        if (playerMaxX > b.minX && playerMinX < b.maxX &&
+            playerMaxZ > b.minZ && playerMinZ < b.maxZ) {
           
-          let topY = o.y + (o.h || o.thickness || 1);
-          const bottomY = o.y;
-          
-          const localX = x - o.x;
-          const localZ = z - o.z;
-          const rotY = o.rotationY || 0;
-          const s = Math.sin(-rotY);
-          const c = Math.cos(-rotY);
-          const lx = localX * c - localZ * s;
-          const lz = localX * s + localZ * c;
-          
-          const nx = Math.max(-0.5, Math.min(0.5, lx / (o.w || o.width || 1)));
-          const nz = Math.max(-0.5, Math.min(0.5, lz / (o.d || o.depth || 1)));
+          let topY = b.topY;
+          const bottomY = b.bottomY;
 
-          const isWedge = o.blockShape === 'wedge';
-          const isPyramid = o.blockShape === 'pyramid';
-          const isRoof = o.type === 'roof';
+          const localX = x - b.origX;
+          const localZ = z - b.origZ;
+          let lx = localX;
+          let lz = localZ;
+          if (b.rotY !== 0) {
+            lx = localX * b.cosRot - localZ * b.sinRot;
+            lz = localX * b.sinRot + localZ * b.cosRot;
+          }
 
-          if (isWedge) {
+          const nx = Math.max(-0.5, Math.min(0.5, lx / b.w));
+          const nz = Math.max(-0.5, Math.min(0.5, lz / b.d));
+
+          if (b.blockShape === 'wedge') {
             const localHeight = Math.max(0, Math.min(1, 0.5 - nx));
-            topY = o.y + localHeight * (o.h || o.thickness || 1);
-          } else if (isPyramid || (isRoof && Math.round(o.curveness || 0) === 0)) {
+            topY = b.origY + localHeight * b.h;
+          } else if (b.blockShape === 'pyramid' || (b.type === 'roof' && Math.round(b.curveness || 0) === 0)) {
             const localHeight = Math.max(0, Math.min(1, (0.5 - Math.max(Math.abs(nx), Math.abs(nz))) * 2));
-            topY = o.y + localHeight * (o.h || o.thickness || 1);
-          } else if (isRoof) {
-            const rDist = Math.sqrt(nx*nx + nz*nz);
+            topY = b.origY + localHeight * b.h;
+          } else if (b.type === 'roof') {
+            const rDist = Math.sqrt(nx * nx + nz * nz);
             const localHeight = Math.max(0, Math.min(1, 1 - rDist / 0.7071));
-            topY = o.y + localHeight * (o.h || o.thickness || 1);
+            topY = b.origY + localHeight * b.h;
           }
 
           if (topY <= currentY + stepHeight) {
@@ -267,67 +430,81 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
             wallHit = true;
           }
         }
-      });
+      }
+
       return { floorY, wallHit };
     };
 
     const currentY = logicalY.current;
-    let targetX = pos.current.x + velocity.current.x * delta;
-    let targetZ = pos.current.z + velocity.current.z * delta;
+    let targetX = pos.current.x;
+    let targetZ = pos.current.z;
+    let finalFloorY = currentY;
 
-    let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, currentY);
-    if (wallHitX) targetX = pos.current.x;
+    if (moving) {
+      targetX = pos.current.x + velocity.current.x * delta;
+      targetZ = pos.current.z + velocity.current.z * delta;
 
-    let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, currentY);
-    if (wallHitZ) targetZ = pos.current.z;
+      let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, currentY);
+      if (wallHitX) targetX = pos.current.x;
 
-    let { floorY: finalFloorY, wallHit: finalWallHit } = checkCollision(targetX, targetZ, currentY);
-    if (finalWallHit) {
-      let { wallHit: slideX, floorY: floorX } = checkCollision(targetX, pos.current.z, currentY);
-      let { wallHit: slideZ, floorY: floorZ } = checkCollision(pos.current.x, targetZ, currentY);
-      if (!slideX) {
-        targetZ = pos.current.z;
-        finalFloorY = floorX;
-      } else if (!slideZ) {
-        targetX = pos.current.x;
-        finalFloorY = floorZ;
-      } else {
-        targetX = pos.current.x;
-        targetZ = pos.current.z;
-        finalFloorY = currentY;
+      let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, currentY);
+      if (wallHitZ) targetZ = pos.current.z;
+
+      let { floorY: compFloorY, wallHit: finalWallHit } = checkCollision(targetX, targetZ, currentY);
+      finalFloorY = compFloorY;
+
+      if (finalWallHit) {
+        let { wallHit: slideX, floorY: floorX } = checkCollision(targetX, pos.current.z, currentY);
+        let { wallHit: slideZ, floorY: floorZ } = checkCollision(pos.current.x, targetZ, currentY);
+        if (!slideX) {
+          targetZ = pos.current.z;
+          finalFloorY = floorX;
+        } else if (!slideZ) {
+          targetX = pos.current.x;
+          finalFloorY = floorZ;
+        } else {
+          targetX = pos.current.x;
+          targetZ = pos.current.z;
+          finalFloorY = currentY;
+        }
       }
+
+      const halfLand = landSize / 2;
+      if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
+      if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
+
+      pos.current.x = targetX;
+      pos.current.z = targetZ;
+      logicalY.current = finalFloorY;
     }
-
-    const halfLand = landSize / 2;
-    if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
-    if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
-
-    pos.current.x = targetX;
-    pos.current.z = targetZ;
-    logicalY.current = finalFloorY;
 
     playerState.pos.copy(pos.current);
     playerState.rotation = targetRotation.current;
 
     pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
 
-    const yaw = groupRef.current.rotation.y;
-    const sinYaw = Math.sin(yaw);
-    const cosYaw = Math.cos(yaw);
-    
-    const forwardOffset = 0.4;
-    const sideOffset = 0.4;
-    
-    const frontY = checkCollision(targetX + sinYaw * forwardOffset, targetZ + cosYaw * forwardOffset, finalFloorY).floorY;
-    const backY = checkCollision(targetX - sinYaw * forwardOffset, targetZ - cosYaw * forwardOffset, finalFloorY).floorY;
-    const rightY = checkCollision(targetX + cosYaw * sideOffset, targetZ - sinYaw * sideOffset, finalFloorY).floorY;
-    const leftY = checkCollision(targetX - cosYaw * sideOffset, targetZ + sinYaw * sideOffset, finalFloorY).floorY;
+    // Only compute pitch & roll when driving vehicle
+    if (drivingVehicle) {
+      const yaw = groupRef.current.rotation.y;
+      const sinYaw = Math.sin(yaw);
+      const cosYaw = Math.cos(yaw);
+      const forwardOffset = 0.4;
+      const sideOffset = 0.4;
 
-    const targetPitch = Math.atan2(backY - frontY, forwardOffset * 2);
-    const targetRoll = Math.atan2(rightY - leftY, sideOffset * 2);
+      const frontY = checkCollision(targetX + sinYaw * forwardOffset, targetZ + cosYaw * forwardOffset, finalFloorY).floorY;
+      const backY = checkCollision(targetX - sinYaw * forwardOffset, targetZ - cosYaw * forwardOffset, finalFloorY).floorY;
+      const rightY = checkCollision(targetX + cosYaw * sideOffset, targetZ - sinYaw * sideOffset, finalFloorY).floorY;
+      const leftY = checkCollision(targetX - cosYaw * sideOffset, targetZ + sinYaw * sideOffset, finalFloorY).floorY;
 
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, drivingVehicle ? targetPitch : 0, delta * 10);
-    groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, drivingVehicle ? targetRoll : 0, delta * 10);
+      const targetPitch = Math.atan2(backY - frontY, forwardOffset * 2);
+      const targetRoll = Math.atan2(rightY - leftY, sideOffset * 2);
+
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetPitch, delta * 10);
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetRoll, delta * 10);
+    } else {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, 0, delta * 10);
+    }
 
     groupRef.current.position.copy(pos.current);
 
@@ -339,7 +516,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       rightArmRef.current.rotation.x = swing;
     }
 
-    // Chase Camera Logic
+    // ─── Responsive Chase Camera Logic ───
     const targetLookAt = new THREE.Vector3(pos.current.x, pos.current.y + 1, pos.current.z);
 
     if (moving) {
@@ -361,7 +538,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
         pos.current.z + offsetZ
       );
 
-      state.camera.position.lerp(idealCamPos, delta * 1.5);
+      state.camera.position.lerp(idealCamPos, delta * 6);
       state.camera.lookAt(targetLookAt);
 
       if (state.controls) {

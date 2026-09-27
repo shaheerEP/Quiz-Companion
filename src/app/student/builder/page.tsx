@@ -13,6 +13,7 @@ import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/co
 import { CameraBounds } from "@/components/CameraBounds";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 import { GroupGizmo } from "./GroupGizmo";
+import { ChunkedBlocks, getBoxProps } from "@/components/ChunkedBlocks";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -142,14 +143,21 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
   const [isOpen, setIsOpen] = useState(data.isOpen || false);
   const [showUI, setShowUI] = useState(false);
   const vec = useRef(new THREE.Vector3());
+  const frameCount = useRef(0);
 
   useFrame((state) => {
-    const doorPos = vec.current.set(data.x, data.y, data.z);
-    const dist = state.camera.position.distanceTo(doorPos);
-    if (dist < 3.5 && isExploreMode) {
-      if (!showUI) setShowUI(true);
-    } else {
+    if (!isExploreMode) {
       if (showUI) setShowUI(false);
+      return;
+    }
+    frameCount.current++;
+    if (frameCount.current % 6 !== 0) return;
+
+    const doorPos = vec.current.set(data.x, data.y, data.z);
+    const distSq = state.camera.position.distanceToSquared(doorPos);
+    const inRange = distSq < 12.25;
+    if (inRange !== showUI) {
+      setShowUI(inRange);
     }
   });
 
@@ -201,14 +209,21 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
 function InteractiveVehicle({ data, onEnterVehicle, isExploreMode, children }: { data: PlacedObject; onEnterVehicle: () => void; isExploreMode?: boolean; children: React.ReactNode }) {
   const [showUI, setShowUI] = useState(false);
   const vec = useRef(new THREE.Vector3());
+  const frameCount = useRef(0);
 
   useFrame((state) => {
-    const vPos = vec.current.set(data.x, data.y, data.z);
-    const dist = state.camera.position.distanceTo(vPos);
-    if (dist < 8 && isExploreMode) {
-      if (!showUI) setShowUI(true);
-    } else {
+    if (!isExploreMode) {
       if (showUI) setShowUI(false);
+      return;
+    }
+    frameCount.current++;
+    if (frameCount.current % 6 !== 0) return;
+
+    const vPos = vec.current.set(data.x, data.y, data.z);
+    const distSq = state.camera.position.distanceToSquared(vPos);
+    const inRange = distSq < 64;
+    if (inRange !== showUI) {
+      setShowUI(inRange);
     }
   });
 
@@ -333,9 +348,9 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         {/* Lamp */}
         <mesh position={[0, 3.2, 0]} castShadow receiveShadow>
           <sphereGeometry args={[0.3, 16, 16]} />
-          <meshPhysicalMaterial color="#fef08a" emissive="#facc15" emissiveIntensity={2} transmission={0.9} />
+          <meshStandardMaterial color="#fef08a" emissive="#facc15" emissiveIntensity={1.5} roughness={0.2} transparent opacity={0.85} />
         </mesh>
-        <pointLight position={[0, 3.2, 0]} intensity={1} distance={5} color="#fef08a" />
+        <pointLight position={[0, 3.2, 0]} intensity={0.8} distance={4} color="#fef08a" decay={2} />
       </ModelWrapper>
     );
   }
@@ -356,7 +371,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         {/* Water in Base */}
         <mesh position={[0, 0.25, 0]} receiveShadow>
           <cylinderGeometry args={[1.15, 1.15, 0.1, 16]} />
-          <meshPhysicalMaterial color="#38bdf8" transmission={0.9} opacity={0.7} transparent />
+          <meshStandardMaterial color="#38bdf8" roughness={0.1} metalness={0.1} transparent opacity={0.65} />
         </mesh>
         {/* Center Pillar - fluted */}
         <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -384,11 +399,11 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
           return (
             <mesh key={`stream-${i}`} position={[Math.cos(angle) * 0.3, 1.3, Math.sin(angle) * 0.3]} castShadow>
               <cylinderGeometry args={[0.03, 0.03, 0.6, 6]} />
-              <meshPhysicalMaterial color="#7dd3fc" transmission={0.8} opacity={0.5} transparent />
+              <meshStandardMaterial color="#7dd3fc" roughness={0.1} transparent opacity={0.5} />
             </mesh>
           );
         })}
-        <pointLight position={[0, 1.5, 0]} intensity={0.3} distance={4} color="#bae6fd" />
+        <pointLight position={[0, 1.5, 0]} intensity={0.3} distance={3} color="#bae6fd" decay={2} />
       </ModelWrapper>
     );
   }
@@ -466,9 +481,9 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         {/* Fire */}
         <mesh position={[0, 0.5, 0]} castShadow>
           <coneGeometry args={[0.4, 0.6, 8]} />
-          <meshPhysicalMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={2} transparent opacity={0.8} />
+          <meshStandardMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={1.5} transparent opacity={0.85} />
         </mesh>
-        <pointLight position={[0, 1, 0]} intensity={1.5} distance={5} color="#fb923c" />
+        <pointLight position={[0, 1, 0]} intensity={1.2} distance={4} color="#fb923c" decay={2} />
       </ModelWrapper>
     );
   }
@@ -560,7 +575,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
         {/* Water */}
         <mesh position={[0, 0.88, 0]} receiveShadow>
           <cylinderGeometry args={[0.45, 0.45, 0.04, 16]} />
-          <meshPhysicalMaterial color="#7dd3fc" transmission={0.9} transparent />
+          <meshStandardMaterial color="#7dd3fc" roughness={0.1} transparent opacity={0.7} />
         </mesh>
         {/* Small Bird */}
         <mesh position={[0.3, 1.05, 0]} castShadow receiveShadow>
@@ -4010,137 +4025,16 @@ export default function VoxelBuilder() {
             const validObjects = objects.filter(o => o !== drivingVehicle);
             const items = validObjects.filter(o => o.type === 'item');
 
-            const getBoxProps = (data: PlacedObject) => {
-              if (data.type === 'large-roof') {
-                const h = data.h || 1;
-                return {
-                  position: [data.x, data.y - 0.5 + h / 2, data.z] as [number, number, number],
-                  scale: [data.w || 1, h, data.d || 1] as [number, number, number],
-                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
-                };
-              } else {
-                const width = data.width || 1;
-                const thickness = data.thickness || 1;
-                const depth = data.depth || 1;
-                return {
-                  position: [data.x, data.y - 0.5 + thickness / 2, data.z] as [number, number, number],
-                  scale: [width, thickness, depth] as [number, number, number],
-                  rotation: [data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0] as [number, number, number]
-                };
-              }
-            };
-            
-            const curvenessLevels = [0, 1, 2, 3, 4];
-            const boxShapes = ['box', undefined];
-
-            const blockMaterials = [
-              { type: 'color', id: 'color', transparent: false, glass: false, texture: null },
-              { type: 'glass', id: 'glass', transparent: true, glass: true, texture: null },
-              { type: 'texture', id: 'wood', transparent: false, glass: false, texture: TEXTURES?.wood },
-              { type: 'texture', id: 'stone', transparent: false, glass: false, texture: TEXTURES?.stone },
-              { type: 'texture', id: 'brick', transparent: false, glass: false, texture: TEXTURES?.brick },
-              { type: 'texture', id: 'shingles', transparent: false, glass: false, texture: TEXTURES?.shingles },
-              { type: 'texture', id: 'tile', transparent: false, glass: false, texture: TEXTURES?.tile },
-            ];
-
             return (
               <>
-                {blockMaterials.map(mat => {
-                  let subset;
-                  if (mat.type === 'color') {
-                    subset = validObjects.filter(o => (o.materialType === 'color' || !o.materialType) && o.color !== "#ADD8E6");
-                  } else {
-                    subset = validObjects.filter(o => o.materialType === 'texture' && o.textureId === mat.id);
-                  }
-                  
-                  if (subset.length === 0) return null;
-                  
-                  const boxes = subset.filter(o => (!o.type || o.type === 'block' || o.type === 'large-roof'));
-                  const roofs = subset.filter(o => o.type === 'roof');
-
-                  return (
-                    <group key={`mat-${mat.id}`}>
-                      {/* Boxes */}
-                      {curvenessLevels.map(level => {
-                        const blocks = boxes.filter(o => boxShapes.includes(o.blockShape) && Math.round(o.curveness || 0) === level);
-                        if (blocks.length === 0) return null;
-                        return (
-                          <Instances key={`bx-${level}`} limit={100000} castShadow receiveShadow>
-                            <primitive object={getCurvedGeometry(level)} attach="geometry" />
-                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
-                            {blocks.map((data, idx) => {
-                              const props = getBoxProps(data);
-                              return (
-                                <Instance key={`b-${level}-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
-                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
-                              );
-                            })}
-                          </Instances>
-                        );
-                      })}
-
-                      {/* Wedges */}
-                      {(() => {
-                        const blocks = boxes.filter(o => o.blockShape === 'wedge');
-                        if (blocks.length === 0) return null;
-                        return (
-                          <Instances limit={100000} castShadow receiveShadow>
-                            <primitive object={getWedgeGeometry()} attach="geometry" />
-                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
-                            {blocks.map((data, idx) => {
-                              const props = getBoxProps(data);
-                              return (
-                                <Instance key={`w-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
-                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
-                              );
-                            })}
-                          </Instances>
-                        );
-                      })()}
-
-                      {/* Pyramids */}
-                      {(() => {
-                        const blocks = boxes.filter(o => o.blockShape === 'pyramid');
-                        if (blocks.length === 0) return null;
-                        return (
-                          <Instances limit={100000} castShadow receiveShadow>
-                            <primitive object={getPyramidGeometry()} attach="geometry" />
-                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
-                            {blocks.map((data, idx) => {
-                              const props = getBoxProps(data);
-                              return (
-                                <Instance key={`p-${idx}`} position={props.position} scale={props.scale} rotation={props.rotation} color={mat.type === 'texture' ? "#ffffff" : data.color}
-                                  onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }} />
-                              );
-                            })}
-                          </Instances>
-                        );
-                      })()}
-                      
-                      {/* Roofs */}
-                      {curvenessLevels.map(level => {
-                        const rfs = roofs.filter(o => Math.round(o.curveness || 0) === level);
-                        if (rfs.length === 0) return null;
-                        const segments = level === 0 ? 4 : level === 1 ? 8 : level === 2 ? 16 : level === 3 ? 24 : 32;
-                        return (
-                          <Instances key={`rf-${level}`} limit={100000} castShadow receiveShadow>
-                            <primitive object={getRoofGeometry(segments)} attach="geometry" />
-                            <meshStandardMaterial map={mat.texture || undefined} transparent={mat.transparent} opacity={mat.transparent ? 0.6 : 1} />
-                            {rfs.map((data, idx) => (
-                              <Instance key={`r-${level}-${idx}`}
-                                position={[data.x, data.y - 0.5 + (data.thickness || 1) / 2, data.z]}
-                                rotation={[0, Math.PI / 4, 0]}
-                                scale={[data.width || 1, data.thickness || 1, data.depth || 1]}
-                                color={mat.type === 'texture' ? "#ffffff" : data.color}
-                                onClick={(e) => { if (isDraggingFn()) return; e.stopPropagation(); handleBlockClick(data, e.face?.normal, e.point); }}
-                              />
-                            ))}
-                          </Instances>
-                        );
-                      })}
-                    </group>
-                  );
-                })}
+                <ChunkedBlocks
+                  objects={validObjects}
+                  textures={TEXTURES}
+                  selectedBlockIds={selectedBlockIds}
+                  prefabSelectionIds={prefabSelectionIds}
+                  onBlockClick={handleBlockClick}
+                  isDraggingFn={isDraggingFn}
+                />
 
                 {/* Selected Highlights */}
                 {validObjects.map((data, idx) => {
