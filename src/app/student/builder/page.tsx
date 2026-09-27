@@ -4207,7 +4207,7 @@ export default function VoxelBuilder() {
             </Text>
           )}
 
-          <CameraBounds landSize={studentData?.landSize ?? 50} />
+          {!isExploreMode && <CameraBounds landSize={studentData?.landSize ?? 50} />}
           <Ground landSize={studentData?.landSize ?? 50} onClick={handleGroundClick} isDragging={isDraggingFn} />
           
           {(() => {
@@ -4296,15 +4296,17 @@ export default function VoxelBuilder() {
             />
           )}
 
-          <MapControls 
-            ref={mapControlsRef}
-            makeDefault 
-            maxPolarAngle={Math.PI / 2 - 0.05} 
-            enablePan={!isExploreMode && !isGizmoDragging} 
-            rotateSpeed={0.5}
-            maxDistance={(studentData?.landSize ?? 50) * 1.5}
-            enabled={!isExploreMode && !isGizmoDragging}
-          />
+          {!isExploreMode && (
+            <MapControls 
+              ref={mapControlsRef}
+              makeDefault 
+              maxPolarAngle={Math.PI / 2 - 0.05} 
+              enablePan={!isGizmoDragging} 
+              rotateSpeed={0.5}
+              maxDistance={(studentData?.landSize ?? 50) * 1.5}
+              enabled={!isGizmoDragging}
+            />
+          )}
         </Canvas>
       </main>
     </div>

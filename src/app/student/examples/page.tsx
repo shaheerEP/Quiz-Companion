@@ -2449,7 +2449,7 @@ export default function ExampleWorldsViewer() {
           <ambientLight intensity={0.5} />
           <directionalLight castShadow position={[10, 20, 10]} intensity={1.5} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
           
-          <CameraBounds landSize={studentData?.landSize ?? 50} />
+          {!isExploreMode && <CameraBounds landSize={studentData?.landSize ?? 50} />}
           <Ground landSize={studentData?.landSize ?? 50} onClick={() => {}} isDragging={() => false} />
           {isExploreMode && <BakeShadows />}
           
@@ -2671,13 +2671,15 @@ export default function ExampleWorldsViewer() {
 
           {isExploreMode && <Player objects={activeWorld.objects} activeAvatar={studentData?.activeAvatar || 'boy'} landSize={studentData?.landSize ?? 50} />}
 
-          <MapControls 
-            makeDefault 
-            maxPolarAngle={Math.PI / 2 - 0.05} 
-            enablePan={!isExploreMode} 
-            rotateSpeed={0.5} 
-            maxDistance={(studentData?.landSize ?? 50) * 1.5}
-          />
+          {!isExploreMode && (
+            <MapControls 
+              makeDefault 
+              maxPolarAngle={Math.PI / 2 - 0.05} 
+              enablePan={true} 
+              rotateSpeed={0.5} 
+              maxDistance={(studentData?.landSize ?? 50) * 1.5}
+            />
+          )}
         </Canvas>
       </main>
     </div>

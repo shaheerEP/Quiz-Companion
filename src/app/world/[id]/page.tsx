@@ -2567,7 +2567,7 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             </Text>
           )}
 
-          <CameraBounds landSize={worldData.landSize ?? 50} />
+          {!isExploreMode && <CameraBounds landSize={worldData.landSize ?? 50} />}
           <Ground landSize={worldData.landSize ?? 50} />
           {isExploreMode && <BakeShadows />}
 
@@ -2601,14 +2601,15 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
             }
           />}
 
-          <MapControls 
-            makeDefault 
-            maxPolarAngle={Math.PI / 2 - 0.05} 
-            enablePan={!isExploreMode} 
-            rotateSpeed={0.5} 
-            maxDistance={(worldData.landSize ?? 50) * 1.5}
-            enabled={!isExploreMode}
-          />
+          {!isExploreMode && (
+            <MapControls 
+              makeDefault 
+              maxPolarAngle={Math.PI / 2 - 0.05} 
+              enablePan={true} 
+              rotateSpeed={0.5} 
+              maxDistance={(worldData.landSize ?? 50) * 1.5}
+            />
+          )}
         </Canvas>
       </main>
     </div>

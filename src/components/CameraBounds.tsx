@@ -3,8 +3,9 @@
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-export function CameraBounds({ landSize = 50 }: { landSize?: number }) {
+export function CameraBounds({ landSize = 50, enabled = true }: { landSize?: number; enabled?: boolean }) {
   useFrame((state) => {
+    if (!enabled) return;
     const controls = state.controls as any;
     if (controls && controls.target) {
       const half = landSize / 2;

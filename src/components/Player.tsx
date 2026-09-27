@@ -260,6 +260,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const initialized = useRef(false);
   const currentYaw = useRef(0);
   const currentPitch = useRef(0.2);
+  const targetLookAt = useRef(new THREE.Vector3());
+  const idealCamPos = useRef(new THREE.Vector3());
 
   // Memoize spatial collision grid so it only rebuilds when objects change
   const spatialGrid = useMemo(() => new SpatialCollisionGrid(objects), [objects]);
@@ -380,13 +382,17 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       const initCamX = startX - Math.sin(startRot) * initCamDist * cosPitch;
       const initCamZ = startZ - Math.cos(startRot) * initCamDist * cosPitch;
       const initCamY = startY + initCamHeight + initCamDist * sinPitch;
-      const initLookAt = new THREE.Vector3(startX, startY + 1.1, startZ);
+      targetLookAt.current.set(startX, startY + 1.1, startZ);
+      idealCamPos.current.set(initCamX, initCamY, initCamZ);
 
       state.camera.position.set(initCamX, initCamY, initCamZ);
-      state.camera.lookAt(initLookAt);
+      state.camera.lookAt(targetLookAt.current);
 
       if (state.controls) {
         (state.controls as any).enabled = false;
+        if ((state.controls as any).target) {
+          (state.controls as any).target.copy(targetLookAt.current);
+        }
       }
 
       initialized.current = true;
@@ -428,7 +434,12 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       }
 
       // Avatar smoothly faces the current yaw
-      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, currentYaw.current, 20, delta);
+      const rotDiff = Math.abs(groupRef.current.rotation.y - currentYaw.current);
+      if (rotDiff < 0.002) {
+        groupRef.current.rotation.y = currentYaw.current;
+      } else {
+        groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, currentYaw.current, 20, Math.min(0.1, delta));
+      }
       targetRotation.current = groupRef.current.rotation.y;
 
       velocity.current.x = Math.sin(currentYaw.current) * moveSpeed;
@@ -540,7 +551,12 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     playerState.pos.copy(pos.current);
     playerState.rotation = targetRotation.current;
 
-    pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, delta * 15);
+    const yDiff = Math.abs(pos.current.y - finalFloorY);
+    if (!moving && yDiff < 0.005) {
+      pos.current.y = finalFloorY;
+    } else {
+      pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, Math.min(1, delta * 15));
+    }
 
     // Only compute pitch & roll when driving vehicle
     if (drivingVehicle) {
@@ -585,11 +601,24 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     const idealCamZ = pos.current.z - Math.cos(currentYaw.current) * camDist * cosPitch;
     const idealCamY = pos.current.y + camHeight + camDist * sinPitch;
 
-    const targetLookAt = new THREE.Vector3(pos.current.x, pos.current.y + 1.1, pos.current.z);
-    const idealCamPos = new THREE.Vector3(idealCamX, idealCamY, idealCamZ);
+    targetLookAt.current.set(pos.current.x, pos.current.y + 1.1, pos.current.z);
+    idealCamPos.current.set(idealCamX, idealCamY, idealCamZ);
 
-    state.camera.position.lerp(idealCamPos, delta * 12);
-    state.camera.lookAt(targetLookAt);
+    const distToIdeal = state.camera.position.distanceTo(idealCamPos.current);
+    if (!moving && !controlsRef.left && !controlsRef.right && distToIdeal < 0.005) {
+      state.camera.position.copy(idealCamPos.current);
+    } else {
+      const lerpFactor = 1 - Math.exp(-15 * Math.min(delta, 0.1));
+      state.camera.position.lerp(idealCamPos.current, lerpFactor);
+    }
+    state.camera.lookAt(targetLookAt.current);
+
+    if (state.controls) {
+      (state.controls as any).enabled = false;
+      if ((state.controls as any).target) {
+        (state.controls as any).target.copy(targetLookAt.current);
+      }
+    }
   });
 
   return (
