@@ -65,8 +65,11 @@ export function getBoxProps(data: PlacedObject) {
  */
 function cullHiddenInteriorBlocks(
   objects: PlacedObject[],
-  preservedBlockIds?: Set<string>
+  preservedBlockIds?: Set<string>,
+  disabled?: boolean
 ): PlacedObject[] {
+  if (disabled) return objects;
+
   const solidMap = new Set<string>();
 
   for (let i = 0; i < objects.length; i++) {
@@ -85,8 +88,8 @@ function cullHiddenInteriorBlocks(
     }
   }
 
-  // If world is small or has few solid blocks, keep all
-  if (solidMap.size < 12) return objects;
+  // If world has few solid blocks, keep all to avoid premature culling while building
+  if (solidMap.size < 64) return objects;
 
   const visible: PlacedObject[] = [];
 
@@ -110,9 +113,10 @@ function cullHiddenInteriorBlocks(
       continue;
     }
 
-    // Never cull blocks selected by the user in builder mode
-    const blockKey = `${o.x}_${o.y}_${o.z}`;
-    if (preservedBlockIds && preservedBlockIds.has(blockKey)) {
+    // Never cull blocks selected by the user in builder mode (check both comma and underscore formats)
+    const blockKeyUnderscore = `${o.x}_${o.y}_${o.z}`;
+    const blockKeyComma = `${o.x},${o.y},${o.z}`;
+    if (preservedBlockIds && (preservedBlockIds.has(blockKeyUnderscore) || preservedBlockIds.has(blockKeyComma))) {
       visible.push(o);
       continue;
     }
@@ -174,6 +178,7 @@ interface ChunkedBlocksProps {
   prefabSelectionIds?: string[];
   onBlockClick?: (data: PlacedObject, faceNormal?: THREE.Vector3, point?: THREE.Vector3) => void;
   isDraggingFn?: () => boolean;
+  disableOcclusionCulling?: boolean;
 }
 
 export function ChunkedBlocks({
@@ -182,7 +187,8 @@ export function ChunkedBlocks({
   selectedBlockIds,
   prefabSelectionIds,
   onBlockClick,
-  isDraggingFn
+  isDraggingFn,
+  disableOcclusionCulling
 }: ChunkedBlocksProps) {
   const curvenessLevels = [0, 1, 2, 3, 4];
   const boxShapes = ['box', undefined];
@@ -193,12 +199,18 @@ export function ChunkedBlocks({
     let preservedSet: Set<string> | undefined;
     if (selectedBlockIds?.length || prefabSelectionIds?.length) {
       preservedSet = new Set<string>();
-      selectedBlockIds?.forEach(id => preservedSet!.add(id));
-      prefabSelectionIds?.forEach(id => preservedSet!.add(id));
+      selectedBlockIds?.forEach(id => {
+        preservedSet!.add(id);
+        preservedSet!.add(id.replace(/,/g, '_'));
+      });
+      prefabSelectionIds?.forEach(id => {
+        preservedSet!.add(id);
+        preservedSet!.add(id.replace(/,/g, '_'));
+      });
     }
 
     // Step 1: Occlusion Culling
-    const visibleObjects = cullHiddenInteriorBlocks(objects, preservedSet);
+    const visibleObjects = cullHiddenInteriorBlocks(objects, preservedSet, disableOcclusionCulling);
 
     // Filter to non-item blocks
     const blockObjects = visibleObjects.filter(o => o.type !== 'item');
@@ -322,156 +334,168 @@ export function ChunkedBlocks({
             return (
               <group key={matKey}>
                 {/* Standard Boxes / Blocks */}
-                {group.boxesByCurveness.map(curveGroup => (
-                  <Instances
-                    key={`bx-${chunk.key}-${mat.id}-${curveGroup.level}`}
-                    limit={curveGroup.blocks.length + 10}
-                    castShadow
-                    receiveShadow
-                    frustumCulled={true}
-                  >
-                    <primitive object={getCurvedGeometry(curveGroup.level)} attach="geometry" />
-                    <meshStandardMaterial
-                      map={mat.texture || undefined}
-                      transparent={mat.transparent}
-                      opacity={mat.transparent ? 0.6 : 1}
-                    />
-                    {curveGroup.blocks.map((item, idx) => (
-                      <Instance
-                        key={`b-${idx}`}
-                        position={item.props.position}
-                        scale={item.props.scale}
-                        rotation={item.props.rotation}
-                        color={mat.type === 'texture' ? "#ffffff" : item.data.color}
-                        onClick={
-                          onBlockClick
-                            ? (e) => {
-                                if (isDraggingFn && isDraggingFn()) return;
-                                e.stopPropagation();
-                                onBlockClick(item.data, e.face?.normal, e.point);
-                              }
-                            : undefined
-                        }
+                {group.boxesByCurveness.map(curveGroup => {
+                  const capacity = Math.max(1000, Math.ceil((curveGroup.blocks.length + 100) / 500) * 500);
+                  return (
+                    <Instances
+                      key={`bx-${chunk.key}-${mat.id}-${curveGroup.level}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getCurvedGeometry(curveGroup.level)} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
                       />
-                    ))}
-                  </Instances>
-                ))}
+                      {curveGroup.blocks.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `b-${item.data._id}` : `b-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
 
                 {/* Wedges */}
-                {group.wedges.length > 0 && (
-                  <Instances
-                    key={`w-${chunk.key}-${mat.id}`}
-                    limit={group.wedges.length + 10}
-                    castShadow
-                    receiveShadow
-                    frustumCulled={true}
-                  >
-                    <primitive object={getWedgeGeometry()} attach="geometry" />
-                    <meshStandardMaterial
-                      map={mat.texture || undefined}
-                      transparent={mat.transparent}
-                      opacity={mat.transparent ? 0.6 : 1}
-                    />
-                    {group.wedges.map((item, idx) => (
-                      <Instance
-                        key={`w-${idx}`}
-                        position={item.props.position}
-                        scale={item.props.scale}
-                        rotation={item.props.rotation}
-                        color={mat.type === 'texture' ? "#ffffff" : item.data.color}
-                        onClick={
-                          onBlockClick
-                            ? (e) => {
-                                if (isDraggingFn && isDraggingFn()) return;
-                                e.stopPropagation();
-                                onBlockClick(item.data, e.face?.normal, e.point);
-                              }
-                            : undefined
-                        }
+                {group.wedges.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.wedges.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`w-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getWedgeGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
                       />
-                    ))}
-                  </Instances>
-                )}
+                      {group.wedges.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `w-${item.data._id}` : `w-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
 
                 {/* Pyramids */}
-                {group.pyramids.length > 0 && (
-                  <Instances
-                    key={`p-${chunk.key}-${mat.id}`}
-                    limit={group.pyramids.length + 10}
-                    castShadow
-                    receiveShadow
-                    frustumCulled={true}
-                  >
-                    <primitive object={getPyramidGeometry()} attach="geometry" />
-                    <meshStandardMaterial
-                      map={mat.texture || undefined}
-                      transparent={mat.transparent}
-                      opacity={mat.transparent ? 0.6 : 1}
-                    />
-                    {group.pyramids.map((item, idx) => (
-                      <Instance
-                        key={`p-${idx}`}
-                        position={item.props.position}
-                        scale={item.props.scale}
-                        rotation={item.props.rotation}
-                        color={mat.type === 'texture' ? "#ffffff" : item.data.color}
-                        onClick={
-                          onBlockClick
-                            ? (e) => {
-                                if (isDraggingFn && isDraggingFn()) return;
-                                e.stopPropagation();
-                                onBlockClick(item.data, e.face?.normal, e.point);
-                              }
-                            : undefined
-                        }
+                {group.pyramids.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.pyramids.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`p-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getPyramidGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
                       />
-                    ))}
-                  </Instances>
-                )}
+                      {group.pyramids.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `p-${item.data._id}` : `p-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
 
                 {/* Roofs */}
-                {group.roofsByCurveness.map(roofGroup => (
-                  <Instances
-                    key={`rf-${chunk.key}-${mat.id}-${roofGroup.level}`}
-                    limit={roofGroup.blocks.length + 10}
-                    castShadow
-                    receiveShadow
-                    frustumCulled={true}
-                  >
-                    <primitive object={getRoofGeometry(roofGroup.segments)} attach="geometry" />
-                    <meshStandardMaterial
-                      map={mat.texture || undefined}
-                      transparent={mat.transparent}
-                      opacity={mat.transparent ? 0.6 : 1}
-                    />
-                    {roofGroup.blocks.map((item, idx) => (
-                      <Instance
-                        key={`r-${idx}`}
-                        position={[
-                          item.data.x,
-                          item.data.y - 0.5 + (item.data.thickness || 1) / 2,
-                          item.data.z
-                        ]}
-                        rotation={[0, Math.PI / 4, 0]}
-                        scale={[
-                          item.data.width || 1,
-                          item.data.thickness || 1,
-                          item.data.depth || 1
-                        ]}
-                        color={mat.type === 'texture' ? "#ffffff" : item.data.color}
-                        onClick={
-                          onBlockClick
-                            ? (e) => {
-                                if (isDraggingFn && isDraggingFn()) return;
-                                e.stopPropagation();
-                                onBlockClick(item.data, e.face?.normal, e.point);
-                              }
-                            : undefined
-                        }
+                {group.roofsByCurveness.map(roofGroup => {
+                  const capacity = Math.max(500, Math.ceil((roofGroup.blocks.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`rf-${chunk.key}-${mat.id}-${roofGroup.level}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getRoofGeometry(roofGroup.segments)} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
                       />
-                    ))}
-                  </Instances>
-                ))}
+                      {roofGroup.blocks.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `r-${item.data._id}` : `r-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={[
+                            item.data.x,
+                            item.data.y - 0.5 + (item.data.thickness || 1) / 2,
+                            item.data.z
+                          ]}
+                          rotation={[0, Math.PI / 4, 0]}
+                          scale={[
+                            item.data.width || 1,
+                            item.data.thickness || 1,
+                            item.data.depth || 1
+                          ]}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })}
               </group>
             );
           })}

@@ -3191,7 +3191,7 @@ export default function VoxelBuilder() {
     if (obj.type === 'item') return;
     if (obj.color === activeColor && obj.materialType === activeMaterialType && obj.textureId === activeTexture) return;
     const currentObjects = objectsRef.current;
-    const newObjects = currentObjects.map(o => (o.x === obj.x && o.y === obj.y && o.z === obj.z) ? { ...o, color: activeColor, materialType: activeMaterialType, textureId: activeTexture } : o);
+    const newObjects = currentObjects.map(o => (o === obj || (Math.abs(o.x - obj.x) < 0.05 && Math.abs(o.y - obj.y) < 0.05 && Math.abs(o.z - obj.z) < 0.05)) ? { ...o, color: activeColor, materialType: activeMaterialType, textureId: activeTexture } : o);
     objectsRef.current = newObjects;
     setObjects(newObjects);
     saveObjects(newObjects, studentDataRef.current?.pointsBalance || 0, `Painted block/roof`, 0);
@@ -3199,7 +3199,7 @@ export default function VoxelBuilder() {
 
   const rotateObject = (obj: PlacedObject) => {
     const newObjects = objectsRef.current.map(o => {
-      if (o.x === obj.x && o.y === obj.y && o.z === obj.z) {
+      if (o === obj || (Math.abs(o.x - obj.x) < 0.05 && Math.abs(o.y - obj.y) < 0.05 && Math.abs(o.z - obj.z) < 0.05)) {
         if (o.type === 'large-roof') {
           return { ...o, w: o.d, d: o.w, rotationY: ((o.rotationY || 0) + Math.PI / 2) % (Math.PI * 2) };
         }
@@ -3336,14 +3336,17 @@ export default function VoxelBuilder() {
 
   const placeBlock = (x: number, y: number, z: number, type: 'block' | 'roof') => {
     if (!studentDataRef.current) return;
+    const rx = Number(x.toFixed(2));
+    const ry = Number(y.toFixed(2));
+    const rz = Number(z.toFixed(2));
     const currentObjects = objectsRef.current;
-    const overlaps = currentObjects.filter(o => o.x === x && o.y === y && o.z === z);
+    const overlaps = currentObjects.filter(o => Math.abs(o.x - rx) < 0.05 && Math.abs(o.y - ry) < 0.05 && Math.abs(o.z - rz) < 0.05);
     if (overlaps.length > 0 && !overlaps.every(o => o.itemId === 'grass_field')) return;
     
     const curBalance = studentDataRef.current.pointsBalance ?? 0;
     if (curBalance < actualBlockCost) { showMessage(`Need ${actualBlockCost} pts!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape, materialType: activeMaterialType, textureId: activeTexture };
+    const obj: PlacedObject = { x: rx, y: ry, z: rz, color: activeColor, type, width: activeWidth, thickness: activeThickness, depth: activeDepth, curveness: activeCurveness, rotationY: (activeRotation * Math.PI) / 180, blockShape: activeShape, materialType: activeMaterialType, textureId: activeTexture };
     const newObjects = [...currentObjects, obj];
     const newBalance = curBalance - actualBlockCost;
 
@@ -3363,8 +3366,11 @@ export default function VoxelBuilder() {
     if (!studentDataRef.current || !activeItemId) { showMessage("Select an item first!", "error"); return; }
     const itemDef = shopItems.find((i: any) => i.id === activeItemId);
     if (!itemDef) return;
+    const rx = Number(x.toFixed(2));
+    const ry = Number(y.toFixed(2));
+    const rz = Number(z.toFixed(2));
     const currentObjects = objectsRef.current;
-    const overlaps = currentObjects.filter(o => o.x === x && o.y === y && o.z === z);
+    const overlaps = currentObjects.filter(o => Math.abs(o.x - rx) < 0.05 && Math.abs(o.y - ry) < 0.05 && Math.abs(o.z - rz) < 0.05);
     if (overlaps.length >= 2) return;
     if (overlaps.length === 1) {
       if (activeItemId === 'grass_field' && overlaps[0].itemId !== 'grass_field') {
@@ -3378,7 +3384,7 @@ export default function VoxelBuilder() {
     const curBalance = studentDataRef.current.pointsBalance ?? 0;
     if (curBalance < itemDef.cost) { showMessage(`Need ${itemDef.cost} pts for ${itemDef.name}!`, "error"); return; }
 
-    const obj: PlacedObject = { x, y, z, color: '', type: 'item', itemId: activeItemId };
+    const obj: PlacedObject = { x: rx, y: ry, z: rz, color: '', type: 'item', itemId: activeItemId };
     const newObjects = [...currentObjects, obj];
     const newBalance = curBalance - itemDef.cost;
 
@@ -3397,7 +3403,7 @@ export default function VoxelBuilder() {
   const eraseObject = (obj: PlacedObject) => {
     if (!studentDataRef.current) return;
     const currentObjects = objectsRef.current;
-    const newObjects = currentObjects.filter(o => o !== obj && !(o.x === obj.x && o.y === obj.y && o.z === obj.z));
+    const newObjects = currentObjects.filter(o => o !== obj && !(Math.abs(o.x - obj.x) < 0.05 && Math.abs(o.y - obj.y) < 0.05 && Math.abs(o.z - obj.z) < 0.05));
     let refund = 0;
     if (obj.type === 'item' && obj.itemId) {
       const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
@@ -4239,6 +4245,7 @@ export default function VoxelBuilder() {
                   prefabSelectionIds={prefabSelectionIds}
                   onBlockClick={handleBlockClick}
                   isDraggingFn={isDraggingFn}
+                  disableOcclusionCulling={!isExploreMode}
                 />
 
                 {/* Selected Highlights */}
