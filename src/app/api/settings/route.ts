@@ -549,6 +549,16 @@ const DEFAULT_SETTINGS = {
       "depth": 1.5
     },
     {
+      "id": "helicopter",
+      "name": "Helicopter",
+      "emoji": "🚁",
+      "cost": 800,
+      "refundOnErase": 400,
+      "width": 3,
+      "height": 2.2,
+      "depth": 3
+    },
+    {
       "id": "street_light",
       "name": "Street Light",
       "emoji": "💡",

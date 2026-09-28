@@ -8,8 +8,9 @@ import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "
 import * as THREE from "three";
 import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Player, usePlayerKeyboardControls, MobileDPad } from "@/components/Player";
+import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
+import { HelicopterModel } from "@/components/HelicopterModel";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 
 // Returns true if the pointer moved enough to be considered a drag
@@ -88,22 +89,32 @@ function LargeRoofBlock({ data }: { data: PlacedObject }) {
 }
 
 function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExploreMode?: boolean }) {
-  const [isOpen, setIsOpen] = useState(data.isOpen || false);
+  const [isOpen, setIsOpen] = useState(Boolean(data.isOpen));
   const [showUI, setShowUI] = useState(false);
-  const vec = useRef(new THREE.Vector3());
+  const frameCount = useRef(0);
 
   useFrame((state) => {
-    const doorPos = vec.current.set(data.x, data.y, data.z);
-    const dist = state.camera.position.distanceTo(doorPos);
-    if (dist < 3.5 && isExploreMode) {
-      if (!showUI) setShowUI(true);
-    } else {
+    if (!isExploreMode) {
       if (showUI) setShowUI(false);
+      return;
+    }
+    frameCount.current++;
+    if (frameCount.current % 4 !== 0) return;
+
+    // 5 block circle around door using player position (or camera fallback)
+    const pPos = (playerState?.pos && playerState.pos.lengthSq() > 0) ? playerState.pos : state.camera.position;
+    const dx = pPos.x - data.x;
+    const dz = pPos.z - data.z;
+    const dy = Math.abs(pPos.y - data.y);
+    const distSq = dx * dx + dz * dz;
+    const inRange = distSq <= 25 && dy < 4; // 5 block circle (radius 5 blocks)
+    if (inRange !== showUI) {
+      setShowUI(inRange);
     }
   });
 
-  const handleToggle = (e: any) => {
-    e.stopPropagation();
+  const handleToggle = (e?: any) => {
+    if (e?.stopPropagation) e.stopPropagation();
     const newIsOpen = !isOpen;
     setIsOpen(newIsOpen);
     data.isOpen = newIsOpen;
@@ -111,10 +122,8 @@ function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExplor
 
   const handleDoubleClick = (e: any) => {
     if (!isExploreMode) return;
-    e.stopPropagation();
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
-    data.isOpen = newIsOpen;
+    if (e?.stopPropagation) e.stopPropagation();
+    handleToggle(e);
   };
 
   const baseRotation = data.rotationY || 0;
@@ -136,17 +145,18 @@ function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExplor
           <meshStandardMaterial color="#fbbf24" />
         </mesh>
         
-        {showUI && (
-          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
-            <button 
-              onClick={handleToggle}
-              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
-            >
-              {isOpen ? "Close Door" : "Open Door"}
-            </button>
-          </Html>
-        )}
       </group>
+      
+      {showUI && (
+        <Html position={[0, 1.3, 0]} center zIndexRange={[100, 0]}>
+          <button 
+            onClick={handleToggle}
+            className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer select-none"
+          >
+            {isOpen ? "Close Door" : "Open Door"}
+          </button>
+        </Html>
+      )}
     </group>
   );
 }
@@ -2255,6 +2265,14 @@ function ItemObject({ data, itemDef, isExploreMode }: { data: PlacedObject, item
             </mesh>
           </group>
         ))}
+      </ModelWrapper>
+    );
+  }
+
+  if (isMatch("helicopter", "helicopter", "🚁")) {
+    return (
+      <ModelWrapper>
+        <HelicopterModel color={data.color || "#0284c7"} isSpinning={isExploreMode} />
       </ModelWrapper>
     );
   }

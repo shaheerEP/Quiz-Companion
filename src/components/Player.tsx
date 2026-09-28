@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export const controlsRef = { forward: false, backward: false, left: false, right: false };
+export const controlsRef = { forward: false, backward: false, left: false, right: false, up: false, down: false };
 
 export function usePlayerKeyboardControls() {
   useEffect(() => {
@@ -14,6 +14,8 @@ export function usePlayerKeyboardControls() {
         case 'ArrowDown': case 'KeyS': controlsRef.backward = true; break;
         case 'ArrowLeft': case 'KeyA': controlsRef.left = true; break;
         case 'ArrowRight': case 'KeyD': controlsRef.right = true; break;
+        case 'Space': case 'KeyE': controlsRef.up = true; break;
+        case 'ShiftLeft': case 'ShiftRight': case 'KeyQ': case 'KeyC': controlsRef.down = true; break;
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -22,6 +24,8 @@ export function usePlayerKeyboardControls() {
         case 'ArrowDown': case 'KeyS': controlsRef.backward = false; break;
         case 'ArrowLeft': case 'KeyA': controlsRef.left = false; break;
         case 'ArrowRight': case 'KeyD': controlsRef.right = false; break;
+        case 'Space': case 'KeyE': controlsRef.up = false; break;
+        case 'ShiftLeft': case 'ShiftRight': case 'KeyQ': case 'KeyC': controlsRef.down = false; break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -33,7 +37,7 @@ export function usePlayerKeyboardControls() {
   }, []);
 }
 
-export function MobileDPad() {
+export function MobileDPad({ isFlying }: { isFlying?: boolean }) {
   const baseRef = useRef<HTMLDivElement>(null);
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
@@ -85,7 +89,29 @@ export function MobileDPad() {
   };
 
   return (
-    <div className="absolute bottom-8 right-8 pointer-events-auto select-none" style={{ zIndex: 50 }}>
+    <div className="absolute bottom-8 right-8 pointer-events-auto select-none flex items-center gap-4" style={{ zIndex: 50 }}>
+      {isFlying && (
+        <div className="flex flex-col gap-2">
+          <button
+            onPointerDown={(e) => { e.preventDefault(); controlsRef.up = true; }}
+            onPointerUp={(e) => { e.preventDefault(); controlsRef.up = false; }}
+            onPointerCancel={(e) => { e.preventDefault(); controlsRef.up = false; }}
+            className="w-13 h-13 bg-sky-600/90 active:bg-sky-500 text-white rounded-2xl shadow-xl flex items-center justify-center font-black text-xl border-2 border-white/60 touch-none select-none backdrop-blur-sm transition-transform active:scale-95"
+            title="Climb (Fly Up)"
+          >
+            ▲
+          </button>
+          <button
+            onPointerDown={(e) => { e.preventDefault(); controlsRef.down = true; }}
+            onPointerUp={(e) => { e.preventDefault(); controlsRef.down = false; }}
+            onPointerCancel={(e) => { e.preventDefault(); controlsRef.down = false; }}
+            className="w-13 h-13 bg-amber-600/90 active:bg-amber-500 text-white rounded-2xl shadow-xl flex items-center justify-center font-black text-xl border-2 border-white/60 touch-none select-none backdrop-blur-sm transition-transform active:scale-95"
+            title="Descend (Fly Down)"
+          >
+            ▼
+          </button>
+        </div>
+      )}
       <div
         ref={baseRef}
         className="w-32 h-32 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-full flex items-center justify-center touch-none shadow-xl relative cursor-pointer"
@@ -128,6 +154,7 @@ interface CachedBlock {
   type?: string;
   curveness?: number;
   checkId: number;
+  sourceObj?: any;
 }
 
 const COLLISION_CELL_SIZE = 3;
@@ -139,11 +166,11 @@ class SpatialCollisionGrid {
   constructor(objects: any[]) {
     for (let i = 0; i < objects.length; i++) {
       const o = objects[i];
-      if (o.isOpen) continue; // Walk through open doors
 
-      const w = o.w || o.width || 1;
-      const d = o.d || o.depth || 1;
-      const h = o.h || o.thickness || 1;
+      const isDoor = o.itemId === 'door' || o.type === 'door';
+      const w = o.w || o.width || (isDoor ? 0.8 : 1);
+      const d = o.d || o.depth || (isDoor ? 0.2 : 1);
+      const h = o.h || o.thickness || (isDoor ? 2.0 : 1);
       const rotY = o.rotationY || 0;
       const hw = w / 2;
       const hd = d / 2;
@@ -185,6 +212,7 @@ class SpatialCollisionGrid {
         type: o.type,
         curveness: o.curveness,
         checkId: 0,
+        sourceObj: o,
       };
 
       const minCX = Math.floor(minX / COLLISION_CELL_SIZE);
@@ -236,6 +264,7 @@ class SpatialCollisionGrid {
     let top = 0;
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
+      if (b.sourceObj?.isOpen) continue;
       if (x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) {
         if (b.topY > top) top = b.topY;
       }
@@ -254,7 +283,9 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
   const pos = useRef(new THREE.Vector3(0, 0, 0));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   const targetRotation = useRef(0);
-  const speed = drivingVehicle ? 5.5 : 3;
+  const isHelicopter = drivingVehicle?.itemId === 'helicopter';
+  const speed = isHelicopter ? 8.5 : drivingVehicle ? 5.5 : 3;
+  const verticalFlySpeed = 7.0;
   const walkTime = useRef(0);
   const logicalY = useRef(0);
   const initialized = useRef(false);
@@ -375,8 +406,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       playerState.rotation = startRot;
 
       // Snap camera directly behind player at ground level (prevents falling from the sky)
-      const initCamDist = drivingVehicle ? 6.0 : 2.8;
-      const initCamHeight = drivingVehicle ? 2.5 : 1.35;
+      const initCamDist = isHelicopter ? 8.5 : drivingVehicle ? 6.0 : 2.8;
+      const initCamHeight = isHelicopter ? 3.5 : drivingVehicle ? 2.5 : 1.35;
       const cosPitch = Math.cos(0.2);
       const sinPitch = Math.sin(0.2);
       const initCamX = startX - Math.sin(startRot) * initCamDist * cosPitch;
@@ -400,10 +431,10 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
     // Steering & Yaw adjustment:
     if (controlsRef.left) {
-      currentYaw.current += (drivingVehicle ? 1.8 : 2.5) * delta;
+      currentYaw.current += (isHelicopter ? 1.5 : drivingVehicle ? 1.8 : 2.5) * delta;
     }
     if (controlsRef.right) {
-      currentYaw.current -= (drivingVehicle ? 1.8 : 2.5) * delta;
+      currentYaw.current -= (isHelicopter ? 1.5 : drivingVehicle ? 1.8 : 2.5) * delta;
     }
 
     let moving = false;
@@ -411,16 +442,27 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     if (drivingVehicle) {
       let moveSpeed = 0;
       if (controlsRef.forward) moveSpeed = speed;
-      else if (controlsRef.backward) moveSpeed = -speed * 0.7;
+      else if (controlsRef.backward) moveSpeed = -speed * (isHelicopter ? 0.6 : 0.7);
 
-      if (moveSpeed !== 0) {
+      let verticalVelocity = 0;
+      if (isHelicopter) {
+        if (controlsRef.up) verticalVelocity = verticalFlySpeed;
+        else if (controlsRef.down) verticalVelocity = -verticalFlySpeed;
+      }
+
+      if (moveSpeed !== 0 || verticalVelocity !== 0) {
         moving = true;
+        walkTime.current += delta * 15;
+      } else {
+        if (isHelicopter) walkTime.current += delta * 2;
+        else walkTime.current = 0;
       }
 
       groupRef.current.rotation.y = currentYaw.current;
       targetRotation.current = currentYaw.current;
       velocity.current.x = Math.sin(currentYaw.current) * moveSpeed;
       velocity.current.z = Math.cos(currentYaw.current) * moveSpeed;
+      velocity.current.y = verticalVelocity;
     } else {
       let moveSpeed = 0;
       if (controlsRef.forward) moveSpeed += speed;
@@ -448,9 +490,9 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
     // ─── Fast O(1) Local Collision Check ───
     const checkCollision = (x: number, z: number, currentY: number) => {
-      const r = 0.25;
+      const r = drivingVehicle ? 0.45 : 0.22;
       const stepHeight = 1.1;
-      const playerHeight = 1.5;
+      const playerHeight = 1.3;
       let floorY = 0;
       let wallHit = false;
 
@@ -458,6 +500,7 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
 
       for (let i = 0; i < nearby.length; i++) {
         const b = nearby[i];
+        if (b.sourceObj?.isOpen) continue; // Walk directly through open doors
 
         const playerMinX = x - r;
         const playerMaxX = x + r;
@@ -514,38 +557,67 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
       targetX = pos.current.x + velocity.current.x * delta;
       targetZ = pos.current.z + velocity.current.z * delta;
 
-      let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, currentY);
-      if (wallHitX) targetX = pos.current.x;
+      if (isHelicopter) {
+        let targetY = logicalY.current + velocity.current.y * delta;
+        const groundFloorY = spatialGrid.getTopSurfaceAt(targetX, targetZ);
+        const minHelicopterY = groundFloorY;
+        const maxHelicopterY = Math.max(75, (landSize ?? 50) * 1.5);
+        targetY = THREE.MathUtils.clamp(targetY, minHelicopterY, maxHelicopterY);
 
-      let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, currentY);
-      if (wallHitZ) targetZ = pos.current.z;
+        let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, targetY);
+        if (wallHitX) targetX = pos.current.x;
 
-      let { floorY: compFloorY, wallHit: finalWallHit } = checkCollision(targetX, targetZ, currentY);
-      finalFloorY = compFloorY;
+        let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, targetY);
+        if (wallHitZ) targetZ = pos.current.z;
 
-      if (finalWallHit) {
-        let { wallHit: slideX, floorY: floorX } = checkCollision(targetX, pos.current.z, currentY);
-        let { wallHit: slideZ, floorY: floorZ } = checkCollision(pos.current.x, targetZ, currentY);
-        if (!slideX) {
-          targetZ = pos.current.z;
-          finalFloorY = floorX;
-        } else if (!slideZ) {
-          targetX = pos.current.x;
-          finalFloorY = floorZ;
-        } else {
+        let { wallHit: finalWallHit } = checkCollision(targetX, targetZ, targetY);
+        if (finalWallHit) {
           targetX = pos.current.x;
           targetZ = pos.current.z;
-          finalFloorY = currentY;
         }
+
+        const halfLand = (landSize ?? 50) / 2;
+        if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
+        if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
+
+        pos.current.x = targetX;
+        pos.current.z = targetZ;
+        logicalY.current = targetY;
+        finalFloorY = targetY;
+      } else {
+        let { wallHit: wallHitX } = checkCollision(targetX, pos.current.z, currentY);
+        if (wallHitX) targetX = pos.current.x;
+
+        let { wallHit: wallHitZ } = checkCollision(pos.current.x, targetZ, currentY);
+        if (wallHitZ) targetZ = pos.current.z;
+
+        let { floorY: compFloorY, wallHit: finalWallHit } = checkCollision(targetX, targetZ, currentY);
+        finalFloorY = compFloorY;
+
+        if (finalWallHit) {
+          let { wallHit: slideX, floorY: floorX } = checkCollision(targetX, pos.current.z, currentY);
+          let { wallHit: slideZ, floorY: floorZ } = checkCollision(pos.current.x, targetZ, currentY);
+          if (!slideX) {
+            targetZ = pos.current.z;
+            finalFloorY = floorX;
+          } else if (!slideZ) {
+            targetX = pos.current.x;
+            finalFloorY = floorZ;
+          } else {
+            targetX = pos.current.x;
+            targetZ = pos.current.z;
+            finalFloorY = currentY;
+          }
+        }
+
+        const halfLand = (landSize ?? 50) / 2;
+        if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
+        if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
+
+        pos.current.x = targetX;
+        pos.current.z = targetZ;
+        logicalY.current = finalFloorY;
       }
-
-      const halfLand = landSize / 2;
-      if (targetX < -halfLand || targetX > halfLand) targetX = pos.current.x;
-      if (targetZ < -halfLand || targetZ > halfLand) targetZ = pos.current.z;
-
-      pos.current.x = targetX;
-      pos.current.z = targetZ;
-      logicalY.current = finalFloorY;
     }
 
     playerState.pos.copy(pos.current);
@@ -555,11 +627,30 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     if (!moving && yDiff < 0.005) {
       pos.current.y = finalFloorY;
     } else {
-      pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, Math.min(1, delta * 15));
+      pos.current.y = THREE.MathUtils.lerp(pos.current.y, finalFloorY, Math.min(1, delta * (isHelicopter ? 20 : 15)));
     }
 
-    // Only compute pitch & roll when driving vehicle
-    if (drivingVehicle) {
+    // Compute pitch & roll for vehicles
+    if (isHelicopter) {
+      let targetPitch = 0;
+      if (controlsRef.forward) targetPitch = -0.16;
+      else if (controlsRef.backward) targetPitch = 0.12;
+
+      const isAirborne = pos.current.y > spatialGrid.getTopSurfaceAt(pos.current.x, pos.current.z) + 0.3;
+      if (isAirborne && !controlsRef.forward && !controlsRef.backward) {
+        targetPitch = Math.sin(walkTime.current * 1.5) * 0.02;
+      }
+
+      let targetRoll = 0;
+      if (controlsRef.left) targetRoll = 0.20;
+      else if (controlsRef.right) targetRoll = -0.20;
+      else if (isAirborne) {
+        targetRoll = Math.cos(walkTime.current * 1.2) * 0.015;
+      }
+
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetPitch, Math.min(1, delta * 6));
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetRoll, Math.min(1, delta * 6));
+    } else if (drivingVehicle) {
       const yaw = groupRef.current.rotation.y;
       const sinYaw = Math.sin(yaw);
       const cosYaw = Math.cos(yaw);
@@ -592,8 +683,8 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
     }
 
     // ─── Responsive Chase Camera Logic ───
-    const camDist = drivingVehicle ? 6.0 : 2.8;
-    const camHeight = drivingVehicle ? 2.5 : 1.35;
+    const camDist = isHelicopter ? 8.5 : drivingVehicle ? 6.0 : 2.8;
+    const camHeight = isHelicopter ? 3.5 : drivingVehicle ? 2.5 : 1.35;
     const cosPitch = Math.cos(currentPitch.current);
     const sinPitch = Math.sin(currentPitch.current);
 
@@ -630,6 +721,13 @@ export function Player({ objects, activeAvatar = 'boy', drivingVehicle, vehicleM
           </group>
           {drivingVehicle.itemId === 'bike' && (
             <group position={[0, 0.8, 0]} scale={[0.5, 0.5, 0.5]}>
+              {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+              {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+              {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
+            </group>
+          )}
+          {drivingVehicle.itemId === 'helicopter' && (
+            <group position={[0, 0.22, 0.45]} scale={[0.42, 0.42, 0.42]}>
               {activeAvatar === 'boy' && <BoyModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
               {activeAvatar === 'knight' && <KnightModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}
               {activeAvatar === 'robot' && <RobotModel leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />}

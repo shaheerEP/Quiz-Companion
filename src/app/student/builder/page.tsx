@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
+import { HelicopterModel } from "@/components/HelicopterModel";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 import { GroupGizmo } from "./GroupGizmo";
 import { ChunkedBlocks, getBoxProps } from "@/components/ChunkedBlocks";
@@ -140,9 +141,8 @@ function LargeRoofBlock({ data, onClick, isDragging }: { data: PlacedObject, onC
 }
 
 function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObject; handleClick: any; isExploreMode?: boolean }) {
-  const [isOpen, setIsOpen] = useState(data.isOpen || false);
+  const [isOpen, setIsOpen] = useState(Boolean(data.isOpen));
   const [showUI, setShowUI] = useState(false);
-  const vec = useRef(new THREE.Vector3());
   const frameCount = useRef(0);
 
   useFrame((state) => {
@@ -151,18 +151,22 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
       return;
     }
     frameCount.current++;
-    if (frameCount.current % 6 !== 0) return;
+    if (frameCount.current % 4 !== 0) return;
 
-    const doorPos = vec.current.set(data.x, data.y, data.z);
-    const distSq = state.camera.position.distanceToSquared(doorPos);
-    const inRange = distSq < 12.25;
+    // 5 block circle around door using player position (or camera fallback)
+    const pPos = (playerState?.pos && playerState.pos.lengthSq() > 0) ? playerState.pos : state.camera.position;
+    const dx = pPos.x - data.x;
+    const dz = pPos.z - data.z;
+    const dy = Math.abs(pPos.y - data.y);
+    const distSq = dx * dx + dz * dz;
+    const inRange = distSq <= 25 && dy < 4; // 5 block circle (radius 5 blocks)
     if (inRange !== showUI) {
       setShowUI(inRange);
     }
   });
 
-  const handleToggle = (e: any) => {
-    e.stopPropagation();
+  const handleToggle = (e?: any) => {
+    if (e?.stopPropagation) e.stopPropagation();
     const newIsOpen = !isOpen;
     setIsOpen(newIsOpen);
     data.isOpen = newIsOpen;
@@ -170,10 +174,8 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
 
   const handleDoubleClick = (e: any) => {
     if (!isExploreMode) return;
-    e.stopPropagation();
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
-    data.isOpen = newIsOpen;
+    if (e?.stopPropagation) e.stopPropagation();
+    handleToggle(e);
   };
 
   const baseRotation = data.rotationY || 0;
@@ -194,18 +196,18 @@ function InteractiveDoor({ data, handleClick, isExploreMode }: { data: PlacedObj
           <sphereGeometry args={[0.05, 16, 16]} />
           <meshStandardMaterial color="#fbbf24" />
         </mesh>
-        
-        {showUI && (
-          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
-            <button 
-              onClick={handleToggle}
-              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
-            >
-              {isOpen ? "Close Door" : "Open Door"}
-            </button>
-          </Html>
-        )}
       </group>
+      
+      {showUI && (
+        <Html position={[0, 1.3, 0]} center zIndexRange={[100, 0]}>
+          <button 
+            onClick={handleToggle}
+            className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer select-none"
+          >
+            {isOpen ? "Close Door" : "Open Door"}
+          </button>
+        </Html>
+      )}
     </group>
   );
 }
@@ -263,7 +265,7 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
   };
 
   const itemId = data.itemId || "";
-  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(itemId);
+  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter'].includes(itemId);
 
   const wrapIfVehicle = (node: React.ReactNode) => {
     if (isVehicle && onEnterVehicle) {
@@ -2417,6 +2419,14 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
     );
   }
 
+  if (isMatch("helicopter", "helicopter", "🚁")) {
+    return wrapIfVehicle(
+      <ModelWrapper>
+        <HelicopterModel color={data.color || "#0284c7"} isSpinning={isExploreMode} />
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("lamp", "lamp", "🏮")) {
     return (
       <ModelWrapper>
@@ -3804,7 +3814,7 @@ export default function VoxelBuilder() {
 
         {toolMode === 'items' && showItemsMenu && (
           <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
-            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe', 'street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)).map((item: any) => (
+            {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe', 'street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)).map((item: any) => (
               <button key={item.id}
                 onClick={() => { setActiveItemId(item.id); setShowItemsMenu(false); }}
                 className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
@@ -3816,11 +3826,11 @@ export default function VoxelBuilder() {
             ))}
 
             {/* Vehicles Dropdown Button */}
-            {shopItems.some((i: any) => ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(i.id)) && (
+            {shopItems.some((i: any) => ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter'].includes(i.id)) && (
               <div className="relative shrink-0 flex flex-col items-center">
                  <button 
                     onClick={() => setShowVehiclesDropdown(!showVehiclesDropdown)}
-                    className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(activeItemId || '') ? 'border-amber-500 bg-amber-50' : 'border-transparent bg-white'}`}
+                    className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter'].includes(activeItemId || '') ? 'border-amber-500 bg-amber-50' : 'border-transparent bg-white'}`}
                     title="Vehicles Menu">
                     <span className="text-2xl leading-none">🚗</span>
                     <span className="text-[10px] font-black text-gray-600">Vehicles</span>
@@ -3834,7 +3844,7 @@ export default function VoxelBuilder() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-sky-200 z-50 w-max origin-bottom items-center">
-                         {shopItems.filter((i: any) => ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(i.id)).map((item: any) => (
+                         {shopItems.filter((i: any) => ['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter'].includes(i.id)).map((item: any) => (
                             <button key={item.id}
                               onClick={() => { setActiveItemId(item.id); setShowVehiclesDropdown(false); setShowItemsMenu(false); }}
                               className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 ${activeItemId === item.id ? 'border-amber-500 bg-amber-50 scale-105' : 'border-transparent bg-white'}`}
@@ -4152,14 +4162,20 @@ export default function VoxelBuilder() {
       </AnimatePresence>
 
       {/* ─── Mobile D-Pad (Explore Mode) ─── */}
-      {isExploreMode && <MobileDPad />}
+      {isExploreMode && <MobileDPad isFlying={drivingVehicle?.itemId === 'helicopter'} />}
 
-      {/* ─── Driving Mode Exit UI ─── */}
+      {/* ─── Driving Mode Exit UI & Controls ─── */}
       {drivingVehicle && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
+        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-40 pointer-events-auto flex flex-col items-center gap-2">
+          {drivingVehicle.itemId === 'helicopter' && (
+            <div className="bg-sky-950/85 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-xl border border-sky-400/40 flex items-center gap-2">
+              <span className="text-base">🚁</span>
+              <span><strong>Flight:</strong> [W/S] Pitch/Fly &bull; [A/D] Steer &bull; [Space] Climb &bull; [Shift] Descend</span>
+            </div>
+          )}
           <button 
             onClick={handleExitVehicle}
-            className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full shadow-2xl border-4 border-white transition-transform hover:scale-105 animate-bounce"
+            className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full shadow-2xl border-4 border-white transition-transform hover:scale-105 animate-bounce cursor-pointer"
             title="Exit Vehicle"
           >
             <LogOut className="w-8 h-8" />

@@ -9,6 +9,7 @@ import { Copy, Check, Gamepad2, X, LogIn, LogOut } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
+import { HelicopterModel } from "@/components/HelicopterModel";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 import { ChunkedBlocks } from "@/components/ChunkedBlocks";
 
@@ -90,9 +91,8 @@ function LargeRoofBlock({ data }: { data: PlacedObject }) {
 }
 
 function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExploreMode?: boolean }) {
-  const [isOpen, setIsOpen] = useState(data.isOpen || false);
+  const [isOpen, setIsOpen] = useState(Boolean(data.isOpen));
   const [showUI, setShowUI] = useState(false);
-  const vec = useRef(new THREE.Vector3());
   const frameCount = useRef(0);
 
   useFrame((state) => {
@@ -101,18 +101,22 @@ function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExplor
       return;
     }
     frameCount.current++;
-    if (frameCount.current % 6 !== 0) return;
+    if (frameCount.current % 4 !== 0) return;
 
-    const doorPos = vec.current.set(data.x, data.y, data.z);
-    const distSq = state.camera.position.distanceToSquared(doorPos);
-    const inRange = distSq < 12.25;
+    // 5 block circle around door using player position (or camera fallback)
+    const pPos = (playerState?.pos && playerState.pos.lengthSq() > 0) ? playerState.pos : state.camera.position;
+    const dx = pPos.x - data.x;
+    const dz = pPos.z - data.z;
+    const dy = Math.abs(pPos.y - data.y);
+    const distSq = dx * dx + dz * dz;
+    const inRange = distSq <= 25 && dy < 4; // 5 block circle (radius 5 blocks)
     if (inRange !== showUI) {
       setShowUI(inRange);
     }
   });
 
-  const handleToggle = (e: any) => {
-    e.stopPropagation();
+  const handleToggle = (e?: any) => {
+    if (e?.stopPropagation) e.stopPropagation();
     const newIsOpen = !isOpen;
     setIsOpen(newIsOpen);
     data.isOpen = newIsOpen;
@@ -120,10 +124,8 @@ function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExplor
 
   const handleDoubleClick = (e: any) => {
     if (!isExploreMode) return;
-    e.stopPropagation();
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
-    data.isOpen = newIsOpen;
+    if (e?.stopPropagation) e.stopPropagation();
+    handleToggle(e);
   };
 
   const baseRotation = data.rotationY || 0;
@@ -144,18 +146,18 @@ function InteractiveDoor({ data, isExploreMode }: { data: PlacedObject; isExplor
           <sphereGeometry args={[0.05, 16, 16]} />
           <meshStandardMaterial color="#fbbf24" />
         </mesh>
-        
-        {showUI && (
-          <Html position={[0.4, 1.2, 0.2]} center zIndexRange={[100, 0]}>
-            <button 
-              onClick={handleToggle}
-              className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer"
-            >
-              {isOpen ? "Close Door" : "Open Door"}
-            </button>
-          </Html>
-        )}
       </group>
+      
+      {showUI && (
+        <Html position={[0, 1.3, 0]} center zIndexRange={[100, 0]}>
+          <button 
+            onClick={handleToggle}
+            className="bg-sky-600/90 text-white text-xs font-bold px-3 py-2 rounded-lg pointer-events-auto hover:bg-sky-500 whitespace-nowrap shadow-xl border border-sky-300 transition-all cursor-pointer select-none"
+          >
+            {isOpen ? "Close Door" : "Open Door"}
+          </button>
+        </Html>
+      )}
     </group>
   );
 }
@@ -211,7 +213,7 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
   };
 
   const itemId = data.itemId || "";
-  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep'].includes(itemId);
+  const isVehicle = ['car', 'lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter'].includes(itemId);
 
   const wrapIfVehicle = (node: React.ReactNode) => {
     if (isVehicle && onEnterVehicle) {
@@ -2364,6 +2366,14 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
     );
   }
 
+  if (isMatch("helicopter", "helicopter", "🚁")) {
+    return (
+      <ModelWrapper>
+        <HelicopterModel color={data.color || "#0284c7"} isSpinning={isExploreMode} />
+      </ModelWrapper>
+    );
+  }
+
   if (isMatch("lamp", "lamp", "🏮")) {
     return (
       <ModelWrapper>
@@ -2536,14 +2546,22 @@ export default function WorldViewer({ params }: { params: { id: string } }) {
           {isExploreMode ? <X className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
         </button>
         {isExploreMode && drivingVehicle && (
-          <button onClick={handleExitVehicle} className="bg-rose-500 text-white p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center hover:bg-rose-400 border-2 border-rose-300" title="Exit Vehicle">
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            {drivingVehicle.itemId === 'helicopter' && (
+              <div className="bg-sky-950/85 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-xl border border-sky-400/40 flex items-center gap-2">
+                <span className="text-base">🚁</span>
+                <span>[W/S] Fly &bull; [A/D] Steer &bull; [Space] Climb &bull; [Shift] Descend</span>
+              </div>
+            )}
+            <button onClick={handleExitVehicle} className="bg-rose-500 text-white p-3 rounded-full shadow-lg transition-colors pointer-events-auto flex items-center justify-center hover:bg-rose-400 border-2 border-rose-300" title="Exit Vehicle">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         )}
       </div>
 
       {/* Mobile D-Pad (Explore Mode) */}
-      {isExploreMode && <MobileDPad />}
+      {isExploreMode && <MobileDPad isFlying={drivingVehicle?.itemId === 'helicopter'} />}
 
       {/* ─── 3D Canvas ─── */}
       <main className="flex-1 w-full h-full cursor-move">
