@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Play, Square, Check, X } from "lucide-react";
 
 interface StopwatchProps {
   onScore: (seconds: number, isCorrect: boolean) => void;
@@ -90,70 +90,79 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
 
   // Determine glow color based on state
   const glowColor = isRunning
-    ? "drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]"
+    ? "drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
     : isPendingScore
-    ? "drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]"
-    : "drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]";
+    ? "drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+    : "";
 
   return (
-    <div className="flex flex-col items-center gap-8 bg-gray-900/50 backdrop-blur-md p-12 rounded-[2rem] border border-gray-800 shadow-2xl relative overflow-hidden w-full max-w-2xl">
-      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
-      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+    <div className="flex flex-col items-center gap-6 bg-white/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-md relative overflow-hidden w-full max-w-xl transition-all">
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
+      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
 
       {/* Timer display */}
-      <div className={`relative z-10 text-7xl sm:text-8xl md:text-9xl font-mono font-black text-white tracking-tighter transition-all duration-300 ${glowColor}`}>
-        {time.toFixed(1)}<span className="text-4xl sm:text-5xl md:text-5xl text-gray-400">s</span>
+      <div className={`relative z-10 text-7xl sm:text-8xl md:text-9xl font-mono font-black text-slate-900 tracking-tighter transition-all duration-300 ${glowColor}`}>
+        {time.toFixed(1)}<span className="text-4xl sm:text-5xl md:text-5xl text-slate-400">s</span>
       </div>
 
       {/* Status badge */}
       {isPendingScore && (
-        <div className={`relative z-10 font-bold px-5 py-2 rounded-full text-sm border ${
+        <div className={`relative z-10 font-bold px-4 py-1.5 rounded-full text-xs border ${
           studentStopTime
-            ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-            : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+            ? "bg-rose-50 text-rose-600 border-rose-200"
+            : "bg-amber-50 text-amber-600 border-amber-200"
         }`}>
-          {studentStopTime ? "⏹ Stopped by student" : "⏸ Timer stopped — Correct or Wrong?"}
+          {studentStopTime ? "⏹ Stopped by student" : "⏸ Stopped"}
         </div>
       )}
 
       {/* Buttons */}
-      <div className="flex flex-wrap justify-center gap-4 w-full relative z-10">
+      <div className="flex flex-wrap justify-center items-center gap-4 w-full relative z-10">
         {!isRunning && !isPendingScore ? (
           <button
             onClick={handleStart}
-            className="flex-1 min-w-[200px] bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-2xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+            title="Start Timer"
+            aria-label="Start Timer"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25"
           >
-            START TIMER
+            <Play className="w-10 h-10 sm:w-11 sm:h-11 fill-current ml-1" />
           </button>
         ) : isRunning ? (
           <button
             onClick={handleStop}
-            className="flex-1 min-w-[200px] bg-rose-500 hover:bg-rose-400 text-white font-black text-2xl py-6 px-8 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)]"
+            title="Stop Timer"
+            aria-label="Stop Timer"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/25 animate-pulse"
           >
-            STOP TIMER
+            <Square className="w-9 h-9 sm:w-10 sm:h-10 fill-current" />
           </button>
         ) : (
-          <>
+          <div className="flex items-center gap-4">
             <button
               onClick={handleCorrectAndScore}
-              className="flex-1 min-w-[140px] bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xl py-6 px-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+              title="Correct"
+              aria-label="Correct"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25"
             >
-              ✅ CORRECT
+              <Check className="w-9 h-9 sm:w-10 sm:h-10 stroke-[3]" />
             </button>
             <button
               onClick={handleWrongAnswer}
-              className="flex-1 min-w-[140px] bg-rose-500 hover:bg-rose-400 text-white font-black text-xl py-6 px-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)]"
+              title="Wrong"
+              aria-label="Wrong"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/25"
             >
-              ❌ WRONG
+              <X className="w-9 h-9 sm:w-10 sm:h-10 stroke-[3]" />
             </button>
             <button
               onClick={handleCancel}
-              className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 font-black text-lg py-6 px-6 rounded-2xl transition-all transform hover:scale-105 active:scale-95 border border-gray-600"
-              title="Cancel and ask again"
+              title="Reset"
+              aria-label="Reset"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 border border-slate-200"
             >
-              <RotateCcw className="w-5 h-5" /> ASK AGAIN
+              <RotateCcw className="w-7 h-7 sm:w-8 sm:h-8" />
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

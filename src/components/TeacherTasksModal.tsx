@@ -89,7 +89,12 @@ export default function TeacherTasksModal({
         );
         await fetchTasks();
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          alert(errData.error || "Session expired or unauthorized. Please log in again.");
+          window.location.href = "/login";
+          return;
+        }
         alert(errData.error || "Failed to create task");
       }
     } catch (err) {

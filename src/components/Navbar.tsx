@@ -10,32 +10,33 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isTeacherRoute = pathname === "/teacher";
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   // If no user, just show a simple Navbar
   if (!user) {
     return (
-      <nav className="flex items-center justify-between px-4 md:px-6 py-4 bg-gray-950 border-b border-gray-800 relative z-50">
+      <nav className={`flex items-center justify-between px-4 md:px-6 py-4 ${isTeacherRoute ? 'bg-white/90 border-b border-slate-200 text-slate-800' : 'bg-gray-950 border-b border-gray-800'} relative z-50`}>
         <div className="flex items-center gap-3">
           <div className="bg-indigo-600 p-2 rounded-lg shadow-lg shadow-indigo-500/20">
             <PlayCircle className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-black text-white tracking-wide">QuizCompanion</h1>
+          <h1 className={`text-xl font-black ${isTeacherRoute ? 'text-slate-900' : 'text-white'} tracking-wide`}>QuizCompanion</h1>
         </div>
       </nav>
     );
   }
 
   return (
-    <nav className="bg-gray-950 border-b border-gray-800 relative z-50">
+    <nav className={`${isTeacherRoute ? 'bg-white/95 border-b border-slate-200 text-slate-800 backdrop-blur-md' : 'bg-gray-950 border-b border-gray-800'} relative z-50`}>
       <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="bg-indigo-600 p-1.5 md:p-2 rounded-lg shadow-lg shadow-indigo-500/20">
             <PlayCircle className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
-          <h1 className="text-lg md:text-xl font-black text-white tracking-wide">QuizCompanion</h1>
-          <span className="ml-1 md:ml-2 px-2 py-0.5 md:py-1 bg-gray-800 rounded text-[10px] md:text-xs font-bold uppercase text-gray-400">
+          <h1 className={`text-lg md:text-xl font-black ${isTeacherRoute ? 'text-slate-900' : 'text-white'} tracking-wide`}>QuizCompanion</h1>
+          <span className={`ml-1 md:ml-2 px-2 py-0.5 md:py-1 rounded text-[10px] md:text-xs font-bold uppercase ${isTeacherRoute ? 'bg-slate-100 text-slate-600 border border-slate-200' : 'bg-gray-800 text-gray-400'}`}>
             {user.role}
           </span>
         </div>
@@ -46,13 +47,13 @@ export default function Navbar() {
             <>
               <Link 
                 href="/teacher" 
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/teacher' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/teacher' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : (isTeacherRoute ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' : 'text-gray-300 hover:text-white hover:bg-gray-800')}`}
               >
                 Dashboard
               </Link>
               <Link
                 href="/settings"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : (isTeacherRoute ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' : 'text-gray-300 hover:text-white hover:bg-gray-800')}`}
               >
                 <Settings className="w-4 h-4" />
                 Settings
@@ -94,7 +95,7 @@ export default function Navbar() {
           )}
           <button 
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-lg font-bold transition-all"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${isTeacherRoute ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200/60' : 'bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white'}`}
           >
             <LogOut className="w-4 h-4" />
             Logout
@@ -105,7 +106,7 @@ export default function Navbar() {
         <div className="md:hidden flex items-center">
           <button 
             onClick={toggleMenu}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors focus:outline-none"
+            className={`p-2 rounded-lg transition-colors focus:outline-none ${isTeacherRoute ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
             aria-label="Toggle Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -115,20 +116,20 @@ export default function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-gray-900 border-b border-gray-800 p-4 flex flex-col gap-2 shadow-2xl">
+        <div className={`md:hidden absolute top-full left-0 right-0 ${isTeacherRoute ? 'bg-white border-b border-slate-200 shadow-xl' : 'bg-gray-900 border-b border-gray-800 shadow-2xl'} p-4 flex flex-col gap-2`}>
           {user.role === "teacher" && (
             <>
               <Link 
                 href="/teacher" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/teacher' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/teacher' ? 'bg-indigo-600 text-white' : (isTeacherRoute ? 'text-slate-700 hover:bg-slate-100' : 'text-gray-300 hover:text-white hover:bg-gray-800')}`}
               >
                 Dashboard
               </Link>
               <Link
                 href="/settings"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${pathname === '/settings' ? 'bg-indigo-600 text-white' : (isTeacherRoute ? 'text-slate-700 hover:bg-slate-100' : 'text-gray-300 hover:text-white hover:bg-gray-800')}`}
               >
                 <Settings className="w-5 h-5" />
                 Settings
@@ -172,13 +173,13 @@ export default function Navbar() {
               )}
             </>
           )}
-          <hr className="border-gray-800 my-2" />
+          <hr className={`${isTeacherRoute ? 'border-slate-200' : 'border-gray-800'} my-2`} />
           <button 
             onClick={() => {
               setIsMobileMenuOpen(false);
               logout();
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-lg font-bold transition-all w-full"
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold transition-all w-full ${isTeacherRoute ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200/60' : 'bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white'}`}
           >
             <LogOut className="w-5 h-5" />
             Logout

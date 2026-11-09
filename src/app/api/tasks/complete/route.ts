@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    if (sessionUser.role === "teacher" && String(student.teacherId) !== String(sessionUser.id)) {
+    if (sessionUser.role === "teacher" && String(student.teacherId) !== String(sessionUser.teacherId || sessionUser.id)) {
       return NextResponse.json({ error: "Forbidden: Not your student" }, { status: 403 });
     }
 

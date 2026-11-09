@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
-import { getSession, getTeacherId } from "@/lib/auth-helpers";
+import { getSession } from "@/lib/auth-helpers";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing studentId" }, { status: 400 });
     }
 
-    // Check authorization: must be student themselves or teacher
+    // Check authorization: must be student themselves, teacher, or admin
     if (session.role === "student" && session.id !== studentId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -48,10 +48,16 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized. Please log in again." }, { status: 401 });
+    }
+
+    if (session.role !== "teacher" && session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized. Teacher only." }, { status: 401 });
     }
+
+    const teacherId = session.teacherId || session.id;
 
     const body = await req.json();
     const { studentId, title, points, isRepeatable } = body;
@@ -77,9 +83,10 @@ export async function POST(req: Request) {
     };
 
     if (studentId === "all") {
-      // Assign to all students of this teacher
+      // Assign to all students of this teacher (or all students if admin)
+      const updateFilter = (session.role === "admin" || !teacherId) ? {} : { teacherId };
       await Student.updateMany(
-        { teacherId },
+        updateFilter,
         { $push: { tasks: newTask } }
       );
       return NextResponse.json({ success: true, message: "Task assigned to all students", task: newTask });
@@ -87,7 +94,13 @@ export async function POST(req: Request) {
       if (!studentId) {
         return NextResponse.json({ error: "studentId is required" }, { status: 400 });
       }
-      const student = await Student.findOne({ _id: studentId, teacherId });
+
+      const studentQuery: any = { _id: studentId };
+      if (session.role !== "admin" && teacherId) {
+        studentQuery.teacherId = teacherId;
+      }
+
+      const student = await Student.findOne(studentQuery);
       if (!student) {
         return NextResponse.json({ error: "Student not found" }, { status: 404 });
       }
@@ -106,10 +119,16 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized. Please log in again." }, { status: 401 });
+    }
+
+    if (session.role !== "teacher" && session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized. Teacher only." }, { status: 401 });
     }
+
+    const teacherId = session.teacherId || session.id;
 
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
@@ -122,14 +141,20 @@ export async function DELETE(req: Request) {
     await connectToDatabase();
 
     if (studentId === "all") {
+      const updateFilter = (session.role === "admin" || !teacherId) ? {} : { teacherId };
       await Student.updateMany(
-        { teacherId },
+        updateFilter,
         { $pull: { tasks: { id: taskId } } }
       );
       return NextResponse.json({ success: true, message: "Task removed from all students" });
     }
 
-    const student = await Student.findOne({ _id: studentId, teacherId });
+    const studentQuery: any = { _id: studentId };
+    if (session.role !== "admin" && teacherId) {
+      studentQuery.teacherId = teacherId;
+    }
+
+    const student = await Student.findOne(studentQuery);
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }

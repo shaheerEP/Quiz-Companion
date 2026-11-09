@@ -9,7 +9,7 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, Package, ListChecks, History, Trophy, Globe, Star, Timer, BookOpen, Award } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, History, Trophy, Globe, Star, Timer, BookOpen, Award, Users, Search, X, Check } from "lucide-react";
 import Link from "next/link";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
 import StudentEPosterModal from "@/components/StudentEPosterModal";
@@ -22,6 +22,12 @@ export default function TeacherDashboard() {
   const [activeSession, setActiveSession] = useState<any>(null);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showTasksModal, setShowTasksModal] = useState(false);
+  const [showStudentSelectModal, setShowStudentSelectModal] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+
+  const filteredStudents = students.filter(s =>
+    s.name?.toLowerCase().includes(studentSearch.toLowerCase())
+  );
 
   const [isRunning, setIsRunning] = useState(false);
   const [showRating, setShowRating] = useState<{ stars: number, compliment: string, points: number } | null>(null);
@@ -486,82 +492,79 @@ export default function TeacherDashboard() {
   }, [activeStudent?._id, activeStudent?.lifetimePoints, activeStudent?.rewardSystem, settings?.bundleLimit, prevBundles]);
 
   const renderDailyHistory = () => (
-    <section className="w-full bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-white/10 rounded-[2.5rem] shadow-xl p-6 xl:p-8 flex flex-col gap-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+    <section className="w-full bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
             <History className="w-4 h-4" />
           </div>
-          <div>
-            <h3 className="text-lg font-black text-white">Score History</h3>
-            <p className="text-[11px] text-slate-400">Past quiz rounds and rewards</p>
-          </div>
+          <h3 className="text-sm font-bold text-slate-800">History</h3>
         </div>
 
         {/* Segmented Tab Controls */}
-        <div className="inline-flex p-1 bg-black/40 border border-white/10 rounded-2xl self-start sm:self-auto">
+        <div className="inline-flex p-1 bg-slate-100 border border-slate-200/80 rounded-2xl self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveHistoryTab("daily")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "daily"
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30"
-                : "text-slate-400 hover:text-white"
+                ? "bg-white text-indigo-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            📅 Daily ({totalDailyDays})
+            Daily ({totalDailyDays})
           </button>
           <button
             type="button"
             onClick={() => setActiveHistoryTab("weekly")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "weekly"
-                ? "bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/30"
-                : "text-slate-400 hover:text-white"
+                ? "bg-white text-fuchsia-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            🗓️ Weekly ({totalWeeks})
+            Weekly ({totalWeeks})
           </button>
         </div>
       </div>
 
       {activeHistoryTab === "daily" ? (
-        <div className="flex flex-col gap-4 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex flex-col gap-3 max-h-96 xl:max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
           {dailyHistory.length === 0 ? (
-            <p className="text-slate-500 italic text-sm text-center py-6">No daily history recorded yet.</p>
+            <p className="text-slate-400 italic text-xs text-center py-6">No history recorded yet.</p>
           ) : (
             dailyHistory.map((dayGroup) => (
-              <div key={dayGroup.dayString} className="flex flex-col gap-2">
-                <div className="flex justify-between items-center pl-2.5 border-l-2 border-indigo-500/60">
-                  <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">{dayGroup.dayString}</p>
-                  <div className="flex gap-2 items-center">
-                    <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}% of daily goal`}>
-                      <div className="flex text-gray-700">★★★★★</div>
-                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_6px_rgba(250,204,21,0.85)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
+              <div key={dayGroup.dayString} className="flex flex-col gap-1.5">
+                <div className="flex justify-between items-center pl-2 border-l-2 border-indigo-500">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">{dayGroup.dayString}</p>
+                  <div className="flex gap-1.5 items-center">
+                    <div className="relative inline-block text-xs mr-1" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}%`}>
+                      <div className="flex text-slate-200">★★★★★</div>
+                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_4px_rgba(250,204,21,0.85)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
                         ★★★★★
                       </div>
                     </div>
-                    <p className={`text-xs font-black mr-1 ${dayGroup.totalPoints > 0 ? 'text-emerald-400' : dayGroup.totalPoints < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
+                    <p className={`text-xs font-black mr-1 ${dayGroup.totalPoints > 0 ? 'text-emerald-600' : dayGroup.totalPoints < 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                       {dayGroup.totalPoints > 0 ? '+' : ''}{dayGroup.totalPoints} pts
                     </p>
-                    <button title="Add points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'bonus')} className="w-6 h-6 bg-indigo-500/20 text-indigo-400 hover:text-white hover:bg-indigo-500 rounded-lg flex items-center justify-center transition-colors"><PlusCircle className="w-3.5 h-3.5" /></button>
-                    <button title="Deduct points for this day" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'deduction')} className="w-6 h-6 bg-rose-500/20 text-rose-400 hover:text-white hover:bg-rose-500 rounded-lg flex items-center justify-center transition-colors"><MinusCircle className="w-3.5 h-3.5" /></button>
+                    <button title="Add points" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'bonus')} className="w-6 h-6 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg flex items-center justify-center transition-colors"><PlusCircle className="w-3.5 h-3.5" /></button>
+                    <button title="Deduct points" onClick={() => handleHistoryManualLog(dayGroup.dayString, 'deduction')} className="w-6 h-6 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg flex items-center justify-center transition-colors"><MinusCircle className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   {dayGroup.items?.map((item: any) => (
-                    <div key={item._id} className="flex justify-between items-center bg-slate-950/60 p-3.5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
-                      <div className="flex items-center gap-3.5">
-                        {item.type === 'quiz' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-emerald-500/20 text-emerald-400"><Trophy className="w-4 h-4" /></div>}
-                        {item.type === 'bonus' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-indigo-500/20 text-indigo-400"><PlusCircle className="w-4 h-4" /></div>}
-                        {item.type === 'deduction' && <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-rose-500/20 text-rose-400"><MinusCircle className="w-4 h-4" /></div>}
+                    <div key={item._id} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-2xl border border-slate-100 hover:border-slate-200 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        {item.type === 'quiz' && <div className="w-7 h-7 shrink-0 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700"><Trophy className="w-3.5 h-3.5" /></div>}
+                        {item.type === 'bonus' && <div className="w-7 h-7 shrink-0 rounded-xl flex items-center justify-center bg-indigo-100 text-indigo-700"><PlusCircle className="w-3.5 h-3.5" /></div>}
+                        {item.type === 'deduction' && <div className="w-7 h-7 shrink-0 rounded-xl flex items-center justify-center bg-rose-100 text-rose-700"><MinusCircle className="w-3.5 h-3.5" /></div>}
                         <div>
-                          <p className="font-bold text-white text-sm sm:text-base">{item.title}</p>
-                          {item.details && <p className="text-xs text-slate-400 font-medium">{item.details}</p>}
+                          <p className="font-bold text-slate-800 text-xs sm:text-sm">{item.title}</p>
+                          {item.details && <p className="text-[11px] text-slate-500">{item.details}</p>}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className={`font-black text-lg ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        <p className={`font-black text-sm sm:text-base ${item.type === 'deduction' ? 'text-rose-600' : 'text-emerald-600'}`}>
                           {item.type === 'deduction' ? '-' : '+'}{item.points}
                         </p>
                       </div>
@@ -579,57 +582,56 @@ export default function TeacherDashboard() {
                 type="button"
                 onClick={handleShowMoreDaily}
                 disabled={loadingMoreDaily}
-                className="px-5 py-2.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
               >
-                {loadingMoreDaily ? "Fetching days..." : `Show More Days (${dailyHistory.length} of ${totalDailyDays})`}
+                {loadingMoreDaily ? "..." : `+ More (${dailyHistory.length}/${totalDailyDays})`}
               </button>
             </div>
           )}
         </div>
       ) : (
         /* Weekly History Tab */
-        <div className="flex flex-col gap-3 max-h-96 xl:max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex flex-col gap-2 max-h-96 xl:max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
           {weeklyHistory.length === 0 ? (
-            <p className="text-slate-500 italic text-sm text-center py-6">No weekly history recorded yet.</p>
+            <p className="text-slate-400 italic text-xs text-center py-6">No weekly history recorded yet.</p>
           ) : (
             weeklyHistory.map((week: any) => (
               <div
                 key={week.weekKey}
-                className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-2 hover:border-fuchsia-500/30 transition-all"
+                className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col gap-1.5 hover:border-fuchsia-300 transition-all"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 text-fuchsia-300 flex items-center justify-center text-xs font-black shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-xl bg-fuchsia-100 text-fuchsia-700 flex items-center justify-center text-xs font-black shrink-0">
                       📆
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-white text-sm">{week.weekLabel}</h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-slate-800 text-xs sm:text-sm">{week.weekLabel}</h4>
                         {week.isBestWeek && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black">
-                            ★ Top week
+                          <span className="px-1.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-800 text-[9px] font-black">
+                            ★ Top
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400">{week.itemsCount} total events</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  <div className="flex items-center gap-2">
                     {week.diffPrevWeek !== undefined && (
                       <span
-                        className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
+                        className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold ${
                           week.diffPrevWeek > 0
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                             : week.diffPrevWeek < 0
-                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                            : 'bg-slate-800 text-slate-400'
+                            ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'bg-slate-200 text-slate-600'
                         }`}
                       >
-                        {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek} vs prev
+                        {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek}
                       </span>
                     )}
-                    <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 to-pink-400">
+                    <span className="text-base font-black text-fuchsia-600">
                       {week.totalPoints > 0 ? `+${week.totalPoints}` : week.totalPoints} pts
                     </span>
                   </div>
@@ -645,9 +647,9 @@ export default function TeacherDashboard() {
                 type="button"
                 onClick={handleShowMoreWeekly}
                 disabled={loadingMoreWeekly}
-                className="px-5 py-2.5 rounded-2xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 hover:text-white border border-fuchsia-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-600 border border-fuchsia-200 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
               >
-                {loadingMoreWeekly ? "Fetching weeks..." : `Show More Weeks (${weeklyHistory.length} of ${totalWeeks})`}
+                {loadingMoreWeekly ? "..." : `+ More (${weeklyHistory.length}/${totalWeeks})`}
               </button>
             </div>
           )}
@@ -657,438 +659,299 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-gray-100 flex flex-col relative selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col relative selection:bg-indigo-500 selection:text-white">
       <Navbar />
 
       {/* Ambient background glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-emerald-600/10 rounded-full blur-[140px]" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-200/40 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-purple-200/30 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-emerald-200/30 rounded-full blur-[140px]" />
       </div>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 p-3 sm:p-5 md:p-6 gap-4 md:gap-6 max-w-[1600px] mx-auto w-full pb-28 md:pb-6 relative z-10">
-        {/* Left Sidebar: Student Profile & Gamification Stats */}
-        <aside className={`w-full md:col-span-1 lg:col-span-4 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit ${activeStudent ? 'order-2' : 'order-1'} md:order-1`}>
-          <div className="bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-indigo-950/40 border border-white/10 p-5 sm:p-6 rounded-[2.5rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-                  <User className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-black text-white tracking-tight">Student Champion</h2>
-                  <p className="text-[11px] text-indigo-300 font-semibold">Active Quiz Player</p>
-                </div>
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-5 md:p-6 gap-4 md:gap-6 max-w-[1500px] mx-auto w-full pb-24 md:pb-6 relative z-10">
+        {/* Left Sidebar: Student Profile & Stats */}
+        <aside className={`w-full lg:col-span-4 xl:col-span-3 flex flex-col gap-4 shrink-0 h-fit ${activeStudent ? 'order-2' : 'order-1'} lg:order-1`}>
+          <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-sm flex flex-col gap-3 relative">
+            {!activeStudent ? (
+              <div className="flex items-center justify-between py-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Challenger</span>
+                <button
+                  onClick={() => setShowStudentSelectModal(true)}
+                  title="Select Challenger"
+                  aria-label="Select Challenger"
+                  className="w-10 h-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-sm transition-all active:scale-95"
+                >
+                  <Users className="w-5 h-5" />
+                </button>
               </div>
-              {activeStudent && (
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center gap-1 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Select Challenger
-              </label>
-              <select
-                className="w-full bg-slate-950/90 border border-white/10 text-white font-bold rounded-2xl px-4 py-3.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer shadow-inner appearance-none text-sm"
-                onChange={handleStudentChange}
-                value={activeStudent?._id || ""}
-              >
-                <option value="">Choose a student...</option>
-                {students.map(s => (
-                  <option key={s._id} value={s._id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {activeStudent && (
-              <div className="pt-2 flex flex-col gap-4">
-                {/* Points Treasure */}
-                <div className="flex items-center justify-between bg-gradient-to-r from-emerald-950/40 via-slate-950/70 to-slate-950/70 p-4 rounded-2xl border border-emerald-500/20 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">
-                      💎
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Points Balance</span>
-                      <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-green-300">
-                        {activeStudent.pointsBalance?.toLocaleString() || 0}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lifetime Points */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/50 rounded-2xl border border-white/5">
-                  <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" /> Lifetime Earned
-                  </span>
-                  <span className="text-sm font-black text-white">{activeStudent.lifetimePoints?.toLocaleString() || 0} pts</span>
-                </div>
-
-                {/* Class Time Toggle */}
-                <div className="flex items-center justify-between bg-slate-950/50 p-3.5 rounded-2xl border border-white/5">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <span>📚</span> Class Quiz Mode
-                    </span>
-                    <span className="text-[10px] text-slate-500">{activeStudent.isClassTime ? "Student restricted" : "Free play active"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleToggleClassTime}
-                    className={`w-14 h-8 rounded-full flex items-center transition-colors p-1 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-slate-700'}`}
+            ) : (
+              <>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div
+                    onClick={() => setShowStudentSelectModal(true)}
+                    className="flex items-center gap-2.5 cursor-pointer group min-w-0"
+                    title="Switch Challenger"
                   >
-                    <div className={`w-6 h-6 bg-white rounded-full transition-transform shadow-md ${activeStudent.isClassTime ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 group-hover:border-indigo-500 transition-all">
+                      {activeStudent.profileImageUrl ? (
+                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-500" />
+                      )}
+                    </div>
+                    <div className="truncate">
+                      <h2 className="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{activeStudent.name}</h2>
+                      <span className="text-[10px] font-bold text-emerald-600">● Live</span>
+                    </div>
+                  </div>
+
+                  {/* Select Challenger Icon Button */}
+                  <button
+                    onClick={() => setShowStudentSelectModal(true)}
+                    title="Select Challenger"
+                    aria-label="Select Challenger"
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shrink-0"
+                  >
+                    <Users className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Game / Revision Links */}
-                <a
-                  href={`/world/${activeStudent._id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-all flex justify-center items-center gap-2 text-sm"
-                >
-                  <Globe className="w-4 h-4" /> Explore Built World 🌍
-                </a>
-
-                {activeStudent.revisionEnabled && (
-                  <Link
-                    href={`/revision?studentId=${activeStudent._id}`}
-                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex justify-center items-center gap-2 text-sm"
-                  >
-                    <BookOpen className="w-4 h-4" /> Revision Cards 📖
-                  </Link>
-                )}
-
-                {/* Tasks & Points */}
-                <button
-                  type="button"
-                  onClick={() => setShowTasksModal(true)}
-                  className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/35 transition-all flex justify-center items-center gap-2 text-sm cursor-pointer active:scale-[0.98]"
-                >
-                  <Award className="w-4 h-4" /> Tasks & Points 🎯
-                  {activeStudent.tasks && activeStudent.tasks.length > 0 && (
-                    <span className="ml-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-black">
-                      {activeStudent.tasks.length}
+                {/* Points balance and lifetime */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2">
+                    <span className="text-base">💎</span>
+                    <span className="text-xs font-black text-slate-800 truncate">
+                      {activeStudent.pointsBalance?.toLocaleString() || 0}
                     </span>
-                  )}
-                </button>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span className="text-xs font-black text-slate-800 truncate">
+                      {activeStudent.lifetimePoints?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                </div>
 
-                {/* Today's Manners */}
-                {activeStudent.mannersEnabled && (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-300 font-bold flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                        Today's Manners
+                {/* Class Mode toggle */}
+                <div className="flex items-center justify-between bg-slate-50 p-2 px-3 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5" title="Class Mode">
+                    📚 Class Mode
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleToggleClassTime}
+                    title="Toggle Class Mode"
+                    aria-label="Toggle Class Mode"
+                    className={`w-11 h-6 rounded-full flex items-center transition-colors p-0.5 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${activeStudent.isClassTime ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                  </button>
+                </div>
+
+                {/* Action Toolbar (Icon-only with tooltips!) */}
+                <div className="flex items-center justify-between gap-1.5 p-1.5 bg-slate-50 border border-slate-100 rounded-2xl">
+                  <button
+                    onClick={handleAddBonus}
+                    title="Add Points"
+                    aria-label="Add Points"
+                    className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-sm transition-all active:scale-95"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleDeductPoints}
+                    title="Deduct Points"
+                    aria-label="Deduct Points"
+                    className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <MinusCircle className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTasksModal(true)}
+                    title="Tasks"
+                    aria-label="Tasks"
+                    className="relative w-9 h-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <Award className="w-4 h-4" />
+                    {activeStudent.tasks && activeStudent.tasks.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                        {activeStudent.tasks.length}
                       </span>
-                      <button onClick={() => setShowMannersHistory(true)} className="text-[11px] text-amber-400 font-bold hover:underline">History &rarr;</button>
-                    </div>
-                    <div className="relative inline-block text-3xl text-center py-1">
-                      <div className="flex justify-center text-slate-800">★★★★★</div>
+                    )}
+                  </button>
+                  {/* Single E-Poster Button across the entire page */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPosterModal(true)}
+                    title="Achievement E-Poster"
+                    aria-label="Achievement E-Poster"
+                    className="w-9 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <Trophy className="w-4 h-4" />
+                  </button>
+                  <a
+                    href={`/world/${activeStudent._id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="World"
+                    aria-label="World"
+                    className="w-9 h-9 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <Globe className="w-4 h-4" />
+                  </a>
+                  {activeStudent.revisionEnabled && (
+                    <Link
+                      href={`/revision?studentId=${activeStudent._id}`}
+                      title="Revision"
+                      aria-label="Revision"
+                      className="w-9 h-9 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-600 border border-violet-200 flex items-center justify-center transition-all active:scale-95"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                    </Link>
+                  )}
+                </div>
+
+                {/* Manners */}
+                {activeStudent.mannersEnabled && (
+                  <div className="flex items-center justify-between p-2 px-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="relative inline-block text-lg">
+                      <div className="flex text-slate-300">★★★★★</div>
                       {(() => {
                         const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
                         const pct = todayLog ? todayLog.percentage : 0;
                         return (
-                          <div className="flex text-yellow-400 absolute top-0 left-0 right-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.85)] mx-auto justify-center" style={{ width: `${pct}%`, marginLeft: 'calc(50% - 50px)' }}>
+                          <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_6px_rgba(250,204,21,0.85)]" style={{ width: `${pct}%` }}>
                             ★★★★★
                           </div>
                         );
                       })()}
                     </div>
+                    <button
+                      onClick={() => setShowMannersHistory(true)}
+                      title="Manners History"
+                      aria-label="Manners History"
+                      className="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
 
-                {/* Unlimited Weekly Progress & Comparisons */}
-                <div className="flex flex-col gap-3 pt-3 border-t border-white/10 bg-slate-950/60 p-4 rounded-2xl border border-white/5">
+                {/* Weekly Progress */}
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-white font-bold flex items-center gap-1.5 text-xs">
-                      <span>🚀</span> Weekly Progress
-                    </span>
-                    <span className="text-[9px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-white/5">
-                      Resets Mon
+                    <span className="text-xs font-bold text-slate-600">🚀 Weekly</span>
+                    <span className="text-xs font-black text-fuchsia-600">
+                      {historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)} pts
                     </span>
                   </div>
-
-                  <div className="flex items-baseline justify-between">
-                    <div>
-                      <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-300 to-rose-400">
-                        {historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400 ml-1.5">pts this week</span>
-                    </div>
-                    {historyStats?.isNewRecord && (
-                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black animate-pulse">
-                        ★ Top week!
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Comparisons: vs Last Week & vs ★ Top week */}
-                  <div className="flex flex-col gap-2 pt-0.5">
-                    {/* vs Last Week */}
-                    <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">vs. Last Week</span>
-                        <span className="text-[10px] text-slate-500">
-                          Last: <strong className="text-slate-300">{historyStats?.lastWeekPoints ?? 0} pts</strong>
-                        </span>
-                      </div>
-                      {(() => {
-                        const diff = historyStats?.diffLastWeek ?? 0;
-                        if (diff > 0) {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black">
-                              +{diff} pts ↗
-                            </span>
-                          );
-                        } else if (diff < 0) {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-black">
-                              {diff} pts ↘
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] font-bold">
-                            Equal (0)
-                          </span>
-                        );
-                      })()}
-                    </div>
-
-                    {/* vs ★ Top week */}
-                    <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                          vs. ★ Top week
-                        </span>
-                        <span className="text-[10px] text-slate-500">
-                          Top: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
-                        </span>
-                      </div>
-                      {(() => {
-                        const diffBest = historyStats?.diffBestWeek ?? 0;
-                        if (historyStats?.isNewRecord) {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black">
-                              ★ Top week
-                            </span>
-                          );
-                        } else if (diffBest < 0) {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300 text-xs font-bold">
-                              {diffBest} pts vs top
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[11px] font-bold">
-                            0 pts
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Relative progress towards ★ Top week */}
                   {historyStats && historyStats.bestWeekPoints > 0 && (
-                    <div className="flex flex-col gap-1 pt-1">
-                      <div className="w-full bg-slate-900 rounded-full h-2 border border-white/5 overflow-hidden relative">
-                        <div
-                          className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(100, Math.max(3, (historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100))}%`
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-slate-500 font-bold px-0.5">
-                        <span>{((historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100).toFixed(0)}% of ★ Top week</span>
-                        <span>{historyStats.bestWeekPoints} pts</span>
-                      </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, Math.max(3, (historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100))}%`
+                        }}
+                      />
                     </div>
                   )}
-
-                  {/* E-Poster Generation Button */}
-                  <button
-                    type="button"
-                    onClick={() => setShowPosterModal(true)}
-                    className="w-full mt-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 hover:from-amber-500/30 hover:via-indigo-500/30 hover:to-purple-500/30 border border-amber-500/35 hover:border-amber-500/50 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98]"
-                  >
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Get Achievement E-Poster 🖼️</span>
-                  </button>
                 </div>
-
-                {/* Quick Add / Deduct Points */}
-                <div className="flex gap-2 w-full pt-1">
-                  <button
-                    onClick={handleAddBonus}
-                    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-3 text-xs sm:text-sm rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex justify-center items-center gap-1.5 active:scale-95"
-                  >
-                    <PlusCircle className="w-4 h-4" /> Add Points 🌟
-                  </button>
-                  <button
-                    onClick={handleDeductPoints}
-                    className="flex-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold py-3 px-3 text-xs sm:text-sm rounded-2xl border border-rose-500/25 transition-all flex justify-center items-center gap-1.5 active:scale-95"
-                  >
-                    <MinusCircle className="w-4 h-4" /> Deduct
-                  </button>
-                </div>
-              </div>
+              </>
             )}
           </div>
         </aside>
 
         {/* Main Interaction Area: Quiz Arena */}
-        <div className={`w-full md:col-span-1 lg:col-span-8 xl:col-span-6 flex flex-col gap-6 ${activeStudent ? 'order-1' : 'order-2'} md:order-2`}>
-          <section className="w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900/90 via-indigo-950/30 to-purple-950/20 border border-white/10 rounded-[2.5rem] shadow-2xl p-6 sm:p-8 relative overflow-hidden min-h-[420px] md:min-h-[520px]">
-            {/* Ambient Background Glows */}
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-500/15 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-500/15 rounded-full blur-[100px] pointer-events-none" />
-
+        <div className={`w-full lg:col-span-8 xl:col-span-9 flex flex-col gap-6 ${activeStudent ? 'order-1' : 'order-2'} lg:order-2`}>
+          <section className="w-full flex flex-col items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-sm p-5 sm:p-7 relative overflow-hidden min-h-[380px]">
             {!activeStudent ? (
-              <div className="text-center text-slate-400 flex flex-col items-center max-w-md z-10 py-10">
-                <div className="w-28 h-28 bg-gradient-to-tr from-indigo-600/30 to-purple-600/30 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/30 shadow-xl shadow-indigo-500/10">
-                  <span className="text-5xl">🎯</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">Quiz Time Arena! 🚀</h3>
-                <p className="text-sm sm:text-base font-medium text-slate-400 leading-relaxed">
-                  Select a student champion from the left panel to begin today's live quiz round and earn stars!
-                </p>
+              <div className="text-center text-slate-400 flex flex-col items-center max-w-sm z-10 py-12">
+                <button
+                  onClick={() => setShowStudentSelectModal(true)}
+                  title="Select Challenger"
+                  aria-label="Select Challenger"
+                  className="w-20 h-20 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-3xl flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-sm text-indigo-600 cursor-pointer"
+                >
+                  <Users className="w-9 h-9" />
+                </button>
               </div>
             ) : (
-              <div className="w-full flex flex-col h-full items-center justify-center gap-6 sm:gap-8 z-10">
-                {/* Desktop Student Header */}
-                <div className="w-full flex-col hidden md:flex items-start">
-                  <div className="flex justify-between items-center w-full mb-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider">
-                      <span>🌟</span> Active Challenger
+              <div className="w-full flex flex-col h-full items-center justify-center gap-5 z-10">
+                {/* Student Header */}
+                <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div
+                      onClick={() => setShowStudentSelectModal(true)}
+                      title="Switch Challenger"
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-indigo-300 bg-slate-100 flex items-center justify-center shadow-sm cursor-pointer hover:border-indigo-500 transition-all shrink-0"
+                    >
+                      {activeStudent.profileImageUrl ? (
+                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-slate-400" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 bg-emerald-500/15 px-4 py-2 rounded-2xl border border-emerald-500/30 shadow-inner">
-                      <Zap className="w-4 h-4 text-emerald-400" />
-                      <span className="text-emerald-300 font-bold text-sm">Today's Points: </span>
-                      <span className="text-xl font-black text-emerald-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-8 w-full">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-indigo-400/60 bg-slate-800 flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.35)] relative z-10">
-                        {activeStudent.profileImageUrl ? (
-                          <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-16 h-16 md:w-20 md:h-20 text-slate-400" />
-                        )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight capitalize">
+                          {activeStudent.name}
+                        </h1>
+                        <button
+                          onClick={() => setShowStudentSelectModal(true)}
+                          title="Select Challenger"
+                          aria-label="Select Challenger"
+                          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-
-                      {/* 5 Star Daily Fill */}
-                      <div className="relative inline-block text-3xl md:text-4xl">
-                        <div className="flex text-slate-800">★★★★★</div>
+                      <div className="relative inline-block text-lg">
+                        <div className="flex text-slate-200">★★★★★</div>
                         <div
-                          className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+                          className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"
                           style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
                         >
                           ★★★★★
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold uppercase tracking-widest text-indigo-300">Ready to score</span>
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <h1 className="text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-amber-200 tracking-tight capitalize drop-shadow-md">
-                          {activeStudent.name}
-                        </h1>
-                        <button
-                          type="button"
-                          onClick={() => setShowPosterModal(true)}
-                          className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                          title="Generate Student Achievement E-Poster"
-                        >
-                          <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Get E-Poster 🖼️</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile Student Header */}
-                <div className="w-full md:hidden flex flex-col items-center">
-                  <div className="flex justify-between items-center w-full mb-3 gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold">
-                      <span>🌟</span> Challenger
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-emerald-500/15 px-3 py-1 rounded-xl border border-emerald-500/30">
-                      <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-300 text-xs font-bold">Today: </span>
-                      <span className="text-base font-black text-emerald-400">{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
-                    </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-400/60 bg-slate-800 flex items-center justify-center shadow-xl relative z-10">
-                      {activeStudent.profileImageUrl ? (
-                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-14 h-14 text-slate-400" />
-                      )}
-                    </div>
-
-                    <h1 className="text-4xl font-black text-white tracking-tight capitalize drop-shadow-md text-center">
-                      {activeStudent.name}
-                    </h1>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowPosterModal(true)}
-                      className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                    >
-                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Get E-Poster 🖼️</span>
-                    </button>
-
-                    {/* 5 Star Daily Fill (Mobile) */}
-                    <div className="relative inline-block text-3xl">
-                      <div className="flex text-slate-800">★★★★★</div>
-                      <div
-                        className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
-                        style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
-                      >
-                        ★★★★★
-                      </div>
-                    </div>
+                  {/* Today's Points */}
+                  <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-2xl border border-emerald-200 text-emerald-700 font-black text-sm sm:text-base">
+                    <Zap className="w-4 h-4 text-emerald-600" />
+                    <span>{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
                   </div>
                 </div>
 
                 {/* Timer Controls & Display */}
-                <div className="flex flex-col items-center w-full mt-2 gap-4">
-                  <div className="flex bg-black/40 rounded-2xl p-1 border border-white/10 shadow-inner">
+                <div className="flex flex-col items-center w-full gap-4">
+                  <div className="flex bg-slate-100 rounded-2xl p-1 border border-slate-200/80">
                     <button
                       onClick={() => setTimerTab('quiz')}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+                      title="Stopwatch"
+                      aria-label="Stopwatch"
+                      className={`p-2.5 rounded-xl transition-all ${
                         timerTab === 'quiz'
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                          : 'text-slate-400 hover:text-white'
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <Activity className="w-4 h-4" /> ⚡ Quiz Stopwatch
+                      <Activity className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => setTimerTab('countdown')}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+                      title="Countdown"
+                      aria-label="Countdown"
+                      className={`p-2.5 rounded-xl transition-all ${
                         timerTab === 'countdown'
-                          ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-md'
-                          : 'text-slate-400 hover:text-white'
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <Timer className="w-4 h-4" /> ⏳ Countdown
+                      <Timer className="w-5 h-5" />
                     </button>
                   </div>
 
@@ -1109,62 +972,59 @@ export default function TeacherDashboard() {
             )}
           </section>
 
-          <div className="hidden md:block w-full">
-            {activeStudent && renderDailyHistory()}
-          </div>
-        </div>
-
-        {/* Daily History for Mobile (moves outside middle column) */}
-        <div className="block md:hidden w-full order-3">
           {activeStudent && renderDailyHistory()}
         </div>
-
-        {/* Right Sidebar */}
-        {activeSession && (
-          <aside className="w-full md:col-span-2 lg:col-span-12 xl:col-span-3 flex flex-col gap-4 md:gap-6 shrink-0 h-fit order-3">
-            <div className="bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-rose-950/25 border border-white/10 p-5 sm:p-6 rounded-[2.5rem] shadow-xl">
-              <h2 className="text-base font-black text-white mb-5 flex items-center gap-2.5 border-b border-white/10 pb-4">
-                <div className="bg-rose-500/20 p-2 rounded-xl text-rose-400"><Activity className="w-4 h-4" /></div>
-                Live Quiz Mission 🎯
-              </h2>
-
-              <div className="flex flex-col gap-4">
-                <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 shadow-inner">
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <span>⚡</span> Average Speed
-                  </p>
-                  <p className="text-3xl sm:text-4xl font-black text-indigo-400 flex items-center gap-2">
-                    <Zap className="w-6 h-6 text-indigo-400" />
-                    {activeSession.averageSpeed.toFixed(1)}s
-                  </p>
-                </div>
-                {activeSession.isCompleted && (
-                  <div className="mt-4 bg-gradient-to-tr from-amber-500/20 to-yellow-500/10 border border-amber-500/30 p-5 rounded-2xl text-center">
-                    <div className="text-3xl mb-1">🏆</div>
-                    <h3 className="text-lg font-black text-amber-300 mb-1">Quiz Completed!</h3>
-                    <p className="text-xs text-amber-200">Final Score: <span className="font-black text-white text-sm">{activeSession.finalScore} pts</span></p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </aside>
-        )}
       </main>
 
       {/* Mobile Action Bar */}
       {activeStudent && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-2.5 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 flex items-center justify-around shadow-lg">
+          <button
+            onClick={() => setShowStudentSelectModal(true)}
+            title="Select Challenger"
+            aria-label="Select Challenger"
+            className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center transition-all active:scale-95"
+          >
+            <Users className="w-4 h-4" />
+          </button>
           <button
             onClick={handleAddBonus}
-            className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex justify-center items-center gap-2 text-sm active:scale-95"
+            title="Add Points"
+            aria-label="Add Points"
+            className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 transition-all active:scale-95"
           >
-            <PlusCircle className="w-5 h-5" /> Add Points 🌟
+            <PlusCircle className="w-4 h-4" />
           </button>
           <button
             onClick={handleDeductPoints}
-            className="flex-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold py-3.5 rounded-2xl border border-rose-500/25 transition-all flex justify-center items-center gap-2 text-sm active:scale-95"
+            title="Deduct Points"
+            aria-label="Deduct Points"
+            className="w-10 h-10 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all active:scale-95"
           >
-            <MinusCircle className="w-5 h-5" /> Deduct
+            <MinusCircle className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTasksModal(true)}
+            title="Tasks"
+            aria-label="Tasks"
+            className="relative w-10 h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center transition-all active:scale-95"
+          >
+            <Award className="w-4 h-4" />
+            {activeStudent.tasks && activeStudent.tasks.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                {activeStudent.tasks.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPosterModal(true)}
+            title="Achievement E-Poster"
+            aria-label="Achievement E-Poster"
+            className="w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all active:scale-95"
+          >
+            <Trophy className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -1230,6 +1090,79 @@ export default function TeacherDashboard() {
             fetchStudentHistory(updatedStudent._id);
           }}
         />
+      )}
+
+      {showStudentSelectModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 flex flex-col gap-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span>Select Challenger</span>
+              </div>
+              <button
+                onClick={() => {
+                  setShowStudentSelectModal(false);
+                  setStudentSearch("");
+                }}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search student..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                autoFocus
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto flex flex-col gap-1.5 custom-scrollbar pr-1">
+              {filteredStudents.map((s) => (
+                <button
+                  key={s._id}
+                  onClick={() => {
+                    selectStudent(s._id, students);
+                    setShowStudentSelectModal(false);
+                    setStudentSearch("");
+                  }}
+                  className={`flex items-center justify-between p-2.5 rounded-2xl transition-all text-left ${
+                    activeStudent?._id === s._id
+                      ? "bg-indigo-50 border-2 border-indigo-500 text-indigo-900"
+                      : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shrink-0">
+                      {s.profileImageUrl ? (
+                        <img src={s.profileImageUrl} alt={s.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 text-slate-500" />
+                      )}
+                    </div>
+                    <div className="truncate">
+                      <p className="font-bold text-xs truncate">{s.name}</p>
+                      <p className="text-[10px] text-slate-500">💎 {s.pointsBalance?.toLocaleString() || 0}</p>
+                    </div>
+                  </div>
+                  {activeStudent?._id === s._id && (
+                    <Check className="w-4 h-4 text-indigo-600 shrink-0" />
+                  )}
+                </button>
+              ))}
+              {filteredStudents.length === 0 && (
+                <p className="text-slate-400 text-xs italic text-center py-4">No student found</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

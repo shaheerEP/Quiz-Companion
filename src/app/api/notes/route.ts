@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
-import { getTeacherId } from "@/lib/auth-helpers";
+import { getSession } from "@/lib/auth-helpers";
 
 export async function GET(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session || (session.role !== "teacher" && session.role !== "admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
     if (!studentId) return NextResponse.json({ error: "Student ID required" }, { status: 400 });
 
     await connectToDatabase();
-    const student = await Student.findOne({ _id: studentId, teacherId });
+    const teacherId = session.teacherId || session.id;
+    const query: any = { _id: studentId };
+    if (session.role !== "admin" && teacherId) {
+      query.teacherId = teacherId;
+    }
+
+    const student = await Student.findOne(query);
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     return NextResponse.json({
@@ -27,8 +35,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session || (session.role !== "teacher" && session.role !== "admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { studentId, text, isCheckbox } = body;
@@ -37,7 +47,13 @@ export async function POST(req: Request) {
     }
 
     await connectToDatabase();
-    const student = await Student.findOne({ _id: studentId, teacherId });
+    const teacherId = session.teacherId || session.id;
+    const query: any = { _id: studentId };
+    if (session.role !== "admin" && teacherId) {
+      query.teacherId = teacherId;
+    }
+
+    const student = await Student.findOne(query);
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     const newNote = {
@@ -60,15 +76,23 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session || (session.role !== "teacher" && session.role !== "admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { studentId, notesText, noteId, checked, text, isCheckbox, notes } = body;
     if (!studentId) return NextResponse.json({ error: "Student ID required" }, { status: 400 });
 
     await connectToDatabase();
-    const student = await Student.findOne({ _id: studentId, teacherId });
+    const teacherId = session.teacherId || session.id;
+    const query: any = { _id: studentId };
+    if (session.role !== "admin" && teacherId) {
+      query.teacherId = teacherId;
+    }
+
+    const student = await Student.findOne(query);
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     if (notesText !== undefined) {
@@ -103,8 +127,10 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const teacherId = await getTeacherId();
-    if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session || (session.role !== "teacher" && session.role !== "admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
@@ -115,7 +141,13 @@ export async function DELETE(req: Request) {
     }
 
     await connectToDatabase();
-    const student = await Student.findOne({ _id: studentId, teacherId });
+    const teacherId = session.teacherId || session.id;
+    const query: any = { _id: studentId };
+    if (session.role !== "admin" && teacherId) {
+      query.teacherId = teacherId;
+    }
+
+    const student = await Student.findOne(query);
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     student.notes = (student.notes || []).filter((n: any) => n.id !== noteId);
