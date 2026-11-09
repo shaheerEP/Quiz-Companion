@@ -100,23 +100,23 @@ export default function AdminDashboard() {
   if (loading || !user || user.role !== "admin") return <div className="min-h-screen bg-gray-950 flex items-center justify-center text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 p-6 transition-colors duration-200">
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-10">
           <div className="flex items-center gap-3">
             <div className="bg-amber-600 p-2 rounded-xl">
               <ShieldCheck className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-black text-white">Super Admin</h1>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white">Super Admin</h1>
           </div>
-          <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold transition-colors border border-gray-800">
+          <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 rounded-xl font-bold transition-colors border border-slate-200 dark:border-gray-700">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </header>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-xl">
+        <div className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Manage Teachers</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Manage Teachers</h2>
             <button
               onClick={() => setIsAdding(!isAdding)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-colors"
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
           </div>
 
           {isAdding && (
-            <form onSubmit={handleAddTeacher} className="bg-gray-950 p-6 rounded-2xl mb-6 border border-gray-800">
+            <form onSubmit={handleAddTeacher} className="bg-slate-50 dark:bg-gray-950 p-6 rounded-2xl mb-6 border border-slate-200 dark:border-gray-800">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-white">New Teacher</h3>
                 <button type="button" onClick={() => setIsAdding(false)} className="text-gray-500 hover:text-white">

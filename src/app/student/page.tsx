@@ -3,7 +3,25 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, Trophy, History, Package, ListChecks, PlusCircle, MinusCircle, User, Star, Check, CheckCircle2, Repeat, Sparkles, Award } from "lucide-react";
+import { 
+  Zap, 
+  Trophy, 
+  History, 
+  Package, 
+  PlusCircle, 
+  MinusCircle, 
+  User, 
+  Star, 
+  Check, 
+  CheckCircle2, 
+  Repeat, 
+  Sparkles, 
+  Award, 
+  Calendar, 
+  CalendarDays, 
+  ChevronDown, 
+  Square 
+} from "lucide-react";
 import confetti from "canvas-confetti";
 import BundleAnimation from "@/components/BundleAnimation";
 import StarRatingAnimation from "@/components/StarRatingAnimation";
@@ -59,17 +77,14 @@ export default function StudentDashboard() {
         .then(data => {
           setQuestionLogs(data);
           if (data && data.length > 0) {
-            // Find the most recent manual log that hasn't been shown
             const unseenManuals = data.filter((l: any) => 
               (l.logType === 'bonus' || l.logType === 'deduction') && !shownManualLogsRef.current.has(l._id)
             );
             if (unseenManuals.length > 0) {
               if (initialLogsFetchedRef.current) {
-                const latest = unseenManuals[unseenManuals.length - 1]; // Assume last is newest
+                const latest = unseenManuals[unseenManuals.length - 1];
                 setManualAnim({ type: latest.logType, amount: latest.points });
               }
-              
-              // Also add all others to the shown set so we don't queue them forever
               unseenManuals.forEach((l: any) => shownManualLogsRef.current.add(l._id));
             }
           }
@@ -86,7 +101,6 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || user.role !== "student") return;
 
-    // 1. Fetch slow-moving data ONCE on mount
     const fetchInitialData = async () => {
       try {
         const [settingsRes, tasksRes, withdrawalsRes] = await Promise.all([
@@ -108,7 +122,6 @@ export default function StudentDashboard() {
     };
     fetchInitialData();
 
-    // 2. Fetch history and manners on mount and on relaxed interval (30s)
     const fetchHistoryAndManners = async () => {
       try {
         const [historyRes, mannersRes] = await Promise.all([
@@ -131,9 +144,8 @@ export default function StudentDashboard() {
       } catch (e) {}
     };
     fetchHistoryAndManners();
-    const historyInterval = setInterval(fetchHistoryAndManners, 30000); // 30s instead of 3s!
+    const historyInterval = setInterval(fetchHistoryAndManners, 30000);
 
-    // 3. Lightweight check for active session (only checks single active session)
     const checkActiveSession = async () => {
       try {
         const res = await fetch(`/api/sessions?studentId=${user.id}&activeOnly=true`);
@@ -149,7 +161,7 @@ export default function StudentDashboard() {
       } catch (e) {}
     };
     checkActiveSession();
-    const sessionInterval = setInterval(checkActiveSession, 5000); // 5s lightweight check
+    const sessionInterval = setInterval(checkActiveSession, 5000);
 
     return () => {
       clearInterval(historyInterval);
@@ -162,7 +174,6 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!activeSession) return;
 
-    // Check timer state fast polling (every 1s)
     const syncTimer = async () => {
       try {
         const res = await fetch(`/api/sessions/timer?sessionId=${activeSession._id}`);
@@ -171,7 +182,6 @@ export default function StudentDashboard() {
         if (timerData.isTimerRunning && timerData.currentTimerStartTime) {
           setFrozenTime(null);
           setLastResult(null);
-          // Sync local clock
           const updateTimer = () => {
             const msPassed = Date.now() - timerData.currentTimerStartTime;
             setLiveTime(msPassed / 1000);
@@ -182,16 +192,13 @@ export default function StudentDashboard() {
             requestRef.current = requestAnimationFrame(updateTimer);
           }
         } else {
-          // Timer stopped
           if (requestRef.current) {
             cancelAnimationFrame(requestRef.current);
             requestRef.current = null;
           }
-          // Show frozen time if stopped by anyone
           if (timerData.studentStopTime !== undefined && timerData.studentStopTime !== null) {
             setFrozenTime(timerData.studentStopTime);
           }
-          // Show last question result when available
           if (timerData.lastQuestionResult) {
             const resultKey = JSON.stringify(timerData.lastQuestionResult);
             if (timerData.lastQuestionResult.cancelled) {
@@ -204,7 +211,6 @@ export default function StudentDashboard() {
               if (!initialTimerSyncDoneRef.current) {
                 lastResultIdRef.current = resultKey;
               } else {
-                // Trigger star animation once per result
                 if (timerData.lastQuestionResult.isCorrect && resultKey !== lastResultIdRef.current) {
                   lastResultIdRef.current = resultKey;
                   setShowRating({
@@ -289,10 +295,8 @@ export default function StudentDashboard() {
         setTaskSuccessToast(data.message || `+${task.points} pts added! 🎉`);
         setTimeout(() => setTaskSuccessToast(null), 4000);
 
-        // Instantly refresh student auth / points
         await refreshAuth();
 
-        // Refresh tasks and history
         const tasksRes = await fetch(`/api/tasks?studentId=${user.id}`);
         if (tasksRes.ok) {
           const tasksData = await tasksRes.json();
@@ -400,607 +404,520 @@ export default function StudentDashboard() {
   if (!user || user.role !== "student") return null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col transition-colors duration-200">
       <Navbar />
 
-      <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-10">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full flex flex-col gap-6">
         
-        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 mb-8">
-          <div className="flex flex-col md:flex-row items-center gap-10">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-indigo-500/50 bg-gray-800 flex items-center justify-center shadow-2xl relative z-10">
-                {user.student?.profileImageUrl ? (
-                  <img src={user.student.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-16 h-16 md:w-20 md:h-20 text-gray-500" />
-                )}
-              </div>
-              
-              {/* 5 Star Daily Fill */}
-              <div className="relative inline-block text-3xl md:text-4xl">
-                <div className="flex text-gray-700">★★★★★</div>
-                <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" style={{ width: `${Math.min(100, ((user.student?.dailyPoints || 0) / 1000) * 100)}%` }}>
+        {/* Header: Student Name & Image shown once, double-sized avatar, and points with small explanatory text */}
+        <div className="bg-white dark:bg-gray-900 p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/* Double-sized avatar */}
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-indigo-200/90 dark:border-indigo-500/30 bg-slate-100 dark:bg-gray-800 flex items-center justify-center shadow-md shrink-0">
+              {user.student?.profileImageUrl ? (
+                <img src={user.student.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 sm:w-14 sm:h-14 text-slate-400" />
+              )}
+            </div>
+
+            {/* Name & 5-Star daily rating */}
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight capitalize">
+                {user.name}
+              </h1>
+              <div className="relative inline-block text-xl">
+                <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
+                <div
+                  className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"
+                  style={{ width: `${Math.min(100, ((user.student?.dailyPoints || 0) / 1000) * 100)}%` }}
+                >
                   ★★★★★
                 </div>
               </div>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-indigo-400 font-bold uppercase tracking-widest mb-2 text-sm md:text-base">Welcome back,</p>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tight capitalize drop-shadow-lg">{user.name}</h1>
-              <p className="text-sm text-gray-400 mt-1 font-bold">Today's Points: <span className="text-emerald-400">{user.student?.dailyPoints || 0}</span></p>
+          </div>
+
+          {/* Points meaning with small-sized explanatory labels */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            {/* Balance */}
+            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-[120px]">
+              <span className="text-xl sm:text-2xl shrink-0">💎</span>
+              <div className="min-w-0 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                  Balance
+                </span>
+                <span className="text-sm sm:text-base font-black text-slate-800 dark:text-white truncate">
+                  {user.student?.pointsBalance?.toLocaleString() || 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Lifetime */}
+            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-[120px]">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 shrink-0" />
+              <div className="min-w-0 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                  Lifetime
+                </span>
+                <span className="text-sm sm:text-base font-black text-slate-800 dark:text-white truncate">
+                  {lifetimePoints.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Today */}
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 sm:p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center gap-2.5 min-w-[110px]">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 shrink-0" />
+              <div className="min-w-0 flex flex-col">
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider leading-tight">
+                  Today
+                </span>
+                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 truncate">
+                  {user.student?.dailyPoints?.toLocaleString() || 0}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          <div className="flex-1 flex flex-col gap-8">
-            {/* Main Stats Card */}
-            <div className="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/30 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full filter blur-3xl mix-blend-overlay"></div>
-            
-            <div className="flex flex-col gap-4 relative z-10 h-full">
-              <div>
-                <h2 className="text-2xl font-black text-indigo-200 mb-2 uppercase tracking-widest">Points Balance</h2>
-                <div className="text-8xl md:text-[8rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-300 drop-shadow-lg mb-4">
-                  {user.student?.pointsBalance?.toLocaleString() || 0} <span className="text-4xl text-indigo-300">pts</span>
+          {/* Left Column: Score History */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            <div className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-gray-800 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <History className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-lg font-black text-slate-800 dark:text-white">History</h3>
+                </div>
+
+                {/* Tab Controls - icon-focused with small counts */}
+                <div className="inline-flex p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200/60 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("daily")}
+                    title={`Daily History (${totalDailyDays})`}
+                    aria-label="Daily History"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      activeHistoryTab === "daily"
+                        ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/25"
+                        : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{totalDailyDays}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("weekly")}
+                    title={`Weekly History (${totalWeeks})`}
+                    aria-label="Weekly History"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      activeHistoryTab === "weekly"
+                        ? "bg-fuchsia-600 text-white shadow-sm shadow-fuchsia-500/25"
+                        : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    <span>{totalWeeks}</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 bg-black/30 p-5 rounded-2xl w-fit border border-white/10 backdrop-blur-md mb-2">
-                <Trophy className="w-8 h-8 text-yellow-400" />
-                <div>
-                  <p className="text-sm font-bold text-indigo-200 uppercase tracking-wider">Lifetime Earnings</p>
-                  <p className="text-2xl font-black text-white">{lifetimePoints.toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-            
-          {/* Dual-Tab History Section: Daily History & Weekly History */}
-          <div className="bg-black/40 p-6 sm:p-8 rounded-3xl border border-white/5 shadow-inner flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2">
-                <History className="w-6 h-6 text-indigo-400" />
-                <h3 className="text-xl font-black text-white">Score History</h3>
-              </div>
-
-              {/* Segmented Tab Controls */}
-              <div className="inline-flex p-1 bg-gray-900 border border-white/10 rounded-2xl self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setActiveHistoryTab("daily")}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    activeHistoryTab === "daily"
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Daily History ({totalDailyDays})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveHistoryTab("weekly")}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    activeHistoryTab === "weekly"
-                      ? "bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/30"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Weekly History ({totalWeeks})
-                </button>
-              </div>
-            </div>
-
-            {/* 1. DAILY HISTORY TAB */}
-            {activeHistoryTab === "daily" && (
-              <div className="flex flex-col gap-6">
-                {dailyHistory.length === 0 ? (
-                  <p className="text-gray-500 italic text-sm text-center py-6">No daily quiz history yet.</p>
-                ) : (
-                  dailyHistory.map((dayGroup: any) => (
-                    <div key={dayGroup.dayString} className="flex flex-col gap-3">
-                      <div className="flex justify-between items-center pl-3 border-l-2 border-indigo-500/60">
-                        <p className="text-sm font-bold text-gray-300 uppercase tracking-wider">{dayGroup.dayString}</p>
-                        <div className="flex gap-2 items-center">
-                          <div className="relative inline-block text-sm mr-2" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}% of daily goal`}>
-                            <div className="flex text-gray-700">★★★★★</div>
-                            <div
-                              className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]"
-                              style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}
-                            >
-                              ★★★★★
-                            </div>
-                          </div>
-                          <p className={`text-sm font-black ${dayGroup.totalPoints > 0 ? 'text-emerald-400' : dayGroup.totalPoints < 0 ? 'text-rose-400' : 'text-gray-400'}`}>
-                            {dayGroup.totalPoints > 0 ? '+' : ''}{dayGroup.totalPoints} pts
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        {dayGroup.items?.map((item: any) => (
-                          <div key={item._id} className="flex justify-between items-center bg-gray-900/60 p-4 rounded-2xl border border-gray-800/60 hover:bg-gray-800/50 transition-colors">
-                            <div className="flex items-center gap-3.5">
-                              {item.type === 'quiz' && (
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/20 text-emerald-400 shrink-0">
-                                  <Trophy className="w-4 h-4" />
-                                </div>
-                              )}
-                              {item.type === 'bonus' && (
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-500/20 text-indigo-400 shrink-0">
-                                  <PlusCircle className="w-4 h-4" />
-                                </div>
-                              )}
-                              {item.type === 'deduction' && (
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-rose-500/20 text-rose-400 shrink-0">
-                                  <MinusCircle className="w-4 h-4" />
-                                </div>
-                              )}
-                              <div>
-                                <p className="font-bold text-gray-200 text-sm sm:text-base">{item.title}</p>
-                                {item.details && <p className="text-xs text-gray-400 font-medium">{item.details}</p>}
+              {/* 1. DAILY HISTORY TAB */}
+              {activeHistoryTab === "daily" && (
+                <div className="flex flex-col gap-5">
+                  {dailyHistory.length === 0 ? (
+                    <p className="text-slate-400 italic text-sm text-center py-6">No quiz history yet.</p>
+                  ) : (
+                    dailyHistory.map((dayGroup: any) => (
+                      <div key={dayGroup.dayString} className="flex flex-col gap-2.5">
+                        <div className="flex justify-between items-center pl-2.5 border-l-2 border-indigo-500">
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{dayGroup.dayString}</p>
+                          <div className="flex gap-2 items-center">
+                            <div className="relative inline-block text-xs" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}%`}>
+                              <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
+                              <div
+                                className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_4px_rgba(250,204,21,0.8)]"
+                                style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}
+                              >
+                                ★★★★★
                               </div>
                             </div>
-                            <div className="text-right shrink-0">
-                              <p className={`font-black text-lg ${item.type === 'deduction' ? 'text-rose-400' : 'text-emerald-400'}`}>
-                                {item.type === 'deduction' ? '-' : '+'}{item.points}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {/* Show More Days Button */}
-                {hasMoreDaily && (
-                  <div className="pt-2 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={handleShowMoreDaily}
-                      disabled={loadingMoreDaily}
-                      className="px-6 py-2.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
-                    >
-                      {loadingMoreDaily ? "Fetching days..." : `Show More Days (${dailyHistory.length} of ${totalDailyDays})`}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 2. WEEKLY HISTORY TAB */}
-            {activeHistoryTab === "weekly" && (
-              <div className="flex flex-col gap-4">
-                {weeklyHistory.length === 0 ? (
-                  <p className="text-gray-500 italic text-sm text-center py-6">No weekly history recorded yet.</p>
-                ) : (
-                  weeklyHistory.map((week: any) => (
-                    <div
-                      key={week.weekKey}
-                      className="bg-gray-900/70 border border-gray-800/80 p-5 rounded-2xl flex flex-col gap-3 hover:border-fuchsia-500/30 transition-all"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-300 font-black text-xs shrink-0">
-                            📆
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-white text-sm sm:text-base">{week.weekLabel}</h4>
-                              {week.isBestWeek && (
-                                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black flex items-center gap-1">
-                                  ★ Top week
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium">
-                              {week.itemsCount} total quiz events
+                            <p className={`text-xs font-black ${dayGroup.totalPoints > 0 ? 'text-emerald-600' : dayGroup.totalPoints < 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                              {dayGroup.totalPoints > 0 ? '+' : ''}{dayGroup.totalPoints} pts
                             </p>
                           </div>
                         </div>
 
-                        {/* Points & Difference vs previous week */}
-                        <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <div className="flex flex-col gap-2">
+                          {dayGroup.items?.map((item: any) => (
+                            <div key={item._id} className="flex justify-between items-center bg-slate-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-slate-100 dark:border-gray-700 hover:bg-slate-100/70 dark:hover:bg-gray-800 transition-colors">
+                              <div className="flex items-center gap-3 min-w-0">
+                                {item.type === 'quiz' && (
+                                  <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 shrink-0">
+                                    <Trophy className="w-4 h-4" />
+                                  </div>
+                                )}
+                                {item.type === 'bonus' && (
+                                  <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-indigo-100 text-indigo-600 shrink-0">
+                                    <PlusCircle className="w-4 h-4" />
+                                  </div>
+                                )}
+                                {item.type === 'deduction' && (
+                                  <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-rose-100 text-rose-600 shrink-0">
+                                    <MinusCircle className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.title}</p>
+                                  {item.details && <p className="text-[11px] text-slate-400 truncate font-medium">{item.details}</p>}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0 ml-2">
+                                <p className={`font-black text-sm sm:text-base ${item.type === 'deduction' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                  {item.type === 'deduction' ? '-' : '+'}{item.points}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  {/* Show More Days Button - Icon-focused */}
+                  {hasMoreDaily && (
+                    <div className="pt-1 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={handleShowMoreDaily}
+                        disabled={loadingMoreDaily}
+                        title={`Show More (${dailyHistory.length} of ${totalDailyDays})`}
+                        aria-label="Show More Days"
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60 text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        <span>{loadingMoreDaily ? "..." : `${dailyHistory.length} / ${totalDailyDays}`}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2. WEEKLY HISTORY TAB */}
+              {activeHistoryTab === "weekly" && (
+                <div className="flex flex-col gap-3">
+                  {weeklyHistory.length === 0 ? (
+                    <p className="text-slate-400 italic text-sm text-center py-6">No weekly history yet.</p>
+                  ) : (
+                    weeklyHistory.map((week: any) => (
+                      <div
+                        key={week.weekKey}
+                        className="bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-gray-700 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-fuchsia-200 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-700 flex items-center justify-center font-black text-xs shrink-0">
+                            📆
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-slate-800 dark:text-white text-sm">{week.weekLabel}</h4>
+                              {week.isBestWeek && (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-700 text-[10px] font-black">
+                                  ★ Top week
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                              {week.itemsCount} events
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 self-end sm:self-auto">
                           {week.diffPrevWeek !== undefined && (
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                              className={`px-2 py-0.5 rounded-lg text-[11px] font-bold ${
                                 week.diffPrevWeek > 0
-                                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                  ? 'bg-emerald-100 text-emerald-700'
                                   : week.diffPrevWeek < 0
-                                  ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                                  : 'bg-gray-800 text-gray-500'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : 'bg-slate-200 text-slate-600'
                               }`}
                             >
-                              {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek} vs prev
+                              {week.diffPrevWeek > 0 ? `+${week.diffPrevWeek}` : week.diffPrevWeek}
                             </span>
                           )}
-                          <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 to-pink-400">
+                          <span className="text-base font-black text-fuchsia-600">
                             {week.totalPoints > 0 ? `+${week.totalPoints}` : week.totalPoints} pts
                           </span>
                         </div>
                       </div>
+                    ))
+                  )}
+
+                  {/* Show More Weeks Button */}
+                  {hasMoreWeekly && (
+                    <div className="pt-1 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={handleShowMoreWeekly}
+                        disabled={loadingMoreWeekly}
+                        title={`Show More (${weeklyHistory.length} of ${totalWeeks})`}
+                        aria-label="Show More Weeks"
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60 text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        <span>{loadingMoreWeekly ? "..." : `${weeklyHistory.length} / ${totalWeeks}`}</span>
+                      </button>
                     </div>
-                  ))
-                )}
-
-                {/* Show More Weeks Button */}
-                {hasMoreWeekly && (
-                  <div className="pt-2 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={handleShowMoreWeekly}
-                      disabled={loadingMoreWeekly}
-                      className="px-6 py-2.5 rounded-2xl bg-fuchsia-600/20 hover:bg-fuchsia-600/30 text-fuchsia-300 hover:text-white border border-fuchsia-500/30 text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 disabled:opacity-50"
-                    >
-                      {loadingMoreWeekly ? "Fetching weeks..." : `Show More Weeks (${weeklyHistory.length} of ${totalWeeks})`}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-          {/* Live Timer Sync Card */}
-          <div className="w-full md:w-96 flex flex-col gap-8">
-            <div className="bg-gray-900 border border-gray-800 p-10 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-               {activeSession?.isTimerRunning ? (
+          {/* Right Column: Live Timer Sync, Tasks, Manners, Weekly Card */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            
+            {/* Live Timer Sync Card */}
+            <div className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 p-8 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-4 relative overflow-hidden min-h-[220px]">
+              {activeSession?.isTimerRunning ? (
                 <>
-                  <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
-                  <Zap className="w-12 h-12 text-emerald-400 mb-2 animate-bounce z-10" />
-                  <p className="text-emerald-400 font-bold uppercase tracking-widest z-10">Live Timer Running</p>
-                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter drop-shadow-[0_0_15px_rgba(52,211,153,0.3)] mb-2">
-                    {liveTime.toFixed(1)}<span className="text-3xl text-gray-500">s</span>
+                  <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
+                  <Zap className="w-8 h-8 text-emerald-500 animate-bounce z-10" />
+                  <div className="text-6xl sm:text-7xl font-mono font-black text-slate-800 dark:text-white z-10 tracking-tight">
+                    {liveTime.toFixed(1)}<span className="text-2xl text-slate-400">s</span>
                   </div>
                   {settings?.allowStudentToStopTimer && (
                     <button 
                       onClick={handleRemoteStop}
-                      className="z-10 w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-2xl py-6 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(244,63,94,0.4)] border border-rose-400/50"
+                      title="Stop Timer"
+                      aria-label="Stop Timer"
+                      className="z-10 w-16 h-16 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/30 active:scale-95 transition-all"
                     >
-                      STOP TIMER
+                      <Square className="w-7 h-7 fill-current" />
                     </button>
                   )}
                 </>
-             ) : lastResult?.cancelled ? (
+              ) : lastResult?.cancelled ? (
                 <>
-                  <div className="absolute inset-0 bg-amber-500/10"></div>
-                  <div className="z-10 text-center flex flex-col items-center gap-3">
-                    <div className="text-5xl">🔄</div>
-                    <div className="text-2xl font-black text-amber-400">Question Cancelled</div>
-                    <p className="text-gray-400 font-bold">Teacher will ask again!</p>
-                  </div>
+                  <div className="text-4xl">🔄</div>
+                  <div className="text-lg font-black text-amber-600">Question Cancelled</div>
                 </>
-             ) : lastResult ? (
+              ) : lastResult ? (
                 <>
-                  <div className={`absolute inset-0 ${lastResult.isCorrect ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}></div>
-                  <div className="z-10 text-center flex flex-col items-center gap-3">
-                    <div className={`text-5xl font-mono font-black tracking-tighter ${lastResult.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {(frozenTime ?? lastResult.responseTime).toFixed(1)}<span className="text-2xl text-gray-500">s</span>
-                    </div>
-                    <div className={`text-4xl font-black ${lastResult.isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {lastResult.isCorrect ? '✅ Correct!' : '❌ Wrong!'}
-                    </div>
-                    {lastResult.isCorrect && lastResult.points > 0 && (
-                      <div className="bg-emerald-500/20 border border-emerald-500/40 px-6 py-3 rounded-2xl">
-                        <span className="text-2xl font-black text-emerald-400">+{lastResult.points} pts</span>
-                        <span className="ml-2 text-yellow-400">{"⭐".repeat(lastResult.stars)}</span>
-                      </div>
-                    )}
-                    {!lastResult.isCorrect && (
-                      <div className="bg-rose-500/20 border border-rose-500/30 px-6 py-3 rounded-2xl">
-                        <span className="text-lg font-bold text-rose-300">No points this round</span>
-                      </div>
-                    )}
+                  <div className="text-5xl font-mono font-black tracking-tight text-slate-800 dark:text-white">
+                    {(frozenTime ?? lastResult.responseTime).toFixed(1)}<span className="text-2xl text-slate-400">s</span>
                   </div>
-                </>
-             ) : frozenTime !== null ? (
-                <>
-                  <div className="absolute inset-0 bg-amber-500/10"></div>
-                  <p className="text-amber-400 font-bold uppercase tracking-widest z-10">Stopped</p>
-                  <div className="text-6xl font-mono font-black text-white z-10 tracking-tighter">
-                    {frozenTime.toFixed(1)}<span className="text-3xl text-gray-500">s</span>
-                  </div>
-                  <p className="text-gray-500 text-sm font-bold z-10">Waiting for result...</p>
-                </>
-             ) : (
-                <>
-                  <div className="bg-gray-800 p-6 rounded-full mb-2">
-                    <Zap className="w-12 h-12 text-gray-600" />
-                  </div>
-                  <div className="text-6xl font-mono font-black text-gray-600 z-10 tracking-tighter mb-2">
-                    0.0<span className="text-3xl text-gray-700">s</span>
-                  </div>
-                  <p className="text-gray-500 font-bold uppercase tracking-widest text-center">Ready for next question!</p>
-                </>
-             )}
-            </div>
-
-            {settings && (
-              <div className="flex flex-col gap-4">
-                {user.student?.mannersEnabled && (
-                  <div 
-                    onClick={() => setShowMannersHistory(true)}
-                    className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col items-center justify-center gap-2 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition-colors group"
-                  >
-                    <div className="flex items-center justify-between w-full mb-2">
-                      <span className="text-gray-400 font-bold flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                        Daily Manners
-                      </span>
-                      <span className="text-xs font-bold text-gray-500 group-hover:text-white transition-colors">History &rarr;</span>
-                    </div>
-                    
-                    <div className="relative inline-block text-5xl md:text-6xl mb-2">
-                      <div className="flex text-gray-800">★★★★★</div>
-                      {(() => {
-                        const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
-                        const pct = todayLog ? todayLog.percentage : 0;
-                        return (
-                          <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]" style={{ width: `${pct}%` }}>
-                            ★★★★★
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* My Tasks & Points Missions */}
-                <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 font-black flex items-center gap-2 text-base">
-                      <Award className="w-5 h-5 text-indigo-400" />
-                      Tasks & Points Missions
-                    </span>
-                    <span className="text-xs font-bold text-indigo-300 bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-500/30">
-                      {tasks.filter((t) => (!t.isRepeatable && !t.completed) || (t.isRepeatable && !t.completedToday)).length} To-Do
-                    </span>
-                  </div>
-
-                  {taskSuccessToast && (
-                    <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs font-black flex items-center gap-2 animate-in fade-in duration-200">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{taskSuccessToast}</span>
-                    </div>
-                  )}
-
-                  {tasks.length === 0 ? (
-                    <div className="py-8 text-center text-gray-500 flex flex-col items-center gap-2">
-                      <Sparkles className="w-7 h-7 text-gray-600" />
-                      <p className="text-xs font-bold">No tasks assigned yet.</p>
-                      <p className="text-[11px] text-gray-600">Your teacher will assign exciting tasks here!</p>
+                  {lastResult.isCorrect ? (
+                    <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl flex items-center gap-2">
+                      <span className="text-sm font-black text-emerald-700">+{lastResult.points} pts</span>
+                      <span className="text-sm text-yellow-500">{"⭐".repeat(lastResult.stars)}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2.5">
-                      {tasks.map((task) => {
-                        const isCompleted = !task.isRepeatable && task.completed;
-                        const isCompletedToday = task.isRepeatable && task.completedToday;
-                        const isBusy = completingTaskId === task.id;
+                    <div className="bg-rose-50 border border-rose-200 px-4 py-2 rounded-2xl">
+                      <span className="text-xs font-bold text-rose-600">No points</span>
+                    </div>
+                  )}
+                </>
+              ) : frozenTime !== null ? (
+                <>
+                  <div className="text-6xl font-mono font-black text-slate-800 dark:text-white tracking-tight">
+                    {frozenTime.toFixed(1)}<span className="text-2xl text-slate-400">s</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-slate-400 dark:text-gray-500">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <div className="text-6xl font-mono font-black text-slate-300 dark:text-gray-700 tracking-tight">
+                    0.0<span className="text-2xl text-slate-300">s</span>
+                  </div>
+                </>
+              )}
+            </div>
 
-                        return (
-                          <div
-                            key={task.id}
-                            className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                              isCompleted
-                                ? "bg-gray-950/50 border-gray-800/40 opacity-60"
-                                : isCompletedToday
-                                ? "bg-indigo-950/30 border-indigo-500/30"
-                                : "bg-gray-950 border-gray-800 hover:border-indigo-500/40 shadow-sm"
-                            }`}
-                          >
-                            {/* Tick mark button */}
-                            <button
-                              type="button"
-                              onClick={() => handleCompleteTask(task)}
-                              disabled={isCompleted || isBusy}
-                              title={
-                                isCompleted
-                                  ? "Task Completed"
-                                  : isCompletedToday
-                                  ? "Completed today (Click to complete again)"
-                                  : `Click to complete and claim +${task.points} pts!`
-                              }
-                              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
-                                isCompleted
-                                  ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 cursor-default"
-                                  : isCompletedToday
-                                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:scale-105 active:scale-95"
-                                  : "bg-gray-800 hover:bg-emerald-600 border border-gray-700 hover:border-emerald-400 text-gray-400 hover:text-white shadow-md active:scale-95 hover:shadow-emerald-500/20"
-                              }`}
-                            >
-                              <Check className={`w-5 h-5 ${isCompleted ? "stroke-[3]" : "stroke-[2.5]"}`} />
-                            </button>
+            {/* Daily Manners (if enabled) */}
+            {user.student?.mannersEnabled && (
+              <div 
+                onClick={() => setShowMannersHistory(true)}
+                className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 p-5 rounded-3xl shadow-sm flex flex-col gap-2 relative overflow-hidden cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-all group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-slate-600 font-bold text-sm flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    Manners
+                  </span>
+                  <span className="text-xs font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">&rarr;</span>
+                </div>
+                
+                <div className="relative inline-block text-3xl self-center my-1">
+                  <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
+                  {(() => {
+                    const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
+                    const pct = todayLog ? todayLog.percentage : 0;
+                    return (
+                      <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" style={{ width: `${pct}%` }}>
+                        ★★★★★
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
-                            {/* Task details */}
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={`text-sm sm:text-base font-bold ${
-                                  isCompleted ? "line-through text-gray-500" : "text-gray-200"
-                                }`}
-                              >
-                                {task.title}
-                              </p>
+            {/* Tasks & Missions */}
+            <div className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 p-5 sm:p-6 rounded-3xl shadow-sm flex flex-col gap-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-800 dark:text-white font-black flex items-center gap-2 text-sm sm:text-base">
+                  <Award className="w-4 h-4 text-indigo-600" />
+                  Tasks
+                </span>
+                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                  {tasks.filter((t) => (!t.isRepeatable && !t.completed) || (t.isRepeatable && !t.completedToday)).length} To-Do
+                </span>
+              </div>
 
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-black">
-                                  +{task.points} pts
-                                </span>
+              {taskSuccessToast && (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-black flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{taskSuccessToast}</span>
+                </div>
+              )}
 
-                                {task.isRepeatable ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold flex items-center gap-1">
-                                    <Repeat className="w-2.5 h-2.5" /> Repeatable
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-[10px] font-bold">
-                                    ⭐ One-Time
-                                  </span>
-                                )}
+              {tasks.length === 0 ? (
+                <div className="py-6 text-center text-slate-400 flex flex-col items-center gap-1.5">
+                  <Sparkles className="w-6 h-6 text-slate-300" />
+                  <p className="text-xs font-bold">No tasks assigned yet.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {tasks.map((task) => {
+                    const isCompleted = !task.isRepeatable && task.completed;
+                    const isCompletedToday = task.isRepeatable && task.completedToday;
+                    const isBusy = completingTaskId === task.id;
 
-                                {isCompleted && (
-                                  <span className="text-[11px] font-black text-emerald-400">
-                                    ✓ Claimed
-                                  </span>
-                                )}
-                                {isCompletedToday && (
-                                  <span className="text-[11px] font-bold text-cyan-400">
-                                    ✓ Done Today ({task.completedCount || 1}x)
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                    return (
+                      <div
+                        key={task.id}
+                        className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          isCompleted
+                            ? "bg-slate-50 border-slate-100 opacity-60"
+                            : isCompletedToday
+                            ? "bg-cyan-50/50 border-cyan-100"
+                            : "bg-slate-50 dark:bg-gray-800/60 border-slate-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-500/40 shadow-sm"
+                        }`}
+                      >
+                        {/* Check button */}
+                        <button
+                          type="button"
+                          onClick={() => handleCompleteTask(task)}
+                          disabled={isCompleted || isBusy}
+                          title={
+                            isCompleted
+                              ? "Task Completed"
+                              : isCompletedToday
+                              ? "Completed today (Click to complete again)"
+                              : `Click to claim +${task.points} pts!`
+                          }
+                          aria-label={`Complete task ${task.title}`}
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                            isCompleted
+                              ? "bg-emerald-100 text-emerald-600 cursor-default"
+                              : isCompletedToday
+                              ? "bg-cyan-100 text-cyan-700 hover:scale-105 active:scale-95"
+                              : "bg-white dark:bg-gray-800 hover:bg-emerald-600 text-slate-500 dark:text-gray-400 hover:text-white border border-slate-200 dark:border-gray-700 shadow-sm active:scale-95"
+                          }`}
+                        >
+                          <Check className={`w-4 h-4 ${isCompleted ? "stroke-[3]" : "stroke-[2.5]"}`} />
+                        </button>
+
+                        {/* Task details */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs sm:text-sm font-bold truncate ${isCompleted ? "line-through text-slate-400" : "text-slate-800"}`}>
+                            {task.title}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black">
+                              +{task.points} pts
+                            </span>
+                            {task.isRepeatable && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[9px] font-bold flex items-center gap-0.5">
+                                <Repeat className="w-2.5 h-2.5" /> Repeat
+                              </span>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
 
-                {/* Unlimited Weekly Progress & Comparisons (replaces Tiered Reward Levels) */}
-                <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-4 relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 font-black flex items-center gap-2 text-base">
-                      <Zap className="w-5 h-5 text-fuchsia-400" />
-                      Weekly Progress
-                    </span>
-                    <span className="text-xs font-bold text-gray-500 bg-gray-950 px-3 py-1 rounded-full border border-gray-800">
-                      Resets Monday
-                    </span>
-                  </div>
+            {/* Weekly Progress Card */}
+            <div className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 p-5 sm:p-6 rounded-3xl shadow-sm flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-800 dark:text-white font-black flex items-center gap-2 text-sm sm:text-base">
+                  <Zap className="w-4 h-4 text-fuchsia-600" />
+                  Weekly Progress
+                </span>
+                <span className="text-2xl font-black text-fuchsia-600">
+                  {historyStats ? historyStats.thisWeekPoints : (user.student?.weeklyPoints || 0)} pts
+                </span>
+              </div>
 
-                  <div className="flex items-baseline justify-between mt-1">
-                    <div>
-                      <span className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-400">
-                        {historyStats ? historyStats.thisWeekPoints : (user.student?.weeklyPoints || 0)}
-                      </span>
-                      <span className="text-sm font-bold text-gray-400 ml-2">pts this week</span>
-                    </div>
-                    {historyStats?.isNewRecord && (
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black animate-pulse">
-                        <span>★ Top week!</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Comparisons: vs Last Week & vs ★ Top week */}
-                  <div className="grid grid-cols-1 gap-2.5 pt-1">
-                    {/* vs Last Week */}
-                    <div className="bg-gray-950 p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">vs. Last Week</span>
-                        <span className="text-xs text-gray-500">
-                          Last week: <strong className="text-gray-300">{historyStats?.lastWeekPoints ?? 0} pts</strong>
-                        </span>
-                      </div>
-                      {(() => {
-                        const diff = historyStats?.diffLastWeek ?? 0;
-                        if (diff > 0) {
-                          return (
-                            <span className="px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black">
-                              +{diff} pts ↗
-                            </span>
-                          );
-                        } else if (diff < 0) {
-                          return (
-                            <span className="px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-black">
-                              {diff} pts ↘
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="px-3 py-1 rounded-xl bg-gray-800 text-gray-400 text-xs font-bold">
-                            Equal (0 pts)
-                          </span>
-                        );
-                      })()}
-                    </div>
-
-                    {/* vs ★ Top week */}
-                    <div className="bg-gray-950 p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                          vs. ★ Top week
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Top record: <strong className="text-amber-300">{historyStats?.bestWeekPoints ?? 0} pts</strong>
-                        </span>
-                      </div>
-                      {(() => {
-                        const diffBest = historyStats?.diffBestWeek ?? 0;
-                        if (historyStats?.isNewRecord) {
-                          return (
-                            <span className="px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black">
-                              ★ Top week
-                            </span>
-                          );
-                        } else if (diffBest < 0) {
-                          return (
-                            <span className="px-3 py-1 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300 text-xs font-bold">
-                              {diffBest} pts vs top
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="px-3 py-1 rounded-xl bg-gray-800 text-gray-400 text-xs font-bold">
-                            0 pts
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Top Week Relative Progress Indicator */}
-                  {historyStats && historyStats.bestWeekPoints > 0 && (
-                    <div className="flex flex-col gap-1 pt-1">
-                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800 overflow-hidden relative">
-                        <div
-                          className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(100, Math.max(3, (historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100))}%`
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-gray-500 font-bold px-0.5">
-                        <span>{((historyStats.thisWeekPoints / Math.max(1, historyStats.bestWeekPoints)) * 100).toFixed(0)}% of ★ Top week</span>
-                        <span>{historyStats.bestWeekPoints} pts</span>
-                      </div>
-                    </div>
-                  )}
+              {/* Comparisons */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">vs Last Week</span>
+                  <span className={`text-xs font-black ${(historyStats?.diffLastWeek ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {(historyStats?.diffLastWeek ?? 0) > 0 ? `+${historyStats?.diffLastWeek}` : (historyStats?.diffLastWeek ?? 0)} pts
+                  </span>
                 </div>
+                <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex flex-col">
+                  <span className="text-[10px] font-bold text-amber-600 uppercase">Top Record</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-white">
+                    {historyStats?.bestWeekPoints ?? 0} pts
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                {/* Classic Bundle Progress - only if not tiered, or we can just always show it. Let's only show if not tiered or if they still want it. */}
-                {user.student?.rewardSystem !== 'tiered' && (
-                  <div className="bg-gray-900 border border-gray-800 p-8 rounded-[3rem] shadow-xl flex flex-col gap-2 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400 font-bold flex items-center gap-2">
-                        <Package className="w-4 h-4 text-purple-400" />
-                        {settings.bundleItemName || "🍫 Chocolate"}
-                      </span>
-                      <span className="text-2xl font-black text-purple-400">
-                        x{bundlesEarned}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full transition-all duration-500" 
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-right text-gray-500 font-bold">
-                      {currentProgress} / {bundleLimit} to next
-                    </div>
-                  </div>
-                )}
+            {/* Classic Bundle Progress (if applicable) */}
+            {user.student?.rewardSystem !== 'tiered' && settings && (
+              <div className="bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 p-5 rounded-3xl shadow-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 font-bold text-xs flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5 text-purple-600" />
+                    {settings.bundleItemName || "🍫 Chocolate"}
+                  </span>
+                  <span className="text-sm font-black text-purple-700">
+                    x{bundlesEarned}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${progressPercent}%` }}
+                  ></div>
+                </div>
+                <div className="text-[10px] text-right text-slate-400 font-bold">
+                  {currentProgress} / {bundleLimit}
+                </div>
               </div>
             )}
           </div>
         </div>
 
-
-
       </main>
 
+      {/* Modals & Animations */}
       {showBundleAnim && <BundleAnimation itemName={bundleItemName} />}
 
       {showRating && (

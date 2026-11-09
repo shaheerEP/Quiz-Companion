@@ -94,4 +94,53 @@ export const getPyramidGeometry = () => {
   return geometry;
 };
 
+export const getSphereGeometry = () => {
+  if (geometries[202]) return geometries[202];
+  const geometry = new THREE.SphereGeometry(0.5, 24, 24);
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  geometries[202] = geometry;
+  return geometry;
+};
+
+export const getCylinderGeometry = () => {
+  if (geometries[203]) return geometries[203];
+  const geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 24);
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  geometries[203] = geometry;
+  return geometry;
+};
+
+export const getConeGeometry = () => {
+  if (geometries[204]) return geometries[204];
+  const geometry = new THREE.ConeGeometry(0.5, 1, 24);
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  geometries[204] = geometry;
+  return geometry;
+};
+
+export const getTorusGeometry = () => {
+  if (geometries[205]) return geometries[205];
+  const geometry = new THREE.TorusGeometry(0.35, 0.15, 16, 24);
+  geometry.rotateX(Math.PI / 2);
+  geometry.scale(1, 1 / 0.3, 1);
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  geometries[205] = geometry;
+  return geometry;
+};
+
+export const getDomeGeometry = () => {
+  if (geometries[206]) return geometries[206];
+  const geometry = new THREE.SphereGeometry(0.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  geometry.translate(0, -0.25, 0);
+  geometry.scale(1, 2, 1);
+  geometry.computeBoundingSphere();
+  if (geometry.boundingSphere) geometry.boundingSphere.radius = 10000;
+  geometries[206] = geometry;
+  return geometry;
+};
+
 

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlayCircle, ShieldCheck, User } from "lucide-react";
+import { PlayCircle, ShieldCheck, User, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Login() {
   const [role, setRole] = useState<"admin" | "teacher" | "student">("student");
@@ -13,6 +14,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const { refreshAuth } = useAuth();
   const router = useRouter();
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,63 +46,108 @@ export default function Login() {
     }
   };
 
+  const cycleTheme = () => {
+    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+    setTheme(next);
+  };
+
+  const currentThemeIcon = 
+    theme === "light" ? <Sun className="w-4 h-4 text-amber-500" /> :
+    theme === "dark" ? <Moon className="w-4 h-4 text-indigo-400" /> :
+    resolvedTheme === "dark" ? <Moon className="w-4 h-4 text-indigo-400" /> :
+    <Sun className="w-4 h-4 text-amber-500" />;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-[2rem] shadow-2xl p-10">
-        <div className="flex flex-col items-center mb-10">
-          <div className="bg-indigo-600 p-4 rounded-2xl shadow-lg shadow-indigo-500/20 mb-6">
-            <PlayCircle className="w-12 h-12 text-white" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-gray-950 p-4 relative transition-colors duration-200">
+      {/* Top right theme toggle */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={cycleTheme}
+          title={`Theme: ${theme} (Click to switch)`}
+          aria-label="Switch Theme"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-700 dark:text-gray-300 shadow-sm hover:scale-105 active:scale-95 transition-all"
+        >
+          {currentThemeIcon}
+          <span className="capitalize">{theme}</span>
+        </button>
+      </div>
+
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-xl p-8 sm:p-10 transition-colors">
+        <div className="flex flex-col items-center mb-8">
+          <div className="bg-indigo-600 p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 mb-4">
+            <PlayCircle className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-black text-white tracking-wide">QuizCompanion</h1>
-          <p className="text-gray-500 font-bold mt-3 text-lg">Sign in to continue</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">QuizCompanion</h1>
+          <p className="text-slate-400 dark:text-gray-400 font-bold mt-1 text-sm">Sign in to continue</p>
         </div>
 
-        <div className="flex gap-2 mb-10 bg-gray-950 p-1.5 rounded-2xl">
+        {/* Role toggle */}
+        <div className="flex gap-1.5 mb-8 bg-slate-100 dark:bg-gray-950 p-1.5 rounded-2xl border border-slate-200/60 dark:border-gray-800">
           <button
             type="button"
             onClick={() => setRole("student")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "student" ? "bg-indigo-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all text-xs sm:text-sm ${
+              role === "student" 
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25" 
+                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
           >
-            <User className="w-4 h-4 md:w-5 md:h-5" /> Student
+            <User className="w-4 h-4" /> Student
           </button>
           <button
             type="button"
             onClick={() => setRole("teacher")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "teacher" ? "bg-rose-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all text-xs sm:text-sm ${
+              role === "teacher" 
+                ? "bg-rose-600 text-white shadow-md shadow-rose-500/25" 
+                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
           >
-            <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" /> Teacher
+            <ShieldCheck className="w-4 h-4" /> Teacher
           </button>
           <button
             type="button"
             onClick={() => setRole("admin")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${role === "admin" ? "bg-amber-600 text-white shadow-md" : "text-gray-500 hover:text-gray-300"}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all text-xs sm:text-sm ${
+              role === "admin" 
+                ? "bg-amber-600 text-white shadow-md shadow-amber-500/25" 
+                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
           >
-            <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" /> Admin
+            <ShieldCheck className="w-4 h-4" /> Admin
           </button>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-6">
-          {error && <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-center font-bold text-sm">{error}</div>}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          {error && (
+            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 p-3.5 rounded-xl text-center font-bold text-xs">
+              {error}
+            </div>
+          )}
           
           {role === "student" && (
             <>
               <div>
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Teacher Username</label>
+                <label className="text-[11px] text-slate-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">
+                  Teacher Username
+                </label>
                 <input
                   type="text"
                   value={teacherUsername}
                   onChange={(e) => setTeacherUsername(e.target.value)}
-                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-bold outline-none focus:border-indigo-500 transition-colors text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Student Name</label>
+                <label className="text-[11px] text-slate-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">
+                  Student Name
+                </label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-bold outline-none focus:border-indigo-500 transition-colors text-sm"
                   required
                 />
               </div>
@@ -109,31 +156,39 @@ export default function Login() {
 
           {role === "teacher" && (
             <div>
-              <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Teacher Username</label>
+              <label className="text-[11px] text-slate-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">
+                Teacher Username
+              </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-bold outline-none focus:border-indigo-500 transition-colors text-sm"
                 required
               />
             </div>
           )}
 
           <div>
-            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 block">Password</label>
+            <label className="text-[11px] text-slate-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-5 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-bold outline-none focus:border-indigo-500 transition-colors text-sm"
               required
             />
           </div>
 
           <button
             type="submit"
-            className={`w-full py-5 rounded-2xl font-black text-xl transition-all mt-4 shadow-lg hover:scale-[1.02] active:scale-[0.98] ${role === "teacher" ? "bg-rose-600 hover:bg-rose-500 shadow-rose-500/20" : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20"}`}
+            className={`w-full py-3.5 rounded-xl font-black text-base text-white transition-all mt-2 shadow-md hover:scale-[1.01] active:scale-[0.99] ${
+              role === "teacher" 
+                ? "bg-rose-600 hover:bg-rose-500 shadow-rose-500/20" 
+                : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20"
+            }`}
           >
             Log In
           </button>

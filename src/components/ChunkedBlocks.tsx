@@ -7,7 +7,12 @@ import {
   getCurvedGeometry,
   getRoofGeometry,
   getWedgeGeometry,
-  getPyramidGeometry
+  getPyramidGeometry,
+  getSphereGeometry,
+  getCylinderGeometry,
+  getConeGeometry,
+  getTorusGeometry,
+  getDomeGeometry
 } from "@/components/BlockGeometries";
 
 export type PlacedObject = {
@@ -27,7 +32,7 @@ export type PlacedObject = {
   depth?: number;
   width?: number;
   curveness?: number;
-  blockShape?: 'box' | 'wedge' | 'pyramid';
+  blockShape?: 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome';
   isOpen?: boolean;
   materialType?: 'color' | 'texture' | 'glass';
   textureId?: string;
@@ -161,6 +166,11 @@ interface ChunkMaterialGroup {
   boxesByCurveness: { level: number; blocks: ProcessedBlock[] }[];
   wedges: ProcessedBlock[];
   pyramids: ProcessedBlock[];
+  spheres: ProcessedBlock[];
+  cylinders: ProcessedBlock[];
+  cones: ProcessedBlock[];
+  toruses: ProcessedBlock[];
+  domes: ProcessedBlock[];
   roofsByCurveness: { level: number; segments: number; blocks: ProcessedBlock[] }[];
 }
 
@@ -286,6 +296,26 @@ export function ChunkedBlocks({
           .filter(o => o.blockShape === 'pyramid')
           .map(data => ({ data, props: getBoxProps(data) }));
 
+        const sphereBlocks = boxes
+          .filter(o => o.blockShape === 'sphere')
+          .map(data => ({ data, props: getBoxProps(data) }));
+
+        const cylinderBlocks = boxes
+          .filter(o => o.blockShape === 'cylinder')
+          .map(data => ({ data, props: getBoxProps(data) }));
+
+        const coneBlocks = boxes
+          .filter(o => o.blockShape === 'cone')
+          .map(data => ({ data, props: getBoxProps(data) }));
+
+        const torusBlocks = boxes
+          .filter(o => o.blockShape === 'torus')
+          .map(data => ({ data, props: getBoxProps(data) }));
+
+        const domeBlocks = boxes
+          .filter(o => o.blockShape === 'dome')
+          .map(data => ({ data, props: getBoxProps(data) }));
+
         const roofsByCurveness = curvenessLevels
           .map(level => {
             const matched = roofs.filter(o => Math.round(o.curveness || 0) === level);
@@ -303,6 +333,11 @@ export function ChunkedBlocks({
           boxesByCurveness.length > 0 ||
           wedgeBlocks.length > 0 ||
           pyramidBlocks.length > 0 ||
+          sphereBlocks.length > 0 ||
+          cylinderBlocks.length > 0 ||
+          coneBlocks.length > 0 ||
+          torusBlocks.length > 0 ||
+          domeBlocks.length > 0 ||
           roofsByCurveness.length > 0
         ) {
           groups.push({
@@ -310,6 +345,11 @@ export function ChunkedBlocks({
             boxesByCurveness,
             wedges: wedgeBlocks,
             pyramids: pyramidBlocks,
+            spheres: sphereBlocks,
+            cylinders: cylinderBlocks,
+            cones: coneBlocks,
+            toruses: torusBlocks,
+            domes: domeBlocks,
             roofsByCurveness
           });
         }
@@ -431,6 +471,201 @@ export function ChunkedBlocks({
                       {group.pyramids.map((item, idx) => (
                         <Instance
                           key={item.data._id ? `p-${item.data._id}` : `p-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Spheres */}
+                {group.spheres.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.spheres.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`sph-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getSphereGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
+                      />
+                      {group.spheres.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `sph-${item.data._id}` : `sph-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Cylinders */}
+                {group.cylinders.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.cylinders.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`cyl-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getCylinderGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
+                      />
+                      {group.cylinders.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `cyl-${item.data._id}` : `cyl-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Cones */}
+                {group.cones.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.cones.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`cone-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getConeGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
+                      />
+                      {group.cones.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `cone-${item.data._id}` : `cone-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Toruses */}
+                {group.toruses.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.toruses.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`tor-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getTorusGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
+                      />
+                      {group.toruses.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `tor-${item.data._id}` : `tor-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
+                          position={item.props.position}
+                          scale={item.props.scale}
+                          rotation={item.props.rotation}
+                          color={mat.type === 'texture' ? "#ffffff" : item.data.color}
+                          onClick={
+                            onBlockClick
+                              ? (e) => {
+                                  if (isDraggingFn && isDraggingFn()) return;
+                                  e.stopPropagation();
+                                  onBlockClick(item.data, e.face?.normal, e.point);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Instances>
+                  );
+                })()}
+
+                {/* Domes */}
+                {group.domes.length > 0 && (() => {
+                  const capacity = Math.max(500, Math.ceil((group.domes.length + 100) / 250) * 250);
+                  return (
+                    <Instances
+                      key={`dom-${chunk.key}-${mat.id}-${capacity}`}
+                      limit={capacity}
+                      castShadow
+                      receiveShadow
+                      frustumCulled={false}
+                    >
+                      <primitive object={getDomeGeometry()} attach="geometry" />
+                      <meshStandardMaterial
+                        map={mat.texture || undefined}
+                        transparent={mat.transparent}
+                        opacity={mat.transparent ? 0.6 : 1}
+                      />
+                      {group.domes.map((item, idx) => (
+                        <Instance
+                          key={item.data._id ? `dom-${item.data._id}` : `dom-${item.data.x}_${item.data.y}_${item.data.z}-${idx}`}
                           position={item.props.position}
                           scale={item.props.scale}
                           rotation={item.props.rotation}

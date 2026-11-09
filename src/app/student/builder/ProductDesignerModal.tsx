@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html } from "@react-three/drei";
-import * as THREE from "three";
+import { OrbitControls } from "@react-three/drei";
 import {
   X,
   Plus,
@@ -11,20 +10,25 @@ import {
   Copy,
   RotateCw,
   Box,
-  Sparkles,
   Layers,
-  Check,
   Save,
-  Palette,
-  Maximize2,
-  Minimize2
+  Pencil,
+  Circle,
+  HelpCircle
 } from "lucide-react";
 import {
   getCurvedGeometry,
   getWedgeGeometry,
   getPyramidGeometry,
-  getRoofGeometry
+  getRoofGeometry,
+  getSphereGeometry,
+  getCylinderGeometry,
+  getConeGeometry,
+  getTorusGeometry,
+  getDomeGeometry
 } from "@/components/BlockGeometries";
+
+export type ShapeType = 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome';
 
 export type ProductBlock = {
   id: string;
@@ -37,7 +41,7 @@ export type ProductBlock = {
   depth?: number;
   width?: number;
   curveness?: number;
-  blockShape?: 'box' | 'wedge' | 'pyramid';
+  blockShape?: ShapeType;
   materialType?: 'color' | 'texture' | 'glass';
   textureId?: string;
   rotationY?: number;
@@ -78,7 +82,19 @@ const AVAILABLE_TEXTURES = [
 const PRESET_EMOJIS = [
   "🪑", "🛋️", "🚪", "🛏️", "🚗", "🏎️", "🚀", "🛸",
   "👑", "🏆", "💎", "🗿", "🌲", "🌳", "🌸", "🪴",
-  "💡", "🤖", "🕹️", "🎮", "🛡️", "⚔️", "☕", "📦"
+  "💡", "🤖", "🕹️", "🎮", "🛡️", "⚔️", "☕", "📦",
+  "🔮", "🥫", "🍩", "🛖", "🍦", "⛄", "🎸", "🎯"
+];
+
+const SHAPE_OPTIONS: { id: ShapeType; name: string; emoji: string; desc: string }[] = [
+  { id: "box", name: "Box", emoji: "📦", desc: "Cube block" },
+  { id: "sphere", name: "Sphere", emoji: "🔮", desc: "Round ball" },
+  { id: "cylinder", name: "Cylinder", emoji: "🥫", desc: "Column / Pipe" },
+  { id: "wedge", name: "Wedge", emoji: "📐", desc: "Ramp / Slope" },
+  { id: "pyramid", name: "Pyramid", emoji: "🔺", desc: "4-sided roof" },
+  { id: "cone", name: "Cone", emoji: "🍦", desc: "Round spike" },
+  { id: "torus", name: "Torus", emoji: "🍩", desc: "Donut / Ring" },
+  { id: "dome", name: "Dome", emoji: "🛖", desc: "Hemisphere" },
 ];
 
 const TEMPLATES: Record<string, { name: string; emoji: string; blocks: Omit<ProductBlock, "id">[] }> = {
@@ -86,42 +102,82 @@ const TEMPLATES: Record<string, { name: string; emoji: string; blocks: Omit<Prod
     name: "Modern Chair",
     emoji: "🪑",
     blocks: [
-      // 4 Legs
-      { x: -0.4, y: 0, z: -0.4, color: "#8B5A2B", width: 0.15, thickness: 0.7, depth: 0.15 },
-      { x: 0.4, y: 0, z: -0.4, color: "#8B5A2B", width: 0.15, thickness: 0.7, depth: 0.15 },
-      { x: -0.4, y: 0, z: 0.4, color: "#8B5A2B", width: 0.15, thickness: 0.7, depth: 0.15 },
-      { x: 0.4, y: 0, z: 0.4, color: "#8B5A2B", width: 0.15, thickness: 0.7, depth: 0.15 },
-      // Seat
-      { x: 0, y: 0.7, z: 0, color: "#B22222", width: 1.0, thickness: 0.15, depth: 1.0, curveness: 1 },
+      // 4 Cylinder Legs
+      { x: -0.4, y: 0, z: -0.4, color: "#8B5A2B", width: 0.12, thickness: 0.7, depth: 0.12, blockShape: "cylinder" },
+      { x: 0.4, y: 0, z: -0.4, color: "#8B5A2B", width: 0.12, thickness: 0.7, depth: 0.12, blockShape: "cylinder" },
+      { x: -0.4, y: 0, z: 0.4, color: "#8B5A2B", width: 0.12, thickness: 0.7, depth: 0.12, blockShape: "cylinder" },
+      { x: 0.4, y: 0, z: 0.4, color: "#8B5A2B", width: 0.12, thickness: 0.7, depth: 0.12, blockShape: "cylinder" },
+      // Seat with curved bevel
+      { x: 0, y: 0.7, z: 0, color: "#B22222", width: 1.0, thickness: 0.15, depth: 1.0, curveness: 2 },
       // Backrest
-      { x: 0, y: 1.25, z: -0.42, color: "#B22222", width: 1.0, thickness: 0.9, depth: 0.15, curveness: 1 },
+      { x: 0, y: 1.25, z: -0.42, color: "#B22222", width: 1.0, thickness: 0.9, depth: 0.12, curveness: 2 },
     ]
   },
-  table: {
+  desk: {
     name: "Study Desk",
     emoji: "🛋️",
     blocks: [
-      // 4 Legs
-      { x: -0.8, y: 0, z: -0.4, color: "#1f2937", width: 0.15, thickness: 0.8, depth: 0.15 },
-      { x: 0.8, y: 0, z: -0.4, color: "#1f2937", width: 0.15, thickness: 0.8, depth: 0.15 },
-      { x: -0.8, y: 0, z: 0.4, color: "#1f2937", width: 0.15, thickness: 0.8, depth: 0.15 },
-      { x: 0.8, y: 0, z: 0.4, color: "#1f2937", width: 0.15, thickness: 0.8, depth: 0.15 },
-      // Tabletop
+      // 4 Metal Cylindrical Legs
+      { x: -0.8, y: 0, z: -0.4, color: "#1f2937", width: 0.12, thickness: 0.8, depth: 0.12, blockShape: "cylinder" },
+      { x: 0.8, y: 0, z: -0.4, color: "#1f2937", width: 0.12, thickness: 0.8, depth: 0.12, blockShape: "cylinder" },
+      { x: -0.8, y: 0, z: 0.4, color: "#1f2937", width: 0.12, thickness: 0.8, depth: 0.12, blockShape: "cylinder" },
+      { x: 0.8, y: 0, z: 0.4, color: "#1f2937", width: 0.12, thickness: 0.8, depth: 0.12, blockShape: "cylinder" },
+      // Tabletop with Wood Texture
       { x: 0, y: 0.8, z: 0, color: "#8B5A2B", width: 1.9, thickness: 0.12, depth: 1.0, materialType: "texture", textureId: "wood" },
+      // Desk Lamp on top
+      { x: -0.6, y: 0.92, z: -0.2, color: "#f59e0b", width: 0.25, thickness: 0.08, depth: 0.25, blockShape: "cylinder" },
+      { x: -0.6, y: 1.0, z: -0.2, color: "#f59e0b", width: 0.06, thickness: 0.35, depth: 0.06, blockShape: "cylinder" },
+      { x: -0.6, y: 1.35, z: -0.2, color: "#fef08a", width: 0.2, thickness: 0.2, depth: 0.2, blockShape: "sphere", materialType: "glass" },
     ]
   },
   lamp: {
-    name: "Modern Street Lamp",
+    name: "Sphere Street Lamp",
     emoji: "💡",
     blocks: [
-      // Base
-      { x: 0, y: 0, z: 0, color: "#1f2937", width: 0.5, thickness: 0.2, depth: 0.5, curveness: 2 },
-      // Pole
-      { x: 0, y: 0.2, z: 0, color: "#1f2937", width: 0.15, thickness: 1.6, depth: 0.15 },
-      // Top Lamp Head
-      { x: 0, y: 1.8, z: 0, color: "#f59e0b", width: 0.4, thickness: 0.35, depth: 0.4, curveness: 4 },
-      // Glow Glass Core
-      { x: 0, y: 1.9, z: 0, color: "#ADD8E6", width: 0.3, thickness: 0.2, depth: 0.3, materialType: "glass" },
+      // Dome Base
+      { x: 0, y: 0, z: 0, color: "#1f2937", width: 0.6, thickness: 0.25, depth: 0.6, blockShape: "dome" },
+      // Cylinder Pole
+      { x: 0, y: 0.25, z: 0, color: "#1f2937", width: 0.12, thickness: 1.8, depth: 0.12, blockShape: "cylinder" },
+      // Glowing Sphere Lamp Head
+      { x: 0, y: 2.05, z: 0, color: "#fef08a", width: 0.5, thickness: 0.5, depth: 0.5, blockShape: "sphere", materialType: "glass" },
+      // Small Cone Finial on top
+      { x: 0, y: 2.55, z: 0, color: "#1f2937", width: 0.2, thickness: 0.2, depth: 0.2, blockShape: "cone" },
+    ]
+  },
+  car: {
+    name: "Cyber Speedster",
+    emoji: "🏎️",
+    blocks: [
+      // 4 Torus/Cylinder Wheels
+      { x: -0.6, y: 0, z: -0.6, color: "#1f2937", width: 0.3, thickness: 0.4, depth: 0.4, blockShape: "torus" },
+      { x: 0.6, y: 0, z: -0.6, color: "#1f2937", width: 0.3, thickness: 0.4, depth: 0.4, blockShape: "torus" },
+      { x: -0.6, y: 0, z: 0.6, color: "#1f2937", width: 0.3, thickness: 0.4, depth: 0.4, blockShape: "torus" },
+      { x: 0.6, y: 0, z: 0.6, color: "#1f2937", width: 0.3, thickness: 0.4, depth: 0.4, blockShape: "torus" },
+      // Chassis
+      { x: 0, y: 0.2, z: 0, color: "#0284c7", width: 1.1, thickness: 0.35, depth: 1.7, curveness: 2 },
+      // Glass Cockpit Dome
+      { x: 0, y: 0.55, z: -0.1, color: "#ADD8E6", width: 0.8, thickness: 0.4, depth: 0.9, blockShape: "dome", materialType: "glass" },
+      // Front Cone Headlights
+      { x: -0.3, y: 0.3, z: 0.85, color: "#fef08a", width: 0.15, thickness: 0.15, depth: 0.15, blockShape: "sphere" },
+      { x: 0.3, y: 0.3, z: 0.85, color: "#fef08a", width: 0.15, thickness: 0.15, depth: 0.15, blockShape: "sphere" },
+    ]
+  },
+  snowman: {
+    name: "Frosty Snowman",
+    emoji: "⛄",
+    blocks: [
+      // Base Sphere
+      { x: 0, y: 0, z: 0, color: "#f3f4f6", width: 1.2, thickness: 1.0, depth: 1.2, blockShape: "sphere" },
+      // Torso Sphere
+      { x: 0, y: 0.85, z: 0, color: "#f3f4f6", width: 0.9, thickness: 0.8, depth: 0.9, blockShape: "sphere" },
+      // Head Sphere
+      { x: 0, y: 1.55, z: 0, color: "#f3f4f6", width: 0.65, thickness: 0.6, depth: 0.65, blockShape: "sphere" },
+      // Carrot Nose (Cone)
+      { x: 0, y: 1.55, z: 0.35, color: "#f59e0b", width: 0.15, thickness: 0.3, depth: 0.15, blockShape: "cone", rotationY: 0 },
+      // Top Hat (Cylinder)
+      { x: 0, y: 2.15, z: 0, color: "#1f2937", width: 0.5, thickness: 0.45, depth: 0.5, blockShape: "cylinder" },
+      // Hat Brim (Torus/Cylinder)
+      { x: 0, y: 1.95, z: 0, color: "#1f2937", width: 0.8, thickness: 0.08, depth: 0.8, blockShape: "cylinder" },
     ]
   },
   throne: {
@@ -132,13 +188,16 @@ const TEMPLATES: Record<string, { name: string; emoji: string; blocks: Omit<Prod
       { x: 0, y: 0, z: 0, color: "#f59e0b", width: 1.4, thickness: 0.3, depth: 1.4, curveness: 1 },
       // Seat Cushion
       { x: 0, y: 0.3, z: 0, color: "#B22222", width: 1.0, thickness: 0.25, depth: 1.0, curveness: 2 },
-      // Armrests
-      { x: -0.6, y: 0.55, z: 0, color: "#f59e0b", width: 0.2, thickness: 0.35, depth: 0.9 },
-      { x: 0.6, y: 0.55, z: 0, color: "#f59e0b", width: 0.2, thickness: 0.35, depth: 0.9 },
+      // Armrests (Cylinders)
+      { x: -0.6, y: 0.55, z: 0, color: "#f59e0b", width: 0.2, thickness: 0.35, depth: 0.9, blockShape: "cylinder" },
+      { x: 0.6, y: 0.55, z: 0, color: "#f59e0b", width: 0.2, thickness: 0.35, depth: 0.9, blockShape: "cylinder" },
       // Backrest
       { x: 0, y: 1.1, z: -0.45, color: "#f59e0b", width: 1.2, thickness: 1.3, depth: 0.2 },
-      // Crest / Crown on Top
-      { x: 0, y: 1.85, z: -0.45, color: "#f59e0b", width: 0.6, thickness: 0.4, depth: 0.2, blockShape: "pyramid" },
+      // Crown Pyramids on Top
+      { x: -0.4, y: 1.85, z: -0.45, color: "#f59e0b", width: 0.35, thickness: 0.35, depth: 0.2, blockShape: "pyramid" },
+      { x: 0, y: 1.95, z: -0.45, color: "#f59e0b", width: 0.45, thickness: 0.45, depth: 0.2, blockShape: "pyramid" },
+      { x: 0.4, y: 1.85, z: -0.45, color: "#f59e0b", width: 0.35, thickness: 0.35, depth: 0.2, blockShape: "pyramid" },
+      // Velvet Center
       { x: 0, y: 1.2, z: -0.34, color: "#B22222", width: 0.8, thickness: 0.9, depth: 0.05 },
     ]
   }
@@ -169,6 +228,16 @@ function StudioBlockMesh({
     geom = <primitive object={getWedgeGeometry()} attach="geometry" />;
   } else if (block.blockShape === 'pyramid') {
     geom = <primitive object={getPyramidGeometry()} attach="geometry" />;
+  } else if (block.blockShape === 'sphere') {
+    geom = <primitive object={getSphereGeometry()} attach="geometry" />;
+  } else if (block.blockShape === 'cylinder') {
+    geom = <primitive object={getCylinderGeometry()} attach="geometry" />;
+  } else if (block.blockShape === 'cone') {
+    geom = <primitive object={getConeGeometry()} attach="geometry" />;
+  } else if (block.blockShape === 'torus') {
+    geom = <primitive object={getTorusGeometry()} attach="geometry" />;
+  } else if (block.blockShape === 'dome') {
+    geom = <primitive object={getDomeGeometry()} attach="geometry" />;
   } else if (block.curveness && block.curveness > 0) {
     geom = <primitive object={getCurvedGeometry(block.curveness)} attach="geometry" />;
   } else {
@@ -199,9 +268,11 @@ function StudioBlockMesh({
 }
 
 interface ProductDesignerModalProps {
+  initialProductId?: string; // Present when editing an existing product!
   initialBlocks?: any[];
   initialName?: string;
   initialEmoji?: string;
+  initialCost?: number;
   blockCost?: number;
   customColors?: string[];
   isConvertingFromWorld?: boolean;
@@ -210,15 +281,19 @@ interface ProductDesignerModalProps {
 }
 
 export function ProductDesignerModal({
+  initialProductId,
   initialBlocks = [],
   initialName = "",
   initialEmoji = "📦",
+  initialCost,
   blockCost = 50,
   customColors = [],
   isConvertingFromWorld = false,
   onSave,
   onClose,
 }: ProductDesignerModalProps) {
+  const isEditing = Boolean(initialProductId);
+
   // Convert initial blocks into internal blocks format
   const initialBlocksFormatted = useMemo(() => {
     if (initialBlocks.length === 0) {
@@ -233,7 +308,7 @@ export function ProductDesignerModal({
           width: 1,
           thickness: 1,
           depth: 1,
-          blockShape: "box" as const,
+          blockShape: "box" as ShapeType,
           materialType: "color" as const,
           rotationY: 0,
           curveness: 0
@@ -260,7 +335,7 @@ export function ProductDesignerModal({
       thickness: b.thickness ?? b.h ?? 1,
       depth: b.depth ?? b.d ?? 1,
       curveness: b.curveness || 0,
-      blockShape: b.blockShape || "box",
+      blockShape: (b.blockShape || "box") as ShapeType,
       materialType: b.materialType || (b.color === "#ADD8E6" ? "glass" : "color"),
       textureId: b.textureId || "",
       rotationY: b.rotationY ? Math.round((b.rotationY * 180) / Math.PI) : 0
@@ -269,11 +344,12 @@ export function ProductDesignerModal({
 
   const [blocks, setBlocks] = useState<ProductBlock[]>(initialBlocksFormatted);
   const [selectedBlockId, setSelectedBlockId] = useState<string>(initialBlocksFormatted[0]?.id || "");
-  const [productName, setProductName] = useState(initialName || "My Custom Product");
+  const [productName, setProductName] = useState(initialName || (isEditing ? "Custom Product" : "My Custom Product"));
   const [productEmoji, setProductEmoji] = useState(initialEmoji || "📦");
-  const [cost, setCost] = useState<number>(Math.max(0, initialBlocks.length * (blockCost || 50)));
+  const [cost, setCost] = useState<number>(
+    initialCost !== undefined ? initialCost : Math.max(0, initialBlocks.length * (blockCost || 50))
+  );
   const [removeOriginals, setRemoveOriginals] = useState<boolean>(true);
-  const [customColorInput, setCustomColorInput] = useState<string>("#e11d48");
   const [activeTab, setActiveTab] = useState<'transform' | 'shape' | 'material'>('transform');
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || blocks[0];
@@ -297,7 +373,7 @@ export function ProductDesignerModal({
       width: 1,
       thickness: 1,
       depth: 1,
-      blockShape: "box",
+      blockShape: (ref?.blockShape || "box") as ShapeType,
       materialType: "color",
       rotationY: 0,
       curveness: 0
@@ -346,7 +422,7 @@ export function ProductDesignerModal({
   // Handle Save
   const handleSaveProduct = () => {
     if (blocks.length === 0) return;
-    const trimmedName = productName.trim() || "Custom Product";
+    const trimmedName = productName.trim() || (isEditing ? "Updated Product" : "Custom Product");
 
     // Re-normalize coordinates so bottom Y is 0 and centered on X/Z
     const minY = Math.min(...blocks.map(b => b.y));
@@ -375,7 +451,7 @@ export function ProductDesignerModal({
     }));
 
     const finalProduct: CustomProductData = {
-      id: `custom_prod_${Date.now()}`,
+      id: initialProductId || `custom_prod_${Date.now()}`,
       name: trimmedName,
       emoji: productEmoji || "📦",
       cost: Math.max(0, cost),
@@ -400,14 +476,20 @@ export function ProductDesignerModal({
               {productEmoji}
             </span>
             <div>
-              <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
-                <span>Product Studio</span>
-                <span className="text-xs bg-sky-500 text-white font-extrabold px-2.5 py-0.5 rounded-full shadow-sm">
-                  {blocks.length} {blocks.length === 1 ? 'block' : 'blocks'}
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
+                  <span>{isEditing ? `Edit Item: ${productName}` : "Product Studio"}</span>
+                </h2>
+                <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-sm text-white ${
+                  isEditing ? 'bg-amber-500' : 'bg-sky-500'
+                }`}>
+                  {isEditing ? "Editing Item" : `${blocks.length} ${blocks.length === 1 ? 'block' : 'blocks'}`}
                 </span>
-              </h2>
+              </div>
               <p className="text-xs text-slate-500 font-semibold">
-                Design custom items using 1 or more blocks and place them anytime in your world
+                {isEditing 
+                  ? "Modify the shapes, blocks, and colors of this product — placed items will update automatically!"
+                  : "Design custom items using spheres, cylinders, boxes, and more, then use them anytime in your world"}
               </p>
             </div>
           </div>
@@ -432,13 +514,13 @@ export function ProductDesignerModal({
             </div>
 
             {/* Quick Preset Templates */}
-            <div className="absolute top-3 right-3 z-10 flex gap-1.5 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white">
+            <div className="absolute top-3 right-3 z-10 flex gap-1.5 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white max-w-[280px] sm:max-w-none overflow-x-auto">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider self-center px-1">Templates:</span>
               {Object.entries(TEMPLATES).map(([key, t]) => (
                 <button
                   key={key}
                   onClick={() => handleLoadTemplate(key)}
-                  className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-50 hover:bg-sky-100 text-sky-700 transition-colors cursor-pointer border border-sky-200/60 flex items-center gap-1"
+                  className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-50 hover:bg-sky-100 text-sky-700 transition-colors cursor-pointer border border-sky-200/60 flex items-center gap-1 shrink-0"
                   title={`Load ${t.name}`}
                 >
                   <span>{t.emoji}</span>
@@ -489,6 +571,7 @@ export function ProductDesignerModal({
               <div className="flex gap-2 overflow-x-auto py-0.5">
                 {blocks.map((b, idx) => {
                   const isSel = b.id === selectedBlockId;
+                  const shapeDef = SHAPE_OPTIONS.find(s => s.id === b.blockShape);
                   return (
                     <button
                       key={b.id}
@@ -499,8 +582,9 @@ export function ProductDesignerModal({
                           : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                       }`}
                     >
+                      <span className="text-sm">{shapeDef?.emoji || "📦"}</span>
                       <span
-                        className="w-3 h-3 rounded-full border border-black/20 shrink-0"
+                        className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0"
                         style={{ backgroundColor: b.color || "#8B5A2B" }}
                       />
                       <span>Block {idx + 1}</span>
@@ -539,7 +623,7 @@ export function ProductDesignerModal({
                     title="Click to type emoji"
                   />
                   {/* Preset emojis flyout */}
-                  <div className="hidden group-hover:flex group-focus-within:flex absolute top-full left-0 mt-1 z-30 bg-white p-2 rounded-2xl shadow-xl border border-slate-200 w-52 flex-wrap gap-1">
+                  <div className="hidden group-hover:flex group-focus-within:flex absolute top-full left-0 mt-1 z-30 bg-white p-2 rounded-2xl shadow-xl border border-slate-200 w-56 flex-wrap gap-1">
                     {PRESET_EMOJIS.map((em) => (
                       <button
                         key={em}
@@ -609,7 +693,7 @@ export function ProductDesignerModal({
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-sky-500" />
                     <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
-                      Selected Block
+                      Selected Block ({SHAPE_OPTIONS.find(s => s.id === selectedBlock.blockShape)?.name || "Box"})
                     </span>
                   </div>
                   <div className="flex gap-1">
@@ -648,7 +732,7 @@ export function ProductDesignerModal({
                       activeTab === 'shape' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600'
                     }`}
                   >
-                    Shape
+                    Shapes
                   </button>
                   <button
                     onClick={() => setActiveTab('material')}
@@ -656,7 +740,7 @@ export function ProductDesignerModal({
                       activeTab === 'material' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600'
                     }`}
                   >
-                    Color/Texture
+                    Material
                   </button>
                 </div>
 
@@ -787,67 +871,58 @@ export function ProductDesignerModal({
                   </div>
                 )}
 
-                {/* Tab: Shape */}
+                {/* Tab: Shapes */}
                 {activeTab === 'shape' && (
                   <div className="flex flex-col gap-3">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Geometry Shape</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        onClick={() => updateSelectedBlock({ blockShape: "box", type: "block" })}
-                        className={`p-2.5 rounded-xl border-2 flex flex-col items-center gap-1 font-bold text-xs cursor-pointer transition-colors ${
-                          (!selectedBlock.blockShape || selectedBlock.blockShape === "box") && selectedBlock.type !== 'roof'
-                            ? "border-sky-500 bg-sky-50 text-sky-700"
-                            : "border-slate-200 hover:bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        <Box className="w-5 h-5 text-sky-500" />
-                        <span>Box</span>
-                      </button>
-
-                      <button
-                        onClick={() => updateSelectedBlock({ blockShape: "wedge", type: "block" })}
-                        className={`p-2.5 rounded-xl border-2 flex flex-col items-center gap-1 font-bold text-xs cursor-pointer transition-colors ${
-                          selectedBlock.blockShape === "wedge"
-                            ? "border-sky-500 bg-sky-50 text-sky-700"
-                            : "border-slate-200 hover:bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        <span className="text-lg leading-none">📐</span>
-                        <span>Wedge</span>
-                      </button>
-
-                      <button
-                        onClick={() => updateSelectedBlock({ blockShape: "pyramid", type: "block" })}
-                        className={`p-2.5 rounded-xl border-2 flex flex-col items-center gap-1 font-bold text-xs cursor-pointer transition-colors ${
-                          selectedBlock.blockShape === "pyramid"
-                            ? "border-sky-500 bg-sky-50 text-sky-700"
-                            : "border-slate-200 hover:bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        <span className="text-lg leading-none">🔺</span>
-                        <span>Pyramid</span>
-                      </button>
-                    </div>
-
-                    {/* Corner Curveness */}
-                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col gap-2 mt-2">
-                      <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                        <span>Corner Bevel / Curveness</span>
-                        <span className="font-black text-sky-600">{selectedBlock.curveness || 0}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={4}
-                        step={1}
-                        value={selectedBlock.curveness || 0}
-                        onChange={(e) => updateSelectedBlock({ curveness: parseInt(e.target.value) })}
-                        className="accent-sky-500"
-                      />
-                      <span className="text-[10px] text-slate-400">
-                        0 = sharp box, 4 = smooth cylinder / rounded corners
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">3D Shape</span>
+                      <span className="text-xs font-bold text-sky-600">
+                        {SHAPE_OPTIONS.find(s => s.id === selectedBlock.blockShape)?.name || "Box"}
                       </span>
                     </div>
+
+                    <div className="grid grid-cols-4 gap-2">
+                      {SHAPE_OPTIONS.map((shape) => {
+                        const isCurrent = (!selectedBlock.blockShape && shape.id === 'box') || selectedBlock.blockShape === shape.id;
+                        return (
+                          <button
+                            key={shape.id}
+                            onClick={() => updateSelectedBlock({ blockShape: shape.id, type: "block" })}
+                            className={`p-2.5 rounded-xl border-2 flex flex-col items-center gap-1 font-bold text-xs cursor-pointer transition-all ${
+                              isCurrent
+                                ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm scale-105"
+                                : "border-slate-200 hover:bg-slate-50 text-slate-600"
+                            }`}
+                            title={shape.desc}
+                          >
+                            <span className="text-xl leading-none">{shape.emoji}</span>
+                            <span className="text-[10px] font-black leading-tight text-center">{shape.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Corner Curveness (available for Box) */}
+                    {(!selectedBlock.blockShape || selectedBlock.blockShape === 'box') && (
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col gap-2 mt-2">
+                        <div className="flex justify-between items-center text-xs font-bold text-slate-600">
+                          <span>Corner Bevel / Curveness</span>
+                          <span className="font-black text-sky-600">{selectedBlock.curveness || 0}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={4}
+                          step={1}
+                          value={selectedBlock.curveness || 0}
+                          onChange={(e) => updateSelectedBlock({ curveness: parseInt(e.target.value) })}
+                          className="accent-sky-500"
+                        />
+                        <span className="text-[10px] text-slate-400">
+                          0 = sharp box, 4 = rounded corners
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -999,9 +1074,14 @@ export function ProductDesignerModal({
 
               <button
                 onClick={handleSaveProduct}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer"
+                className={`flex-1 px-4 py-2.5 rounded-xl text-white font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer ${
+                  isEditing
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-amber-500/25"
+                    : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/25"
+                }`}
               >
-                <Save className="w-4 h-4" /> Save as Item
+                {isEditing ? <Pencil className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                <span>{isEditing ? "Update Item" : "Save as Item"}</span>
               </button>
             </div>
           </div>

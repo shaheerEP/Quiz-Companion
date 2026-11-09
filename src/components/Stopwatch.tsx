@@ -96,21 +96,21 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
     : "";
 
   return (
-    <div className="flex flex-col items-center gap-6 bg-white/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-md relative overflow-hidden w-full max-w-xl transition-all">
-      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
-      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
+    <div className="flex flex-col items-center gap-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl border border-slate-200/80 dark:border-gray-800 shadow-md relative overflow-hidden w-full max-w-xl transition-all">
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-100 dark:bg-indigo-950/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[80px] opacity-70 dark:opacity-40 pointer-events-none"></div>
+      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-rose-100 dark:bg-rose-950/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[80px] opacity-70 dark:opacity-40 pointer-events-none"></div>
 
       {/* Timer display */}
-      <div className={`relative z-10 text-7xl sm:text-8xl md:text-9xl font-mono font-black text-slate-900 tracking-tighter transition-all duration-300 ${glowColor}`}>
-        {time.toFixed(1)}<span className="text-4xl sm:text-5xl md:text-5xl text-slate-400">s</span>
+      <div className={`relative z-10 text-7xl sm:text-8xl md:text-9xl font-mono font-black text-slate-900 dark:text-white tracking-tighter transition-all duration-300 ${glowColor}`}>
+        {time.toFixed(1)}<span className="text-4xl sm:text-5xl md:text-5xl text-slate-400 dark:text-slate-500">s</span>
       </div>
 
       {/* Status badge */}
       {isPendingScore && (
         <div className={`relative z-10 font-bold px-4 py-1.5 rounded-full text-xs border ${
           studentStopTime
-            ? "bg-rose-50 text-rose-600 border-rose-200"
-            : "bg-amber-50 text-amber-600 border-amber-200"
+            ? "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/40"
+            : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/40"
         }`}>
           {studentStopTime ? "⏹ Stopped by student" : "⏸ Stopped"}
         </div>
@@ -158,7 +158,7 @@ export default function Stopwatch({ onScore, onCancel, isRunning, setIsRunning, 
               onClick={handleCancel}
               title="Reset"
               aria-label="Reset"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 border border-slate-200"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 border border-slate-200 dark:border-gray-700"
             >
               <RotateCcw className="w-7 h-7 sm:w-8 sm:h-8" />
             </button>

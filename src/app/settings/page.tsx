@@ -432,7 +432,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col font-sans selection:bg-[#0A84FF]/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-800 dark:text-[#f5f5f7] flex flex-col font-sans selection:bg-[#0A84FF]/30 transition-colors duration-200">
       <Navbar />
 
       {/* --- Dynamic Capsule Floating Toast (Apple Dynamic Island style) --- */}
@@ -446,7 +446,7 @@ export default function SettingsPage() {
       )}
 
       {/* --- Liquid Glass Sticky Header Bar --- */}
-      <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#121214]/90 border-b border-white/[0.08] transition-all">
+      <div className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-[#121214]/90 border-b border-slate-200/80 dark:border-white/[0.08] transition-all">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white border border-white/10 shadow-sm shrink-0">
@@ -458,7 +458,7 @@ export default function SettingsPage() {
                 <span className="text-[10px] text-neutral-600">/</span>
                 <span className="text-neutral-400 font-medium">Settings</span>
               </div>
-              <h1 className="text-sm sm:text-lg font-bold text-white tracking-tight truncate">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
                 {navItems.find((item) => item.id === activePane)?.label}
               </h1>
             </div>

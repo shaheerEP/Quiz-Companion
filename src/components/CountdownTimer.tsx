@@ -131,12 +131,12 @@ export default function CountdownTimer() {
     ? "drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
     : "";
 
-  const borderFlash = isFinished ? "border-rose-400 ring-2 ring-rose-200" : "border-slate-200/80";
+  const borderFlash = isFinished ? "border-rose-400 ring-2 ring-rose-200 dark:ring-rose-900/40" : "border-slate-200/80 dark:border-gray-800";
 
   return (
-    <div className={`flex flex-col items-center gap-6 bg-white/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl border ${borderFlash} shadow-md relative overflow-hidden w-full max-w-xl transition-all duration-300`}>
-      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
-      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-amber-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
+    <div className={`flex flex-col items-center gap-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl border ${borderFlash} shadow-md relative overflow-hidden w-full max-w-xl transition-all duration-300`}>
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-100 dark:bg-indigo-950/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
+      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-amber-100 dark:bg-amber-950/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 pointer-events-none"></div>
 
       {/* Progress ring */}
       <div className="relative z-10">
@@ -150,14 +150,14 @@ export default function CountdownTimer() {
             strokeDashoffset={`${2 * Math.PI * 52 * (1 - progress / 100)}`}
           />
         </svg>
-        <div className={`absolute inset-0 flex items-center justify-center text-5xl sm:text-6xl font-mono font-black text-slate-900 tracking-tight ${glowColor}`}>
+        <div className={`absolute inset-0 flex items-center justify-center text-5xl sm:text-6xl font-mono font-black text-slate-900 dark:text-white tracking-tight ${glowColor}`}>
           {formatTime(Math.ceil(remaining))}
         </div>
       </div>
 
       {/* Finished badge */}
       {isFinished && (
-        <div className="relative z-10 font-bold px-4 py-1.5 rounded-full text-xs border bg-rose-50 text-rose-600 border-rose-200 animate-pulse">
+        <div className="relative z-10 font-bold px-4 py-1.5 rounded-full text-xs border bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/40 animate-pulse">
           Time&apos;s up!
         </div>
       )}
@@ -188,7 +188,7 @@ export default function CountdownTimer() {
           onClick={handleReset}
           title="Reset"
           aria-label="Reset"
-          className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95"
+          className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95"
         >
           <RotateCcw className="w-5 h-5" />
         </button>
@@ -204,8 +204,8 @@ export default function CountdownTimer() {
                 onClick={() => selectPreset(p.seconds)}
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs border transition-all ${
                   targetSeconds === p.seconds && !isFinished
-                    ? "bg-indigo-50 text-indigo-600 border-indigo-300 shadow-sm"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-300 dark:border-indigo-800 shadow-sm"
+                    : "bg-slate-50 dark:bg-gray-800/80 text-slate-600 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-100 dark:hover:bg-gray-700"
                 }`}
               >
                 {p.label}

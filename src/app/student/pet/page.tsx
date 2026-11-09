@@ -194,7 +194,7 @@ export default function PetDashboard() {
   const levelProgress = nextLevelPts ? Math.min(100, (studentData.lifetimePoints / nextLevelPts) * 100) : 100;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full flex flex-col gap-8">

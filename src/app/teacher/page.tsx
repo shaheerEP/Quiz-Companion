@@ -478,8 +478,8 @@ export default function TeacherDashboard() {
   }, [activeStudent?._id, activeStudent?.lifetimePoints, activeStudent?.rewardSystem, settings?.bundleLimit, prevBundles]);
 
   const renderDailyHistory = () => (
-    <section className="w-full bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-sm p-5 sm:p-6 flex flex-col gap-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+    <section className="w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-gray-800 pb-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
             <History className="w-4 h-4" />
@@ -494,8 +494,8 @@ export default function TeacherDashboard() {
             onClick={() => setActiveHistoryTab("daily")}
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "daily"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"
             }`}
           >
             Daily ({totalDailyDays})
@@ -506,7 +506,7 @@ export default function TeacherDashboard() {
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               activeHistoryTab === "weekly"
                 ? "bg-white text-fuchsia-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"
             }`}
           >
             Weekly ({totalWeeks})
@@ -525,7 +525,7 @@ export default function TeacherDashboard() {
                   <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">{dayGroup.dayString}</p>
                   <div className="flex gap-1.5 items-center">
                     <div className="relative inline-block text-xs mr-1" title={`${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100)).toFixed(0)}%`}>
-                      <div className="flex text-slate-200">★★★★★</div>
+                      <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
                       <div className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_4px_rgba(250,204,21,0.85)]" style={{ width: `${Math.min(100, Math.max(0, (dayGroup.totalPoints / 1000) * 100))}%` }}>
                         ★★★★★
                       </div>
@@ -658,7 +658,7 @@ export default function TeacherDashboard() {
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-5 md:p-6 gap-4 md:gap-6 max-w-[1500px] mx-auto w-full pb-24 md:pb-6 relative z-10">
         {/* Left Sidebar: Student Profile & Stats */}
         <aside className={`w-full lg:col-span-4 xl:col-span-3 flex flex-col gap-4 shrink-0 h-fit ${activeStudent ? 'order-2' : 'order-1'} lg:order-1`}>
-          <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 sm:p-5 rounded-3xl shadow-sm flex flex-col gap-3 relative">
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 p-4 sm:p-5 rounded-3xl shadow-sm flex flex-col gap-3 relative">
             {!activeStudent ? (
               <div className="flex items-center justify-between py-2">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Challenger</span>
@@ -675,24 +675,24 @@ export default function TeacherDashboard() {
               <>
                 {/* Points balance and lifetime with explanatory labels */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2.5">
+                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex items-center gap-2.5">
                     <span className="text-xl shrink-0">💎</span>
                     <div className="min-w-0 flex flex-col">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
                         Balance
                       </span>
-                      <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
+                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-white truncate">
                         {activeStudent.pointsBalance?.toLocaleString() || 0}
                       </span>
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2.5">
+                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex items-center gap-2.5">
                     <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
                     <div className="min-w-0 flex flex-col">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
                         Lifetime
                       </span>
-                      <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
+                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-white truncate">
                         {activeStudent.lifetimePoints?.toLocaleString() || 0}
                       </span>
                     </div>
@@ -700,7 +700,7 @@ export default function TeacherDashboard() {
                 </div>
 
                 {/* Action Toolbar (Icon-only with tooltips!) */}
-                <div className="flex items-center justify-between gap-1.5 p-1.5 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between gap-1.5 p-1.5 bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-gray-700 rounded-2xl">
                   <button
                     onClick={handleAddBonus}
                     title="Add Points"
@@ -713,7 +713,7 @@ export default function TeacherDashboard() {
                     onClick={handleDeductPoints}
                     title="Deduct Points"
                     aria-label="Deduct Points"
-                    className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 flex items-center justify-center transition-all active:scale-95"
                   >
                     <MinusCircle className="w-4 h-4" />
                   </button>
@@ -722,7 +722,7 @@ export default function TeacherDashboard() {
                     onClick={() => setShowTasksModal(true)}
                     title="Tasks"
                     aria-label="Tasks"
-                    className="relative w-9 h-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center transition-all active:scale-95"
+                    className="relative w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/40 flex items-center justify-center transition-all active:scale-95"
                   >
                     <Award className="w-4 h-4" />
                     {activeStudent.tasks && activeStudent.tasks.length > 0 && (
@@ -737,7 +737,7 @@ export default function TeacherDashboard() {
                     onClick={() => setShowPosterModal(true)}
                     title="Achievement E-Poster"
                     aria-label="Achievement E-Poster"
-                    className="w-9 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 flex items-center justify-center transition-all active:scale-95"
                   >
                     <Trophy className="w-4 h-4" />
                   </button>
@@ -747,7 +747,7 @@ export default function TeacherDashboard() {
                     rel="noopener noreferrer"
                     title="World"
                     aria-label="World"
-                    className="w-9 h-9 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-900/40 flex items-center justify-center transition-all active:scale-95"
                   >
                     <Globe className="w-4 h-4" />
                   </a>
@@ -782,7 +782,7 @@ export default function TeacherDashboard() {
                       onClick={() => setShowMannersHistory(true)}
                       title="Manners History"
                       aria-label="Manners History"
-                      className="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all"
+                      className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 flex items-center justify-center transition-all"
                     >
                       <History className="w-3.5 h-3.5" />
                     </button>
@@ -815,7 +815,7 @@ export default function TeacherDashboard() {
 
         {/* Main Interaction Area: Quiz Arena */}
         <div className={`w-full lg:col-span-8 xl:col-span-9 flex flex-col gap-6 ${activeStudent ? 'order-1' : 'order-2'} lg:order-2`}>
-          <section className="w-full flex flex-col items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-sm p-5 sm:p-7 relative overflow-hidden min-h-[380px]">
+          <section className="w-full flex flex-col items-center justify-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm p-5 sm:p-7 relative overflow-hidden min-h-[380px]">
             {!activeStudent ? (
               <div className="text-center text-slate-400 flex flex-col items-center max-w-sm z-10 py-12">
                 <button
@@ -830,12 +830,12 @@ export default function TeacherDashboard() {
             ) : (
               <div className="w-full flex flex-col h-full items-center justify-center gap-5 z-10">
                 {/* Student Header */}
-                <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100 dark:border-gray-800">
                   <div className="flex items-center gap-4">
                     <div
                       onClick={() => setShowStudentSelectModal(true)}
                       title="Switch Challenger"
-                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-indigo-200/90 bg-slate-100 flex items-center justify-center shadow-md cursor-pointer hover:border-indigo-500 transition-all shrink-0"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-indigo-200/90 dark:border-indigo-500/30 bg-slate-100 dark:bg-gray-800 flex items-center justify-center shadow-md cursor-pointer hover:border-indigo-500 transition-all shrink-0"
                     >
                       {activeStudent.profileImageUrl ? (
                         <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -845,20 +845,20 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2.5">
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight capitalize">
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight capitalize">
                           {activeStudent.name}
                         </h1>
                         <button
                           onClick={() => setShowStudentSelectModal(true)}
                           title="Select Challenger"
                           aria-label="Select Challenger"
-                          className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-95"
+                          className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 flex items-center justify-center transition-all active:scale-95"
                         >
                           <Users className="w-4 h-4" />
                         </button>
                       </div>
                       <div className="relative inline-block text-xl">
-                        <div className="flex text-slate-200">★★★★★</div>
+                        <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
                         <div
                           className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"
                           style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
@@ -870,13 +870,13 @@ export default function TeacherDashboard() {
                   </div>
 
                   {/* Today's Points with small label */}
-                  <div className="flex items-center gap-2 bg-emerald-50 px-3.5 py-2 rounded-2xl border border-emerald-200">
+                  <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-2 rounded-2xl border border-emerald-200 dark:border-emerald-800">
                     <Zap className="w-5 h-5 text-emerald-600 shrink-0" />
                     <div className="flex flex-col text-right">
                       <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider leading-none">
                         Today
                       </span>
-                      <span className="text-base sm:text-xl font-black text-emerald-700 leading-tight">
+                      <span className="text-base sm:text-xl font-black text-emerald-700 dark:text-emerald-400 leading-tight">
                         {activeStudent.dailyPoints?.toLocaleString() || 0}
                       </span>
                     </div>
@@ -892,8 +892,8 @@ export default function TeacherDashboard() {
                       aria-label="Stopwatch"
                       className={`p-2.5 rounded-xl transition-all ${
                         timerTab === 'quiz'
-                          ? 'bg-white text-indigo-600 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-800'
+                          ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                          : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                       }`}
                     >
                       <Activity className="w-5 h-5" />
@@ -904,8 +904,8 @@ export default function TeacherDashboard() {
                       aria-label="Countdown"
                       className={`p-2.5 rounded-xl transition-all ${
                         timerTab === 'countdown'
-                          ? 'bg-white text-indigo-600 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-800'
+                          ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                          : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                       }`}
                     >
                       <Timer className="w-5 h-5" />
@@ -956,7 +956,7 @@ export default function TeacherDashboard() {
             onClick={handleDeductPoints}
             title="Deduct Points"
             aria-label="Deduct Points"
-            className="w-10 h-10 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all active:scale-95"
+            className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 flex items-center justify-center transition-all active:scale-95"
           >
             <MinusCircle className="w-4 h-4" />
           </button>
@@ -965,7 +965,7 @@ export default function TeacherDashboard() {
             onClick={() => setShowTasksModal(true)}
             title="Tasks"
             aria-label="Tasks"
-            className="relative w-10 h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center transition-all active:scale-95"
+            className="relative w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/40 flex items-center justify-center transition-all active:scale-95"
           >
             <Award className="w-4 h-4" />
             {activeStudent.tasks && activeStudent.tasks.length > 0 && (
@@ -979,7 +979,7 @@ export default function TeacherDashboard() {
             onClick={() => setShowPosterModal(true)}
             title="Achievement E-Poster"
             aria-label="Achievement E-Poster"
-            className="w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center transition-all active:scale-95"
+            className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 flex items-center justify-center transition-all active:scale-95"
           >
             <Trophy className="w-4 h-4" />
           </button>
@@ -1052,7 +1052,7 @@ export default function TeacherDashboard() {
       {showStudentSelectModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 flex flex-col gap-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-2.5">
               <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
                 <Users className="w-4 h-4 text-indigo-600" />
                 <span>Select Challenger</span>

@@ -17,7 +17,7 @@ export interface ICustomProductBlock {
   h?: number;
   width?: number;
   curveness?: number;
-  blockShape?: 'box' | 'wedge' | 'pyramid';
+  blockShape?: 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome';
   materialType?: string;
   textureId?: string;
 }
@@ -77,7 +77,7 @@ export interface IStudent extends Document {
     h?: number;
     width?: number;
     curveness?: number;
-    blockShape?: 'box' | 'wedge' | 'pyramid';
+    blockShape?: 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome';
     materialType?: string;
     textureId?: string;
   }>;

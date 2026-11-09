@@ -27,7 +27,7 @@ export type PlacedObject = {
   depth?: number;
   width?: number;
   curveness?: number;
-  blockShape?: 'box' | 'wedge' | 'pyramid';
+  blockShape?: 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome';
   isOpen?: boolean;
   materialType?: 'color' | 'texture' | 'glass';
   textureId?: string;

@@ -242,7 +242,7 @@ function RevisionPageInner() {
 
   if (!studentId) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
         <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500 gap-4">
           <BookOpen className="w-12 h-12 opacity-20" />
@@ -272,7 +272,7 @@ function RevisionPageInner() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -977,7 +977,7 @@ function RevisionPageInner() {
 export default function RevisionPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     }>

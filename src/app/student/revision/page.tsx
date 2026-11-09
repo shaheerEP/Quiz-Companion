@@ -107,7 +107,7 @@ export default function StudentRevisionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
         <Navbar />
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
@@ -118,7 +118,7 @@ export default function StudentRevisionPage() {
 
   if (finished) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
         <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
           <div className="bg-violet-600 p-5 rounded-full mb-6 shadow-2xl shadow-violet-500/30 animate-bounce">
@@ -157,7 +157,7 @@ export default function StudentRevisionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
       <Navbar />
 
       <div className="max-w-xl mx-auto px-4 py-8">
