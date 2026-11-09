@@ -330,6 +330,22 @@ export default function SettingsPage() {
     showToast("Student deleted");
   };
 
+  const handleToggleStudentClassTime = async (studentId: string, isClassTime: boolean) => {
+    try {
+      const res = await fetch("/api/students", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: studentId, isClassTime })
+      });
+      if (res.ok) {
+        setStudents(prev => prev.map(s => s._id === studentId ? { ...s, isClassTime } : s));
+        showToast(`Class Mode ${isClassTime ? "enabled" : "disabled"}`);
+      }
+    } catch (err) {
+      console.error("Failed to toggle class mode:", err);
+    }
+  };
+
   const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
@@ -349,6 +365,7 @@ export default function SettingsPage() {
         mannersEnabled: editingStudent.mannersEnabled,
         mannersList: editingStudent.mannersList,
         profileImageUrl: editingStudent.profileImageUrl,
+        isClassTime: editingStudent.isClassTime,
       }),
     });
     setEditingStudent(null);
@@ -673,6 +690,15 @@ export default function SettingsPage() {
                               <span className="flex items-center gap-1 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20 text-blue-400 font-semibold">
                                 <span>🏆</span> {(student.lifetimePoints ?? 0).toLocaleString()} pts
                               </span>
+                              <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
+                                <span className="text-[10px] text-neutral-300 font-semibold">📚 Class Mode:</span>
+                                <CupertinoSwitch
+                                  size="sm"
+                                  checked={Boolean(student.isClassTime)}
+                                  onChange={(checked) => handleToggleStudentClassTime(student._id, checked)}
+                                  ariaLabel={`Toggle Class Mode for ${student.name}`}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -738,6 +764,15 @@ export default function SettingsPage() {
                         <span className="flex items-center gap-1 bg-blue-500/10 px-2.5 py-1 rounded-xl border border-blue-500/20 text-blue-400 text-xs font-bold">
                           <span>🏆</span> {(student.lifetimePoints ?? 0).toLocaleString()} pts
                         </span>
+                        <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10 text-xs">
+                          <span className="text-[10px] text-neutral-300 font-semibold">📚 Class Mode:</span>
+                          <CupertinoSwitch
+                            size="sm"
+                            checked={Boolean(student.isClassTime)}
+                            onChange={(checked) => handleToggleStudentClassTime(student._id, checked)}
+                            ariaLabel={`Toggle Class Mode for ${student.name}`}
+                          />
+                        </div>
                       </div>
 
                       {/* Desktop Action Buttons */}
@@ -1692,6 +1727,21 @@ export default function SettingsPage() {
                     onChange={(val) =>
                       setEditingStudent({ ...editingStudent, rewardSystem: val })
                     }
+                  />
+                </AppleGroupedRow>
+
+                <AppleGroupedRow
+                  icon={<Clock className="w-4 h-4 text-amber-400" />}
+                  iconBg="bg-amber-600/30"
+                  title="Class Quiz Mode"
+                  subtitle="Restrict student builder access during live class quiz"
+                >
+                  <CupertinoSwitch
+                    checked={Boolean(editingStudent.isClassTime)}
+                    onChange={(checked) =>
+                      setEditingStudent({ ...editingStudent, isClassTime: checked })
+                    }
+                    ariaLabel="Toggle Class Mode"
                   />
                 </AppleGroupedRow>
               </AppleGroupedSection>

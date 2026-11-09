@@ -168,20 +168,6 @@ export default function TeacherDashboard() {
     }).catch(console.error);
   }, []);
 
-  const handleToggleClassTime = async () => {
-    if (!activeStudent) return;
-    const newIsClassTime = !activeStudent.isClassTime;
-
-    await fetch("/api/students", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: activeStudent._id, isClassTime: newIsClassTime })
-    });
-
-    setActiveStudent({ ...activeStudent, isClassTime: newIsClassTime });
-    setStudents(students.map(s => s._id === activeStudent._id ? { ...s, isClassTime: newIsClassTime } : s));
-  };
-
   const handleStudentChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     selectStudent(e.target.value, students);
   };
@@ -687,66 +673,30 @@ export default function TeacherDashboard() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div
-                    onClick={() => setShowStudentSelectModal(true)}
-                    className="flex items-center gap-2.5 cursor-pointer group min-w-0"
-                    title="Switch Challenger"
-                  >
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 group-hover:border-indigo-500 transition-all">
-                      {activeStudent.profileImageUrl ? (
-                        <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5 text-slate-500" />
-                      )}
-                    </div>
-                    <div className="truncate">
-                      <h2 className="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{activeStudent.name}</h2>
-                      <span className="text-[10px] font-bold text-emerald-600">● Live</span>
-                    </div>
-                  </div>
-
-                  {/* Select Challenger Icon Button */}
-                  <button
-                    onClick={() => setShowStudentSelectModal(true)}
-                    title="Select Challenger"
-                    aria-label="Select Challenger"
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shrink-0"
-                  >
-                    <Users className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Points balance and lifetime */}
+                {/* Points balance and lifetime with explanatory labels */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2">
-                    <span className="text-base">💎</span>
-                    <span className="text-xs font-black text-slate-800 truncate">
-                      {activeStudent.pointsBalance?.toLocaleString() || 0}
-                    </span>
+                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2.5">
+                    <span className="text-xl shrink-0">💎</span>
+                    <div className="min-w-0 flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                        Balance
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
+                        {activeStudent.pointsBalance?.toLocaleString() || 0}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span className="text-xs font-black text-slate-800 truncate">
-                      {activeStudent.lifetimePoints?.toLocaleString() || 0}
-                    </span>
+                  <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 flex items-center gap-2.5">
+                    <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+                    <div className="min-w-0 flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                        Lifetime
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-slate-800 truncate">
+                        {activeStudent.lifetimePoints?.toLocaleString() || 0}
+                      </span>
+                    </div>
                   </div>
-                </div>
-
-                {/* Class Mode toggle */}
-                <div className="flex items-center justify-between bg-slate-50 p-2 px-3 rounded-2xl border border-slate-100">
-                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5" title="Class Mode">
-                    📚 Class Mode
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleToggleClassTime}
-                    title="Toggle Class Mode"
-                    aria-label="Toggle Class Mode"
-                    className={`w-11 h-6 rounded-full flex items-center transition-colors p-0.5 ${activeStudent.isClassTime ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${activeStudent.isClassTime ? 'translate-x-5' : 'translate-x-0'}`}></div>
-                  </button>
                 </div>
 
                 {/* Action Toolbar (Icon-only with tooltips!) */}
@@ -880,37 +830,37 @@ export default function TeacherDashboard() {
             ) : (
               <div className="w-full flex flex-col h-full items-center justify-center gap-5 z-10">
                 {/* Student Header */}
-                <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
+                <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-4">
                     <div
                       onClick={() => setShowStudentSelectModal(true)}
                       title="Switch Challenger"
-                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-indigo-300 bg-slate-100 flex items-center justify-center shadow-sm cursor-pointer hover:border-indigo-500 transition-all shrink-0"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-indigo-200/90 bg-slate-100 flex items-center justify-center shadow-md cursor-pointer hover:border-indigo-500 transition-all shrink-0"
                     >
                       {activeStudent.profileImageUrl ? (
                         <img src={activeStudent.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-6 h-6 text-slate-400" />
+                        <User className="w-12 h-12 sm:w-14 sm:h-14 text-slate-400" />
                       )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight capitalize">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2.5">
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight capitalize">
                           {activeStudent.name}
                         </h1>
                         <button
                           onClick={() => setShowStudentSelectModal(true)}
                           title="Select Challenger"
                           aria-label="Select Challenger"
-                          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all"
+                          className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-95"
                         >
-                          <Users className="w-3.5 h-3.5" />
+                          <Users className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="relative inline-block text-lg">
+                      <div className="relative inline-block text-xl">
                         <div className="flex text-slate-200">★★★★★</div>
                         <div
-                          className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]"
+                          className="flex text-yellow-400 absolute top-0 left-0 overflow-hidden whitespace-nowrap drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"
                           style={{ width: `${Math.min(100, ((activeStudent.dailyPoints || 0) / 1000) * 100)}%` }}
                         >
                           ★★★★★
@@ -919,10 +869,17 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
 
-                  {/* Today's Points */}
-                  <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-2xl border border-emerald-200 text-emerald-700 font-black text-sm sm:text-base">
-                    <Zap className="w-4 h-4 text-emerald-600" />
-                    <span>{activeStudent.dailyPoints?.toLocaleString() || 0}</span>
+                  {/* Today's Points with small label */}
+                  <div className="flex items-center gap-2 bg-emerald-50 px-3.5 py-2 rounded-2xl border border-emerald-200">
+                    <Zap className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div className="flex flex-col text-right">
+                      <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider leading-none">
+                        Today
+                      </span>
+                      <span className="text-base sm:text-xl font-black text-emerald-700 leading-tight">
+                        {activeStudent.dailyPoints?.toLocaleString() || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
