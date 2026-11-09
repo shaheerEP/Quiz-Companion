@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     
     // Decode base64 student ID
     const studentId = Buffer.from(token, "base64").toString();
-    const student = await Student.findById(studentId);
+    const student = await Student.findById(studentId).select("name teacherId").lean();
     
     if (!student) return NextResponse.redirect(new URL("/login", req.url));
 

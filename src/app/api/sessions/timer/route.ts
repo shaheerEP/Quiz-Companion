@@ -58,7 +58,9 @@ export async function GET(req: Request) {
     if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
 
     await connectToDatabase();
-    const session = await Session.findOne({ _id: sessionId, teacherId });
+    const session = await Session.findOne({ _id: sessionId, teacherId })
+      .select("isTimerRunning currentTimerStartTime stoppedByStudent studentStopTime lastQuestionResult")
+      .lean();
     if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
 
     return NextResponse.json({ 

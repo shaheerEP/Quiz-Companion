@@ -38,7 +38,7 @@ export type PlacedObject = {
   textureId?: string;
 };
 
-export type Prefab = {
+type Prefab = {
   id: string;
   name: string;
   emoji: string;
@@ -54,7 +54,7 @@ const BASE_COLORS = [
   { id: "glass", color: "#ADD8E6", name: "Glass" },
 ];
 
-export const AVAILABLE_TEXTURES = [
+const AVAILABLE_TEXTURES = [
   { id: "wood", url: "/textures/wood.png", name: "Wood Planks" },
   { id: "stone", url: "/textures/stone.png", name: "Stone Masonry" },
   { id: "brick", url: "/textures/brick.png", name: "Red Brick" },
@@ -2864,9 +2864,10 @@ export default function VoxelBuilder() {
   const fetchData = async () => {
     if (!user) return;
     try {
-      const [studentRes, settingsRes] = await Promise.all([fetch("/api/students"), fetch("/api/settings")]);
+      const studentUrl = !initialLoadedRef.current ? `/api/students?id=${user.id}&includeBlocks=true` : `/api/students?id=${user.id}`;
+      const [studentRes, settingsRes] = await Promise.all([fetch(studentUrl), fetch("/api/settings")]);
       const students = await studentRes.json();
-      const currentStudent = students.find((s: any) => s._id === user.id);
+      const currentStudent = Array.isArray(students) ? (students.find((s: any) => s._id === user.id) || students[0]) : students;
       const config = await settingsRes.json();
       setSettings(config);
 

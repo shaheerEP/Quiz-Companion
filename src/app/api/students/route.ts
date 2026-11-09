@@ -5,27 +5,69 @@ import { getTeacherId } from "@/lib/auth-helpers";
 
 import { updateStudentPoints } from "@/lib/points";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const teacherId = await getTeacherId();
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const includeBlocks = searchParams.get("includeBlocks") === "true";
+
     await connectToDatabase();
-    const students = await Student.find({ teacherId }).sort({ updatedAt: -1 });
-    
-    // Auto-reset daily and weekly points on load if needed
-    let hasUpdates = false;
-    for (const student of students) {
-      const prevDaily = student.lastDailyReset;
-      const prevWeekly = student.lastWeeklyReset;
-      updateStudentPoints(student, 0);
-      if (student.lastDailyReset !== prevDaily || student.lastWeeklyReset !== prevWeekly) {
-        await student.save();
-        hasUpdates = true;
-      }
+
+    const now = new Date();
+    const startOfCurrentDay = new Date(now);
+    startOfCurrentDay.setHours(0, 0, 0, 0);
+
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfCurrentWeek = new Date(new Date(now).setDate(diff));
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+    const resetScope: any = { teacherId };
+    if (id) resetScope._id = id;
+
+    // Fast atomic database-level resets instead of iterating and calling student.save() in a loop
+    await Promise.all([
+      Student.updateMany(
+        {
+          ...resetScope,
+          $or: [
+            { lastDailyReset: { $lt: startOfCurrentDay } },
+            { lastDailyReset: null },
+            { lastDailyReset: { $exists: false } }
+          ]
+        },
+        { $set: { dailyPoints: 0, lastDailyReset: now } }
+      ),
+      Student.updateMany(
+        {
+          ...resetScope,
+          $or: [
+            { lastWeeklyReset: { $lt: startOfCurrentWeek } },
+            { lastWeeklyReset: null },
+            { lastWeeklyReset: { $exists: false } }
+          ]
+        },
+        { $set: { weeklyPoints: 0, lastWeeklyReset: now } }
+      )
+    ]);
+
+    const query: any = { teacherId };
+    if (id) query._id = id;
+
+    let mongoQuery = Student.find(query).sort({ updatedAt: -1 });
+    if (!includeBlocks) {
+      // Exclude heavy worldBlocks array by default to slash payload size and memory serialization
+      mongoQuery = mongoQuery.select("-worldBlocks");
     }
 
-    return NextResponse.json(students);
+    const students = await mongoQuery.lean();
+
+    const response = NextResponse.json(students);
+    response.headers.set("Cache-Control", "private, no-cache");
+    return response;
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch students" }, { status: 500 });
   }
@@ -89,7 +131,11 @@ export async function PUT(req: Request) {
     if (body.landSize !== undefined) student.landSize = Number(body.landSize);
 
     await student.save();
-    return NextResponse.json(student);
+    const studentObj = student.toObject();
+    if (body.worldBlocks === undefined) {
+      delete (studentObj as any).worldBlocks;
+    }
+    return NextResponse.json(studentObj);
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to update student", details: error.message }, { status: 500 });
   }

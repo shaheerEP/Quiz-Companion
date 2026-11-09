@@ -698,7 +698,7 @@ export async function GET() {
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectToDatabase();
-    let config = await Settings.findOne({ key: "config", teacherId });
+    let config = await Settings.findOne({ key: "config", teacherId }).lean();
     if (!config) {
       config = await Settings.create({ key: "config", value: DEFAULT_SETTINGS, teacherId });
     } else {
@@ -753,10 +753,12 @@ export async function GET() {
         updated = true;
       }
       if (updated) {
-        config = await Settings.findOneAndUpdate({ key: "config", teacherId }, { value: newValue }, { new: true });
+        config = await Settings.findOneAndUpdate({ key: "config", teacherId }, { value: newValue }, { new: true }).lean();
       }
     }
-    return NextResponse.json(config?.value || DEFAULT_SETTINGS);
+    const response = NextResponse.json(config?.value || DEFAULT_SETTINGS);
+    response.headers.set("Cache-Control", "private, max-age=60, stale-while-revalidate=120");
+    return response;
   } catch (error: any) {
     console.error("Settings GET Error:", error);
     return NextResponse.json({ error: "Failed to fetch settings", details: error.message || error.toString() }, { status: 500 });
@@ -774,7 +776,7 @@ export async function PUT(req: Request) {
       { key: "config", teacherId },
       { value },
       { new: true, upsert: true }
-    );
+    ).lean();
     return NextResponse.json(config.value);
   } catch (error: any) {
     console.error("Settings PUT Error:", error);

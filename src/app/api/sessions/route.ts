@@ -10,11 +10,21 @@ export async function GET(req: Request) {
     if (!teacherId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
+    const activeOnly = searchParams.get("activeOnly") === "true";
     await connectToDatabase();
     
     const query: any = { teacherId };
     if (studentId) query.studentId = studentId;
-    const sessions = await Session.find(query).sort({ date: -1 });
+
+    if (activeOnly) {
+      query.isCompleted = false;
+      const activeSession = await Session.findOne(query).lean();
+      const res = NextResponse.json(activeSession ? [activeSession] : []);
+      res.headers.set("Cache-Control", "private, no-cache");
+      return res;
+    }
+
+    const sessions = await Session.find(query).sort({ date: -1 }).limit(30).lean();
     return NextResponse.json(sessions);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 });

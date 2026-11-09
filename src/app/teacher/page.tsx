@@ -185,22 +185,16 @@ export default function TeacherDashboard() {
     if (isRunning && activeSession && activeStudent) {
       interval = setInterval(async () => {
         try {
-          const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
-          const sessions = await res.json();
-
-          const active = sessions.find((s: any) => !s.isCompleted);
-
-          fetchStudentHistory(activeStudent._id);
-
-          const mannersRes = await fetch(`/api/manners?studentId=${activeStudent._id}`);
-          if (mannersRes.ok) setMannersLogs(await mannersRes.json());
-
-          if (active) {
-            if (active.stoppedByStudent && active.studentStopTime !== null) {
-              setActiveSession(active);
+          const res = await fetch(`/api/sessions/timer?sessionId=${activeSession._id}`);
+          if (res.ok) {
+            const timerData = await res.json();
+            if (timerData.stoppedByStudent && timerData.studentStopTime !== null) {
+              setActiveSession((prev: any) => ({
+                ...prev,
+                stoppedByStudent: true,
+                studentStopTime: timerData.studentStopTime
+              }));
             }
-          } else {
-            setActiveSession(null);
           }
         } catch (e) { }
       }, 1000);
@@ -211,7 +205,7 @@ export default function TeacherDashboard() {
   const getOrCreateSession = async () => {
     if (activeSession) return activeSession;
     if (!activeStudent) return null;
-    const res = await fetch(`/api/sessions?studentId=${activeStudent._id}`);
+    const res = await fetch(`/api/sessions?studentId=${activeStudent._id}&activeOnly=true`);
     if (!res.ok) return null;
     const sessions = await res.json();
     const open = sessions.find((s: any) => !s.isCompleted);

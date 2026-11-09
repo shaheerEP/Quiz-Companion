@@ -60,14 +60,17 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
-    // Fetch all sessions to get the session IDs for this student
-    const allSessions = await Session.find({ studentId });
+    // Fetch all sessions to get the session IDs for this student (lean & select _id only)
+    const allSessions = await Session.find({ studentId }).select("_id").lean();
     const allSessionIds = allSessions.map((s) => s._id);
 
-    // Fetch all logs for these sessions, sorted newest first
+    // Fetch all logs for these sessions with projection and lean
     const allLogs = await QuestionLog.find({
       sessionId: { $in: allSessionIds }
-    }).sort({ date: -1, createdAt: -1 });
+    })
+      .select("sessionId logType date createdAt points questionNumber isCorrect responseTime")
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
 
     const historyItems: any[] = [];
     for (const log of allLogs) {
@@ -277,10 +280,12 @@ export async function GET(req: Request) {
       weekly: paginatedWeekly,
       totalWeeks: allWeeksList.length,
       hasMoreWeekly,
-      items: historyItems
+      items: historyItems.slice(0, 50)
     };
 
-    return NextResponse.json(responsePayload, { status: 200 });
+    const response = NextResponse.json(responsePayload, { status: 200 });
+    response.headers.set("Cache-Control", "private, max-age=5, stale-while-revalidate=15");
+    return response;
   } catch (error: any) {
     console.error("Failed to fetch history:", error);
     return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });

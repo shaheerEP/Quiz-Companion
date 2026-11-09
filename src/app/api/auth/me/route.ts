@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import connectToDatabase from "@/lib/db";
 import { Student } from "@/models/Student";
+import { updateStudentPoints } from "@/lib/points";
 
 export async function GET() {
   try {
@@ -12,9 +13,9 @@ export async function GET() {
     const session = JSON.parse(Buffer.from(authCookie.value, "base64").toString());
     if (session.role === "student") {
       await connectToDatabase();
-      const student = await Student.findById(session.id);
+      // Exclude heavy worldBlocks and notes/tasks to keep payload and CPU serialization minimal
+      const student = await Student.findById(session.id).select("-worldBlocks -notes -tasks");
       if (student) {
-        const { updateStudentPoints } = await import("@/lib/points");
         const prevDaily = student.lastDailyReset;
         const prevWeekly = student.lastWeeklyReset;
         updateStudentPoints(student, 0);
@@ -22,9 +23,14 @@ export async function GET() {
           await student.save();
         }
       }
-      return NextResponse.json({ ...session, student });
+      const studentData = student?.toObject ? student.toObject() : student;
+      const res = NextResponse.json({ ...session, student: studentData });
+      res.headers.set("Cache-Control", "private, no-cache");
+      return res;
     }
-    return NextResponse.json(session);
+    const res = NextResponse.json(session);
+    res.headers.set("Cache-Control", "private, no-cache");
+    return res;
   } catch (error) {
     return NextResponse.json(null);
   }

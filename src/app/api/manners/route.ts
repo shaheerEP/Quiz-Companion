@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     if (!targetStudentId) return NextResponse.json({ error: "Student ID required" }, { status: 400 });
 
-    const student = await Student.findById(targetStudentId);
+    const student = await Student.findById(targetStudentId).select("mannersList mannersEnabled name").lean();
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
     
     // Parent fetching details via token
@@ -33,14 +33,16 @@ export async function GET(req: Request) {
        const startOfDay = new Date();
        startOfDay.setHours(0, 0, 0, 0);
        
-       const todayLog = await MannersLog.findOne({ studentId: targetStudentId, date: { $gte: startOfDay } });
+       const todayLog = await MannersLog.findOne({ studentId: targetStudentId, date: { $gte: startOfDay } }).lean();
        
        return NextResponse.json({ student, mannersList, todayLog });
     }
 
     // Teacher/Student fetching history
-    const logs = await MannersLog.find({ studentId: targetStudentId }).sort({ date: -1 });
-    return NextResponse.json(logs);
+    const logs = await MannersLog.find({ studentId: targetStudentId }).sort({ date: -1 }).limit(50).lean();
+    const res = NextResponse.json(logs);
+    res.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=30");
+    return res;
 
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch manners logs", details: error.message }, { status: 500 });

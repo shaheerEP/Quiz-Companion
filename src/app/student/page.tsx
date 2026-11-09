@@ -86,16 +86,36 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || user.role !== "student") return;
 
-    const fetchDashboardData = async () => {
-      // Find active session
-      const res = await fetch(`/api/sessions?studentId=${user.id}`);
-        const sessions = await res.json();
-        
-        const active = sessions.find((s: any) => !s.isCompleted);
-        
-        const historyRes = await fetch(
-          `/api/history?studentId=${user.id}&dailyLimit=${dailyLimitRef.current}&weeklyLimit=${weeklyLimitRef.current}`
-        );
+    // 1. Fetch slow-moving data ONCE on mount
+    const fetchInitialData = async () => {
+      try {
+        const [settingsRes, tasksRes, withdrawalsRes] = await Promise.all([
+          fetch("/api/settings"),
+          fetch(`/api/tasks?studentId=${user.id}`),
+          fetch(`/api/withdrawals?studentId=${user.id}`)
+        ]);
+
+        if (settingsRes.ok) setSettings(await settingsRes.json());
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          setTasks(tasksData.tasks || []);
+        }
+        if (withdrawalsRes.ok) {
+          const logsData = await withdrawalsRes.json();
+          setLogs(logsData.filter((log: any) => !log.rewardDescription?.includes("in World Builder")));
+        }
+      } catch (e) {}
+    };
+    fetchInitialData();
+
+    // 2. Fetch history and manners on mount and on relaxed interval (30s)
+    const fetchHistoryAndManners = async () => {
+      try {
+        const [historyRes, mannersRes] = await Promise.all([
+          fetch(`/api/history?studentId=${user.id}&dailyLimit=${dailyLimitRef.current}&weeklyLimit=${weeklyLimitRef.current}`),
+          fetch(`/api/manners?studentId=${user.id}`)
+        ]);
+
         if (historyRes.ok) {
           const histData = await historyRes.json();
           if (histData.stats) setHistoryStats(histData.stats);
@@ -107,36 +127,34 @@ export default function StudentDashboard() {
           setTotalWeeks(histData.totalWeeks || 0);
           if (histData.items) setHistoryItems(histData.items);
         }
-
-        if (active) {
-          setActiveSession(active);
-        } else {
-          setActiveSession(null);
-        }
-      
-        const mannersRes = await fetch(`/api/manners?studentId=${user.id}`);
         if (mannersRes.ok) setMannersLogs(await mannersRes.json());
-
-        const tasksRes = await fetch(`/api/tasks?studentId=${user.id}`);
-        if (tasksRes.ok) {
-          const tasksData = await tasksRes.json();
-          setTasks(tasksData.tasks || []);
-        }
-      
-      // Fetch withdrawals
-      const logsRes = await fetch(`/api/withdrawals?studentId=${user.id}`);
-      const logsData = await logsRes.json();
-      setLogs(logsData.filter((log: any) => !log.rewardDescription?.includes("in World Builder")));
-      
-      const setRes = await fetch("/api/settings");
-      setSettings(await setRes.json());
-      
-      refreshAuth();
+      } catch (e) {}
     };
+    fetchHistoryAndManners();
+    const historyInterval = setInterval(fetchHistoryAndManners, 30000); // 30s instead of 3s!
 
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 3000); // Polling every 3s
-    return () => clearInterval(interval);
+    // 3. Lightweight check for active session (only checks single active session)
+    const checkActiveSession = async () => {
+      try {
+        const res = await fetch(`/api/sessions?studentId=${user.id}&activeOnly=true`);
+        if (res.ok) {
+          const sessions = await res.json();
+          const active = sessions.find((s: any) => !s.isCompleted);
+          if (active) {
+            setActiveSession(active);
+          } else {
+            setActiveSession(null);
+          }
+        }
+      } catch (e) {}
+    };
+    checkActiveSession();
+    const sessionInterval = setInterval(checkActiveSession, 5000); // 5s lightweight check
+
+    return () => {
+      clearInterval(historyInterval);
+      clearInterval(sessionInterval);
+    };
   }, [user]);
 
   const initialTimerSyncDoneRef = useRef(false);

@@ -3,7 +3,9 @@ import connectToDatabase from "@/lib/db";
 import { Session } from "@/models/Session";
 import { QuestionLog } from "@/models/QuestionLog";
 import { Student } from "@/models/Student";
+import { Settings } from "@/models/Settings";
 import { getTeacherId } from "@/lib/auth-helpers";
+import { updateStudentPoints } from "@/lib/points";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -54,8 +56,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     };
 
     // Check if the session has reached the finale question count threshold to mark it completed
-    const { Settings } = await import("@/models/Settings");
-    const config = await Settings.findOne({ key: "config", teacherId });
+    const config = await Settings.findOne({ key: "config", teacherId }).select("value.badgeThresholds").lean();
     const finaleQuestionCount = config?.value?.badgeThresholds?.finaleQuestionCount || 5;
     if (newTotalQuestions >= finaleQuestionCount) {
       session.isCompleted = true;
@@ -64,9 +65,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     await session.save();
 
     if (actualPoints > 0) {
-      const student = await Student.findOne({ _id: session.studentId, teacherId });
+      const student = await Student.findOne({ _id: session.studentId, teacherId }).select("-worldBlocks");
       if (student) {
-        const { updateStudentPoints } = await import("@/lib/points");
         updateStudentPoints(student, actualPoints);
         await student.save();
       }
@@ -86,7 +86,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     const { id } = await context.params;
     await connectToDatabase();
-    const questions = await QuestionLog.find({ sessionId: id, teacherId }).sort({ questionNumber: 1 });
+    const questions = await QuestionLog.find({ sessionId: id, teacherId }).sort({ questionNumber: 1 }).lean();
     return NextResponse.json(questions);
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch questions", details: error.message }, { status: 500 });

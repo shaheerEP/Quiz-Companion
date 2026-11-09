@@ -51,8 +51,10 @@ export async function GET(req: Request) {
     await connectToDatabase();
     const query: any = { teacherId };
     if (studentId) query.studentId = studentId;
-    const logs = await WithdrawalLog.find(query).sort({ date: -1 });
-    return NextResponse.json(logs);
+    const logs = await WithdrawalLog.find(query).sort({ date: -1 }).limit(50).lean();
+    const res = NextResponse.json(logs);
+    res.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=30");
+    return res;
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });
   }

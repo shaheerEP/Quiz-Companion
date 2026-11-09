@@ -51,6 +51,16 @@ export interface IStudent extends Document {
   revisionEnabled?: boolean;
   revisionRewindDays?: number[];
   tasks?: ITaskItem[];
+  notesText?: string;
+  notes?: INoteItem[];
+}
+
+export interface INoteItem {
+  id: string;
+  text: string;
+  isCheckbox: boolean;
+  checked: boolean;
+  createdAt?: Date;
 }
 
 export interface ITaskItem {
@@ -132,6 +142,19 @@ const StudentSchema = new Schema<IStudent>(
           completed: { type: Boolean, default: false },
           completedCount: { type: Number, default: 0 },
           lastCompletedAt: { type: Date },
+          createdAt: { type: Date, default: Date.now },
+        }
+      ],
+      default: []
+    },
+    notesText: { type: String, default: "" },
+    notes: {
+      type: [
+        {
+          id: { type: String, required: true },
+          text: { type: String, required: true },
+          isCheckbox: { type: Boolean, default: false },
+          checked: { type: Boolean, default: false },
           createdAt: { type: Date, default: Date.now },
         }
       ],

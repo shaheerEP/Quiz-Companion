@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     }
 
     await connectToDatabase();
-    const student = await Student.findById(studentId);
+    const student = await Student.findById(studentId).select("tasks").lean();
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }

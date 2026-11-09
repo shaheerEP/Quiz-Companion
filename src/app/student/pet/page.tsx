@@ -35,9 +35,9 @@ export default function PetDashboard() {
       // Need a way to fetch the specific student. Let's fetch all and filter for now,
       // or we can just use the user context if it contains updated info.
       // Wait, the AuthContext `user` might have `student` data attached. Let's see.
-      const res = await fetch("/api/students");
+      const res = await fetch(`/api/students?id=${user.id}`);
       const students = await res.json();
-      const currentStudent = students.find((s: any) => s._id === user.id);
+      const currentStudent = Array.isArray(students) ? (students.find((s: any) => s._id === user.id) || students[0]) : students;
       if (currentStudent) {
         // Auto-evolve check
         let newLevel = 1;
@@ -69,8 +69,8 @@ export default function PetDashboard() {
 
   useEffect(() => {
     fetchStudentData();
-    // Poll every 5s just in case points update
-    const interval = setInterval(fetchStudentData, 5000);
+    // Poll every 20s just in case points update
+    const interval = setInterval(fetchStudentData, 20000);
     return () => clearInterval(interval);
   }, [user]);
 
