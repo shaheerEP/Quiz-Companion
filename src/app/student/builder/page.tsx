@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box, Save } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box, Save, Sparkles, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
@@ -15,6 +15,7 @@ import { HelicopterModel } from "@/components/HelicopterModel";
 import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
 import { GroupGizmo } from "./GroupGizmo";
 import { ChunkedBlocks, getBoxProps } from "@/components/ChunkedBlocks";
+import { ProductDesignerModal, CustomProductData } from "./ProductDesignerModal";
 
 // Returns true if the pointer moved enough to be considered a drag
 const DRAG_THRESHOLD = 10; // px
@@ -280,6 +281,62 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
       {children}
     </group>
   );
+
+  // Custom Product rendering (compound blocks designed by student)
+  if (itemDef?.isCustomProduct || (itemDef?.blocks && itemDef.blocks.length > 0)) {
+    const blocks = itemDef.blocks || [];
+    return wrapIfVehicle(
+      <ModelWrapper>
+        {blocks.map((b: any, bIdx: number) => {
+          const bw = b.width ?? b.w ?? 1;
+          const bh = b.thickness ?? b.h ?? 1;
+          const bd = b.depth ?? b.d ?? 1;
+          const bRotY = b.rotationY || 0;
+          const bRotX = b.rotationX || 0;
+          const bRotZ = b.rotationZ || 0;
+          const posY = (b.y ?? 0) + bh / 2;
+          const posX = b.x ?? 0;
+          const posZ = b.z ?? 0;
+
+          let geom: React.ReactNode = null;
+          if (b.type === 'roof') {
+            geom = <coneGeometry args={[0.71, 1, 4]} />;
+          } else if (b.blockShape === 'wedge') {
+            geom = <primitive object={getWedgeGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'pyramid') {
+            geom = <primitive object={getPyramidGeometry()} attach="geometry" />;
+          } else if (b.curveness && b.curveness > 0) {
+            geom = <primitive object={getCurvedGeometry(b.curveness)} attach="geometry" />;
+          } else {
+            geom = <boxGeometry args={[1, 1, 1]} />;
+          }
+
+          const isGlass = b.materialType === 'glass' || b.color === '#ADD8E6';
+          const texture = b.materialType === 'texture' && b.textureId && TEXTURES[b.textureId] ? TEXTURES[b.textureId] : null;
+
+          return (
+            <mesh
+              key={bIdx}
+              position={[posX, posY, posZ]}
+              rotation={[bRotX, bRotY, bRotZ]}
+              scale={[bw, bh, bd]}
+              castShadow
+              receiveShadow
+            >
+              {geom}
+              <meshStandardMaterial
+                color={b.color || '#8B5A2B'}
+                map={texture}
+                transparent={isGlass}
+                opacity={isGlass ? 0.6 : 1}
+                roughness={b.materialType === 'texture' ? 0.8 : 0.5}
+              />
+            </mesh>
+          );
+        })}
+      </ModelWrapper>
+    );
+  }
 
   const renderAnimal = (bodyColor: string, bodyArgs: [number,number,number], headColor: string, headArgs: [number,number,number], headPos: [number,number,number], legColor: string, legArgs: [number,number,number], hasHorns?: boolean, hornColor?: string) => {
     const [bw, bh, bd] = bodyArgs;
@@ -2577,6 +2634,11 @@ export default function VoxelBuilder() {
   const [showFurnituresDropdown, setShowFurnituresDropdown] = useState(false);
   const [showLandscapeDropdown, setShowLandscapeDropdown] = useState(false);
   const [showItemsMenu, setShowItemsMenu] = useState(true);
+  const [showProductDesigner, setShowProductDesigner] = useState(false);
+  const [designerInitialBlocks, setDesignerInitialBlocks] = useState<any[]>([]);
+  const [isConvertingSelection, setIsConvertingSelection] = useState(false);
+  const [showCustomProductsDropdown, setShowCustomProductsDropdown] = useState(false);
+
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
@@ -2888,6 +2950,7 @@ export default function VoxelBuilder() {
               ...prev,
               isClassTime: currentStudent.isClassTime,
               customColors: currentStudent.customColors || prev.customColors,
+              customProducts: currentStudent.customProducts || prev.customProducts,
               unlockedAvatars: currentStudent.unlockedAvatars || prev.unlockedAvatars,
               pointsBalance: pendingSaveRef.current ? prev.pointsBalance : currentStudent.pointsBalance,
               landSize: currentStudent.landSize ?? prev.landSize,
@@ -2942,6 +3005,107 @@ export default function VoxelBuilder() {
   const blockCost = settings?.builderBlockCost ?? 50;
   const blockRefund = settings?.builderBlockRefund ?? 0;
   const shopItems: any[] = settings?.builderItems ?? [];
+  const customProducts: any[] = studentData?.customProducts ?? [];
+
+  const allItems: any[] = useMemo(() => {
+    const customAsItems = customProducts.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      emoji: p.emoji || "📦",
+      cost: p.cost ?? 0,
+      refundOnErase: p.refundOnErase ?? 0,
+      width: p.width ?? 1,
+      height: p.height ?? 1,
+      depth: p.depth ?? 1,
+      isCustomProduct: true,
+      blocks: p.blocks || [],
+    }));
+    return [...shopItems, ...customAsItems];
+  }, [shopItems, customProducts]);
+
+  const handleSaveCustomProduct = async (productData: CustomProductData, removeOriginals?: boolean) => {
+    if (!studentDataRef.current) return;
+    const existingProducts = studentDataRef.current.customProducts || [];
+    const updatedProducts = existingProducts.some((p: any) => p.id === productData.id)
+      ? existingProducts.map((p: any) => p.id === productData.id ? productData : p)
+      : [...existingProducts, productData];
+
+    let updatedObjects = objectsRef.current;
+    if (removeOriginals && prefabSelectionIds.length > 0) {
+      updatedObjects = updatedObjects.filter(o => !prefabSelectionIds.includes(getBlockId(o)));
+      objectsRef.current = updatedObjects;
+      setObjects(updatedObjects);
+      setPrefabSelectionIds([]);
+    }
+
+    const newStudentData = {
+      ...studentDataRef.current,
+      customProducts: updatedProducts
+    };
+    studentDataRef.current = newStudentData;
+    setStudentData(newStudentData);
+
+    setShowProductDesigner(false);
+    setDesignerInitialBlocks([]);
+    setIsConvertingSelection(false);
+
+    setToolMode('items');
+    setActiveItemId(productData.id);
+    setShowItemsMenu(true);
+    setShowCustomProductsDropdown(true);
+
+    try {
+      const res = await fetch('/api/students', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user?.id,
+          customProducts: updatedProducts,
+          ...(removeOriginals ? { worldBlocks: updatedObjects } : {})
+        })
+      });
+      if (!res.ok) throw new Error("Failed to save product");
+      showMessage(`Product "${productData.name}" added to Items!`, "success");
+    } catch (err) {
+      console.error(err);
+      showMessage("Failed to save product", "error");
+    }
+  };
+
+  const handleDeleteCustomProduct = async (productId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm("Delete this custom product from your items?")) return;
+    if (!studentDataRef.current) return;
+
+    const existingProducts = studentDataRef.current.customProducts || [];
+    const updatedProducts = existingProducts.filter((p: any) => p.id !== productId);
+
+    const newStudentData = {
+      ...studentDataRef.current,
+      customProducts: updatedProducts
+    };
+    studentDataRef.current = newStudentData;
+    setStudentData(newStudentData);
+
+    if (activeItemId === productId) {
+      setActiveItemId(null);
+    }
+
+    try {
+      await fetch('/api/students', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user?.id,
+          customProducts: updatedProducts
+        })
+      });
+      showMessage("Product deleted", "success");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   const isCustomColor = studentData?.customColors?.includes(activeColor);
   const actualBlockCost = isCustomColor ? 0 : blockCost;
@@ -3365,7 +3529,7 @@ export default function VoxelBuilder() {
 
   const placeItem = (x: number, y: number, z: number) => {
     if (!studentDataRef.current || !activeItemId) { showMessage("Select an item first!", "error"); return; }
-    const itemDef = shopItems.find((i: any) => i.id === activeItemId);
+    const itemDef = allItems.find((i: any) => i.id === activeItemId);
     if (!itemDef) return;
     const rx = Number(x.toFixed(2));
     const ry = Number(y.toFixed(2));
@@ -3407,7 +3571,7 @@ export default function VoxelBuilder() {
     const newObjects = currentObjects.filter(o => o !== obj && !(Math.abs(o.x - obj.x) < 0.05 && Math.abs(o.y - obj.y) < 0.05 && Math.abs(o.z - obj.z) < 0.05));
     let refund = 0;
     if (obj.type === 'item' && obj.itemId) {
-      const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+      const itemDef = allItems.find((i: any) => i.id === obj.itemId);
       refund = itemDef?.refundOnErase ?? 0;
     } else {
       refund = blockRefund;
@@ -3434,7 +3598,7 @@ export default function VoxelBuilder() {
     
     let refund = 0;
     if (last.type === 'item' && last.itemId) {
-      const itemDef = shopItems.find((i: any) => i.id === last.itemId);
+      const itemDef = allItems.find((i: any) => i.id === last.itemId);
       refund = itemDef?.cost ?? 0;
     } else if (last.type === 'large-roof') {
       refund = studentDataRef.current.customColors?.includes(last.color) ? 0 : (settings?.builderRoofCost ?? 100);
@@ -3524,7 +3688,7 @@ export default function VoxelBuilder() {
       {toolMode === 'items' && activeItemId && !showItemsMenu && !studentData?.isClassTime && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-amber-600/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg border border-amber-400 flex items-center gap-4">
           <span className="font-bold flex items-center gap-2">
-            Selected: <span className="text-xl">{shopItems.find((i: any) => i.id === activeItemId)?.emoji}</span> {shopItems.find((i: any) => i.id === activeItemId)?.name}
+            Selected: <span className="text-xl">{allItems.find((i: any) => i.id === activeItemId)?.emoji}</span> {allItems.find((i: any) => i.id === activeItemId)?.name}
           </span>
           <button onClick={() => setShowItemsMenu(true)} className="bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-lg text-sm font-black transition-colors">
             Change Item
@@ -3810,8 +3974,20 @@ export default function VoxelBuilder() {
         )}
 
         {toolMode === 'select' && prefabSelectionIds.length > 0 && (
-          <div className="flex gap-2">
-            <button 
+          <div className="flex gap-2 flex-wrap justify-center">
+            <button
+              onClick={() => {
+                const selected = objects.filter(o => prefabSelectionIds.includes(getBlockId(o)));
+                if (selected.length === 0) return;
+                setDesignerInitialBlocks(selected);
+                setIsConvertingSelection(true);
+                setShowProductDesigner(true);
+              }}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold px-4 py-2 rounded-xl shadow-md flex items-center gap-2 transition-transform active:scale-95 shrink-0 cursor-pointer"
+            >
+              <Sparkles className="w-5 h-5" /> ✨ Save as Custom Item ({prefabSelectionIds.length} blocks)
+            </button>
+            <button
               onClick={handleSavePrefab}
               className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl shadow-md flex items-center gap-2 transition-colors shrink-0">
               <Save className="w-5 h-5" /> Save Group as Prefab ({prefabSelectionIds.length} items)
@@ -3821,6 +3997,99 @@ export default function VoxelBuilder() {
 
         {toolMode === 'items' && showItemsMenu && (
           <div className="flex flex-wrap justify-center gap-2 pb-1 px-1 relative items-center w-full">
+            {/* Design New Product Button */}
+            <button
+              onClick={() => {
+                setDesignerInitialBlocks([]);
+                setIsConvertingSelection(false);
+                setShowProductDesigner(true);
+              }}
+              className="relative shrink-0 flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl border-[2px] border-dashed border-amber-400 bg-amber-50 hover:bg-amber-100 hover:scale-105 transition-all text-amber-700 cursor-pointer shadow-sm"
+              title="Design your own product block-by-block and add it as an item"
+            >
+              <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
+              <span className="text-[10px] font-black text-amber-900 leading-tight">Design</span>
+              <span className="text-[9px] font-black text-amber-600">Product</span>
+            </button>
+
+            {/* My Products Dropdown Button */}
+            <div className="relative shrink-0 flex flex-col items-center">
+              <button
+                onClick={() => setShowCustomProductsDropdown(!showCustomProductsDropdown)}
+                className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 cursor-pointer ${
+                  customProducts.some((p: any) => p.id === activeItemId)
+                    ? 'border-amber-500 bg-amber-50 scale-105'
+                    : 'border-amber-300 bg-white hover:bg-amber-50'
+                }`}
+                title="My Custom Products"
+              >
+                <span className="text-2xl leading-none">🎨</span>
+                <span className="text-[10px] font-black text-amber-900">My Items</span>
+                <span className="text-[9px] font-black text-amber-600">({customProducts.length})</span>
+              </button>
+
+              <AnimatePresence>
+                {showCustomProductsDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-amber-300 z-50 w-max max-w-lg overflow-x-auto items-center"
+                  >
+                    <button
+                      onClick={() => {
+                        setDesignerInitialBlocks([]);
+                        setIsConvertingSelection(false);
+                        setShowProductDesigner(true);
+                        setShowCustomProductsDropdown(false);
+                      }}
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow-sm cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Design New
+                    </button>
+
+                    {customProducts.length === 0 ? (
+                      <span className="text-xs text-amber-800 font-bold px-2 whitespace-nowrap">
+                        No custom items yet! Click &quot;Design New&quot; to build one.
+                      </span>
+                    ) : (
+                      customProducts.map((prod: any) => (
+                        <div key={prod.id} className="relative group shrink-0">
+                          <button
+                            onClick={() => {
+                              setActiveItemId(prod.id);
+                              setShowCustomProductsDropdown(false);
+                              setShowItemsMenu(false);
+                            }}
+                            className={`relative shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border-[3px] transition-transform hover:scale-105 cursor-pointer ${
+                              activeItemId === prod.id
+                                ? 'border-amber-500 bg-amber-50 scale-105'
+                                : 'border-transparent bg-white shadow-sm'
+                            }`}
+                            title={`${prod.name} (${prod.blocks?.length || 0} blocks) — ${prod.cost} pts`}
+                          >
+                            <span className="text-2xl leading-none">{prod.emoji || '📦'}</span>
+                            <span className="text-[10px] font-black text-gray-700 max-w-[80px] truncate">{prod.name}</span>
+                            <span className="text-[9px] font-black text-amber-600">
+                              {prod.cost > 0 ? `-${prod.cost} pts` : 'Free'}
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={(e) => handleDeleteCustomProduct(prod.id, e)}
+                            className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer"
+                            title="Delete custom product"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {shopItems.filter((i: any) => !['lemborgini', 'defender', 'truck', 'bike', 'bus', 'jeep', 'helicopter', 'cat', 'horse', 'cow', 'goat', 'pig', 'dog', 'chicken', 'tree', 'pine_tree_big', 'pine_tree_small', 'oak_tree_big', 'oak_tree_small', 'palm_tree', 'bench', 'bed', 'table', 'stool', 'sofa', 'chair', 'bookshelf', 'wardrobe', 'street_light', 'fountain', 'park_bench', 'gazebo', 'fire_pit', 'picnic_table', 'hedge', 'bird_bath', 'mailbox', 'trash_can'].includes(i.id)).map((item: any) => (
               <button key={item.id}
                 onClick={() => { setActiveItemId(item.id); setShowItemsMenu(false); }}
@@ -4279,7 +4548,7 @@ export default function VoxelBuilder() {
                 })}
 
                 {items.map((obj, idx) => {
-                  const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+                  const itemDef = allItems.find((i: any) => i.id === obj.itemId);
                   return <ItemObject key={idx} data={obj} itemDef={itemDef} onClick={handleItemClick} isDragging={isDraggingFn} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
                 })}
               </>
@@ -4302,7 +4571,7 @@ export default function VoxelBuilder() {
               drivingVehicle ? 
               <ItemObject 
                 data={{ ...drivingVehicle, x: 0, y: 0.5, z: 0, rotationY: 0 }} 
-                itemDef={shopItems.find((i: any) => i.id === drivingVehicle.itemId)} 
+                itemDef={allItems.find((i: any) => i.id === drivingVehicle.itemId)} 
                 onClick={() => {}} 
                 isDragging={() => false} 
               /> : undefined
@@ -4332,7 +4601,21 @@ export default function VoxelBuilder() {
             />
           )}
         </Canvas>
-      </main>
+            {showProductDesigner && (
+        <ProductDesignerModal
+          initialBlocks={designerInitialBlocks}
+          blockCost={actualBlockCost}
+          customColors={studentData?.customColors || []}
+          isConvertingFromWorld={isConvertingSelection}
+          onSave={handleSaveCustomProduct}
+          onClose={() => {
+            setShowProductDesigner(false);
+            setDesignerInitialBlocks([]);
+            setIsConvertingSelection(false);
+          }}
+        />
+      )}
+    </main>
     </div>
   );
 }

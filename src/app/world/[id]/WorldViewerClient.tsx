@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, useRef } from "react";
+import { useEffect, useState, use, useRef, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
@@ -229,6 +229,62 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
       {children}
     </group>
   );
+
+  // Custom Product rendering (compound blocks designed by student)
+  if (itemDef?.isCustomProduct || (itemDef?.blocks && itemDef.blocks.length > 0)) {
+    const blocks = itemDef.blocks || [];
+    return (
+      <ModelWrapper>
+        {blocks.map((b: any, bIdx: number) => {
+          const bw = b.width ?? b.w ?? 1;
+          const bh = b.thickness ?? b.h ?? 1;
+          const bd = b.depth ?? b.d ?? 1;
+          const bRotY = b.rotationY || 0;
+          const bRotX = b.rotationX || 0;
+          const bRotZ = b.rotationZ || 0;
+          const posY = (b.y ?? 0) + bh / 2;
+          const posX = b.x ?? 0;
+          const posZ = b.z ?? 0;
+
+          let geom: React.ReactNode = null;
+          if (b.type === 'roof') {
+            geom = <coneGeometry args={[0.71, 1, 4]} />;
+          } else if (b.blockShape === 'wedge') {
+            geom = <primitive object={getWedgeGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'pyramid') {
+            geom = <primitive object={getPyramidGeometry()} attach="geometry" />;
+          } else if (b.curveness && b.curveness > 0) {
+            geom = <primitive object={getCurvedGeometry(b.curveness)} attach="geometry" />;
+          } else {
+            geom = <boxGeometry args={[1, 1, 1]} />;
+          }
+
+          const isGlass = b.materialType === 'glass' || b.color === '#ADD8E6';
+          const texture = b.materialType === 'texture' && b.textureId && TEXTURES[b.textureId] ? TEXTURES[b.textureId] : null;
+
+          return (
+            <mesh
+              key={bIdx}
+              position={[posX, posY, posZ]}
+              rotation={[bRotX, bRotY, bRotZ]}
+              scale={[bw, bh, bd]}
+              castShadow
+              receiveShadow
+            >
+              {geom}
+              <meshStandardMaterial
+                color={b.color || '#8B5A2B'}
+                map={texture}
+                transparent={isGlass}
+                opacity={isGlass ? 0.6 : 1}
+                roughness={b.materialType === 'texture' ? 0.8 : 0.5}
+              />
+            </mesh>
+          );
+        })}
+      </ModelWrapper>
+    );
+  }
 
   const renderAnimal = (bodyColor: string, bodyArgs: [number,number,number], headColor: string, headArgs: [number,number,number], headPos: [number,number,number], legColor: string, legArgs: [number,number,number], hasHorns?: boolean, hornColor?: string) => {
     const [bw, bh, bd] = bodyArgs;
@@ -2519,7 +2575,24 @@ export default function WorldViewer() {
     </div>
   );
 
-  const shopItems: any[] = worldData.builderItems || [];
+    const shopItems: any[] = worldData.builderItems || [];
+  const customProducts: any[] = worldData.customProducts || [];
+  const allItems = useMemo(() => {
+    const customAsItems = customProducts.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      emoji: p.emoji || "📦",
+      cost: p.cost ?? 0,
+      refundOnErase: p.refundOnErase ?? 0,
+      width: p.width ?? 1,
+      height: p.height ?? 1,
+      depth: p.depth ?? 1,
+      isCustomProduct: true,
+      blocks: p.blocks || [],
+    }));
+    return [...shopItems, ...customAsItems];
+  }, [shopItems, customProducts]);
+
 
   const handleEnterVehicle = (obj: PlacedObject) => {
     setDrivingVehicle(obj);
@@ -2598,7 +2671,7 @@ export default function WorldViewer() {
                 <ChunkedBlocks objects={objects} textures={TEXTURES} />
 
                 {items.map((obj, idx) => {
-                  const itemDef = shopItems.find((i: any) => i.id === obj.itemId);
+                  const itemDef = allItems.find((i: any) => i.id === obj.itemId);
                   if (obj === drivingVehicle) return null;
                   return <ItemObject key={idx} data={obj} itemDef={itemDef} onEnterVehicle={() => handleEnterVehicle(obj)} isExploreMode={isExploreMode} />;
                 })}
@@ -2615,7 +2688,7 @@ export default function WorldViewer() {
               drivingVehicle ? 
               <ItemObject 
                 data={{ ...drivingVehicle, x: 0, y: 0.5, z: 0, rotationY: 0 }} 
-                itemDef={shopItems.find((i: any) => i.id === drivingVehicle.itemId)} 
+                itemDef={allItems.find((i: any) => i.id === drivingVehicle.itemId)} 
               /> : undefined
             }
           />}

@@ -1,5 +1,40 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface ICustomProductBlock {
+  x: number;
+  y: number;
+  z: number;
+  color: string;
+  type?: 'block' | 'item' | 'roof' | 'large-roof';
+  itemId?: string;
+  rotationY?: number;
+  rotationX?: number;
+  rotationZ?: number;
+  thickness?: number;
+  depth?: number;
+  w?: number;
+  d?: number;
+  h?: number;
+  width?: number;
+  curveness?: number;
+  blockShape?: 'box' | 'wedge' | 'pyramid';
+  materialType?: string;
+  textureId?: string;
+}
+
+export interface ICustomProduct {
+  id: string;
+  name: string;
+  emoji: string;
+  cost?: number;
+  refundOnErase?: number;
+  width?: number;
+  height?: number;
+  depth?: number;
+  blocks: ICustomProductBlock[];
+  createdAt?: Date;
+}
+
 export interface IStudent extends Document {
   teacherId: mongoose.Types.ObjectId;
   name: string;
@@ -46,6 +81,7 @@ export interface IStudent extends Document {
     materialType?: string;
     textureId?: string;
   }>;
+  customProducts?: ICustomProduct[];
   mannersEnabled?: boolean;
   mannersList?: { task: string; maxStars: number; id: string }[];
   revisionEnabled?: boolean;
@@ -124,6 +160,23 @@ const StudentSchema = new Schema<IStudent>(
           blockShape: String,
           materialType: String,
           textureId: String
+        }
+      ],
+      default: []
+    },
+    customProducts: {
+      type: [
+        {
+          id: { type: String, required: true },
+          name: { type: String, required: true },
+          emoji: { type: String, default: "📦" },
+          cost: { type: Number, default: 0 },
+          refundOnErase: { type: Number, default: 0 },
+          width: { type: Number, default: 1 },
+          height: { type: Number, default: 1 },
+          depth: { type: Number, default: 1 },
+          blocks: { type: Array, default: [] },
+          createdAt: { type: Date, default: Date.now },
         }
       ],
       default: []

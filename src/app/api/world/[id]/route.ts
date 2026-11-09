@@ -9,7 +9,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (!id) return NextResponse.json({ error: "Student ID is required" }, { status: 400 });
 
     await connectToDatabase();
-    const student = await Student.findById(id).select("name worldBlocks landSize teacherId").lean();
+    const student = await Student.findById(id).select("name worldBlocks landSize teacherId customProducts").lean();
     if (!student) return NextResponse.json({ error: "World not found" }, { status: 404 });
 
     const settings = await Settings.findOne({ key: "config", teacherId: student.teacherId })
@@ -22,6 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       landSize: student.landSize || 50,
       builderQuote: settings?.value?.builderQuote || "",
       builderItems: settings?.value?.builderItems || [],
+      customProducts: (student as any).customProducts || [],
     });
 
     // Cache at Vercel Edge for 60s with stale-while-revalidate for fast CDN delivery
