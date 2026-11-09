@@ -11,7 +11,7 @@ import Navbar from "@/components/Navbar";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from "@/components/Player";
 import { CameraBounds } from "@/components/CameraBounds";
 import { HelicopterModel } from "@/components/HelicopterModel";
-import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry, getSphereGeometry, getCylinderGeometry, getConeGeometry, getTorusGeometry, getDomeGeometry } from "@/components/BlockGeometries";
 import { ChunkedBlocks } from "@/components/ChunkedBlocks";
 
 export type PlacedObject = {
@@ -253,6 +253,16 @@ function ItemObject({ data, itemDef, onEnterVehicle, isExploreMode }: { data: Pl
             geom = <primitive object={getWedgeGeometry()} attach="geometry" />;
           } else if (b.blockShape === 'pyramid') {
             geom = <primitive object={getPyramidGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'sphere') {
+            geom = <primitive object={getSphereGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'cylinder') {
+            geom = <primitive object={getCylinderGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'cone') {
+            geom = <primitive object={getConeGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'torus') {
+            geom = <primitive object={getTorusGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'dome') {
+            geom = <primitive object={getDomeGeometry()} attach="geometry" />;
           } else if (b.curveness && b.curveness > 0) {
             geom = <primitive object={getCurvedGeometry(b.curveness)} attach="geometry" />;
           } else {

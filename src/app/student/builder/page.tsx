@@ -6,13 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, MapControls, Html, Text, BakeShadows, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
-import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box, Save, Sparkles, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, Pickaxe, Undo2, Lock, Eraser, Hammer, TreePine, PaintBucket, Triangle, Info, RotateCw, Share2, Gamepad2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, MousePointer2, Copy, Box, Save, Sparkles, Plus, Trash2, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { Player, usePlayerKeyboardControls, MobileDPad, playerState } from '@/components/Player';
 import { CameraBounds } from "@/components/CameraBounds";
 import { HelicopterModel } from "@/components/HelicopterModel";
-import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry } from "@/components/BlockGeometries";
+import { getCurvedGeometry, getRoofGeometry, getWedgeGeometry, getPyramidGeometry, getSphereGeometry, getCylinderGeometry, getConeGeometry, getTorusGeometry, getDomeGeometry } from "@/components/BlockGeometries";
 import { GroupGizmo } from "./GroupGizmo";
 import { ChunkedBlocks, getBoxProps } from "@/components/ChunkedBlocks";
 import { ProductDesignerModal, CustomProductData } from "./ProductDesignerModal";
@@ -305,6 +305,16 @@ function ItemObject({ data, itemDef, onClick, isDragging, onEnterVehicle, isExpl
             geom = <primitive object={getWedgeGeometry()} attach="geometry" />;
           } else if (b.blockShape === 'pyramid') {
             geom = <primitive object={getPyramidGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'sphere') {
+            geom = <primitive object={getSphereGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'cylinder') {
+            geom = <primitive object={getCylinderGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'cone') {
+            geom = <primitive object={getConeGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'torus') {
+            geom = <primitive object={getTorusGeometry()} attach="geometry" />;
+          } else if (b.blockShape === 'dome') {
+            geom = <primitive object={getDomeGeometry()} attach="geometry" />;
           } else if (b.curveness && b.curveness > 0) {
             geom = <primitive object={getCurvedGeometry(b.curveness)} attach="geometry" />;
           } else {
@@ -2638,6 +2648,7 @@ export default function VoxelBuilder() {
   const [designerInitialBlocks, setDesignerInitialBlocks] = useState<any[]>([]);
   const [isConvertingSelection, setIsConvertingSelection] = useState(false);
   const [showCustomProductsDropdown, setShowCustomProductsDropdown] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   const [showAvatars, setShowAvatars] = useState(false);
   const [showLandUpgrade, setShowLandUpgrade] = useState(false);
@@ -2655,7 +2666,7 @@ export default function VoxelBuilder() {
   const [activeDepth, setActiveDepth] = useState<number>(1);
   const [activeCurveness, setActiveCurveness] = useState<number>(0);
   const [activeRotation, setActiveRotation] = useState<number>(0);
-  const [activeShape, setActiveShape] = useState<'box' | 'wedge' | 'pyramid'>('box');
+  const [activeShape, setActiveShape] = useState<'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome'>('box');
   const [isEditingBlocks, setIsEditingBlocks] = useState(false);
   const isEditingRef = useRef(false);
   useEffect(() => { isEditingRef.current = isEditingBlocks; }, [isEditingBlocks]);
@@ -2740,7 +2751,7 @@ export default function VoxelBuilder() {
     if (isEditingBlocks) updateSelectedBlocks({ curveness: val });
   };
 
-  const handleShapeChange = (shape: 'box' | 'wedge' | 'pyramid') => {
+  const handleShapeChange = (shape: 'box' | 'wedge' | 'pyramid' | 'sphere' | 'cylinder' | 'cone' | 'torus' | 'dome') => {
     setActiveShape(shape);
     if (isEditingBlocks) updateSelectedBlocks({ blockShape: shape });
   };
@@ -3023,6 +3034,15 @@ export default function VoxelBuilder() {
     return [...shopItems, ...customAsItems];
   }, [shopItems, customProducts]);
 
+    const handleStartEditProduct = (prod: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingProduct(prod);
+    setDesignerInitialBlocks(prod.blocks || []);
+    setIsConvertingSelection(false);
+    setShowProductDesigner(true);
+    setShowCustomProductsDropdown(false);
+  };
+
   const handleSaveCustomProduct = async (productData: CustomProductData, removeOriginals?: boolean) => {
     if (!studentDataRef.current) return;
     const existingProducts = studentDataRef.current.customProducts || [];
@@ -3065,7 +3085,9 @@ export default function VoxelBuilder() {
         })
       });
       if (!res.ok) throw new Error("Failed to save product");
-      showMessage(`Product "${productData.name}" added to Items!`, "success");
+      const wasEditing = Boolean(editingProduct);
+      setEditingProduct(null);
+      showMessage(wasEditing ? `Product "${productData.name}" updated!` : `Product "${productData.name}" added to Items!`, "success");
     } catch (err) {
       console.error(err);
       showMessage("Failed to save product", "error");
@@ -3685,12 +3707,24 @@ export default function VoxelBuilder() {
         </div>
       )}
 
-      {toolMode === 'items' && activeItemId && !showItemsMenu && !studentData?.isClassTime && (
+            {toolMode === 'items' && activeItemId && !showItemsMenu && !studentData?.isClassTime && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-amber-600/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-lg border border-amber-400 flex items-center gap-4">
           <span className="font-bold flex items-center gap-2">
             Selected: <span className="text-xl">{allItems.find((i: any) => i.id === activeItemId)?.emoji}</span> {allItems.find((i: any) => i.id === activeItemId)?.name}
           </span>
-          <button onClick={() => setShowItemsMenu(true)} className="bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-lg text-sm font-black transition-colors">
+          {customProducts.some((p: any) => p.id === activeItemId) && (
+            <button
+              onClick={() => {
+                const prod = customProducts.find((p: any) => p.id === activeItemId);
+                if (prod) handleStartEditProduct(prod);
+              }}
+              className="bg-amber-700/80 hover:bg-amber-700 px-3 py-1.5 rounded-xl text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Edit this item's blocks and shapes"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit Design
+            </button>
+          )}
+          <button onClick={() => setShowItemsMenu(true)} className="bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-lg text-sm font-black transition-colors cursor-pointer">
             Change Item
           </button>
         </div>
@@ -4076,8 +4110,16 @@ export default function VoxelBuilder() {
                           </button>
 
                           <button
+                            onClick={(e) => handleStartEditProduct(prod, e)}
+                            className="absolute -top-1 -left-1 bg-sky-500 hover:bg-sky-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
+                            title="Edit product design & shapes"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+
+                          <button
                             onClick={(e) => handleDeleteCustomProduct(prod.id, e)}
-                            className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer"
+                            className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer z-10"
                             title="Delete custom product"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -4603,13 +4645,18 @@ export default function VoxelBuilder() {
         </Canvas>
             {showProductDesigner && (
         <ProductDesignerModal
+          initialProductId={editingProduct?.id}
           initialBlocks={designerInitialBlocks}
+          initialName={editingProduct?.name}
+          initialEmoji={editingProduct?.emoji}
+          initialCost={editingProduct?.cost}
           blockCost={actualBlockCost}
           customColors={studentData?.customColors || []}
           isConvertingFromWorld={isConvertingSelection}
           onSave={handleSaveCustomProduct}
           onClose={() => {
             setShowProductDesigner(false);
+            setEditingProduct(null);
             setDesignerInitialBlocks([]);
             setIsConvertingSelection(false);
           }}
