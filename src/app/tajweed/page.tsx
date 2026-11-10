@@ -7,10 +7,7 @@ import * as THREE from "three";
 import {
   Play,
   RotateCcw,
-  Compass,
   Eye,
-  Smile,
-  ArrowUpCircle,
   Palette,
   Layers,
   Sparkles,
@@ -856,7 +853,6 @@ export default function TajweedStudioPage() {
 
   // Default starting letter: Qaaf (ق)
   const [currentLetter, setCurrentLetter] = useState<LetterPreset>(LETTER_PRESETS[0]);
-  const [activeCam, setActiveCam] = useState<'3/4' | 'profile' | 'front' | 'palate'>('3/4');
   const [dhaadMode, setDhaadMode] = useState<'right' | 'left' | 'both'>('right');
   const [showAnatomy, setShowAnatomy] = useState<boolean>(false);
   const [isGearsOpen, setIsGearsOpen] = useState<boolean>(false);
@@ -873,6 +869,23 @@ export default function TajweedStudioPage() {
   const simulationStartTimeRef = useRef(0);
   const morphProgressRef = useRef(1.0);
   const isRestingAtAlifRef = useRef(false);
+
+  // Default camera viewpoint (3/4 dental perspective)
+  const DEFAULT_CAM = useMemo(() => ({
+    radius: 3.28,
+    theta: -1.36,
+    phi: 1.48,
+    target: new THREE.Vector3(0.0, -0.04, 0.06)
+  }), []);
+
+  const camAnimRef = useRef<{
+    startRadius: number;
+    startTheta: number;
+    targetTheta: number;
+    startPhi: number;
+    startTime: number;
+    duration: number;
+  } | null>(null);
 
   // Three.js and Gear targets
   const targetGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
@@ -920,25 +933,36 @@ export default function TajweedStudioPage() {
     animFrameId: number;
   } | null>(null);
 
-  // Set camera view
-  const setCameraView = (view: '3/4' | 'profile' | 'front' | 'palate') => {
-    setActiveCam(view);
+  // Reset camera viewpoint to default perspective
+  const resetCameraToDefault = (smooth = true) => {
     if (!sceneElementsRef.current) return;
     const { spherical, camera } = sceneElementsRef.current;
-    if (view === '3/4') {
-      spherical.radius = 3.28; spherical.theta = -1.36; spherical.phi = 1.48;
-    } else if (view === 'profile') {
-      spherical.radius = 3.28; spherical.theta = -Math.PI / 2; spherical.phi = 1.50;
-    } else if (view === 'front') {
-      spherical.radius = 3.22; spherical.theta = 0.0; spherical.phi = 1.46;
-    } else if (view === 'palate') {
-      spherical.radius = 3.1; spherical.theta = 0.35; spherical.phi = 2.15;
+    if (!smooth) {
+      camAnimRef.current = null;
+      spherical.radius = DEFAULT_CAM.radius;
+      spherical.theta = DEFAULT_CAM.theta;
+      spherical.phi = DEFAULT_CAM.phi;
+      spherical.target.copy(DEFAULT_CAM.target);
+      camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(spherical.target);
+      return;
     }
-    const { radius, theta, phi, target } = spherical;
-    camera.position.x = target.x + radius * Math.sin(phi) * Math.sin(theta);
-    camera.position.y = target.y + radius * Math.cos(phi);
-    camera.position.z = target.z + radius * Math.sin(phi) * Math.cos(theta);
-    camera.lookAt(target);
+
+    // Shortest angular difference
+    let diffTheta = (DEFAULT_CAM.theta - (spherical.theta % (Math.PI * 2)));
+    while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
+    while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
+
+    camAnimRef.current = {
+      startRadius: spherical.radius,
+      startTheta: spherical.theta,
+      targetTheta: spherical.theta + diffTheta,
+      startPhi: spherical.phi,
+      startTime: performance.now(),
+      duration: 380
+    };
   };
 
   // Change active letter
@@ -949,6 +973,7 @@ export default function TajweedStudioPage() {
     morphProgressRef.current = 1.0;
     targetGearsRef.current = { ...preset.gears };
     setUpperTeethOpacity(preset.gears.upperOpacity ?? 56);
+    resetCameraToDefault(true);
   };
 
   // Adjust gear slider
@@ -1502,10 +1527,11 @@ export default function TajweedStudioPage() {
       for (let iu = 0; iu < LIP_SEGS_U; iu++) {
         for (let iv = 0; iv < LIP_SEGS_V; iv++) {
           const a = iu * (LIP_SEGS_V + 1) + iv;
-          const b = a + 1;
-          const c = (iu + 1) * (LIP_SEGS_V + 1) + iv;
-          const d = c + 1;
-          ind.push(a, b, c, b, d, c);
+          const b = (iu + 1) * (LIP_SEGS_V + 1) + iv;
+          const c = (iu + 1) * (LIP_SEGS_V + 1) + (iv + 1);
+          const d = iu * (LIP_SEGS_V + 1) + (iv + 1);
+          ind.push(a, b, d);
+          ind.push(b, c, d);
         }
       }
       geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -1517,6 +1543,127 @@ export default function TajweedStudioPage() {
     const lowerLipMesh = createLipMesh();
     lipsGroup.add(upperLipMesh);
     lipsGroup.add(lowerLipMesh);
+
+    const updateRealLipsGeometry = (lipMode: string) => {
+      const showMarker = showMakhrajColors && !showAnatomy;
+      const makhrajMorphProgress = morphProgressRef.current;
+      [
+        { mesh: upperLipMesh, isUpper: true },
+        { mesh: lowerLipMesh, isUpper: false }
+      ].forEach(({ mesh, isUpper }) => {
+        const posArr = mesh.geometry.attributes.position.array as Float32Array;
+        const colArr = mesh.geometry.attributes.color.array as Float32Array;
+        let pPtr = 0, cPtr = 0;
+
+        for (let iu = 0; iu <= LIP_SEGS_U; iu++) {
+          const u = (iu / LIP_SEGS_U) * 2 - 1;
+          const isEnd = (iu === 0 || iu === LIP_SEGS_U);
+          const cornerTaper = isEnd ? 0.0 : Math.pow(Math.max(0.0, 1.0 - u * u), 0.55);
+
+          if (lipMode === 'rounded_waw') {
+            const ringAngle = u * (Math.PI * 0.5);
+            const ringRadius = 0.148;
+            const cx = Math.sin(ringAngle) * ringRadius;
+            const cyDir = isUpper ? Math.cos(ringAngle) : -Math.cos(ringAngle);
+            const cy = 0.015 + cyDir * ringRadius;
+            const cz = 1.04 + Math.cos(ringAngle) * 0.085;
+            const tubeR = isEnd ? 0.0 : (0.024 + 0.042 * (0.35 + 0.65 * Math.cos(ringAngle)));
+            const radX = Math.sin(ringAngle);
+            const radY = cyDir;
+
+            for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
+              const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
+              const cosT = Math.cos(theta), sinT = Math.sin(theta);
+              const rOffset = sinT * tubeR;
+              const zOffset = cosT * tubeR * 1.15;
+
+              const alifX = Math.sin(u * (Math.PI * 0.36)) * 0.48;
+              const alifZ = 0.60 + Math.cos(u * (Math.PI * 0.36)) * 0.40 + rOffset * 0.6;
+              const alifY = (isUpper ? (0.01 + 0.14 * cornerTaper) : (0.01 - 0.14 * cornerTaper)) + rOffset;
+
+              const targetX = cx + radX * rOffset;
+              const targetY = cy + radY * rOffset;
+              const targetZ = cz + zOffset;
+
+              posArr[pPtr++] = alifX + (targetX - alifX) * makhrajMorphProgress;
+              posArr[pPtr++] = alifY + (targetY - alifY) * makhrajMorphProgress;
+              posArr[pPtr++] = alifZ + (targetZ - alifZ) * makhrajMorphProgress;
+
+              let rL = 0.72, gL = 0.25, bL = 0.30;
+              if (showMarker && currentLetter && currentLetter.id === 'waw') {
+                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.72, 2));
+                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.78, 2));
+                const pW = Math.min(0.85, innerRim * 0.88) * makhrajMorphProgress;
+                const sW = Math.min(0.68, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
+                rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+                gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+                bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+              }
+              colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
+            }
+            continue;
+          }
+
+          const archAngle = u * (Math.PI * 0.36);
+          const baseArchX = Math.sin(archAngle) * 0.48;
+          const baseArchZ = 0.60 + Math.cos(archAngle) * 0.40;
+          const cornerY = 0.01;
+          const halfThickZ = isEnd ? 0.0 : (0.008 + 0.050 * cornerTaper);
+          const halfHeightY = isEnd ? 0.0 : (0.008 + 0.052 * cornerTaper);
+
+          for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
+            const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
+            const cosT = Math.cos(theta), sinT = Math.sin(theta);
+            let centerY = isUpper ? (0.018 + halfHeightY * 0.88) : (0.018 - halfHeightY * 0.88);
+            let centerZ = baseArchZ + 0.034 * cornerTaper;
+            let localY = sinT * halfHeightY;
+            let localZ = cosT * halfThickZ;
+
+            if (lipMode === 'faa_labiodental') {
+              centerY = isUpper ? (cornerY + 0.22 * cornerTaper) : (cornerY - 0.036 * cornerTaper);
+              centerZ = isUpper ? (baseArchZ + 0.028 * cornerTaper) : (baseArchZ - 0.024 * cornerTaper);
+              if (!isUpper && sinT > 0 && cosT < 0.25) {
+                localZ -= 0.020 * sinT * cornerTaper * makhrajMorphProgress;
+                localY += 0.015 * sinT * cornerTaper * makhrajMorphProgress;
+              }
+            }
+
+            const alifCenterY = isUpper ? (cornerY + 0.14 * cornerTaper) : (cornerY - 0.14 * cornerTaper);
+            const alifCenterZ = baseArchZ + 0.015 * cornerTaper;
+            const curCenterY = alifCenterY + (centerY - alifCenterY) * makhrajMorphProgress;
+            const curCenterZ = alifCenterZ + (centerZ - alifCenterZ) * makhrajMorphProgress;
+
+            posArr[pPtr++] = baseArchX;
+            posArr[pPtr++] = curCenterY + localY;
+            posArr[pPtr++] = curCenterZ + localZ;
+
+            let rL = 0.72, gL = 0.25, bL = 0.30;
+            if (showMarker && currentLetter) {
+              const lid = currentLetter.id;
+              let pW = 0.0, sW = 0.0;
+              if (lid === 'faa' && !isUpper) {
+                const centerZone = Math.exp(-Math.pow(u / 0.28, 2));
+                const topBelly = Math.max(0.0, sinT);
+                pW = Math.min(0.88, centerZone * topBelly * 1.05) * makhrajMorphProgress;
+                sW = Math.min(0.65, Math.exp(-Math.pow(u / 0.45, 2)) * topBelly * 0.75 * (1.0 - pW)) * makhrajMorphProgress;
+              } else if (lid === 'baa' || lid === 'meem') {
+                const seamContact = isUpper ? Math.max(0.0, -sinT) : Math.max(0.0, sinT);
+                const centerSpan = Math.exp(-Math.pow(u / 0.44, 2));
+                pW = Math.min(0.86, seamContact * centerSpan * (lid === 'baa' ? 1.08 : 0.88)) * makhrajMorphProgress;
+                sW = Math.min(0.64, Math.max(0.0, cosT) * centerSpan * 0.60 * (1.0 - pW)) * makhrajMorphProgress;
+              }
+              rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+              gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+              bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+            }
+            colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
+          }
+        }
+        mesh.geometry.attributes.position.needsUpdate = true;
+        mesh.geometry.attributes.color.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+      });
+    };
 
     // Anatomy 3D Arrows & DOM Callouts
     const anatomyGroup = new THREE.Group();
@@ -1618,6 +1765,7 @@ export default function TajweedStudioPage() {
     let prevPointer = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
+      camAnimRef.current = null;
       isDragging = true;
       prevPointer = { x: e.clientX, y: e.clientY };
     };
@@ -1636,6 +1784,7 @@ export default function TajweedStudioPage() {
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      camAnimRef.current = null;
       spherical.radius = Math.max(1.8, Math.min(6.5, spherical.radius + e.deltaY * 0.0025));
       updateCamPos();
     };
@@ -1649,6 +1798,7 @@ export default function TajweedStudioPage() {
     // Touch controls
     let prevTouchDist = 0;
     const onTouchMove = (e: TouchEvent) => {
+      camAnimRef.current = null;
       if (e.touches.length === 2) {
         const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         if (prevTouchDist > 0) {
@@ -1732,6 +1882,9 @@ export default function TajweedStudioPage() {
       lowerJawPivot.position.y = -jawOpenFactor * 0.04;
 
       lipsGroup.visible = Boolean(currentLetter.showLips && !showAnatomy);
+      if (lipsGroup.visible) {
+        updateRealLipsGeometry(currentLetter.lipMode || 'bilabial_closed');
+      }
 
       // Tongue vertices deformation
       const dorsalMode = currentLetter.dorsalMode || 'istila_cup';
@@ -2118,6 +2271,27 @@ export default function TajweedStudioPage() {
       tongueGeom.attributes.color.needsUpdate = true;
       tongueGeom.computeVertexNormals();
 
+      // Smooth camera transition back to default position if animating
+      if (camAnimRef.current) {
+        const elapsed = performance.now() - camAnimRef.current.startTime;
+        const tNorm = Math.min(1.0, elapsed / camAnimRef.current.duration);
+        const ease = tNorm < 0.5 ? 2 * tNorm * tNorm : -1 + (4 - 2 * tNorm) * tNorm;
+        spherical.radius = camAnimRef.current.startRadius + (DEFAULT_CAM.radius - camAnimRef.current.startRadius) * ease;
+        spherical.theta = camAnimRef.current.startTheta + (camAnimRef.current.targetTheta - camAnimRef.current.startTheta) * ease;
+        spherical.phi = camAnimRef.current.startPhi + (DEFAULT_CAM.phi - camAnimRef.current.startPhi) * ease;
+        spherical.target.copy(DEFAULT_CAM.target);
+        updateCamPos();
+
+        if (tNorm >= 1.0) {
+          camAnimRef.current = null;
+          spherical.theta = DEFAULT_CAM.theta;
+          spherical.radius = DEFAULT_CAM.radius;
+          spherical.phi = DEFAULT_CAM.phi;
+          spherical.target.copy(DEFAULT_CAM.target);
+          updateCamPos();
+        }
+      }
+
       // Update 3D anatomy callouts
       if (showAnatomy) {
         anatomyGroup.visible = true;
@@ -2210,10 +2384,7 @@ export default function TajweedStudioPage() {
         anatomy: 'أقسام الفم',
         selectLetter: 'اختر الحرف:',
         simulate: 'محاكاة الحركة (ألف ← المخرج)',
-        view34: 'مائل ٣/٤',
-        viewProfile: 'جانبي',
-        viewFront: 'أمامي',
-        viewPalate: 'الحنك',
+        resetView: 'إعادة العرض',
         makhrajColors: 'ألوان المخرج',
         palate: 'الحنك',
         upperTeeth: 'الأسنان العليا',
@@ -2240,10 +2411,7 @@ export default function TajweedStudioPage() {
       anatomy: 'Anatomy Parts (أقسام الفم)',
       selectLetter: 'Letter (الحرف):',
       simulate: 'Simulate Motion (ألف ← المخرج)',
-      view34: '3/4 View',
-      viewProfile: 'Profile',
-      viewFront: 'Front',
-      viewPalate: 'Palate',
+      resetView: 'Reset View',
       makhrajColors: 'Makhraj Marks',
       palate: 'Palate',
       upperTeeth: 'Upper Teeth',
@@ -2328,63 +2496,23 @@ export default function TajweedStudioPage() {
         {/* 3D Viewport Section (Immediately after Letter Selection Tab) */}
         <section className="flex flex-col gap-2">
 
-          {/* Viewport Toolbar: Camera Views & Element Toggles */}
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-            
-            {/* Camera Angle Pills */}
-            <div className="inline-flex p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200/80 dark:border-gray-700">
-              <button
-                onClick={() => setCameraView('3/4')}
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                  activeCam === '3/4'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>{t.view34}</span>
-              </button>
-              <button
-                onClick={() => setCameraView('profile')}
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                  activeCam === 'profile'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>{t.viewProfile}</span>
-              </button>
-              <button
-                onClick={() => setCameraView('front')}
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                  activeCam === 'front'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Smile className="w-3.5 h-3.5" />
-                <span>{t.viewFront}</span>
-              </button>
-              <button
-                onClick={() => setCameraView('palate')}
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                  activeCam === 'palate'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <ArrowUpCircle className="w-3.5 h-3.5" />
-                <span>{t.viewPalate}</span>
-              </button>
+          {/* 3D Canvas Container */}
+          <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[380px] sm:h-[460px]">
+            <div
+              ref={containerRef}
+              className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
+            >
+              <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
             </div>
+          </div>
 
-            {/* Viewport Toggles */}
+          {/* Viewport Toggles Toolbar (Shown directly after 3D canvas) */}
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
-              {/* Anatomy Parts Toggle Button (shows directly in normal 3D space!) */}
+              {/* Anatomy Parts Toggle Button */}
               <button
                 onClick={() => setShowAnatomy(!showAnatomy)}
-                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
                   showAnatomy
                     ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
                     : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
@@ -2396,7 +2524,7 @@ export default function TajweedStudioPage() {
 
               <button
                 onClick={() => setShowMakhrajColors(!showMakhrajColors)}
-                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
                   showMakhrajColors
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
                     : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
@@ -2408,7 +2536,7 @@ export default function TajweedStudioPage() {
 
               <button
                 onClick={() => setShowPalate(!showPalate)}
-                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
                   showPalate
                     ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
                     : 'opacity-50 border-transparent text-slate-400'
@@ -2417,7 +2545,7 @@ export default function TajweedStudioPage() {
                 <span>{t.palate}</span>
               </button>
 
-              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-gray-700">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
                 <button
                   onClick={() => setShowUpperTeeth(!showUpperTeeth)}
                   className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
@@ -2439,7 +2567,7 @@ export default function TajweedStudioPage() {
 
               <button
                 onClick={() => setShowLowerTeeth(!showLowerTeeth)}
-                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
                   showLowerTeeth
                     ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
                     : 'opacity-50 border-transparent text-slate-400'
@@ -2449,16 +2577,15 @@ export default function TajweedStudioPage() {
               </button>
             </div>
 
-          </div>
-
-          {/* 3D Canvas Container */}
-          <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[380px] sm:h-[460px]">
-            <div
-              ref={containerRef}
-              className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
+            {/* Quick reset camera view */}
+            <button
+              onClick={() => resetCameraToDefault(true)}
+              className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
+              title={t.resetView}
             >
-              <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
-            </div>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.resetView}</span>
+            </button>
           </div>
 
           {/* Minimal Color Guide */}
