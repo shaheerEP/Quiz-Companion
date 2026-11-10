@@ -2465,371 +2465,385 @@ export default function TajweedStudioPage() {
           </button>
         </div>
 
-        {/* 22 Arabic Letters Bar (in mouth order: from Qaaf ق to Waw و) */}
-        <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center justify-between px-1 text-xs">
-            <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
-              {t.selectLetter}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-            {LETTER_PRESETS.map(preset => {
-              const isSelected = preset.id === currentLetter.id;
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => selectLetter(preset)}
-                  className={`px-3 py-1.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 shrink-0 border active:scale-95 ${
-                    isSelected
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
-                      : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <span className="arabic-font text-lg leading-none font-bold">{preset.letter}</span>
-                  <span className="text-xs">{preset.tag.split(' ')[0]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        {/* Desktop 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
 
-        {/* 3D Viewport Section (Immediately after Letter Selection Tab) */}
-        <section className="flex flex-col gap-2">
+          {/* Left Column (Desktop): Letter Selection + 3D Viewport + 2 Divs under 3D */}
+          <div className="lg:col-span-7 flex flex-col gap-3">
 
-          {/* 3D Canvas Container */}
-          <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[380px] sm:h-[460px]">
-            <div
-              ref={containerRef}
-              className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
-            >
-              <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
-            </div>
-          </div>
-
-          {/* Viewport Toggles Toolbar (Shown directly after 3D canvas) */}
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Anatomy Parts Toggle Button */}
-              <button
-                onClick={() => setShowAnatomy(!showAnatomy)}
-                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                  showAnatomy
-                    ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
-                    : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{t.anatomy}</span>
-              </button>
-
-              <button
-                onClick={() => setShowMakhrajColors(!showMakhrajColors)}
-                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                  showMakhrajColors
-                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                    : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
-                }`}
-              >
-                <Palette className="w-3.5 h-3.5" />
-                <span>{t.makhrajColors}</span>
-              </button>
-
-              <button
-                onClick={() => setShowPalate(!showPalate)}
-                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                  showPalate
-                    ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                    : 'opacity-50 border-transparent text-slate-400'
-                }`}
-              >
-                <span>{t.palate}</span>
-              </button>
-
-              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
-                <button
-                  onClick={() => setShowUpperTeeth(!showUpperTeeth)}
-                  className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{t.upperTeeth}</span>
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={upperTeethOpacity}
-                  onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
-                  className="w-14 accent-emerald-500 cursor-pointer"
-                  title="Upper Teeth Opacity"
-                />
-                <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
-              </div>
-
-              <button
-                onClick={() => setShowLowerTeeth(!showLowerTeeth)}
-                className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                  showLowerTeeth
-                    ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                    : 'opacity-50 border-transparent text-slate-400'
-                }`}
-              >
-                <span>{t.lowerTeeth}</span>
-              </button>
-            </div>
-
-            {/* Quick reset camera view */}
-            <button
-              onClick={() => resetCameraToDefault(true)}
-              className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
-              title={t.resetView}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.resetView}</span>
-            </button>
-          </div>
-
-          {/* Minimal Color Guide */}
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 font-medium">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
-                <span>{t.firmPress}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
-                <span>{t.gentleTouch}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
-                <span>{t.gumShelfBadge}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
-                <span>{t.palate}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
-                <span>{t.tongueBadge}</span>
-              </span>
-            </div>
-            <span className="text-[11px] text-slate-400">
-              {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
-            </span>
-          </div>
-
-        </section>
-
-        {/* Selected Letter Information (Small, Compact Space) */}
-        <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
-                {currentLetter.letter}
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
-                  </h2>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                    currentLetter.isHeavy
-                      ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                      : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
-                  }`}>
-                    {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
-                  </span>
-                </div>
-                <span className="text-xs text-slate-500 dark:text-gray-400">
-                  {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
+            {/* 22 Arabic Letters Bar (in mouth order: from Qaaf ق to Waw و) */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
+                  {t.selectLetter}
                 </span>
               </div>
-            </div>
-
-            {/* Simulate Motion Action Button */}
-            <button
-              onClick={triggerSimulation}
-              className="py-2 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 active:scale-95 shrink-0"
-            >
-              <Play className="w-3.5 h-3.5" />
-              <span>{t.simulate}</span>
-            </button>
-          </div>
-
-          <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
-            {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
-          </p>
-
-          {/* Zad (ض) 3 Variants Pill Switcher */}
-          {currentLetter.id === 'dhaad' && (
-            <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
-              <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t.dhaadVariants}</span>
-              </span>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  onClick={() => setDhaadMode('right')}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    dhaadMode === 'right'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
-                >
-                  {t.dhaadRight}
-                </button>
-                <button
-                  onClick={() => setDhaadMode('left')}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    dhaadMode === 'left'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
-                >
-                  {t.dhaadLeft}
-                </button>
-                <button
-                  onClick={() => setDhaadMode('both')}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    dhaadMode === 'both'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
-                >
-                  {t.dhaadBoth}
-                </button>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                {LETTER_PRESETS.map(preset => {
+                  const isSelected = preset.id === currentLetter.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => selectLetter(preset)}
+                      className={`px-3 py-1.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 shrink-0 border active:scale-95 ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
+                          : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="arabic-font text-lg leading-none font-bold">{preset.letter}</span>
+                      <span className="text-xs">{preset.tag.split(' ')[0]}</span>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
-          )}
+            </section>
 
-          {/* Shajariyyah (ج ، ش ، ي) 3 Letters Compare */}
-          {(currentLetter.id === 'jeem' || currentLetter.id === 'sheen' || currentLetter.id === 'yaa_cons') && (
-            <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
-              <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 px-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t.shajariyyahNotice}</span>
-              </span>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  onClick={() => {
-                    const p = LETTER_PRESETS.find(l => l.id === 'jeem');
-                    if (p) selectLetter(p);
-                  }}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    currentLetter.id === 'jeem'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
+            {/* 3D Viewport Section (Immediately after Letter Selection Tab) */}
+            <section className="flex flex-col gap-2">
+
+              {/* 3D Canvas Container */}
+              <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[360px] sm:h-[420px] lg:h-[460px]">
+                <div
+                  ref={containerRef}
+                  className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
                 >
-                  {t.jeemLabel}
-                </button>
-                <button
-                  onClick={() => {
-                    const p = LETTER_PRESETS.find(l => l.id === 'sheen');
-                    if (p) selectLetter(p);
-                  }}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    currentLetter.id === 'sheen'
-                      ? 'bg-sky-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
-                >
-                  {t.sheenLabel}
-                </button>
-                <button
-                  onClick={() => {
-                    const p = LETTER_PRESETS.find(l => l.id === 'yaa_cons');
-                    if (p) selectLetter(p);
-                  }}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    currentLetter.id === 'yaa_cons'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                  }`}
-                >
-                  {t.yaaLabel}
-                </button>
+                  <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
+                </div>
               </div>
-            </div>
-          )}
-        </section>
 
-        {/* Collapsible Mechanical Controls Accordion */}
-        <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden transition-all">
-          <div
-            onClick={() => setIsGearsOpen(!isGearsOpen)}
-            className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800/40 transition-colors select-none"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <SlidersHorizontal className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                {t.controls}
-              </h3>
-            </div>
+              {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
+              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Anatomy Parts Toggle Button */}
+                  <button
+                    onClick={() => setShowAnatomy(!showAnatomy)}
+                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                      showAnatomy
+                        ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                        : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>{t.anatomy}</span>
+                  </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleResetGears();
-                }}
-                className="px-3 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 text-xs font-bold transition-all flex items-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>{t.reset}</span>
-              </button>
-              <div className="text-slate-400">
-                {isGearsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-              </div>
-            </div>
-          </div>
+                  <button
+                    onClick={() => setShowMakhrajColors(!showMakhrajColors)}
+                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                      showMakhrajColors
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                        : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>{t.makhrajColors}</span>
+                  </button>
 
-          {isGearsOpen && (
-            <div className="p-4 pt-1 border-t border-slate-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {GEAR_DEFINITIONS.map(def => {
-                const val = Math.round(targetGearsRef.current[def.key] ?? 0);
-                return (
-                  <div key={def.key} className="bg-slate-50 dark:bg-gray-800/60 border border-slate-200/60 dark:border-gray-700 p-3 rounded-2xl flex flex-col justify-between gap-2 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
-                        {lang === 'ar' ? def.ar : def.en}
-                      </span>
-                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 text-slate-800 dark:text-white">
-                        {val}{def.unit}
-                      </span>
-                    </div>
+                  <button
+                    onClick={() => setShowPalate(!showPalate)}
+                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                      showPalate
+                        ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                        : 'opacity-50 border-transparent text-slate-400'
+                    }`}
+                  >
+                    <span>{t.palate}</span>
+                  </button>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleGearChange(def.key, Math.max(def.min, val - def.step))}
-                        className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-rose-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="range"
-                        min={def.min}
-                        max={def.max}
-                        step="1"
-                        value={val}
-                        onChange={(e) => handleGearChange(def.key, parseInt(e.target.value, 10))}
-                        className="flex-1 accent-emerald-500 cursor-pointer"
-                      />
-                      <button
-                        onClick={() => handleGearChange(def.key, Math.min(def.max, val + def.step))}
-                        className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
-                      >
-                        +
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
+                    <button
+                      onClick={() => setShowUpperTeeth(!showUpperTeeth)}
+                      className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{t.upperTeeth}</span>
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={upperTeethOpacity}
+                      onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
+                      className="w-14 accent-emerald-500 cursor-pointer"
+                      title="Upper Teeth Opacity"
+                    />
+                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+
+                  <button
+                    onClick={() => setShowLowerTeeth(!showLowerTeeth)}
+                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                      showLowerTeeth
+                        ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                        : 'opacity-50 border-transparent text-slate-400'
+                    }`}
+                  >
+                    <span>{t.lowerTeeth}</span>
+                  </button>
+                </div>
+
+                {/* Quick reset camera view */}
+                <button
+                  onClick={() => resetCameraToDefault(true)}
+                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
+                  title={t.resetView}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t.resetView}</span>
+                </button>
+              </div>
+
+              {/* Div 2 under 3D Section: Minimal Color Guide */}
+              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
+                    <span>{t.firmPress}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
+                    <span>{t.gentleTouch}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
+                    <span>{t.gumShelfBadge}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
+                    <span>{t.palate}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
+                    <span>{t.tongueBadge}</span>
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400">
+                  {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
+                </span>
+              </div>
+
+            </section>
+
+          </div>
+
+          {/* Right Column (Desktop): Selected Letter Info & Controls */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
+
+            {/* Selected Letter Information (Small, Compact Space) */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
+                    {currentLetter.letter}
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                        {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
+                      </h2>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                        currentLetter.isHeavy
+                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                          : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
+                      }`}>
+                        {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-gray-400">
+                      {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Simulate Motion Action Button */}
+                <button
+                  onClick={triggerSimulation}
+                  className="py-2 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 active:scale-95 shrink-0"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  <span>{t.simulate}</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
+                {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
+              </p>
+
+              {/* Zad (ض) 3 Variants Pill Switcher */}
+              {currentLetter.id === 'dhaad' && (
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
+                  <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{t.dhaadVariants}</span>
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => setDhaadMode('right')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'right'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadRight}
+                    </button>
+                    <button
+                      onClick={() => setDhaadMode('left')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'left'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadLeft}
+                    </button>
+                    <button
+                      onClick={() => setDhaadMode('both')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'both'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadBoth}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Shajariyyah (ج ، ش ، ي) 3 Letters Compare */}
+              {(currentLetter.id === 'jeem' || currentLetter.id === 'sheen' || currentLetter.id === 'yaa_cons') && (
+                <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
+                  <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 px-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{t.shajariyyahNotice}</span>
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => {
+                        const p = LETTER_PRESETS.find(l => l.id === 'jeem');
+                        if (p) selectLetter(p);
+                      }}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        currentLetter.id === 'jeem'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.jeemLabel}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const p = LETTER_PRESETS.find(l => l.id === 'sheen');
+                        if (p) selectLetter(p);
+                      }}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        currentLetter.id === 'sheen'
+                          ? 'bg-sky-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.sheenLabel}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const p = LETTER_PRESETS.find(l => l.id === 'yaa_cons');
+                        if (p) selectLetter(p);
+                      }}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        currentLetter.id === 'yaa_cons'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.yaaLabel}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Collapsible Mechanical Controls Accordion */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden transition-all">
+              <div
+                onClick={() => setIsGearsOpen(!isGearsOpen)}
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800/40 transition-colors select-none"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <SlidersHorizontal className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {t.controls}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResetGears();
+                    }}
+                    className="px-3 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{t.reset}</span>
+                  </button>
+                  <div className="text-slate-400">
+                    {isGearsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </div>
+              </div>
+
+              {isGearsOpen && (
+                <div className="p-4 pt-1 border-t border-slate-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {GEAR_DEFINITIONS.map(def => {
+                    const val = Math.round(targetGearsRef.current[def.key] ?? 0);
+                    return (
+                      <div key={def.key} className="bg-slate-50 dark:bg-gray-800/60 border border-slate-200/60 dark:border-gray-700 p-2.5 rounded-2xl flex flex-col justify-between gap-1.5 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
+                            {lang === 'ar' ? def.ar : def.en}
+                          </span>
+                          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 text-slate-800 dark:text-white">
+                            {val}{def.unit}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleGearChange(def.key, Math.max(def.min, val - def.step))}
+                            className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="range"
+                            min={def.min}
+                            max={def.max}
+                            step="1"
+                            value={val}
+                            onChange={(e) => handleGearChange(def.key, parseInt(e.target.value, 10))}
+                            className="flex-1 accent-emerald-500 cursor-pointer"
+                          />
+                          <button
+                            onClick={() => handleGearChange(def.key, Math.min(def.max, val + def.step))}
+                            className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+          </div>
+
+        </div>
 
       </main>
     </div>
