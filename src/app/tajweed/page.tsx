@@ -5,7 +5,6 @@ import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
 import * as THREE from "three";
 import {
-  Volume2,
   Play,
   RotateCcw,
   Compass,
@@ -14,18 +13,15 @@ import {
   ArrowUpCircle,
   Palette,
   Layers,
-  GraduationCap,
   Sparkles,
   SlidersHorizontal,
   Globe,
   ChevronDown,
-  ChevronUp,
-  Info,
-  Check
+  ChevronUp
 } from "lucide-react";
 
 // ----------------------------------------------------------------------------
-// 0. BIOLOGICAL PALATE RATIOS
+// 0. BIOLOGICAL PALATE CONSTANTS
 // ----------------------------------------------------------------------------
 const BIO_HARD_PALATE_RATIO = 0.673;
 const BIO_ALVEOLAR_SHELF_U = 0.165; // 11.1% of Total Palate length
@@ -56,7 +52,7 @@ const GEAR_DEFINITIONS: GearDef[] = [
 ];
 
 // ----------------------------------------------------------------------------
-// 2. 22 ORAL LETTERS PRESETS (ENGLISH & ARABIC LOCALIZED)
+// 2. 22 ORAL LETTERS PRESETS IN MAKHRAJ ORDER: FROM QAAF (ق) TO WAW (و)
 // ----------------------------------------------------------------------------
 interface LetterPreset {
   id: string;
@@ -87,31 +83,7 @@ interface LetterPreset {
 }
 
 const LETTER_PRESETS: LetterPreset[] = [
-  {
-    id: 'dhaad',
-    tag: 'Zad / Dhaad (ض)',
-    letter: 'ض',
-    sukoonText: 'ضْ',
-    isHeavy: true,
-    dorsalMode: 'dhaad_lateral',
-    phoneticSound: 'أَضْ',
-    en: {
-      title: 'Makhraj of Zad / Dhaad (ض)',
-      category: 'Tongue & Upper Molars (حافة اللسان مع الأضراس)',
-      zoneLabel: 'Lateral Molars & Front Teeth Touch',
-      desc: 'One or both edges of the tongue press firmly against upper molars, while the rounded tip gently touches front teeth without pressing.',
-      sifah: 'Heavy (تفخيم واستطالة)'
-    },
-    ar: {
-      title: 'مخرج حرف الضاد (ض)',
-      category: 'حافة اللسان مع الأضراس العليا',
-      zoneLabel: 'ضغط حافة اللسان مع تلامس لطيف لطرفه بالأسنان',
-      desc: 'تضغط إحدى حافتي اللسان أو كلاهما بقوة على الأضراس العليا، بينما يلامس طرف اللسان المستدير الثنايا العليا بلطف دون ضغط.',
-      sifah: 'مفخم (استعلاء واستطالة)'
-    },
-    gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
-    greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
-  },
+  // 1. Qaaf (ق) - Deep Tongue Root
   {
     id: 'qaaf',
     tag: 'Qaaf (ق)',
@@ -137,6 +109,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 26, tipElevation: -26, tipForward: -15, backIstila: 98, middleArch: 12, lateralSpread: 30, greenPointPos: 88, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.302, z: -0.44, rx: 0.36 }
   },
+  // 2. Kaaf (ك)
   {
     id: 'kaaf',
     tag: 'Kaaf (ك)',
@@ -162,6 +135,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 25, tipElevation: -25, tipForward: -10, backIstila: 90, middleArch: 48, lateralSpread: 25, greenPointPos: 72, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.364, z: -0.22, rx: 0.13 }
   },
+  // 3. Jeem (ج)
   {
     id: 'jeem',
     tag: 'Jeem (ج)',
@@ -187,6 +161,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 22, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 100, lateralSpread: 52, greenPointPos: 54, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.463, z: 0.12, rx: 0.15 }
   },
+  // 4. Sheen (ش)
   {
     id: 'sheen',
     tag: 'Sheen (ش)',
@@ -212,6 +187,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 20, tipElevation: -18, tipForward: 6, backIstila: 15, middleArch: 86, lateralSpread: 78, greenPointPos: 50, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.467, z: 0.18, rx: 0.11 }
   },
+  // 5. Yaa (ي)
   {
     id: 'yaa_cons',
     tag: 'Yaa (ي)',
@@ -237,6 +213,33 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 22, tipElevation: -26, tipForward: -8, backIstila: 14, middleArch: 94, lateralSpread: 64, greenPointPos: 52, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.466, z: 0.14, rx: 0.13 }
   },
+  // 6. Zad / Dhaad (ض)
+  {
+    id: 'dhaad',
+    tag: 'Zad / Dhaad (ض)',
+    letter: 'ض',
+    sukoonText: 'ضْ',
+    isHeavy: true,
+    dorsalMode: 'dhaad_lateral',
+    phoneticSound: 'أَضْ',
+    en: {
+      title: 'Makhraj of Zad / Dhaad (ض)',
+      category: 'Tongue & Upper Molars (حافة اللسان مع الأضراس)',
+      zoneLabel: 'Lateral Molars & Front Teeth Touch',
+      desc: 'One or both edges of the tongue press firmly against upper molars, while the rounded tip gently touches front teeth without pressing.',
+      sifah: 'Heavy (تفخيم واستطالة)'
+    },
+    ar: {
+      title: 'مخرج حرف الضاد (ض)',
+      category: 'حافة اللسان مع الأضراس العليا',
+      zoneLabel: 'ضغط حافة اللسان مع تلامس لطيف لطرفه بالأسنان',
+      desc: 'تضغط إحدى حافتي اللسان أو كلاهما بقوة على الأضراس العليا، بينما يلامس طرف اللسان المستدير الثنايا العليا بلطف دون ضغط.',
+      sifah: 'مفخم (استعلاء واستطالة)'
+    },
+    gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
+    greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
+  },
+  // 7. Laam (ل)
   {
     id: 'laam',
     tag: 'Laam (ل)',
@@ -262,6 +265,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 28, tipElevation: 76, tipForward: 38, backIstila: 0, middleArch: -20, lateralSpread: 32, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.252, z: 0.84, rx: -0.49 }
   },
+  // 8. Noon (ن)
   {
     id: 'noon',
     tag: 'Noon (ن)',
@@ -287,6 +291,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 26, tipElevation: 78, tipForward: 36, backIstila: 0, middleArch: -18, lateralSpread: 22, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.254, z: 0.84, rx: -0.48 }
   },
+  // 9. Raa (ر)
   {
     id: 'raa',
     tag: 'Raa (ر)',
@@ -299,7 +304,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       title: 'Makhraj of Raa (ر)',
       category: 'Tongue Tip & Blade (طرف اللسان وظهره)',
       zoneLabel: 'Upper Gum with Central Gap (لثة الثنايا)',
-      desc: 'Tip and upper blade curl up to meet upper gums with a narrow central slit preventing excessive trill.',
+      desc: 'Tip and upper blade meet upper gums with a narrow central slit preventing excessive trill.',
       sifah: 'Heavy (تفخيم وتكرير)'
     },
     ar: {
@@ -312,6 +317,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 26, tipElevation: 80, tipForward: 20, backIstila: 65, middleArch: -10, lateralSpread: 35, greenPointPos: 30, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.262, z: 0.78, rx: -0.46 }
   },
+  // 10. Taa (ط)
   {
     id: 'taa_heavy',
     tag: 'Taa / Tha (ط)',
@@ -337,6 +343,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -8, lateralSpread: 42, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
   },
+  // 11. Daal (د)
   {
     id: 'daal',
     tag: 'Daal (د)',
@@ -362,6 +369,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
   },
+  // 12. Taa (ت)
   {
     id: 'taa_light',
     tag: 'Taa (ت)',
@@ -387,6 +395,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
   },
+  // 13. Saad (ص)
   {
     id: 'saad',
     tag: 'Saad (ص)',
@@ -399,7 +408,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       title: 'Makhraj of Saad (ص)',
       category: 'Tongue Apex (أسلة اللسان)',
       zoneLabel: 'Lower Incisors Contact (الثنايا السفلى)',
-      desc: 'Tip points downward behind lower incisors with central whistle groove (Safir) and elevated back root.',
+      desc: 'Tongue tip points downward behind lower incisors with central whistle groove (Safir) and elevated back root.',
       sifah: 'Heavy (تفخيم وصفير)'
     },
     ar: {
@@ -412,31 +421,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: 55, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
   },
-  {
-    id: 'zaay',
-    tag: 'Zay / Zaa (ز)',
-    letter: 'ز',
-    sukoonText: 'زْ',
-    isHeavy: false,
-    dorsalMode: 'safir_hook',
-    phoneticSound: 'أَزْ',
-    en: {
-      title: 'Makhraj of Zay (ز)',
-      category: 'Tongue Apex (أسلة اللسان)',
-      zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
-      desc: 'Tip rests behind lower front incisors, allowing voiced air to buzz through the interdental slit.',
-      sifah: 'Light (ترقيق وصفير)'
-    },
-    ar: {
-      title: 'مخرج حرف الزاي (ز)',
-      category: 'الحروف الأسلية - أسلة اللسان',
-      zoneLabel: 'خلف الثنايا السفلى مع الجهر والصفير',
-      desc: 'تقترب أسلة اللسان من الثنايا السفلى ليمر الهواء بصفير مجهور صافٍ مع ارتجاف الأوتار الصوتية.',
-      sifah: 'مرقق (جهر وصفير)'
-    },
-    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 75, lateralSpread: 75, greenPointPos: 2, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
-  },
+  // 14. Seen (س)
   {
     id: 'seen',
     tag: 'Seen (س)',
@@ -462,6 +447,33 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 72, lateralSpread: 72, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
   },
+  // 15. Zaay (ز)
+  {
+    id: 'zaay',
+    tag: 'Zay / Zaa (ز)',
+    letter: 'ز',
+    sukoonText: 'زْ',
+    isHeavy: false,
+    dorsalMode: 'safir_hook',
+    phoneticSound: 'أَزْ',
+    en: {
+      title: 'Makhraj of Zay (ز)',
+      category: 'Tongue Apex (أسلة اللسان)',
+      zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
+      desc: 'Tip rests behind lower front incisors, allowing voiced air to buzz through the interdental slit.',
+      sifah: 'Light (ترقيق وصفير)'
+    },
+    ar: {
+      title: 'مخرج حرف الزاي (ز)',
+      category: 'الحروف الأسلية - أسلة اللسان',
+      zoneLabel: 'خلف الثنايا السفلى مع الجهر والصفير',
+      desc: 'تقترب أسلة اللسان من الثنايا السفلى ليمر الهواء بصفير مجهور صافٍ مع ارتجاف الأوتار الصوتية.',
+      sifah: 'مرقق (جهر وصفير)'
+    },
+    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 75, lateralSpread: 75, greenPointPos: 2, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
+  },
+  // 16. Zhaa (ظ)
   {
     id: 'thaa_heavy',
     tag: 'Zhaa (ظ)',
@@ -487,6 +499,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: 10, lateralSpread: 40, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
   },
+  // 17. Dhaal (ذ)
   {
     id: 'dhaal_zaa',
     tag: 'Dhaal (ذ)',
@@ -512,6 +525,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 25, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
   },
+  // 18. Thaa (ث)
   {
     id: 'thaa_light',
     tag: 'Thaa (ث)',
@@ -537,6 +551,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 20, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
   },
+  // 19. Faa (ف)
   {
     id: 'faa',
     tag: 'Faa (ف)',
@@ -564,6 +579,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 18, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 6, upperOpacity: 92 },
     greenCoords: { x: 0.0, y: 0.005, z: 0.94, rx: 0.0 }
   },
+  // 20. Baa (ب)
   {
     id: 'baa',
     tag: 'Baa (ب)',
@@ -591,6 +607,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 10, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
   },
+  // 21. Meem (م)
   {
     id: 'meem',
     tag: 'Meem (م)',
@@ -618,6 +635,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     gears: { jawOpen: 12, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
   },
+  // 22. Waw (و)
   {
     id: 'waw',
     tag: 'Waw (و)',
@@ -785,8 +803,8 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
   {
     id: 'lathah_palate',
     group: 'palate',
-    ar: 'اللثة ومقدم الحنك المسطح (١١.١٪)',
-    en: 'Gum Shelf (اللثة ١١.١٪)',
+    ar: 'اللثة ومقدم الحنك المسطح',
+    en: 'Gum Shelf (اللثة)',
     hex: '#eab368',
     rgb: [0.92, 0.72, 0.42],
     getTarget: () => new THREE.Vector3(0.0, 0.26, 0.82),
@@ -795,8 +813,8 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
   {
     id: 'hanak_adhmi',
     group: 'palate',
-    ar: 'الحنك العظمي المقوس (٥٦.٢٪)',
-    en: 'Hard Palate (الحنك العظمي ٥٦.٢٪)',
+    ar: 'الحنك العظمي المقوس',
+    en: 'Hard Palate (الحنك العظمي)',
     hex: '#38bdf8',
     rgb: [0.22, 0.74, 0.97],
     getTarget: () => new THREE.Vector3(0.0, 0.45, 0.18),
@@ -805,8 +823,8 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
   {
     id: 'hanak_lahmi',
     group: 'palate',
-    ar: 'الحنك اللحمي (٣٢.٧٪)',
-    en: 'Soft Palate (الحنك اللحمي ٣٢.٧٪)',
+    ar: 'الحنك اللحمي',
+    en: 'Soft Palate (الحنك اللحمي)',
     hex: '#c084fc',
     rgb: [0.75, 0.52, 0.99],
     getTarget: () => new THREE.Vector3(0.0, 0.31, -0.45),
@@ -836,11 +854,11 @@ export default function TajweedStudioPage() {
     } catch {}
   };
 
+  // Default starting letter: Qaaf (ق)
   const [currentLetter, setCurrentLetter] = useState<LetterPreset>(LETTER_PRESETS[0]);
   const [activeCam, setActiveCam] = useState<'3/4' | 'profile' | 'front' | 'palate'>('3/4');
   const [dhaadMode, setDhaadMode] = useState<'right' | 'left' | 'both'>('right');
-  const [isAnatomyMode, setIsAnatomyMode] = useState<boolean>(false);
-  const [anatomyFilter, setAnatomyFilter] = useState<'all' | 'tongue' | 'teeth' | 'palate'>('all');
+  const [showAnatomy, setShowAnatomy] = useState<boolean>(false);
   const [isGearsOpen, setIsGearsOpen] = useState<boolean>(false);
 
   // Toggles
@@ -862,31 +880,6 @@ export default function TajweedStudioPage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
-  // Pronounce audio
-  const speakLetter = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(currentLetter.phoneticSound);
-      utter.lang = 'ar-SA';
-      utter.rate = 0.75;
-      window.speechSynthesis.speak(utter);
-    }
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(currentLetter.isHeavy ? 135 : 210, ctx.currentTime);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.45);
-    } catch {}
-  };
-
   // Simulate Motion (Alif -> Makhraj -> Alif)
   const triggerSimulation = () => {
     isSimulatingRef.current = true;
@@ -896,7 +889,6 @@ export default function TajweedStudioPage() {
       currentGearsRef.current[k] = ALIF_MAKHRAJ_GEARS[k];
     });
     simulationStartTimeRef.current = performance.now();
-    speakLetter();
   };
 
   // Three.js scene refs
@@ -1600,15 +1592,6 @@ export default function TajweedStudioPage() {
       return a * h + b * (1.0 - h) - k * h * (1.0 - h);
     };
 
-    const sampleGreenByPressIntensity = (p: number) => {
-      const clampedP = Math.max(0.0, Math.min(1.0, p));
-      return {
-        r: 0.52 * (1.0 - clampedP) + 0.04 * clampedP,
-        g: 0.94 * (1.0 - clampedP) + 0.44 * clampedP,
-        b: 0.62 * (1.0 - clampedP) + 0.15 * clampedP
-      };
-    };
-
     // Store refs
     sceneElementsRef.current = {
       scene,
@@ -1748,7 +1731,7 @@ export default function TajweedStudioPage() {
       lowerJawPivot.rotation.x = jawOpenFactor * 0.30;
       lowerJawPivot.position.y = -jawOpenFactor * 0.04;
 
-      lipsGroup.visible = Boolean(currentLetter.showLips && !isAnatomyMode);
+      lipsGroup.visible = Boolean(currentLetter.showLips && !showAnatomy);
 
       // Tongue vertices deformation
       const dorsalMode = currentLetter.dorsalMode || 'istila_cup';
@@ -2049,7 +2032,7 @@ export default function TajweedStudioPage() {
           let gT = 0.24 * shadeT;
           let bT = 0.28 * shadeT;
 
-          if (isAnatomyMode && (anatomyFilter === 'all' || anatomyFilter === 'tongue')) {
+          if (showAnatomy) {
             const absC = Math.abs(cosT);
             let zoneRGB = [0.49, 0.23, 0.93];
             if (s > 0.88 && absC < 0.58 && sinT > -0.35) zoneRGB = [0.88, 0.11, 0.28];
@@ -2136,7 +2119,7 @@ export default function TajweedStudioPage() {
       tongueGeom.computeVertexNormals();
 
       // Update 3D anatomy callouts
-      if (isAnatomyMode) {
+      if (showAnatomy) {
         anatomyGroup.visible = true;
         const curW = container.clientWidth || 640;
         const curH = container.clientHeight || 420;
@@ -2144,12 +2127,7 @@ export default function TajweedStudioPage() {
 
         calloutItems.forEach(entry => {
           const { data, group3D, anchorDot, shaftMesh, coneMesh, airNode, badgeEl } = entry;
-          const isVis = (anatomyFilter === 'all' || anatomyFilter === data.group);
-          group3D.visible = isVis;
-          if (!isVis) {
-            badgeEl.style.display = 'none';
-            return;
-          }
+          group3D.visible = true;
 
           const targetPos = data.getTarget();
           const airPos = targetPos.clone().add(data.offset);
@@ -2206,7 +2184,7 @@ export default function TajweedStudioPage() {
       }
       renderer.dispose();
     };
-  }, [resolvedTheme, currentLetter, dhaadMode, isAnatomyMode, anatomyFilter, showMakhrajColors, lang]);
+  }, [resolvedTheme, currentLetter, dhaadMode, showAnatomy, showMakhrajColors, lang]);
 
   // Sync mesh visibilities
   useEffect(() => {
@@ -2228,14 +2206,10 @@ export default function TajweedStudioPage() {
   const t = useMemo(() => {
     if (lang === 'ar') {
       return {
-        studioTitle: 'استوديو مخارج الحروف ثلاثي الأبعاد',
-        tagline: 'محاكاة تشريحية دقيقة لنطق الحروف العربية ومخارجها',
-        student: 'وضع الطالب',
-        anatomy: 'أقسام الفم والتشريح',
+        studioTitle: 'استوديو التجويد ثلاثي الأبعاد',
+        anatomy: 'أقسام الفم',
         selectLetter: 'اختر الحرف:',
-        pronounce: 'نطق الحرف',
         simulate: 'محاكاة الحركة (ألف ← المخرج)',
-        cameraViews: 'زوايا الرؤية',
         view34: 'مائل ٣/٤',
         viewProfile: 'جانبي',
         viewFront: 'أمامي',
@@ -2252,32 +2226,20 @@ export default function TajweedStudioPage() {
         jeemLabel: '١. الجيم (قفل تام)',
         sheenLabel: '٢. الشين (فرجة التفشي)',
         yaaLabel: '٣. الياء (تضيق المخرج)',
-        palateProportions: 'النسب التشريحية للحنك الأعلى (المجموع ~٧٧.٥ مم):',
-        gumShelf11: '١١.١٪ اللثة ومقدم الحنك',
-        hardPalate56: '٥٦.٢٪ الحنك العظمي المقوس',
-        softPalate32: '٣٢.٧٪ الحنك اللحمي الرخو',
         controls: 'التحكم الحركي في أعضاء النطق',
         reset: 'وضع السكون',
         firmPress: 'ضغط قوي',
         gentleTouch: 'تلامس لطيف',
         gumShelfBadge: 'اللثة ومقدم الحنك',
         tongueBadge: 'اللسان',
-        all: 'الكل',
-        tongueFilter: 'أقسام اللسان',
-        teethFilter: 'أنواع الأسنان',
-        palateFilter: 'أقسام الحنك',
         toggleLanguage: 'English'
       };
     }
     return {
-      studioTitle: '3D Tajweed Makharij Studio',
-      tagline: 'Anatomical Simulation of Arabic Articulation Points (مخارج الحروف)',
-      student: 'Student',
+      studioTitle: '3D Tajweed Studio',
       anatomy: 'Anatomy Parts (أقسام الفم)',
       selectLetter: 'Letter (الحرف):',
-      pronounce: 'Pronounce',
       simulate: 'Simulate Motion (ألف ← المخرج)',
-      cameraViews: 'Camera Views',
       view34: '3/4 View',
       viewProfile: 'Profile',
       viewFront: 'Front',
@@ -2294,20 +2256,12 @@ export default function TajweedStudioPage() {
       jeemLabel: '1. Jeem (ج) — 0.0 mm Seal (قفل تام)',
       sheenLabel: '2. Sheen (ش) — ~3.2 mm Gap (تفشٍّ)',
       yaaLabel: '3. Yaa (ي) — ~1.6 mm Arch (رخاوة)',
-      palateProportions: 'Biological Palate Proportions (نسب الحنك الأعلى):',
-      gumShelf11: '11.1% Gums (اللثة)',
-      hardPalate56: '56.2% Hard Palate (الحنك العظمي)',
-      softPalate32: '32.7% Soft Palate (الحنك اللحمي)',
       controls: 'Mechanical Articulation Controls (التحكم بالمخرج)',
       reset: 'Neutral Pose',
       firmPress: 'Firm Press (ضغط)',
       gentleTouch: 'Gentle Touch (تلامس لطيف)',
       gumShelfBadge: 'Gum Shelf (اللثة)',
       tongueBadge: 'Tongue (اللسان)',
-      all: 'All (الكل)',
-      tongueFilter: 'Tongue (اللسان)',
-      teethFilter: 'Teeth (الأسنان)',
-      palateFilter: 'Palate (الحنك)',
       toggleLanguage: 'عربي'
     };
   }, [lang]);
@@ -2325,75 +2279,29 @@ export default function TajweedStudioPage() {
 
       <main className="flex-1 max-w-[1500px] w-full mx-auto px-3 sm:px-5 py-4 flex flex-col gap-3 relative z-10">
 
-        {/* Studio Header Strip */}
-        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3 sm:p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl arabic-font shadow-md shadow-emerald-500/20 shrink-0">
-              {currentLetter.letter}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                  {t.studioTitle}
-                </h1>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                  {lang === 'ar' ? 'مخارج الحروف' : 'Makharij (المخارج)'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-gray-400 line-clamp-1">
-                {t.tagline}
-              </p>
-            </div>
-          </div>
+        {/* Clean Studio Header */}
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-3">
+          <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+            {t.studioTitle}
+          </h1>
 
-          <div className="flex items-center gap-2">
-            {/* Mode Switcher Segment */}
-            <div className="inline-flex p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200/80 dark:border-gray-700">
-              <button
-                onClick={() => setIsAnatomyMode(false)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  !isAnatomyMode
-                    ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>{t.student}</span>
-              </button>
-              <button
-                onClick={() => setIsAnatomyMode(true)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  isAnatomyMode
-                    ? 'bg-sky-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span>{t.anatomy}</span>
-              </button>
-            </div>
-
-            {/* Language Toggle Button */}
-            <button
-              onClick={handleToggleLang}
-              title={lang === 'en' ? 'Switch to Arabic (العربية)' : 'التبديل إلى الإنجليزية'}
-              aria-label="Language Toggle"
-              className="px-3 py-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/60 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            >
-              <Globe className="w-4 h-4" />
-              <span>{t.toggleLanguage}</span>
-            </button>
-          </div>
+          {/* Language Toggle Button */}
+          <button
+            onClick={handleToggleLang}
+            title={lang === 'en' ? 'Switch to Arabic (العربية)' : 'التبديل إلى الإنجليزية'}
+            aria-label="Language Toggle"
+            className="px-3.5 py-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/60 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{t.toggleLanguage}</span>
+          </button>
         </div>
 
-        {/* 22 Arabic Letters Bar */}
+        {/* 22 Arabic Letters Bar (in mouth order: from Qaaf ق to Waw و) */}
         <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2">
           <div className="flex items-center justify-between px-1 text-xs">
             <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
               {t.selectLetter}
-            </span>
-            <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full font-bold text-xs">
-              {lang === 'ar' ? currentLetter.ar.category : currentLetter.en.category}
             </span>
           </div>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
@@ -2417,371 +2325,305 @@ export default function TajweedStudioPage() {
           </div>
         </section>
 
-        {/* Center Stage: Left Card & Right 3D Viewport */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+        {/* 3D Viewport Section (Immediately after Letter Selection Tab) */}
+        <section className="flex flex-col gap-2">
 
-          {/* Left: Clean Tajweed Reference Card */}
-          <div className="lg:col-span-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm p-4 sm:p-5 flex flex-col justify-between min-h-[380px] gap-4">
+          {/* Viewport Toolbar: Camera Views & Element Toggles */}
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
             
-            {/* Header: Zone & Sifah badge */}
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-gray-800 pb-3">
-              <span className="text-[11px] font-bold text-slate-700 dark:text-gray-300 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 line-clamp-1">
-                {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
-              </span>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                currentLetter.isHeavy
-                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                  : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
-              }`}>
-                {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
-              </span>
-            </div>
-
-            {/* Big Bold Arabic Letter Display */}
-            <div className="flex-1 flex flex-col items-center justify-center py-6 gap-2">
-              <div className="arabic-font text-8xl sm:text-9xl font-bold text-indigo-600 dark:text-indigo-400 leading-none select-none drop-shadow-sm">
-                {currentLetter.letter}
-              </div>
-              <div className="flex items-center justify-center gap-1.5 arabic-font text-5xl sm:text-6xl font-bold leading-none select-none text-slate-800 dark:text-white" dir="rtl">
-                <span>أَ</span>
-                <span className="text-emerald-600 dark:text-emerald-400">{currentLetter.sukoonText}</span>
-              </div>
-            </div>
-
-            {/* Articulation Actions */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Camera Angle Pills */}
+            <div className="inline-flex p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200/80 dark:border-gray-700">
               <button
-                onClick={speakLetter}
-                className="py-2.5 px-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                onClick={() => setCameraView('3/4')}
+                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                  activeCam === '3/4'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
               >
-                <Volume2 className="w-4 h-4" />
-                <span>{t.pronounce}</span>
+                <Compass className="w-3.5 h-3.5" />
+                <span>{t.view34}</span>
+              </button>
+              <button
+                onClick={() => setCameraView('profile')}
+                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                  activeCam === 'profile'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>{t.viewProfile}</span>
+              </button>
+              <button
+                onClick={() => setCameraView('front')}
+                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                  activeCam === 'front'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Smile className="w-3.5 h-3.5" />
+                <span>{t.viewFront}</span>
+              </button>
+              <button
+                onClick={() => setCameraView('palate')}
+                className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                  activeCam === 'palate'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <ArrowUpCircle className="w-3.5 h-3.5" />
+                <span>{t.viewPalate}</span>
+              </button>
+            </div>
+
+            {/* Viewport Toggles */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Anatomy Parts Toggle Button (shows directly in normal 3D space!) */}
+              <button
+                onClick={() => setShowAnatomy(!showAnatomy)}
+                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                  showAnatomy
+                    ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                    : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t.anatomy}</span>
               </button>
 
               <button
-                onClick={triggerSimulation}
-                className="py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                onClick={() => setShowMakhrajColors(!showMakhrajColors)}
+                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                  showMakhrajColors
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                    : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
+                }`}
               >
-                <Play className="w-4 h-4" />
-                <span>{t.simulate}</span>
+                <Palette className="w-3.5 h-3.5" />
+                <span>{t.makhrajColors}</span>
               </button>
-            </div>
 
-            {/* Concise Tajweed Tip Text */}
-            <div className="bg-slate-50 dark:bg-gray-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-gray-700/80">
-              <h3 className="text-xs font-bold text-slate-900 dark:text-white mb-1">
-                {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed">
-                {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
-              </p>
-            </div>
+              <button
+                onClick={() => setShowPalate(!showPalate)}
+                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                  showPalate
+                    ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                    : 'opacity-50 border-transparent text-slate-400'
+                }`}
+              >
+                <span>{t.palate}</span>
+              </button>
 
-          </div>
-
-          {/* Right: 3D Viewport Controls & Canvas */}
-          <div className="lg:col-span-8 flex flex-col gap-3">
-
-            {/* Top Viewport Bar: Camera Angles & Toggles */}
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-              
-              {/* Camera Angle Pills */}
-              <div className="inline-flex p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200/80 dark:border-gray-700">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-gray-700">
                 <button
-                  onClick={() => setCameraView('3/4')}
-                  className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                    activeCam === '3/4'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>{t.view34}</span>
-                </button>
-                <button
-                  onClick={() => setCameraView('profile')}
-                  className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                    activeCam === 'profile'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                  onClick={() => setShowUpperTeeth(!showUpperTeeth)}
+                  className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>{t.viewProfile}</span>
+                  <span className="hidden sm:inline">{t.upperTeeth}</span>
                 </button>
-                <button
-                  onClick={() => setCameraView('front')}
-                  className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                    activeCam === 'front'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Smile className="w-3.5 h-3.5" />
-                  <span>{t.viewFront}</span>
-                </button>
-                <button
-                  onClick={() => setCameraView('palate')}
-                  className={`px-2.5 py-1 rounded-xl font-bold transition-all flex items-center gap-1 ${
-                    activeCam === 'palate'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <ArrowUpCircle className="w-3.5 h-3.5" />
-                  <span>{t.viewPalate}</span>
-                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={upperTeethOpacity}
+                  onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
+                  className="w-14 accent-emerald-500 cursor-pointer"
+                  title="Upper Teeth Opacity"
+                />
+                <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
               </div>
 
-              {/* Viewport Element Toggles */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setShowMakhrajColors(!showMakhrajColors)}
-                  className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
-                    showMakhrajColors
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                      : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
-                  }`}
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                  <span>{t.makhrajColors}</span>
-                </button>
-
-                <button
-                  onClick={() => setShowPalate(!showPalate)}
-                  className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
-                    showPalate
-                      ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                      : 'opacity-50 border-transparent text-slate-400'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>{t.palate}</span>
-                </button>
-
-                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-gray-700">
-                  <button
-                    onClick={() => setShowUpperTeeth(!showUpperTeeth)}
-                    className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{t.upperTeeth}</span>
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={upperTeethOpacity}
-                    onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
-                    className="w-14 accent-emerald-500 cursor-pointer"
-                    title="Upper Teeth Opacity"
-                  />
-                  <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
-                </div>
-
-                <button
-                  onClick={() => setShowLowerTeeth(!showLowerTeeth)}
-                  className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
-                    showLowerTeeth
-                      ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                      : 'opacity-50 border-transparent text-slate-400'
-                  }`}
-                >
-                  <span>{t.lowerTeeth}</span>
-                </button>
-              </div>
-
-            </div>
-
-            {/* Biological Palate Proportions Minimal Indicator */}
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-col gap-1.5 shadow-sm text-xs">
-              <div className="flex items-center justify-between font-bold text-slate-700 dark:text-gray-300 text-[11px]">
-                <span>{t.palateProportions}</span>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">11.1% + 56.2% + 32.7% = 100%</span>
-              </div>
-              <div className="w-full h-3 rounded-lg overflow-hidden flex border border-slate-200 dark:border-gray-700 font-bold text-[9px] shadow-inner">
-                <div style={{ width: '11.1%', backgroundColor: '#eab368' }} className="flex items-center justify-center truncate px-1 text-slate-950" title="Flat Alveolar Gum Shelf (اللثة ومقدم الحنك المسطح)">
-                  11.1%
-                </div>
-                <div style={{ width: '56.2%', backgroundColor: '#8c3246' }} className="flex items-center justify-center truncate px-1 text-white border-l border-yellow-200/50" title="Curved Hard Palate (الحنك العظمي)">
-                  56.2% {lang === 'ar' ? 'العظمي' : 'Hard Palate'}
-                </div>
-                <div style={{ width: '32.7%', backgroundColor: '#6e2536' }} className="flex items-center justify-center truncate px-1 text-white border-l border-white/20" title="Soft Muscular Palate (الحنك اللحمي)">
-                  32.7% {lang === 'ar' ? 'اللحمي' : 'Soft'}
-                </div>
-              </div>
-            </div>
-
-            {/* Zad (ض) 3 Variants Pill Switcher */}
-            {currentLetter.id === 'dhaad' && (
-              <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
-                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{t.dhaadVariants}</span>
-                </span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    onClick={() => setDhaadMode('right')}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      dhaadMode === 'right'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.dhaadRight}
-                  </button>
-                  <button
-                    onClick={() => setDhaadMode('left')}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      dhaadMode === 'left'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.dhaadLeft}
-                  </button>
-                  <button
-                    onClick={() => setDhaadMode('both')}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      dhaadMode === 'both'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.dhaadBoth}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Shajariyyah (ج ، ش ، ي) 3 Letters Compare */}
-            {(currentLetter.id === 'jeem' || currentLetter.id === 'sheen' || currentLetter.id === 'yaa_cons') && (
-              <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
-                <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 px-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{t.shajariyyahNotice}</span>
-                </span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    onClick={() => {
-                      const p = LETTER_PRESETS.find(l => l.id === 'jeem');
-                      if (p) selectLetter(p);
-                    }}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      currentLetter.id === 'jeem'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.jeemLabel}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const p = LETTER_PRESETS.find(l => l.id === 'sheen');
-                      if (p) selectLetter(p);
-                    }}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      currentLetter.id === 'sheen'
-                        ? 'bg-sky-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.sheenLabel}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const p = LETTER_PRESETS.find(l => l.id === 'yaa_cons');
-                      if (p) selectLetter(p);
-                    }}
-                    className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                      currentLetter.id === 'yaa_cons'
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                    }`}
-                  >
-                    {t.yaaLabel}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Anatomy Mode Filter Banner */}
-            {isAnatomyMode && (
-              <div className="bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 rounded-2xl p-2 flex flex-wrap items-center justify-between gap-2 text-xs shadow-sm">
-                <span className="font-bold text-sky-800 dark:text-sky-300 flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
-                  <span>{t.anatomy}</span>
-                </span>
-                <div className="inline-flex p-1 bg-white dark:bg-gray-900 rounded-xl border border-sky-200 dark:border-sky-800/60">
-                  <button
-                    onClick={() => setAnatomyFilter('all')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-xs ${anatomyFilter === 'all' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-gray-300'}`}
-                  >
-                    {t.all}
-                  </button>
-                  <button
-                    onClick={() => setAnatomyFilter('tongue')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-xs ${anatomyFilter === 'tongue' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-gray-300'}`}
-                  >
-                    {t.tongueFilter}
-                  </button>
-                  <button
-                    onClick={() => setAnatomyFilter('teeth')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-xs ${anatomyFilter === 'teeth' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-gray-300'}`}
-                  >
-                    {t.teethFilter}
-                  </button>
-                  <button
-                    onClick={() => setAnatomyFilter('palate')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-xs ${anatomyFilter === 'palate' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-gray-300'}`}
-                  >
-                    {t.palateFilter}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 3D Canvas Box */}
-            <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative flex-1 min-h-[380px] sm:min-h-[440px]">
-              <div
-                ref={containerRef}
-                className="w-full h-full min-h-[380px] sm:min-h-[440px] relative cursor-grab active:cursor-grabbing overflow-hidden"
+              <button
+                onClick={() => setShowLowerTeeth(!showLowerTeeth)}
+                className={`px-2.5 py-1 rounded-xl font-bold border transition-all flex items-center gap-1.5 ${
+                  showLowerTeeth
+                    ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                    : 'opacity-50 border-transparent text-slate-400'
+                }`}
               >
-                <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
-              </div>
-            </div>
-
-            {/* Color Guide Strip */}
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
-              <div className="flex flex-wrap items-center gap-3 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
-                  <span>{t.firmPress}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
-                  <span>{t.gentleTouch}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
-                  <span>{t.gumShelfBadge}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
-                  <span>{t.palate}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
-                  <span>{t.tongueBadge}</span>
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-400">
-                {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
-              </span>
+                <span>{t.lowerTeeth}</span>
+              </button>
             </div>
 
           </div>
 
+          {/* 3D Canvas Container */}
+          <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[380px] sm:h-[460px]">
+            <div
+              ref={containerRef}
+              className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
+            >
+              <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
+            </div>
+          </div>
+
+          {/* Minimal Color Guide */}
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 font-medium">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
+                <span>{t.firmPress}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
+                <span>{t.gentleTouch}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
+                <span>{t.gumShelfBadge}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
+                <span>{t.palate}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
+                <span>{t.tongueBadge}</span>
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400">
+              {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
+            </span>
+          </div>
+
+        </section>
+
+        {/* Selected Letter Information (Small, Compact Space) */}
+        <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
+                {currentLetter.letter}
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
+                  </h2>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                    currentLetter.isHeavy
+                      ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                      : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
+                  }`}>
+                    {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-500 dark:text-gray-400">
+                  {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Simulate Motion Action Button */}
+            <button
+              onClick={triggerSimulation}
+              className="py-2 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 active:scale-95 shrink-0"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>{t.simulate}</span>
+            </button>
+          </div>
+
+          <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
+            {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
+          </p>
+
+          {/* Zad (ض) 3 Variants Pill Switcher */}
+          {currentLetter.id === 'dhaad' && (
+            <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
+              <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{t.dhaadVariants}</span>
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  onClick={() => setDhaadMode('right')}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    dhaadMode === 'right'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.dhaadRight}
+                </button>
+                <button
+                  onClick={() => setDhaadMode('left')}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    dhaadMode === 'left'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.dhaadLeft}
+                </button>
+                <button
+                  onClick={() => setDhaadMode('both')}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    dhaadMode === 'both'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.dhaadBoth}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Shajariyyah (ج ، ش ، ي) 3 Letters Compare */}
+          {(currentLetter.id === 'jeem' || currentLetter.id === 'sheen' || currentLetter.id === 'yaa_cons') && (
+            <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
+              <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 px-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{t.shajariyyahNotice}</span>
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  onClick={() => {
+                    const p = LETTER_PRESETS.find(l => l.id === 'jeem');
+                    if (p) selectLetter(p);
+                  }}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    currentLetter.id === 'jeem'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.jeemLabel}
+                </button>
+                <button
+                  onClick={() => {
+                    const p = LETTER_PRESETS.find(l => l.id === 'sheen');
+                    if (p) selectLetter(p);
+                  }}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    currentLetter.id === 'sheen'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.sheenLabel}
+                </button>
+                <button
+                  onClick={() => {
+                    const p = LETTER_PRESETS.find(l => l.id === 'yaa_cons');
+                    if (p) selectLetter(p);
+                  }}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                    currentLetter.id === 'yaa_cons'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                  }`}
+                >
+                  {t.yaaLabel}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Collapsible Mechanical Controls Accordion */}
@@ -2794,11 +2636,9 @@ export default function TajweedStudioPage() {
               <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <SlidersHorizontal className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>{t.controls}</span>
-                </h3>
-              </div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                {t.controls}
+              </h3>
             </div>
 
             <div className="flex items-center gap-2">
