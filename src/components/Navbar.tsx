@@ -16,7 +16,8 @@ import {
   Sun,
   Moon,
   Monitor,
-  Check
+  Check,
+  Volume2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme, ThemeMode } from "@/context/ThemeContext";
@@ -68,8 +69,23 @@ export default function Navbar() {
           <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">QuizCompanion</h1>
         </div>
 
-        {/* Theme Selector for non-logged in users */}
-        <div className="relative" ref={themeMenuRef}>
+        <div className="flex items-center gap-2">
+          {/* Tajweed Studio Link */}
+          <Link
+            href="/tajweed"
+            title="Tajweed Studio (مخارج الحروف)"
+            aria-label="Tajweed Studio"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+              pathname === '/tajweed'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
+                : 'bg-slate-100 dark:bg-gray-800/80 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white border border-slate-200/60 dark:border-gray-700'
+            }`}
+          >
+            <Volume2 className="w-5 h-5 text-emerald-500" />
+          </Link>
+
+          {/* Theme Selector for non-logged in users */}
+          <div className="relative" ref={themeMenuRef}>
           <button
             onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
             title={`Theme: ${theme}`}
@@ -103,6 +119,7 @@ export default function Navbar() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </nav>
     );
@@ -199,6 +216,20 @@ export default function Navbar() {
               )}
             </>
           )}
+
+          {/* Tajweed Studio Link */}
+          <Link
+            href="/tajweed"
+            title="Tajweed Studio (مخارج الحروف)"
+            aria-label="Tajweed Studio"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+              pathname === '/tajweed'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
+                : 'bg-slate-100 dark:bg-gray-800/80 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white border border-slate-200/60 dark:border-gray-700'
+            }`}
+          >
+            <Volume2 className="w-5 h-5 text-emerald-500" />
+          </Link>
 
           {/* Theme Selector Popover (Light / Dark / System) */}
           <div className="relative" ref={themeMenuRef}>
@@ -364,6 +395,18 @@ export default function Navbar() {
               )}
             </>
           )}
+          <Link
+            href="/tajweed"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-colors ${
+              pathname === '/tajweed'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <Volume2 className="w-5 h-5 text-emerald-500" />
+            <span>Tajweed Studio</span>
+          </Link>
           <hr className="border-slate-200 dark:border-gray-800 my-2" />
           <button 
             onClick={() => {
