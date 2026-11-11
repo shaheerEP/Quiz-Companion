@@ -879,6 +879,25 @@ export default function TajweedStudioPage() {
     target: new THREE.Vector3(0.0, -0.04, 0.06)
   }), []);
 
+  const camPoseRef = useRef({
+    radius: 3.28,
+    theta: -1.36,
+    phi: 1.48,
+    target: new THREE.Vector3(0.0, -0.04, 0.06)
+  });
+
+  const currentLetterRef = useRef(currentLetter);
+  const dhaadModeRef = useRef(dhaadMode);
+  const showAnatomyRef = useRef(showAnatomy);
+  const showMakhrajColorsRef = useRef(showMakhrajColors);
+
+  useEffect(() => {
+    currentLetterRef.current = currentLetter;
+    dhaadModeRef.current = dhaadMode;
+    showAnatomyRef.current = showAnatomy;
+    showMakhrajColorsRef.current = showMakhrajColors;
+  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors]);
+
   const camAnimRef = useRef<{
     startRadius: number;
     startTheta: number;
@@ -944,6 +963,10 @@ export default function TajweedStudioPage() {
       spherical.theta = DEFAULT_CAM.theta;
       spherical.phi = DEFAULT_CAM.phi;
       spherical.target.copy(DEFAULT_CAM.target);
+      camPoseRef.current.radius = spherical.radius;
+      camPoseRef.current.theta = spherical.theta;
+      camPoseRef.current.phi = spherical.phi;
+      camPoseRef.current.target.copy(spherical.target);
       camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
       camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
       camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
@@ -966,7 +989,7 @@ export default function TajweedStudioPage() {
     };
   };
 
-  // Change active letter
+  // Change active letter (preserve current 3D camera viewpoint)
   const selectLetter = (preset: LetterPreset) => {
     setCurrentLetter(preset);
     isSimulatingRef.current = false;
@@ -975,7 +998,6 @@ export default function TajweedStudioPage() {
     targetGearsRef.current = { ...preset.gears };
     setGears({ ...preset.gears });
     setUpperTeethOpacity(preset.gears.upperOpacity ?? 56);
-    resetCameraToDefault(true);
   };
 
   // Adjust gear slider
@@ -1015,16 +1037,20 @@ export default function TajweedStudioPage() {
 
     const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 100);
     const spherical = {
-      radius: 3.28,
-      theta: -1.36,
-      phi: 1.48,
-      target: new THREE.Vector3(0.0, -0.04, 0.06)
+      radius: camPoseRef.current.radius,
+      theta: camPoseRef.current.theta,
+      phi: camPoseRef.current.phi,
+      target: camPoseRef.current.target.clone()
     };
     const updateCamPos = () => {
       camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
       camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
       camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
       camera.lookAt(spherical.target);
+      camPoseRef.current.radius = spherical.radius;
+      camPoseRef.current.theta = spherical.theta;
+      camPoseRef.current.phi = spherical.phi;
+      camPoseRef.current.target.copy(spherical.target);
     };
     updateCamPos();
 
@@ -1549,7 +1575,8 @@ export default function TajweedStudioPage() {
     lipsGroup.add(lowerLipMesh);
 
     const updateRealLipsGeometry = (lipMode: string) => {
-      const showMarker = showMakhrajColors && !showAnatomy;
+      const activeLetter = currentLetterRef.current;
+      const showMarker = showMakhrajColorsRef.current && !showAnatomyRef.current;
       const makhrajMorphProgress = morphProgressRef.current;
       [
         { mesh: upperLipMesh, isUpper: true },
@@ -1594,7 +1621,7 @@ export default function TajweedStudioPage() {
               posArr[pPtr++] = alifZ + (targetZ - alifZ) * makhrajMorphProgress;
 
               let rL = 0.72, gL = 0.25, bL = 0.30;
-              if (showMarker && currentLetter && currentLetter.id === 'waw') {
+              if (showMarker && activeLetter && activeLetter.id === 'waw') {
                 const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.72, 2));
                 const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.78, 2));
                 const pW = Math.min(0.85, innerRim * 0.88) * makhrajMorphProgress;
@@ -1642,8 +1669,8 @@ export default function TajweedStudioPage() {
             posArr[pPtr++] = curCenterZ + localZ;
 
             let rL = 0.72, gL = 0.25, bL = 0.30;
-            if (showMarker && currentLetter) {
-              const lid = currentLetter.id;
+            if (showMarker && activeLetter) {
+              const lid = activeLetter.id;
               let pW = 0.0, sW = 0.0;
               if (lid === 'faa' && !isUpper) {
                 const centerZone = Math.exp(-Math.pow(u / 0.28, 2));
@@ -1830,12 +1857,16 @@ export default function TajweedStudioPage() {
 
     // Highlight hard-palate contact zones for middle-tongue and safir letters without touching the gum shelf
     let lastPalateProg = -1;
+    let lastPalateKey = '';
     const updatePalateMakhrajColors = (mProg: number) => {
-      const lid = currentLetter.id;
+      const lid = currentLetterRef.current.id;
+      const showMarker = showMakhrajColorsRef.current && !showAnatomyRef.current;
+      const stateKey = `${lid}|${showMarker}`;
       const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
       const isSafirLetter = (lid === 'saad' || lid === 'zaay' || lid === 'seen');
-      const targetProg = ((isMiddleLetter || isSafirLetter) && showMakhrajColors && !showAnatomy) ? mProg : 0;
-      if (Math.abs(targetProg - lastPalateProg) < 0.002) return;
+      const targetProg = ((isMiddleLetter || isSafirLetter) && showMarker) ? mProg : 0;
+      if (stateKey === lastPalateKey && Math.abs(targetProg - lastPalateProg) < 0.002) return;
+      lastPalateKey = stateKey;
       lastPalateProg = targetProg;
 
       const geom = hardPalateMesh.geometry;
@@ -1945,10 +1976,11 @@ export default function TajweedStudioPage() {
           const tNorm = Math.max(0.0, Math.min(1.0, elapsed / duration));
           const env = 0.5 * (1.0 - Math.cos(2.0 * Math.PI * tNorm));
           morphProgressRef.current = env;
-          Object.keys(currentLetter.gears).forEach(k => {
+          const simGears = currentLetterRef.current.gears;
+          Object.keys(simGears).forEach(k => {
             if (k !== 'upperOpacity' && k !== 'greenPointPos') {
               const alifBase = ALIF_MAKHRAJ_GEARS[k] ?? 0;
-              currentGearsRef.current[k] = alifBase + (currentLetter.gears[k] - alifBase) * env;
+              currentGearsRef.current[k] = alifBase + (simGears[k] - alifBase) * env;
             }
           });
         }
@@ -1974,16 +2006,17 @@ export default function TajweedStudioPage() {
       lowerJawPivot.rotation.x = jawOpenFactor * 0.30;
       lowerJawPivot.position.y = -jawOpenFactor * 0.04;
 
-      lipsGroup.visible = Boolean(currentLetter.showLips && !showAnatomy);
+      const activeLetter = currentLetterRef.current;
+      lipsGroup.visible = Boolean(activeLetter.showLips && !showAnatomyRef.current);
       if (lipsGroup.visible) {
-        updateRealLipsGeometry(currentLetter.lipMode || 'bilabial_closed');
+        updateRealLipsGeometry(activeLetter.lipMode || 'bilabial_closed');
       }
 
       // Tongue vertices deformation
-      const dorsalMode = currentLetter.dorsalMode || 'istila_cup';
-      const isWideLateral = (currentLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
-      const isNatiyyah = currentLetter.id === 'taa_heavy' || currentLetter.id === 'daal' || currentLetter.id === 'taa_light';
-      const isAlveolar = currentLetter.id === 'laam' || currentLetter.id === 'noon' || currentLetter.id === 'raa';
+      const dorsalMode = activeLetter.dorsalMode || 'istila_cup';
+      const isWideLateral = (activeLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
+      const isNatiyyah = activeLetter.id === 'taa_heavy' || activeLetter.id === 'daal' || activeLetter.id === 'taa_light';
+      const isAlveolar = activeLetter.id === 'laam' || activeLetter.id === 'noon' || activeLetter.id === 'raa';
       const isAlveolarOrNatiyyah = isNatiyyah || isAlveolar;
 
       const zBack = -0.60;
@@ -2101,7 +2134,8 @@ export default function TajweedStudioPage() {
           if (dorsalMode === 'dhaad_lateral') {
             const isRightSide = (cosT < 0);
             const isLeftSide = (cosT > 0);
-            const isPressedSide = (dhaadMode === 'both') || (dhaadMode === 'right' && isRightSide) || (dhaadMode === 'left' && isLeftSide);
+            const activeDhaadMode = dhaadModeRef.current;
+            const isPressedSide = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRightSide) || (activeDhaadMode === 'left' && isLeftSide);
 
             const tipSmoothBlend = Math.pow(Math.max(0.0, (s - 0.62) / 0.38), 1.35);
             const molarExtraReach = isPressedSide ? (0.042 * dhaadMolarEnv * (1.0 - tipSmoothBlend)) : (0.006 * dhaadMolarEnv);
@@ -2202,7 +2236,8 @@ export default function TajweedStudioPage() {
             const wallAtVertexZ = getUpperMolarInnerWallAtZ(wz);
             const isRightSide = (cosT < 0);
             const isLeftSide = (cosT > 0);
-            const isPressedSide = (dhaadMode === 'both') || (dhaadMode === 'right' && isRightSide) || (dhaadMode === 'left' && isLeftSide);
+            const activeDhaadMode = dhaadModeRef.current;
+            const isPressedSide = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRightSide) || (activeDhaadMode === 'left' && isLeftSide);
             const tipSmoothBlend = Math.pow(Math.max(0.0, (s - 0.62) / 0.38), 1.35);
             const allowedArchX = wallAtVertexZ.inX + (isPressedSide ? 0.036 * (1.0 - tipSmoothBlend) : 0.004);
             if (Math.abs(x) > allowedArchX) {
@@ -2274,7 +2309,7 @@ export default function TajweedStudioPage() {
           let gT = 0.24 * shadeT;
           let bT = 0.28 * shadeT;
 
-          if (showAnatomy) {
+          if (showAnatomyRef.current) {
             const absC = Math.abs(cosT);
             let zoneRGB = [0.49, 0.23, 0.93];
             if (s > 0.88 && absC < 0.58 && sinT > -0.35) zoneRGB = [0.88, 0.11, 0.28];
@@ -2286,8 +2321,8 @@ export default function TajweedStudioPage() {
             rT = zoneRGB[0] * anatShade;
             gT = zoneRGB[1] * anatShade;
             bT = zoneRGB[2] * anatShade;
-          } else if (showMakhrajColors) {
-            const lid = currentLetter.id;
+          } else if (showMakhrajColorsRef.current) {
+            const lid = currentLetterRef.current.id;
             const absCos = Math.abs(cosT);
             const topMask = Math.max(0.0, Math.min(1.0, (sinT + 0.18) / 0.55));
             const edgeMask = Math.max(0.0, Math.min(1.0, (sinT + 0.38) / 0.55));
@@ -2296,7 +2331,8 @@ export default function TajweedStudioPage() {
             if (lid === 'dhaad') {
               const isRight = (cosT < 0);
               const isLeft = (cosT > 0);
-              const isPressed = (dhaadMode === 'both') || (dhaadMode === 'right' && isRight) || (dhaadMode === 'left' && isLeft);
+              const activeDhaadMode = dhaadModeRef.current;
+              const isPressed = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRight) || (activeDhaadMode === 'left' && isLeft);
               const latRim = Math.pow(Math.max(0.0, (absCos - 0.46) / 0.54), 1.15) * dhaadMolarEnv * edgeMask;
               const frontSmoothTip = Math.pow(Math.max(0.0, (s - 0.78) / 0.22), 1.2) * Math.pow(Math.max(0.0, absCos * 0.5 + 0.5), 0.6) * edgeMask;
               const backIstila = Math.exp(-Math.pow((s - 0.32) / 0.16, 2)) * Math.exp(-Math.pow(absCos / 0.45, 2)) * topMask;
@@ -2389,7 +2425,7 @@ export default function TajweedStudioPage() {
       }
 
       // Update 3D anatomy callouts
-      if (showAnatomy) {
+      if (showAnatomyRef.current) {
         anatomyGroup.visible = true;
         const curW = container.clientWidth || 640;
         const curH = container.clientHeight || 420;
@@ -2454,7 +2490,7 @@ export default function TajweedStudioPage() {
       }
       renderer.dispose();
     };
-  }, [resolvedTheme, currentLetter, dhaadMode, showAnatomy, showMakhrajColors, lang]);
+  }, [resolvedTheme, lang]);
 
   // Sync mesh visibilities
   useEffect(() => {
