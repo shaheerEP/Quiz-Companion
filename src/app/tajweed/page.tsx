@@ -1141,9 +1141,9 @@ export default function TajweedStudioPage() {
             const endEdgeShade = Math.pow(Math.max(0.0, (tz - 0.86) / 0.14), 1.5) * 0.18;
             const archRimShade = Math.pow(Math.abs(signedTx), 2.2) * 0.12;
             const rimShade = Math.min(0.36, domeCrestShade + endEdgeShade + archRimShade);
-            rCol = 0.58 - 0.20 * rimShade;
-            gCol = 0.20 - 0.09 * rimShade;
-            bCol = 0.28 - 0.11 * rimShade;
+            rCol = 0.78 - 0.16 * rimShade;
+            gCol = 0.40 - 0.08 * rimShade;
+            bCol = 0.46 - 0.10 * rimShade;
           }
           colors.push(rCol, gCol, bCol);
         }
@@ -1416,10 +1416,10 @@ export default function TajweedStudioPage() {
 
     // Materials
     const hardPalateMaterial = new THREE.MeshLambertMaterial({
-      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.62, side: THREE.DoubleSide, depthWrite: false
+      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.54, side: THREE.DoubleSide, depthWrite: false
     });
     const softPalateMaterial = new THREE.MeshLambertMaterial({
-      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.62, side: THREE.DoubleSide, depthWrite: false
+      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.54, side: THREE.DoubleSide, depthWrite: false
     });
     const upperToothMaterial = new THREE.MeshLambertMaterial({
       color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.56, side: THREE.DoubleSide, depthWrite: true
