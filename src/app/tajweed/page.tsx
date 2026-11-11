@@ -1828,12 +1828,13 @@ export default function TajweedStudioPage() {
     };
     window.addEventListener('resize', onResize);
 
-    // Highlight hard-palate contact zones for middle-tongue letters without touching the gum shelf
+    // Highlight hard-palate contact zones for middle-tongue and safir letters without touching the gum shelf
     let lastPalateProg = -1;
-    const updateMiddlePalateColors = (mProg: number) => {
+    const updatePalateMakhrajColors = (mProg: number) => {
       const lid = currentLetter.id;
       const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
-      const targetProg = (isMiddleLetter && showMakhrajColors && !showAnatomy) ? mProg : 0;
+      const isSafirLetter = (lid === 'saad' || lid === 'zaay' || lid === 'seen');
+      const targetProg = ((isMiddleLetter || isSafirLetter) && showMakhrajColors && !showAnatomy) ? mProg : 0;
       if (Math.abs(targetProg - lastPalateProg) < 0.002) return;
       lastPalateProg = targetProg;
 
@@ -1879,6 +1880,17 @@ export default function TajweedStudioPage() {
             if (latBrace > 0.05 || centerChan > 0.05) {
               pW = Math.min(0.76, latBrace * 0.76);
               sW = Math.min(0.58, centerChan * 0.58) * Math.max(0.0, 1.0 - latBrace);
+            }
+          } else if (isSafirLetter) {
+            const zLat = Math.exp(-Math.pow((wz - 0.22) / 0.16, 2));
+            const xLatPeak = (lid === 'saad') ? 0.31 : 0.24;
+            const latBrace = Math.exp(-Math.pow((absX - xLatPeak) / 0.085, 2)) * zLat;
+            const antWhistle = (wz > 0.36)
+              ? (Math.exp(-Math.pow(absX / 0.08, 2)) * Math.min(1.0, (wz - 0.36) / 0.25))
+              : 0.0;
+            if (latBrace > 0.05 || antWhistle > 0.05) {
+              pW = Math.min(0.75, latBrace * 0.75);
+              sW = Math.min(0.55, antWhistle * 0.55) * Math.max(0.0, 1.0 - latBrace);
             }
           }
 
@@ -1969,6 +1981,7 @@ export default function TajweedStudioPage() {
 
       // Tongue vertices deformation
       const dorsalMode = currentLetter.dorsalMode || 'istila_cup';
+      const isWideLateral = (currentLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
       const isNatiyyah = currentLetter.id === 'taa_heavy' || currentLetter.id === 'daal' || currentLetter.id === 'taa_light';
       const isAlveolar = currentLetter.id === 'laam' || currentLetter.id === 'noon' || currentLetter.id === 'raa';
       const isAlveolarOrNatiyyah = isNatiyyah || isAlveolar;
@@ -2123,14 +2136,26 @@ export default function TajweedStudioPage() {
               yOffset += vaultIndent;
             }
           } else {
-            const archPresence = Math.min(1.0, Math.max(0.0, midArchFactor / 0.85));
-            const grooveEnv = (dorsalMode === 'middle_dome' && s > 0.10 && s < 0.68)
-              ? Math.sin(((s - 0.10) / 0.58) * Math.PI) * archPresence
+            const allowMidConcavity = (dorsalMode === 'safir_hook' || dorsalMode === 'middle_dome');
+            const grooveEndS = (dorsalMode === 'safir_hook') ? 0.86 : 0.68;
+            const archPresence = (dorsalMode === 'middle_dome')
+              ? Math.min(1.0, Math.max(0.0, midArchFactor / 0.85))
+              : Math.min(1.0, Math.max(0.0, (midArchFactor + spreadFactor) / 0.90));
+            const grooveEnv = (allowMidConcavity && s > 0.10 && s < grooveEndS)
+              ? Math.sin(((s - 0.10) / (grooveEndS - 0.10)) * Math.PI) * archPresence
               : 0.0;
             if (sinT > 0.0 && grooveEnv > 0.0) {
-              const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / 0.32, 1.45));
-              const centerDip = Math.min(halfThick * 0.72, 0.075 * grooveEnv) * vSharp;
-              const shoulderLift = 0.13 * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - 0.50) / 0.30, 2));
+              const vWidth = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.42 : 0.32;
+              const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / vWidth, 1.45));
+              const dipBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.16 : 0.105)
+                : 0.075;
+              const centerDip = Math.min(halfThick * 0.72, dipBase * grooveEnv) * vSharp;
+              const shoulderPeak = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.64 : 0.50;
+              const liftBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.15 : 0.155)
+                : 0.13;
+              const shoulderLift = liftBase * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - shoulderPeak) / 0.30, 2));
               yOffset += (-centerDip + shoulderLift) * sinT;
             }
 
@@ -2226,7 +2251,9 @@ export default function TajweedStudioPage() {
           targetWy = wyAlif + (targetWy - wyAlif) * mProg;
 
           const tipEdgeRoundOff = (s > 0.88 && sinT > 0.0) ? (0.010 * Math.pow((s - 0.88) / 0.12, 1.6) * sinT) : 0.0;
-          const palateClearance = (dorsalMode === 'jeem_touch') ? 0.001 : (dorsalMode === 'middle_dome' ? 0.002 : 0.005);
+          const palateClearance = (dorsalMode === 'jeem_touch')
+            ? 0.001
+            : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
           const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
           const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.32 && s < 0.72) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
@@ -2308,7 +2335,13 @@ export default function TajweedStudioPage() {
               const cushionHalo = Math.pow(Math.max(0.0, (s - 0.72) / 0.28), 0.9) * edgeMask * 0.65;
               sW = cushionHalo * (1.0 - pW);
             } else if (lid === 'saad' || lid === 'zaay' || lid === 'seen') {
-              pW = Math.pow(Math.max(0.0, (s - 0.88) / 0.12), 1.1) * topMask * 0.90;
+              const tipApex = Math.pow(Math.max(0.0, (s - 0.89) / 0.11), 1.1) * Math.exp(-Math.pow(absCos / 0.56, 2));
+              const shoulderCenter = (lid === 'saad') ? 0.62 : 0.52;
+              const bladeShoulders = Math.exp(-Math.pow((s - 0.60) / 0.14, 2)) * Math.exp(-Math.pow((absCos - shoulderCenter) / 0.20, 2));
+              const whistleGroove = Math.exp(-Math.pow((s - 0.68) / 0.20, 2)) * Math.exp(-Math.pow(absCos / 0.32, 2));
+              const backIstila = (lid === 'saad') ? (Math.exp(-Math.pow((s - 0.25) / 0.14, 2)) * topMask * 0.65) : 0.0;
+              pW = Math.min(0.90, (tipApex + bladeShoulders) * topMask * 0.90);
+              sW = Math.min(0.82, (whistleGroove * topMask * 0.82 + backIstila) * (1.0 - pW));
             } else if (lid === 'thaa_heavy' || lid === 'dhaal_zaa' || lid === 'thaa_light') {
               const pressCore = Math.exp(-Math.pow((s - 0.88) / 0.09, 2)) * Math.exp(-Math.pow(absCos / 0.68, 2));
               pW = pressCore * topMask * 0.90;
@@ -2331,7 +2364,7 @@ export default function TajweedStudioPage() {
 
       tongueGeom.attributes.position.needsUpdate = true;
       tongueGeom.attributes.color.needsUpdate = true;
-      updateMiddlePalateColors(morphProgressRef.current);
+      updatePalateMakhrajColors(morphProgressRef.current);
       tongueGeom.computeVertexNormals();
 
       // Smooth camera transition back to default position if animating
