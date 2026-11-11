@@ -989,15 +989,15 @@ export default function TajweedStudioPage() {
     };
   };
 
-  // Change active letter (preserve current 3D camera viewpoint)
+  // Change active letter (preserve current 3D camera viewpoint and upper teeth opacity)
   const selectLetter = (preset: LetterPreset) => {
     setCurrentLetter(preset);
     isSimulatingRef.current = false;
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 1.0;
-    targetGearsRef.current = { ...preset.gears };
-    setGears({ ...preset.gears });
-    setUpperTeethOpacity(preset.gears.upperOpacity ?? 56);
+    const nextGears = { ...preset.gears, upperOpacity: upperTeethOpacity };
+    targetGearsRef.current = { ...nextGears };
+    setGears(nextGears);
   };
 
   // Adjust gear slider
