@@ -672,160 +672,167 @@ const ALIF_MAKHRAJ_GEARS: Record<string, number> = {
 // ----------------------------------------------------------------------------
 interface AnatomyLabelItem {
   id: string;
-  group: 'tongue' | 'teeth' | 'palate';
+  group: 'tongue' | 'palate' | 'teeth' | 'lips';
   ar: string;
   en: string;
   hex: string;
+  lightTextHex?: string;
   rgb: [number, number, number];
-  getTarget: () => THREE.Vector3;
-  offset: THREE.Vector3;
+  letters: string[];
 }
 
 const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
-  // 5 Tongue Parts
+  // Tongue (5 parts)
   {
     id: 'aqsa_lisaan',
     group: 'tongue',
     ar: 'أقصى اللسان',
-    en: 'Root / Back (أقصى اللسان)',
+    en: 'Tongue Root',
     hex: '#7c3aed',
     rgb: [0.49, 0.23, 0.93],
-    getTarget: () => new THREE.Vector3(0.0, 0.25, -0.38),
-    offset: new THREE.Vector3(-0.48, 0.34, -0.25)
+    letters: ['ق', 'ك']
   },
   {
     id: 'wasat_lisaan',
     group: 'tongue',
     ar: 'وسط اللسان',
-    en: 'Middle Dorsum (وسط اللسان)',
+    en: 'Middle Tongue',
     hex: '#2563eb',
     rgb: [0.15, 0.39, 0.92],
-    getTarget: () => new THREE.Vector3(0.0, 0.28, 0.14),
-    offset: new THREE.Vector3(-0.52, 0.36, 0.08)
+    letters: ['ج', 'ش', 'ي']
   },
   {
     id: 'haafah_lisaan',
     group: 'tongue',
     ar: 'حافتا اللسان',
-    en: 'Lateral Edges (حافتا اللسان)',
+    en: 'Tongue Edges',
     hex: '#d97706',
     rgb: [0.85, 0.47, 0.02],
-    getTarget: () => new THREE.Vector3(-0.38, 0.18, 0.22),
-    offset: new THREE.Vector3(-0.62, 0.08, 0.26)
+    letters: ['ض', 'ل']
   },
   {
     id: 'taraf_lisaan',
     group: 'tongue',
     ar: 'طرف اللسان',
-    en: 'Tip & Blade (طرف اللسان)',
+    en: 'Tongue Tip',
     hex: '#059669',
     rgb: [0.02, 0.59, 0.41],
-    getTarget: () => new THREE.Vector3(0.0, 0.17, 0.66),
-    offset: new THREE.Vector3(-0.48, 0.22, 0.68)
+    letters: ['ل', 'ن', 'ر', 'ط', 'د', 'ت', 'ظ', 'ذ', 'ث']
   },
   {
     id: 'asalat_lisaan',
     group: 'tongue',
     ar: 'أسلة اللسان',
-    en: 'Apex Tip (أسلة اللسان)',
+    en: 'Tongue Apex',
     hex: '#e11d48',
     rgb: [0.88, 0.11, 0.28],
-    getTarget: () => new THREE.Vector3(0.0, 0.12, 0.85),
-    offset: new THREE.Vector3(0.0, -0.18, 1.18)
+    letters: ['ص', 'ز', 'س']
   },
 
-  // 6 Teeth Types
-  {
-    id: 'thanaayaa',
-    group: 'teeth',
-    ar: 'الثنايا (٤)',
-    en: 'Central Incisors (الثنايا)',
-    hex: '#06b6d4',
-    rgb: [0.02, 0.71, 0.83],
-    getTarget: () => new THREE.Vector3(0.07, 0.09, 0.94),
-    offset: new THREE.Vector3(0.32, 0.14, 1.24)
-  },
-  {
-    id: 'rubaaiyyaat',
-    group: 'teeth',
-    ar: 'الرباعيات (٤)',
-    en: 'Lateral Incisors (الرباعيات)',
-    hex: '#10b981',
-    rgb: [0.06, 0.73, 0.51],
-    getTarget: () => new THREE.Vector3(0.21, 0.09, 0.89),
-    offset: new THREE.Vector3(0.56, 0.10, 1.06)
-  },
-  {
-    id: 'anyaab',
-    group: 'teeth',
-    ar: 'الأنياب (٤)',
-    en: 'Canines (الأنياب)',
-    hex: '#f59e0b',
-    rgb: [0.96, 0.62, 0.04],
-    getTarget: () => new THREE.Vector3(0.35, 0.09, 0.78),
-    offset: new THREE.Vector3(0.72, 0.04, 0.84)
-  },
-  {
-    id: 'dawaahik',
-    group: 'teeth',
-    ar: 'الضواحك (٤)',
-    en: 'Premolars (الضواحك)',
-    hex: '#a855f7',
-    rgb: [0.66, 0.33, 0.97],
-    getTarget: () => new THREE.Vector3(0.46, 0.11, 0.58),
-    offset: new THREE.Vector3(0.82, -0.02, 0.58)
-  },
-  {
-    id: 'tawaaheen',
-    group: 'teeth',
-    ar: 'الطواحين (١٢)',
-    en: 'Molars (الطواحين)',
-    hex: '#f97316',
-    rgb: [0.98, 0.45, 0.09],
-    getTarget: () => new THREE.Vector3(0.62, 0.13, 0.12),
-    offset: new THREE.Vector3(0.96, -0.06, 0.10)
-  },
-  {
-    id: 'nawaajidh',
-    group: 'teeth',
-    ar: 'النواجذ (٤)',
-    en: 'Wisdom Teeth (النواجذ)',
-    hex: '#ec4899',
-    rgb: [0.93, 0.28, 0.60],
-    getTarget: () => new THREE.Vector3(0.71, 0.16, -0.42),
-    offset: new THREE.Vector3(1.04, -0.04, -0.48)
-  },
-
-  // 3 Palate Zones
+  // Palate (3 zones)
   {
     id: 'lathah_palate',
     group: 'palate',
-    ar: 'اللثة ومقدم الحنك المسطح',
-    en: 'Gum Shelf (اللثة)',
+    ar: 'اللثة ومقدم الحنك',
+    en: 'Gum Shelf',
     hex: '#eab368',
+    lightTextHex: '#b45309',
     rgb: [0.92, 0.72, 0.42],
-    getTarget: () => new THREE.Vector3(0.0, 0.26, 0.82),
-    offset: new THREE.Vector3(0.0, 0.54, 1.04)
+    letters: ['ل', 'ن', 'ر']
   },
   {
     id: 'hanak_adhmi',
     group: 'palate',
-    ar: 'الحنك العظمي المقوس',
-    en: 'Hard Palate (الحنك العظمي)',
+    ar: 'الحنك العظمي',
+    en: 'Hard Palate',
     hex: '#38bdf8',
+    lightTextHex: '#0284c7',
     rgb: [0.22, 0.74, 0.97],
-    getTarget: () => new THREE.Vector3(0.0, 0.45, 0.18),
-    offset: new THREE.Vector3(0.42, 0.72, 0.12)
+    letters: ['ك', 'ج', 'ش', 'ي']
   },
   {
     id: 'hanak_lahmi',
     group: 'palate',
     ar: 'الحنك اللحمي',
-    en: 'Soft Palate (الحنك اللحمي)',
+    en: 'Soft Palate',
     hex: '#c084fc',
+    lightTextHex: '#9333ea',
     rgb: [0.75, 0.52, 0.99],
-    getTarget: () => new THREE.Vector3(0.0, 0.31, -0.45),
-    offset: new THREE.Vector3(0.38, 0.62, -0.52)
+    letters: ['ق', 'ك']
+  },
+
+  // Teeth (6 types)
+  {
+    id: 'thanaayaa',
+    group: 'teeth',
+    ar: 'الثنايا (٤)',
+    en: 'Central Incisors',
+    hex: '#06b6d4',
+    lightTextHex: '#0891b2',
+    rgb: [0.02, 0.71, 0.83],
+    letters: ['ط', 'د', 'ت', 'ظ', 'ذ', 'ث', 'ص', 'ز', 'س', 'ف']
+  },
+  {
+    id: 'rubaaiyyaat',
+    group: 'teeth',
+    ar: 'الرباعيات (٤)',
+    en: 'Lateral Incisors',
+    hex: '#10b981',
+    lightTextHex: '#059669',
+    rgb: [0.06, 0.73, 0.51],
+    letters: ['ل']
+  },
+  {
+    id: 'anyaab',
+    group: 'teeth',
+    ar: 'الأنياب (٤)',
+    en: 'Canines',
+    hex: '#f59e0b',
+    lightTextHex: '#d97706',
+    rgb: [0.96, 0.62, 0.04],
+    letters: ['ل']
+  },
+  {
+    id: 'dawaahik',
+    group: 'teeth',
+    ar: 'الضواحك (٤)',
+    en: 'Premolars',
+    hex: '#a855f7',
+    lightTextHex: '#9333ea',
+    rgb: [0.66, 0.33, 0.97],
+    letters: ['ض', 'ل']
+  },
+  {
+    id: 'tawaaheen',
+    group: 'teeth',
+    ar: 'الطواحين (١٢)',
+    en: 'Molars',
+    hex: '#f97316',
+    lightTextHex: '#ea580c',
+    rgb: [0.98, 0.45, 0.09],
+    letters: ['ض']
+  },
+  {
+    id: 'nawaajidh',
+    group: 'teeth',
+    ar: 'النواجذ (٤)',
+    en: 'Wisdom Teeth',
+    hex: '#ec4899',
+    lightTextHex: '#db2777',
+    rgb: [0.93, 0.28, 0.60],
+    letters: ['ض']
+  },
+
+  // Lips
+  {
+    id: 'shafataan',
+    group: 'lips',
+    ar: 'الشفتان',
+    en: 'Lips',
+    hex: '#f43f5e',
+    lightTextHex: '#e11d48',
+    rgb: [0.96, 0.25, 0.37],
+    letters: ['ف', 'ب', 'م', 'و']
   }
 ];
 
@@ -911,7 +918,6 @@ export default function TajweedStudioPage() {
   const targetGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
   const currentGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   // Simulate Motion (Alif -> Makhraj -> Alif)
   const triggerSimulation = () => {
@@ -940,16 +946,6 @@ export default function TajweedStudioPage() {
     lipsGroup: THREE.Group;
     upperLipMesh: THREE.Mesh;
     lowerLipMesh: THREE.Mesh;
-    anatomyGroup: THREE.Group;
-    calloutItems: Array<{
-      data: AnatomyLabelItem;
-      group3D: THREE.Group;
-      anchorDot: THREE.Mesh;
-      shaftMesh: THREE.Mesh;
-      coneMesh: THREE.Mesh;
-      airNode: THREE.Mesh;
-      badgeEl: HTMLDivElement;
-    }>;
     animFrameId: number;
   } | null>(null);
 
@@ -1027,7 +1023,6 @@ export default function TajweedStudioPage() {
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
-    const overlay = overlayRef.current;
 
     const width = container.clientWidth || 640;
     const height = container.clientHeight || 420;
@@ -1668,7 +1663,9 @@ export default function TajweedStudioPage() {
             posArr[pPtr++] = curCenterY + localY;
             posArr[pPtr++] = curCenterZ + localZ;
 
-            let rL = 0.72, gL = 0.25, bL = 0.30;
+            let rL = showAnatomyRef.current ? 0.96 : 0.72;
+            let gL = showAnatomyRef.current ? 0.25 : 0.25;
+            let bL = showAnatomyRef.current ? 0.37 : 0.30;
             if (showMarker && activeLetter) {
               const lid = activeLetter.id;
               let pW = 0.0, sW = 0.0;
@@ -1695,57 +1692,6 @@ export default function TajweedStudioPage() {
         mesh.geometry.computeVertexNormals();
       });
     };
-
-    // Anatomy 3D Arrows & DOM Callouts
-    const anatomyGroup = new THREE.Group();
-    anatomyGroup.visible = false;
-    mouthRoot.add(anatomyGroup);
-
-    if (overlay) overlay.innerHTML = '';
-    const calloutItems: any[] = [];
-
-    ANATOMY_LABELS_DATA.forEach(item => {
-      const arrowColor = new THREE.Color(item.hex);
-      const arrowMat = new THREE.MeshBasicMaterial({ color: arrowColor });
-      const itemGroup = new THREE.Group();
-
-      const anchorDot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 12), arrowMat);
-      itemGroup.add(anchorDot);
-
-      const shaftGeom = new THREE.CylinderGeometry(0.007, 0.007, 1, 10);
-      const shaftMesh = new THREE.Mesh(shaftGeom, arrowMat);
-      itemGroup.add(shaftMesh);
-
-      const coneGeom = new THREE.ConeGeometry(0.024, 0.068, 12);
-      const coneMesh = new THREE.Mesh(coneGeom, arrowMat);
-      itemGroup.add(coneMesh);
-
-      const airNode = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 10), arrowMat);
-      itemGroup.add(airNode);
-
-      anatomyGroup.add(itemGroup);
-
-      const badgeEl = document.createElement('div');
-      badgeEl.className = 'absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-950/90 dark:bg-gray-900/90 border text-white shadow-xl backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap pointer-events-none transition-opacity text-xs';
-      badgeEl.style.borderColor = item.hex;
-      badgeEl.innerHTML = `
-        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${item.hex}"></span>
-        <div class="flex flex-col leading-tight">
-          <span class="font-bold text-white">${lang === 'ar' ? item.ar : item.en}</span>
-        </div>
-      `;
-      if (overlay) overlay.appendChild(badgeEl);
-
-      calloutItems.push({
-        data: item,
-        group3D: itemGroup,
-        anchorDot,
-        shaftMesh,
-        coneMesh,
-        airNode,
-        badgeEl
-      });
-    });
 
     // Helpers
     const getUpperMolarInnerWallAtZ = (z: number) => {
@@ -1786,8 +1732,6 @@ export default function TajweedStudioPage() {
       lipsGroup,
       upperLipMesh,
       lowerLipMesh,
-      anatomyGroup,
-      calloutItems,
       animFrameId: 0
     };
 
@@ -1855,19 +1799,99 @@ export default function TajweedStudioPage() {
     };
     window.addEventListener('resize', onResize);
 
-    // Highlight hard-palate contact zones for middle-tongue and safir letters without touching the gum shelf
+    const TEETH_ANATOMY_RGB: Record<number, [number, number, number]> = {
+      0: [0.02, 0.71, 0.83],
+      1: [0.06, 0.73, 0.51],
+      2: [0.96, 0.62, 0.04],
+      3: [0.66, 0.33, 0.97],
+      4: [0.98, 0.45, 0.09],
+      5: [0.98, 0.45, 0.09],
+      6: [0.98, 0.45, 0.09],
+      7: [0.93, 0.28, 0.60]
+    };
+
+    let lastTeethAnat: boolean | null = null;
+    const updateTeethAnatomyColors = (isAnat: boolean) => {
+      if (isAnat === lastTeethAnat) return;
+      lastTeethAnat = isAnat;
+
+      [upperTeethGroup, lowerTeethGroup].forEach(group => {
+        group.children.forEach(child => {
+          const mesh = child as THREE.Mesh;
+          const colAttr = mesh.geometry?.attributes?.color;
+          const base = mesh.userData?.baseColors as Float32Array | undefined;
+          if (!colAttr || !base) return;
+          const arr = colAttr.array as Float32Array;
+          if (!isAnat) {
+            arr.set(base);
+          } else {
+            const tRGB = TEETH_ANATOMY_RGB[mesh.userData.toothIndex] || [0.9, 0.9, 0.9];
+            for (let i = 0; i < base.length; i += 3) {
+              const lum = (base[i] + base[i + 1] + base[i + 2]) / 3.0;
+              const shade = 0.36 + 0.84 * lum;
+              arr[i] = tRGB[0] * shade;
+              arr[i + 1] = tRGB[1] * shade;
+              arr[i + 2] = tRGB[2] * shade;
+            }
+          }
+          colAttr.needsUpdate = true;
+        });
+      });
+    };
+
+    // Highlight palate zones: either vibrant Anatomy divisions or Makhraj contact spots
     let lastPalateProg = -1;
     let lastPalateKey = '';
     const updatePalateMakhrajColors = (mProg: number) => {
       const lid = currentLetterRef.current.id;
-      const showMarker = showMakhrajColorsRef.current && !showAnatomyRef.current;
-      const stateKey = `${lid}|${showMarker}`;
+      const isAnat = showAnatomyRef.current;
+      const showMarker = showMakhrajColorsRef.current && !isAnat;
+      const stateKey = `${lid}|${showMarker}|${isAnat}`;
       const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
       const isSafirLetter = (lid === 'saad' || lid === 'zaay' || lid === 'seen');
-      const targetProg = ((isMiddleLetter || isSafirLetter) && showMarker) ? mProg : 0;
-      if (stateKey === lastPalateKey && Math.abs(targetProg - lastPalateProg) < 0.002) return;
+      const targetProg = (!isAnat && (isMiddleLetter || isSafirLetter) && showMarker) ? mProg : 0;
+      if (stateKey === lastPalateKey && (isAnat || Math.abs(targetProg - lastPalateProg) < 0.002)) return;
+
+      const wasAnat = lastPalateKey.endsWith('|true');
       lastPalateKey = stateKey;
       lastPalateProg = targetProg;
+
+      const palateOp = isAnat ? 0.68 : 0.54;
+      hardPalateMaterial.opacity = palateOp;
+      softPalateMaterial.opacity = palateOp;
+
+      if (isAnat) {
+        [hardPalateMesh, softPalateMesh].forEach(pMesh => {
+          const geom = pMesh.geometry;
+          const base = geom.userData.baseColors as Float32Array | undefined;
+          const uArr = geom.userData.uArray as Float32Array | undefined;
+          const isSoftArr = geom.userData.isSoftArray as Uint8Array | undefined;
+          if (!base || !uArr) return;
+          const colArr = geom.attributes.color.array as Float32Array;
+          for (let i = 0, vi = 0; i < base.length; i += 3, vi++) {
+            const isSoft = isSoftArr ? isSoftArr[vi] === 1 : false;
+            const u = uArr[vi];
+            const pRGB = !isSoft
+              ? (u <= BIO_ALVEOLAR_SHELF_U ? [0.92, 0.72, 0.42] : [0.22, 0.74, 0.97])
+              : [0.75, 0.52, 0.99];
+            const lum = (base[i] + base[i + 1] + base[i + 2]) / 3.0;
+            const shade = 0.56 + 0.68 * lum;
+            colArr[i] = pRGB[0] * shade;
+            colArr[i + 1] = pRGB[1] * shade;
+            colArr[i + 2] = pRGB[2] * shade;
+          }
+          geom.attributes.color.needsUpdate = true;
+        });
+        return;
+      }
+
+      if (wasAnat) {
+        const sBase = softPalateMesh.geometry.userData.baseColors as Float32Array | undefined;
+        if (sBase) {
+          (softPalateMesh.geometry.attributes.color.array as Float32Array).set(sBase);
+          softPalateMesh.geometry.attributes.color.needsUpdate = true;
+        }
+      }
 
       const geom = hardPalateMesh.geometry;
       const base = geom.userData.baseColors as Float32Array | undefined;
@@ -2007,7 +2031,10 @@ export default function TajweedStudioPage() {
       lowerJawPivot.position.y = -jawOpenFactor * 0.04;
 
       const activeLetter = currentLetterRef.current;
-      lipsGroup.visible = Boolean(activeLetter.showLips && !showAnatomyRef.current);
+      lipsGroup.visible = Boolean(activeLetter.showLips);
+      realLipMaterial.transparent = showAnatomyRef.current;
+      realLipMaterial.opacity = showAnatomyRef.current ? 0.65 : 1.0;
+      realLipMaterial.depthWrite = !showAnatomyRef.current;
       if (lipsGroup.visible) {
         updateRealLipsGeometry(activeLetter.lipMode || 'bilabial_closed');
       }
@@ -2401,6 +2428,7 @@ export default function TajweedStudioPage() {
       tongueGeom.attributes.position.needsUpdate = true;
       tongueGeom.attributes.color.needsUpdate = true;
       updatePalateMakhrajColors(morphProgressRef.current);
+      updateTeethAnatomyColors(showAnatomyRef.current);
       tongueGeom.computeVertexNormals();
 
       // Smooth camera transition back to default position if animating
@@ -2424,52 +2452,6 @@ export default function TajweedStudioPage() {
         }
       }
 
-      // Update 3D anatomy callouts
-      if (showAnatomyRef.current) {
-        anatomyGroup.visible = true;
-        const curW = container.clientWidth || 640;
-        const curH = container.clientHeight || 420;
-        const upVec = new THREE.Vector3(0, 1, 0);
-
-        calloutItems.forEach(entry => {
-          const { data, group3D, anchorDot, shaftMesh, coneMesh, airNode, badgeEl } = entry;
-          group3D.visible = true;
-
-          const targetPos = data.getTarget();
-          const airPos = targetPos.clone().add(data.offset);
-          const dirVec = targetPos.clone().sub(airPos);
-          const totalLen = dirVec.length();
-          const dirNorm = dirVec.clone().normalize();
-
-          anchorDot.position.copy(targetPos);
-          airNode.position.copy(airPos);
-
-          const conePos = targetPos.clone().sub(dirNorm.clone().multiplyScalar(0.038));
-          coneMesh.position.copy(conePos);
-          coneMesh.quaternion.setFromUnitVectors(upVec, dirNorm);
-
-          const shaftLen = Math.max(0.02, totalLen - 0.065);
-          const shaftMid = airPos.clone().add(dirNorm.clone().multiplyScalar(shaftLen * 0.5));
-          shaftMesh.position.copy(shaftMid);
-          shaftMesh.scale.set(1, shaftLen, 1);
-          shaftMesh.quaternion.setFromUnitVectors(upVec, dirNorm);
-
-          const projected = airPos.clone().project(camera);
-          if (projected.z > 1.0) {
-            badgeEl.style.display = 'none';
-          } else {
-            const sx = Math.max(60, Math.min(curW - 60, (projected.x * 0.5 + 0.5) * curW));
-            const sy = Math.max(20, Math.min(curH - 20, (-projected.y * 0.5 + 0.5) * curH));
-            badgeEl.style.display = 'flex';
-            badgeEl.style.left = `${sx}px`;
-            badgeEl.style.top = `${sy}px`;
-          }
-        });
-      } else {
-        anatomyGroup.visible = false;
-        calloutItems.forEach(e => { e.badgeEl.style.display = 'none'; });
-      }
-
       renderer.render(scene, camera);
     };
 
@@ -2490,7 +2472,7 @@ export default function TajweedStudioPage() {
       }
       renderer.dispose();
     };
-  }, [resolvedTheme, lang]);
+  }, [resolvedTheme]);
 
   // Sync mesh visibilities
   useEffect(() => {
@@ -2515,8 +2497,11 @@ export default function TajweedStudioPage() {
       return {
         studioTitle: 'استوديو التجويد ثلاثي الأبعاد',
         anatomy: 'أقسام الفم',
+        anatomyPartCol: 'العضو',
+        anatomyLettersCol: 'حروف المخرج',
         selectLetter: 'اختر الحرف:',
-        simulate: 'محاكاة الحركة (ألف ← المخرج)',
+        simulate: 'محاكاة',
+        simulateTitle: 'محاكاة الحركة (ألف ← المخرج)',
         resetView: 'إعادة العرض',
         makhrajColors: 'ألوان المخرج',
         palate: 'الحنك',
@@ -2542,8 +2527,11 @@ export default function TajweedStudioPage() {
     return {
       studioTitle: '3D Tajweed Studio',
       anatomy: 'Anatomy Parts (أقسام الفم)',
+      anatomyPartCol: 'Part',
+      anatomyLettersCol: 'Letters',
       selectLetter: 'Letter (الحرف):',
-      simulate: 'Simulate Motion (ألف ← المخرج)',
+      simulate: 'Simulate',
+      simulateTitle: 'Simulate Motion (ألف ← المخرج)',
       resetView: 'Reset View',
       makhrajColors: 'Makhraj Marks',
       palate: 'Palate',
@@ -2566,6 +2554,52 @@ export default function TajweedStudioPage() {
       toggleLanguage: 'عربي'
     };
   }, [lang]);
+
+  const selectLetterByArabic = (ltr: string) => {
+    const preset = LETTER_PRESETS.find(p => p.letter === ltr);
+    if (preset) selectLetter(preset);
+  };
+
+  const renderAnatomyRows = (items: AnatomyLabelItem[]) =>
+    items.map(item => {
+      const partColor = resolvedTheme === 'dark' ? item.hex : (item.lightTextHex || item.hex);
+      return (
+        <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-gray-800/40 transition-colors">
+          <td className="py-1.5 px-2.5 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1.5 font-bold text-xs" style={{ color: partColor }}>
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/10 dark:ring-white/20" style={{ backgroundColor: item.hex }} />
+              <span>{lang === 'ar' ? item.ar : item.en}</span>
+            </span>
+          </td>
+          <td className="py-1 px-2">
+            <div className="flex flex-wrap items-center gap-1">
+              {item.letters.map(ltr => {
+                const isActive = currentLetter.letter === ltr;
+                return (
+                  <button
+                    key={ltr}
+                    type="button"
+                    onClick={() => selectLetterByArabic(ltr)}
+                    className={`arabic-font text-sm font-bold min-w-[24px] h-6 px-1.5 rounded-lg border transition-all leading-none flex items-center justify-center active:scale-95 ${
+                      isActive
+                        ? 'text-white shadow-sm'
+                        : 'bg-slate-50 dark:bg-gray-800/80 hover:scale-105'
+                    }`}
+                    style={
+                      isActive
+                        ? { backgroundColor: item.hex, borderColor: item.hex }
+                        : { color: partColor, borderColor: `${item.hex}45` }
+                    }
+                  >
+                    {ltr}
+                  </button>
+                );
+              })}
+            </div>
+          </td>
+        </tr>
+      );
+    });
 
   return (
     <div className={`min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col relative selection:bg-emerald-500 selection:text-white ${lang === 'ar' ? 'font-serif' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -2640,14 +2674,22 @@ export default function TajweedStudioPage() {
                 <div
                   ref={containerRef}
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
-                >
-                  <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden z-10" />
-                </div>
+                />
               </div>
 
               {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
               <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Simulate Motion Button */}
+                  <button
+                    onClick={triggerSimulation}
+                    title={t.simulateTitle}
+                    className="px-3 py-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>{t.simulate}</span>
+                  </button>
+
                   {/* Anatomy Parts Toggle Button */}
                   <button
                     onClick={() => setShowAnatomy(!showAnatomy)}
@@ -2727,34 +2769,63 @@ export default function TajweedStudioPage() {
                 </button>
               </div>
 
-              {/* Div 2 under 3D Section: Minimal Color Guide */}
-              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
-                <div className="flex flex-wrap items-center gap-3 font-medium">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
-                    <span>{t.firmPress}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
-                    <span>{t.gentleTouch}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
-                    <span>{t.gumShelfBadge}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
-                    <span>{t.palate}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
-                    <span>{t.tongueBadge}</span>
+              {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
+              {showAnatomy ? (
+                <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x rtl:md:divide-x-reverse divide-slate-200/80 dark:divide-gray-800">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
+                          <th className="py-1.5 px-2.5 text-start">{t.anatomyPartCol}</th>
+                          <th className="py-1.5 px-2 text-start">{t.anatomyLettersCol}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                        {renderAnatomyRows(ANATOMY_LABELS_DATA.filter(i => i.group === 'tongue' || i.group === 'palate'))}
+                      </tbody>
+                    </table>
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
+                          <th className="py-1.5 px-2.5 text-start">{t.anatomyPartCol}</th>
+                          <th className="py-1.5 px-2 text-start">{t.anatomyLettersCol}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                        {renderAnatomyRows(ANATOMY_LABELS_DATA.filter(i => i.group === 'teeth' || i.group === 'lips'))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
+                  <div className="flex flex-wrap items-center gap-3 font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
+                      <span>{t.firmPress}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
+                      <span>{t.gentleTouch}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
+                      <span>{t.gumShelfBadge}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
+                      <span>{t.palate}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
+                      <span>{t.tongueBadge}</span>
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400">
-                  {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : 'Drag to rotate • Wheel to zoom'}
-                </span>
-              </div>
+              )}
 
             </section>
 
@@ -2765,38 +2836,27 @@ export default function TajweedStudioPage() {
 
             {/* Selected Letter Information (Small, Compact Space) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
-                    {currentLetter.letter}
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                        {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
-                      </h2>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                        currentLetter.isHeavy
-                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                          : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
-                      }`}>
-                        {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
-                      </span>
-                    </div>
-                    <span className="text-xs text-slate-500 dark:text-gray-400">
-                      {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
+                  {currentLetter.letter}
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {lang === 'ar' ? currentLetter.ar.title : currentLetter.en.title}
+                    </h2>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                      currentLetter.isHeavy
+                        ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                        : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
+                    }`}>
+                      {lang === 'ar' ? currentLetter.ar.sifah : currentLetter.en.sifah}
                     </span>
                   </div>
+                  <span className="text-xs text-slate-500 dark:text-gray-400">
+                    {lang === 'ar' ? currentLetter.ar.zoneLabel : currentLetter.en.zoneLabel}
+                  </span>
                 </div>
-
-                {/* Simulate Motion Action Button */}
-                <button
-                  onClick={triggerSimulation}
-                  className="py-2 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 active:scale-95 shrink-0"
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  <span>{t.simulate}</span>
-                </button>
               </div>
 
               <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
