@@ -139,7 +139,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     letter: 'ج',
     sukoonText: 'جْ',
     isHeavy: false,
-    dorsalMode: 'jeem_shiddah',
+    dorsalMode: 'jeem_touch',
     phoneticSound: 'أَجْ',
     en: {
       title: 'Makhraj of Jeem (ج)',
@@ -155,7 +155,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'يرتفع وسط اللسان ويلتصق تماماً بسقف الحنك العظمي مغلقاً المخرج (فجوة 0 مم) ثم ينفك باضطراب (قلقلة).',
       sifah: 'مرقق (شدة وقلقلة)'
     },
-    gears: { jawOpen: 22, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 100, lateralSpread: 52, greenPointPos: 54, upperOpacity: 56 },
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 54, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.463, z: 0.12, rx: 0.15 }
   },
   // 4. Sheen (ش)
@@ -165,7 +165,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     letter: 'ش',
     sukoonText: 'شْ',
     isHeavy: false,
-    dorsalMode: 'sheen_tafasshi',
+    dorsalMode: 'middle_dome',
     phoneticSound: 'أَشْ',
     en: {
       title: 'Makhraj of Sheen (ش)',
@@ -181,8 +181,8 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'يرتفع وسط اللسان مع تلامس حافتيه بالحنك وتكون قناة وسطية متسعة يتدفق عبرها الهواء منتشراً نحو الأسنان (تفشٍّ).',
       sifah: 'مرقق (تفشٍّ ورخاوة)'
     },
-    gears: { jawOpen: 20, tipElevation: -18, tipForward: 6, backIstila: 15, middleArch: 86, lateralSpread: 78, greenPointPos: 50, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.467, z: 0.18, rx: 0.11 }
+    gears: { jawOpen: 24, tipElevation: -22, tipForward: -5, backIstila: 15, middleArch: 90, lateralSpread: 65, greenPointPos: 52, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.467, z: 0.15, rx: 0.11 }
   },
   // 5. Yaa (ي)
   {
@@ -191,7 +191,7 @@ const LETTER_PRESETS: LetterPreset[] = [
     letter: 'ي',
     sukoonText: 'يْ',
     isHeavy: false,
-    dorsalMode: 'yaa_rikhwah',
+    dorsalMode: 'middle_dome',
     phoneticSound: 'أَيْ',
     en: {
       title: 'Makhraj of Non-Madd Yaa (ي)',
@@ -207,7 +207,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'يرتفع وسط اللسان مقترباً من الحنك العظمي دون إغلاقه، فيمر الصوت مجهوراً رخواً بسلاسة ولين.',
       sifah: 'مرقق (رخاوة ولين)'
     },
-    gears: { jawOpen: 22, tipElevation: -26, tipForward: -8, backIstila: 14, middleArch: 94, lateralSpread: 64, greenPointPos: 52, upperOpacity: 56 },
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 14, middleArch: 92, lateralSpread: 60, greenPointPos: 52, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.466, z: 0.14, rx: 0.13 }
   },
   // 6. Zad / Dhaad (ض)
@@ -863,6 +863,7 @@ export default function TajweedStudioPage() {
   const [showUpperTeeth, setShowUpperTeeth] = useState<boolean>(true);
   const [upperTeethOpacity, setUpperTeethOpacity] = useState<number>(56);
   const [showLowerTeeth, setShowLowerTeeth] = useState<boolean>(true);
+  const [gears, setGears] = useState<Record<string, number>>(() => ({ ...currentLetter.gears }));
 
   // Motion simulation state
   const isSimulatingRef = useRef(false);
@@ -972,6 +973,7 @@ export default function TajweedStudioPage() {
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 1.0;
     targetGearsRef.current = { ...preset.gears };
+    setGears({ ...preset.gears });
     setUpperTeethOpacity(preset.gears.upperOpacity ?? 56);
     resetCameraToDefault(true);
   };
@@ -982,6 +984,7 @@ export default function TajweedStudioPage() {
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 1.0;
     targetGearsRef.current[key] = value;
+    setGears(prev => ({ ...prev, [key]: value }));
     if (key === 'upperOpacity') {
       setUpperTeethOpacity(value);
     }
@@ -992,6 +995,7 @@ export default function TajweedStudioPage() {
       jawOpen: 20, tipElevation: 0, tipForward: 0, backIstila: 0, middleArch: 0, lateralSpread: 10, greenPointPos: 18, upperOpacity: 56
     };
     targetGearsRef.current = { ...neutral };
+    setGears({ ...neutral });
     setUpperTeethOpacity(56);
   };
 
@@ -1824,6 +1828,83 @@ export default function TajweedStudioPage() {
     };
     window.addEventListener('resize', onResize);
 
+    // Highlight hard-palate contact zones for middle-tongue letters without touching the gum shelf
+    let lastPalateProg = -1;
+    const updateMiddlePalateColors = (mProg: number) => {
+      const lid = currentLetter.id;
+      const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
+      const targetProg = (isMiddleLetter && showMakhrajColors && !showAnatomy) ? mProg : 0;
+      if (Math.abs(targetProg - lastPalateProg) < 0.002) return;
+      lastPalateProg = targetProg;
+
+      const geom = hardPalateMesh.geometry;
+      const base = geom.userData.baseColors as Float32Array | undefined;
+      const uArr = geom.userData.uArray as Float32Array | undefined;
+      if (!base || !uArr) return;
+      const posArr = geom.attributes.position.array as Float32Array;
+      const colArr = geom.attributes.color.array as Float32Array;
+
+      if (targetProg <= 0.001) {
+        colArr.set(base);
+        geom.attributes.color.needsUpdate = true;
+        return;
+      }
+
+      for (let i = 0, vi = 0; i < base.length; i += 3, vi++) {
+        const u = uArr[vi];
+        let r = base[i];
+        let g = base[i + 1];
+        let b = base[i + 2];
+
+        if (u > BIO_ALVEOLAR_SHELF_U + 0.02) {
+          const wx = posArr[i];
+          const wz = posArr[i + 2];
+          const absX = Math.abs(wx);
+          let pW = 0.0;
+          let sW = 0.0;
+
+          if (lid === 'jeem') {
+            const d = Math.hypot(wx / 0.28, (wz - 0.12) / 0.18);
+            if (d < 1.0) {
+              const w = Math.cos(d * Math.PI * 0.5);
+              const press = 0.40 + 0.60 * w;
+              const blend = 0.80 * w;
+              pW = blend * press;
+              sW = blend * (1.0 - press);
+            }
+          } else if (lid === 'sheen' || lid === 'yaa_cons') {
+            const zEnv = Math.exp(-Math.pow((wz - 0.20) / 0.20, 2));
+            const latBrace = Math.exp(-Math.pow((absX - 0.20) / 0.08, 2)) * zEnv;
+            const centerChan = Math.exp(-Math.pow(absX / 0.12, 2)) * zEnv;
+            if (latBrace > 0.05 || centerChan > 0.05) {
+              pW = Math.min(0.76, latBrace * 0.76);
+              sW = Math.min(0.58, centerChan * 0.58) * Math.max(0.0, 1.0 - latBrace);
+            }
+          }
+
+          pW *= targetProg;
+          sW *= targetProg;
+          const wSum = pW + sW;
+          if (wSum > 0.82) {
+            const scale = 0.82 / wSum;
+            pW *= scale;
+            sW *= scale;
+          }
+          const rem = 1.0 - pW - sW;
+          if (pW + sW > 0.0) {
+            r = r * rem + 0.04 * pW + 0.48 * sW;
+            g = g * rem + 0.46 * pW + 0.92 * sW;
+            b = b * rem + 0.16 * pW + 0.60 * sW;
+          }
+        }
+
+        colArr[i] = r;
+        colArr[i + 1] = g;
+        colArr[i + 2] = b;
+      }
+      geom.attributes.color.needsUpdate = true;
+    };
+
     // ------------------------------------------------------------------------
     // RENDER / ANIMATION LOOP
     // ------------------------------------------------------------------------
@@ -1941,12 +2022,10 @@ export default function TajweedStudioPage() {
             dorsalArch = istilaFactor * 0.46 * Math.exp(-Math.pow((s - 0.18) / 0.25, 2));
           } else if (dorsalMode === 'kaaf_velar') {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
-          } else if (dorsalMode === 'jeem_shiddah' || dorsalMode === 'jeem_touch') {
-            dorsalArch = Math.max(0, midArchFactor) * 0.58 * Math.exp(-Math.pow((s - 0.53) / 0.25, 2));
-          } else if (dorsalMode === 'sheen_tafasshi') {
-            dorsalArch = Math.max(0, midArchFactor) * 0.50 * Math.exp(-Math.pow((s - 0.57) / 0.27, 2)) + 0.04 * Math.exp(-Math.pow((s - 0.76) / 0.14, 2));
-          } else if (dorsalMode === 'yaa_rikhwah' || dorsalMode === 'middle_dome') {
-            dorsalArch = Math.max(0, midArchFactor) * 0.53 * Math.exp(-Math.pow((s - 0.52) / 0.24, 2));
+          } else if (dorsalMode === 'jeem_touch') {
+            dorsalArch = Math.max(0, midArchFactor) * 0.54 * Math.exp(-Math.pow((s - 0.54) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
+          } else if (dorsalMode === 'middle_dome') {
+            dorsalArch = Math.max(0, midArchFactor) * 0.52 * Math.exp(-Math.pow((s - 0.56) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'neutral') {
             dorsalArch = -0.045 * (1.0 - wTip) + istilaFactor * 0.32 * Math.exp(-Math.pow((s - 0.26) / 0.28, 2));
           } else {
@@ -2044,21 +2123,15 @@ export default function TajweedStudioPage() {
               yOffset += vaultIndent;
             }
           } else {
-            if (dorsalMode === 'jeem_shiddah' && sinT > 0.0 && s > 0.26 && s < 0.78) {
-              const jeemEnv = Math.sin(((s - 0.26) / 0.52) * Math.PI) * midArchFactor;
-              const centerDomeBoost = 0.042 * jeemEnv * Math.pow(Math.max(0.0, 1.0 - 0.45 * cosT * cosT), 0.9) * sinT;
-              yOffset += centerDomeBoost;
-              pressMeatFactor = jeemEnv * (1.0 - 0.5 * cosT * cosT) * 0.85;
-            } else if (dorsalMode === 'sheen_tafasshi' && sinT > 0.0 && s > 0.24 && s < 0.86) {
-              const sheenEnv = Math.sin(((s - 0.24) / 0.62) * Math.PI) * midArchFactor;
-              const wideTafasshiGroove = -0.042 * sheenEnv * Math.exp(-Math.pow(cosT / 0.52, 2)) * sinT;
-              const lateralPalateBracing = 0.038 * sheenEnv * Math.exp(-Math.pow((Math.abs(cosT) - 0.68) / 0.24, 2)) * sinT;
-              yOffset += wideTafasshiGroove + lateralPalateBracing;
-            } else if ((dorsalMode === 'yaa_rikhwah' || dorsalMode === 'middle_dome') && sinT > 0.0 && s > 0.26 && s < 0.78) {
-              const yaaEnv = Math.sin(((s - 0.26) / 0.52) * Math.PI) * midArchFactor;
-              const narrowVocalChannel = -0.019 * yaaEnv * Math.exp(-Math.pow(cosT / 0.34, 2)) * sinT;
-              const medialShoulderBrace = 0.028 * yaaEnv * Math.exp(-Math.pow((Math.abs(cosT) - 0.54) / 0.22, 2)) * sinT;
-              yOffset += narrowVocalChannel + medialShoulderBrace;
+            const archPresence = Math.min(1.0, Math.max(0.0, midArchFactor / 0.85));
+            const grooveEnv = (dorsalMode === 'middle_dome' && s > 0.10 && s < 0.68)
+              ? Math.sin(((s - 0.10) / 0.58) * Math.PI) * archPresence
+              : 0.0;
+            if (sinT > 0.0 && grooveEnv > 0.0) {
+              const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / 0.32, 1.45));
+              const centerDip = Math.min(halfThick * 0.72, 0.075 * grooveEnv) * vSharp;
+              const shoulderLift = 0.13 * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - 0.50) / 0.30, 2));
+              yOffset += (-centerDip + shoulderLift) * sinT;
             }
 
             if (isAlveolarOrNatiyyah && s > 0.62) {
@@ -2153,20 +2226,9 @@ export default function TajweedStudioPage() {
           targetWy = wyAlif + (targetWy - wyAlif) * mProg;
 
           const tipEdgeRoundOff = (s > 0.88 && sinT > 0.0) ? (0.010 * Math.pow((s - 0.88) / 0.12, 1.6) * sinT) : 0.0;
-
-          let shajariyyahCenterClearance = 0.005;
-          if (dorsalMode === 'jeem_shiddah' && s > 0.30 && s < 0.74 && sinT > 0.15) {
-            shajariyyahCenterClearance = 0.0005;
-          } else if (dorsalMode === 'sheen_tafasshi' && s > 0.26 && s < 0.86 && sinT > 0.0) {
-            const centerApertureEnv = Math.exp(-Math.pow(cosT / 0.54, 2)) * Math.sin(((s - 0.26) / 0.60) * Math.PI);
-            shajariyyahCenterClearance = 0.004 + 0.036 * centerApertureEnv * mProg;
-          } else if ((dorsalMode === 'yaa_rikhwah' || dorsalMode === 'middle_dome') && s > 0.28 && s < 0.76 && sinT > 0.0) {
-            const narrowApertureEnv = Math.exp(-Math.pow(cosT / 0.38, 2)) * Math.sin(((s - 0.28) / 0.48) * Math.PI);
-            shajariyyahCenterClearance = 0.004 + 0.018 * narrowApertureEnv * mProg;
-          }
-
-          const ceilingY = getPalateCeilingY(x, wz) - shajariyyahCenterClearance - tipEdgeRoundOff;
-          const clampRadius = (dorsalMode === 'jeem_shiddah' && s > 0.32 && s < 0.72) ? 0.012 : 0.024;
+          const palateClearance = (dorsalMode === 'jeem_touch') ? 0.001 : (dorsalMode === 'middle_dome' ? 0.002 : 0.005);
+          const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.32 && s < 0.72) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           posArr[ptr++] = x;
@@ -2224,22 +2286,22 @@ export default function TajweedStudioPage() {
             } else if (lid === 'qaaf' || lid === 'kaaf') {
               pW = Math.exp(-Math.pow((s - 0.22) / 0.12, 2)) * topMask * 0.90;
             } else if (lid === 'jeem') {
-              const zDome = Math.exp(-Math.pow((s - 0.53) / 0.13, 2));
-              const xCenterSeal = Math.exp(-Math.pow(absCos / 0.65, 2));
-              pW = zDome * xCenterSeal * topMask * 0.96;
-              sW = zDome * (1.0 - xCenterSeal * 0.75) * topMask * 0.58;
+              const zEnv = Math.exp(-Math.pow((s - 0.54) / 0.11, 2));
+              const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
+              pW = zEnv * xCenter * topMask * 0.92;
+              sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.58;
             } else if (lid === 'sheen') {
-              const zBrace = Math.exp(-Math.pow((s - 0.56) / 0.15, 2));
-              const latBracing = Math.exp(-Math.pow((absCos - 0.66) / 0.20, 2));
-              const wideTafasshiStream = Math.exp(-Math.pow((s - 0.62) / 0.22, 2)) * Math.exp(-Math.pow(absCos / 0.46, 2));
-              pW = zBrace * latBracing * topMask * 0.90;
-              sW = wideTafasshiStream * topMask * 0.86 * (1.0 - pW);
+              const zEnv = Math.exp(-Math.pow((s - 0.56) / 0.14, 2));
+              const latShoulders = Math.exp(-Math.pow((absCos - 0.62) / 0.22, 2));
+              const centerChannel = Math.exp(-Math.pow((s - 0.62) / 0.18, 2)) * Math.exp(-Math.pow(absCos / 0.36, 2));
+              pW = zEnv * latShoulders * topMask * 0.88;
+              sW = centerChannel * topMask * 0.78 * (1.0 - pW);
             } else if (lid === 'yaa_cons') {
-              const zArch = Math.exp(-Math.pow((s - 0.52) / 0.13, 2));
-              const medialShoulders = Math.exp(-Math.pow((absCos - 0.52) / 0.18, 2));
-              const narrowVoiceStream = zArch * Math.exp(-Math.pow(absCos / 0.30, 2));
-              pW = zArch * medialShoulders * topMask * 0.88;
-              sW = narrowVoiceStream * topMask * 0.82 * (1.0 - pW);
+              const zEnv = Math.exp(-Math.pow((s - 0.55) / 0.12, 2));
+              const latShoulders = Math.exp(-Math.pow((absCos - 0.58) / 0.22, 2));
+              const centerChannel = zEnv * Math.exp(-Math.pow(absCos / 0.30, 2));
+              pW = zEnv * latShoulders * topMask * 0.86;
+              sW = centerChannel * topMask * 0.74 * (1.0 - pW);
             } else if (isNatiyyah) {
               const pressCore = Math.exp(-Math.pow((s - 0.86) / 0.11, 2)) * Math.exp(-Math.pow(absCos / 0.72, 2));
               pW = pressCore * topMask * 0.92;
@@ -2269,6 +2331,7 @@ export default function TajweedStudioPage() {
 
       tongueGeom.attributes.position.needsUpdate = true;
       tongueGeom.attributes.color.needsUpdate = true;
+      updateMiddlePalateColors(morphProgressRef.current);
       tongueGeom.computeVertexNormals();
 
       // Smooth camera transition back to default position if animating
@@ -2374,6 +2437,7 @@ export default function TajweedStudioPage() {
   // Opacity slider sync
   useEffect(() => {
     targetGearsRef.current.upperOpacity = upperTeethOpacity;
+    setGears(prev => (prev.upperOpacity === upperTeethOpacity ? prev : { ...prev, upperOpacity: upperTeethOpacity }));
   }, [upperTeethOpacity]);
 
   // Translations object
@@ -2800,7 +2864,7 @@ export default function TajweedStudioPage() {
               {isGearsOpen && (
                 <div className="p-4 pt-1 border-t border-slate-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {GEAR_DEFINITIONS.map(def => {
-                    const val = Math.round(targetGearsRef.current[def.key] ?? 0);
+                    const val = Math.round(gears[def.key] ?? 0);
                     return (
                       <div key={def.key} className="bg-slate-50 dark:bg-gray-800/60 border border-slate-200/60 dark:border-gray-700 p-2.5 rounded-2xl flex flex-col justify-between gap-1.5 shadow-sm">
                         <div className="flex items-center justify-between gap-2">
@@ -2813,6 +2877,7 @@ export default function TajweedStudioPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleGearChange(def.key, Math.max(def.min, val - def.step))}
                             className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
                           >
@@ -2822,12 +2887,13 @@ export default function TajweedStudioPage() {
                             type="range"
                             min={def.min}
                             max={def.max}
-                            step="1"
+                            step={def.step}
                             value={val}
                             onChange={(e) => handleGearChange(def.key, parseInt(e.target.value, 10))}
                             className="flex-1 accent-emerald-500 cursor-pointer"
                           />
                           <button
+                            type="button"
                             onClick={() => handleGearChange(def.key, Math.min(def.max, val + def.step))}
                             className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
                           >
