@@ -1417,15 +1417,25 @@ export default function TajweedStudioPage() {
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.68);
+    // Lights (Brightened for clear anatomical visualization)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.92);
     scene.add(ambientLight);
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x9ca3af, 0.36);
-    hemiLight.position.set(0, 2.2, 0.5);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x9ca3af, 0.52);
+    hemiLight.position.set(0, 2.4, 0.8);
     scene.add(hemiLight);
-    const dirLight = new THREE.DirectionalLight(0xfff5f0, 0.48);
-    dirLight.position.set(-2.2, 0.9, 1.2);
+
+    const dirLight = new THREE.DirectionalLight(0xfff8f5, 0.68);
+    dirLight.position.set(-2.2, 1.2, 1.4);
     scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.38);
+    fillLight.position.set(2.2, 1.0, 1.6);
+    scene.add(fillLight);
+
+    const bounceLight = new THREE.DirectionalLight(0xfff1e6, 0.24);
+    bounceLight.position.set(0.0, -1.8, 0.8);
+    scene.add(bounceLight);
 
     const mouthRoot = new THREE.Group();
     scene.add(mouthRoot);
@@ -1689,8 +1699,8 @@ export default function TajweedStudioPage() {
           const anteriorCurveShadow = Math.pow(Math.max(0.0, 1.0 - fPos / 0.32), 1.5) * 0.16 * capFactor;
           const lingualShadow = (sinT < 0) ? (-sinT * 0.16 * capFactor) : 0.0;
           const buccalHighlight = (sinT > 0.15) ? (Math.pow(sinT, 1.4) * (1.0 - cosT * cosT) * 0.06) : 0.0;
-          const baseBrightness = isUpper ? 0.78 : 0.82;
-          const shade = Math.max(0.36, Math.min(0.84, baseBrightness + buccalHighlight - interdentalCrevice - cervicalShadow - anteriorCurveShadow - lingualShadow));
+          const baseBrightness = isUpper ? 0.84 : 0.88;
+          const shade = Math.max(0.40, Math.min(0.92, baseBrightness + buccalHighlight - interdentalCrevice - cervicalShadow - anteriorCurveShadow - lingualShadow));
           colors.push(shade * 0.98, shade * 0.99, shade * 1.01);
         }
       }
@@ -2688,16 +2698,16 @@ export default function TajweedStudioPage() {
           posArr[ptr++] = wz;
 
           // Tongue Coloring
-          const dorsalLight = (sinT >= 0.0) ? (0.78 + 0.22 * Math.pow(sinT, 0.75)) : Math.max(0.28, 0.78 + sinT * 0.52);
-          const sublingualArchShadow = (sinT < -0.05) ? (Math.pow(Math.min(1.0, (-0.05 - sinT) / 0.95), 1.1) * (0.34 + 0.16 * Math.sin(s * Math.PI))) : 0.0;
+          const dorsalLight = (sinT >= 0.0) ? (0.84 + 0.18 * Math.pow(sinT, 0.75)) : Math.max(0.34, 0.84 + sinT * 0.48);
+          const sublingualArchShadow = (sinT < -0.05) ? (Math.pow(Math.min(1.0, (-0.05 - sinT) / 0.95), 1.1) * (0.30 + 0.14 * Math.sin(s * Math.PI))) : 0.0;
           const molarCushionWave = (s > 0.18 && s < 0.74 && Math.abs(cosT) > 0.45 && sinT > -0.25)
             ? (0.045 * Math.cos(s * 6.5 * Math.PI * 2) * Math.pow((Math.abs(cosT) - 0.45) / 0.55, 0.8)) : 0.0;
-          const backSlopeShadow = Math.pow(Math.max(0.0, (0.28 - s) / 0.28), 1.4) * 0.18;
-          const shadeT = Math.max(0.24, Math.min(1.02, dorsalLight - sublingualArchShadow - backSlopeShadow + molarCushionWave + pressMeatFactor * 0.05));
+          const backSlopeShadow = Math.pow(Math.max(0.0, (0.28 - s) / 0.28), 1.4) * 0.15;
+          const shadeT = Math.max(0.30, Math.min(1.06, dorsalLight - sublingualArchShadow - backSlopeShadow + molarCushionWave + pressMeatFactor * 0.05));
 
-          let rT = 0.76 * shadeT;
-          let gT = 0.24 * shadeT;
-          let bT = 0.28 * shadeT;
+          let rT = 0.80 * shadeT;
+          let gT = 0.26 * shadeT;
+          let bT = 0.30 * shadeT;
 
           if (showAnatomyRef.current) {
             const absC = Math.abs(cosT);
