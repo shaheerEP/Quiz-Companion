@@ -49,6 +49,7 @@ export default function AudioVoicePracticeStudio({
 
   // Recording & Media States
   const [isRecording, setIsRecording] = useState(false);
+  const isRecordingRef = useRef(false);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
   const [isPlayingUserAudio, setIsPlayingUserAudio] = useState(false);
@@ -70,6 +71,7 @@ export default function AudioVoicePracticeStudio({
   const animFrameIdRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const userAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const nativeAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
 
   // Reset syllable selection and audio when letter changes
@@ -104,51 +106,81 @@ export default function AudioVoicePracticeStudio({
       userAudioPlayerRef.current.pause();
       userAudioPlayerRef.current = null;
     }
+    if (nativeAudioPlayerRef.current) {
+      nativeAudioPlayerRef.current.pause();
+      nativeAudioPlayerRef.current = null;
+    }
   };
 
   // --------------------------------------------------------------------------
-  // 1. Native Audio Pronunciation Trigger (Speech Synthesis + Harmonic Tone)
+  // 1. Native Audio Pronunciation Trigger (Direct Online Audio + SpeechSynthesis Fallback)
   // --------------------------------------------------------------------------
   const playNativeAudio = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    // Cancel any ongoing speech
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    // Stop any existing playing native audio
+    if (nativeAudioPlayerRef.current) {
+      nativeAudioPlayerRef.current.pause();
+      nativeAudioPlayerRef.current = null;
     }
 
     setIsPlayingAudio(true);
 
-    try {
-      const textToSpeak = selectedSyllable.audioPrompt;
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = 'ar-SA';
-      utterance.rate = playbackSpeed === 0.75 ? 0.72 : 0.90;
-      utterance.pitch = 1.0;
+    const textToSpeak = selectedSyllable.audioPrompt || selectedSyllable.text;
 
-      // Select Arabic voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const arabicVoice = voices.find(v => v.lang.startsWith('ar') || v.lang.includes('ar-'));
-      if (arabicVoice) {
-        utterance.voice = arabicVoice;
+    // Fallback using browser SpeechSynthesis if audio element fails or is blocked
+    const fallbackToSpeechSynthesis = () => {
+      if (!('speechSynthesis' in window)) {
+        setIsPlayingAudio(false);
+        return;
       }
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'ar-SA';
+        utterance.rate = playbackSpeed === 0.75 ? 0.72 : 0.88;
+        utterance.pitch = 1.0;
 
-      utterance.onend = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const arVoice = voices.find(v => v.lang.startsWith('ar') || v.lang.includes('ar-'));
+        if (arVoice) {
+          utterance.voice = arVoice;
+        }
+
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        setTimeout(() => setIsPlayingAudio(false), 2000);
+
+        window.speechSynthesis.speak(utterance);
+      } catch {
         setIsPlayingAudio(false);
+      }
+    };
+
+    try {
+      // Direct high-quality Arabic audio stream
+      const encodedText = encodeURIComponent(textToSpeak);
+      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=ar&client=tw-ob`;
+      
+      const audio = new Audio(audioUrl);
+      nativeAudioPlayerRef.current = audio;
+      audio.playbackRate = playbackSpeed === 0.75 ? 0.80 : 1.0;
+
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        nativeAudioPlayerRef.current = null;
       };
 
-      utterance.onerror = () => {
-        setIsPlayingAudio(false);
+      audio.onerror = () => {
+        // Fallback to Web Speech API if network or blocked
+        fallbackToSpeechSynthesis();
       };
 
-      // Fallback timeout in case onend doesn't trigger
-      setTimeout(() => {
-        setIsPlayingAudio(false);
-      }, 2500);
-
-      window.speechSynthesis.speak(utterance);
+      audio.play().catch(() => {
+        fallbackToSpeechSynthesis();
+      });
     } catch {
-      setIsPlayingAudio(false);
+      fallbackToSpeechSynthesis();
     }
   }, [selectedSyllable, playbackSpeed]);
 
@@ -174,9 +206,14 @@ export default function AudioVoicePracticeStudio({
 
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
+      analyser.fftSize = 64; // 32 frequency bins - low CPU & optimal for vocal frequency range
+      analyser.smoothingTimeConstant = 0.75;
       source.connect(analyser);
       analyserRef.current = analyser;
+
+      isRecordingRef.current = true;
+      setIsRecording(true);
+      setRecordSeconds(0);
 
       // Start Visualizer Canvas
       drawWaveform();
@@ -225,8 +262,6 @@ export default function AudioVoicePracticeStudio({
       };
 
       mediaRecorder.start(100);
-      setIsRecording(true);
-      setRecordSeconds(0);
 
       // Auto stop after 4 seconds (ideal length for single letter/syllable)
       const startTime = Date.now();
@@ -246,11 +281,15 @@ export default function AudioVoicePracticeStudio({
           ? 'മൈക്രോഫോൺ അനുമതി ലഭ്യമായില്ല. ബ്രൗസർ സെറ്റിങ്സ് പരിശോധിക്കുക.'
           : 'Could not access microphone. Please grant permission in your browser.'
       );
+      isRecordingRef.current = false;
       setIsRecording(false);
     }
   };
 
   const stopRecording = () => {
+    isRecordingRef.current = false;
+    setIsRecording(false);
+
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
@@ -264,8 +303,6 @@ export default function AudioVoicePracticeStudio({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
-
-    setIsRecording(false);
 
     if (animFrameIdRef.current) {
       cancelAnimationFrame(animFrameIdRef.current);
@@ -283,53 +320,70 @@ export default function AudioVoicePracticeStudio({
     setEvaluation(null);
   };
 
-  // Draw real-time animated waveform on canvas
+  // Draw real-time animated waveform on canvas (optimized 30fps throttle & zero heap allocations per frame)
   const drawWaveform = () => {
     if (!canvasRef.current || !analyserRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     const analyser = analyserRef.current;
-    const bufferLength = analyser.frequencyBinCount;
+    const bufferLength = analyser.frequencyBinCount; // 32 bins
     const dataArray = new Uint8Array(bufferLength);
+    let lastDrawTime = 0;
 
-    const render = () => {
+    // Pre-create gradient once to avoid allocating 60+ objects per second
+    const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+    gradient.addColorStop(0, '#10b981');
+    gradient.addColorStop(0.6, '#06b6d4');
+    gradient.addColorStop(1, '#3b82f6');
+    ctx.fillStyle = gradient;
+
+    const render = (now: number) => {
+      // Exit loop immediately if not recording or cancelled
+      if (!isRecordingRef.current) return;
+
       animFrameIdRef.current = requestAnimationFrame(render);
+
+      // Throttle visualizer to ~30-33ms (30fps) for minimal CPU load
+      if (now - lastDrawTime < 32) return;
+      lastDrawTime = now;
+
       analyser.getByteFrequencyData(dataArray);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Fast clear
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = gradient;
 
-      const barWidth = (canvas.width / bufferLength) * 2.2;
-      let x = 0;
+      const barCount = 28;
+      const step = Math.max(1, Math.floor(bufferLength / barCount));
+      const barWidth = Math.max(2, (canvas.width / barCount) - 2);
 
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height * 0.9;
-
-        // Gradient bar
-        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-        gradient.addColorStop(0, '#10b981');
-        gradient.addColorStop(0.6, '#06b6d4');
-        gradient.addColorStop(1, '#3b82f6');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
-        x += barWidth;
+      let x = 3;
+      for (let i = 0; i < barCount; i++) {
+        const dataIdx = Math.min(bufferLength - 1, i * step);
+        const val = dataArray[dataIdx];
+        const barHeight = Math.max(3, (val / 255) * canvas.height * 0.88);
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 2;
       }
     };
-    render();
+
+    animFrameIdRef.current = requestAnimationFrame(render);
   };
 
   // --------------------------------------------------------------------------
-  // 3. AI Evaluation Pipeline
+  // 3. AI Evaluation Pipeline (low CPU, immediate context cleanup)
   // --------------------------------------------------------------------------
   const analyzeAndEvaluate = async (audioBlob: Blob) => {
     setIsEvaluating(true);
 
+    let ctx: AudioContext | null = null;
     try {
       // Decode audio metrics via Web Audio API
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtx();
+      ctx = new AudioCtx();
       const arrayBuffer = await audioBlob.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
@@ -337,17 +391,19 @@ export default function AudioVoicePracticeStudio({
       const channelData = audioBuffer.getChannelData(0);
       let sumSquares = 0;
       let peak = 0;
-      for (let i = 0; i < channelData.length; i++) {
+      // Downsample RMS scan by step of 4 for 4x faster math
+      const step = 4;
+      for (let i = 0; i < channelData.length; i += step) {
         const val = channelData[i];
         sumSquares += val * val;
         if (Math.abs(val) > peak) peak = Math.abs(val);
       }
-      const rms = Math.sqrt(sumSquares / channelData.length);
+      const rms = Math.sqrt(sumSquares / (channelData.length / step));
       const durationSec = audioBuffer.duration;
       const isSilent = rms < 0.012 || peak < 0.03;
 
       // Small natural delay for realistic AI analysis feel
-      await new Promise(res => setTimeout(res, 600));
+      await new Promise(res => setTimeout(res, 450));
 
       const result = evaluatePronunciation({
         letter,
@@ -367,13 +423,13 @@ export default function AudioVoicePracticeStudio({
       // Trigger gamification / celebratory confetti if score is great!
       if (result.isCorrect && result.score >= 75) {
         confetti({
-          particleCount: 50,
-          spread: 60,
+          particleCount: 35,
+          spread: 55,
           origin: { y: 0.8 },
           colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899']
         });
 
-        // Trigger pleasant chime
+        // Trigger pleasant chime and cleanly close context
         try {
           const chimeCtx = new AudioCtx();
           const osc = chimeCtx.createOscillator();
@@ -381,12 +437,15 @@ export default function AudioVoicePracticeStudio({
           osc.type = "sine";
           osc.frequency.setValueAtTime(587.33, chimeCtx.currentTime); // D5
           osc.frequency.exponentialRampToValueAtTime(880, chimeCtx.currentTime + 0.15); // A5
-          gain.gain.setValueAtTime(0.2, chimeCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, chimeCtx.currentTime + 0.35);
+          gain.gain.setValueAtTime(0.18, chimeCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, chimeCtx.currentTime + 0.32);
           osc.connect(gain);
           gain.connect(chimeCtx.destination);
           osc.start();
-          osc.stop(chimeCtx.currentTime + 0.35);
+          osc.stop(chimeCtx.currentTime + 0.32);
+          setTimeout(() => {
+            try { chimeCtx.close(); } catch {}
+          }, 360);
         } catch {}
 
         if (onScoreEarned) {
@@ -410,6 +469,9 @@ export default function AudioVoicePracticeStudio({
       });
       setEvaluation(fallbackResult);
     } finally {
+      if (ctx) {
+        try { (ctx as AudioContext).close(); } catch {}
+      }
       setIsEvaluating(false);
     }
   };

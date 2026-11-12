@@ -103,7 +103,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Deep Tongue Root (أقصى اللسان)',
       zoneLabel: 'Soft Palate (الحنك اللحمي)',
       desc: 'Deepest root of the tongue rises firmly against the soft fleshy palate, with the tip resting calmly behind lower teeth.',
-      sifah: 'Heavy (تفخيم وقلقلة)'
+      sifah: 'Heavy (Echoing)'
     },
     ar: {
       title: 'مخرج حرف القاف (ق)',
@@ -117,7 +117,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ മുരട് (അണ്ണാക്ക്)',
       zoneLabel: 'മൃദു അണ്ണാക്ക്',
       desc: 'നാവിന്റെ ഏറ്റവും പിന്നിലെ മുരട് മേലണ്ണാക്കിലെ മൃദുവായ മാംസഭാഗത്ത് ശക്തിയായി തട്ടുമ്പോൾ പുറപ്പെടുന്നു. നാവിന്റെ തുമ്പ് കീഴ്പല്ലുകൾക്ക് പിന്നിൽ സ്ഥിതിചെയ്യുന്നു.',
-      sifah: 'കനം (തഫ്ഖീമും ഖൽഖലത്തും)'
+      sifah: 'കനം (മുഴക്കം)'
     },
     gears: { jawOpen: 26, tipElevation: -26, tipForward: -15, backIstila: 98, middleArch: 12, lateralSpread: 30, greenPointPos: 88, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.302, z: -0.44, rx: 0.36 }
@@ -136,7 +136,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Deep Tongue Root (أقصى اللسان)',
       zoneLabel: 'Hard & Soft Palate Junction (بين الحنكين)',
       desc: 'Tongue root rises against the junction of hard and soft palates, forward of Qaaf, followed by subtle breath flow (Hams).',
-      sifah: 'Light (ترقيق وهمس)'
+      sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الكاف (ك)',
@@ -150,7 +150,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ മുരട്',
       zoneLabel: 'മൃദു-കഠിന അണ്ണാക്കുകളുടെ സന്ധി',
       desc: 'നാവിന്റെ മുരട് ഖാഫിനേക്കാൾ അല്പം താഴെയായി ഉറച്ചതും മൃദുവായതുമായ അണ്ണാക്കിന്റെ സന്ധിയിൽ തട്ടി ശ്വാസം ഒഴുക്കി (ഹംസ്) പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (തർഖീഖും ഹംസും)'
+      sifah: 'നേർത്തത് (ശ്വാസം)'
     },
     gears: { jawOpen: 25, tipElevation: -25, tipForward: -10, backIstila: 90, middleArch: 48, lateralSpread: 25, greenPointPos: 72, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.364, z: -0.22, rx: 0.13 }
@@ -169,7 +169,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Middle Tongue (وسط اللسان)',
       zoneLabel: 'Hard Palate Occlusion (قفل الحنك 0.0 mm)',
       desc: 'Middle of the tongue rises as a dome and seals completely against hard palate (0.0 mm gap) before bursting open (Qalqalah).',
-      sifah: 'Light (ترقيق وشدة وقلقلة)'
+      sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الجيم (ج)',
@@ -183,7 +183,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ മധ്യഭാഗം',
       zoneLabel: 'മേലണ്ണാക്കിൽ പൂർണ്ണ അടയൽ',
       desc: 'നാവിന്റെ മധ്യഭാഗം മേലണ്ണാക്കിൽ പൂർണ്ണമായി അമർന്ന് വായു തടഞ്ഞുനിർത്തി പെട്ടെന്ന് തുറന്ന് (ഖൽഖലത്തോടെ) ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ശിദ്ദത്തും ഖൽഖലത്തും)'
+      sifah: 'നേർത്തത് (മുഴക്കം)'
     },
     gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 54, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.463, z: 0.12, rx: 0.15 }
@@ -202,7 +202,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Middle Tongue (وسط اللسان)',
       zoneLabel: 'Airflow Trough (فرجة التفشي ~3.2 mm)',
       desc: 'Sides of middle tongue brace against palate while wide central groove diffuses turbulent air forward (Tafasshi).',
-      sifah: 'Light (ترقيق وتفشٍّ)'
+      sifah: 'Light (Diffusion)'
     },
     ar: {
       title: 'مخرج حرف الشين (ش)',
@@ -214,9 +214,9 @@ const LETTER_PRESETS: LetterPreset[] = [
     ml: {
       title: 'ശീൻ (ش) അക്ഷരത്തിന്റെ മഖ്റജ്',
       category: 'നാവിന്റെ മധ്യഭാഗം',
-      zoneLabel: 'വായു പരക്കുന്ന ഭാഗം (തഫശ്ശീ)',
+      zoneLabel: 'വായു പരക്കുന്ന ഭാഗം',
       desc: 'നാവിന്റെ മധ്യഭാഗം ഉയർന്ന് അണ്ണാക്കിലേക്ക് വായു പരന്ന് മുൻപല്ലുകൾ വരെ ഒഴുകി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (തഫശ്ശീ)'
+      sifah: 'നേർത്തത് (കാറ്റ് പരക്കൽ)'
     },
     gears: { jawOpen: 24, tipElevation: -22, tipForward: -5, backIstila: 15, middleArch: 90, lateralSpread: 65, greenPointPos: 52, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.467, z: 0.15, rx: 0.11 }
@@ -235,7 +235,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Middle Tongue (وسط اللسان)',
       zoneLabel: 'Narrow Voiced Arch (تضيق المخرج ~1.6 mm)',
       desc: 'Middle of tongue forms a smooth convex arch narrowing the vocal passage without sealing, letting voiced sound flow smoothly.',
-      sifah: 'Light (ترقيق ورخاوة ولين)'
+      sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الياء غير المدية (ي)',
@@ -268,7 +268,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue & Upper Molars (حافة اللسان مع الأضراس)',
       zoneLabel: 'Lateral Molars & Front Teeth Touch',
       desc: 'One or both edges of the tongue press firmly against upper molars, while the rounded tip gently touches front teeth without pressing.',
-      sifah: 'Heavy (تفخيم واستطالة)'
+      sifah: 'Heavy (Elongation)'
     },
     ar: {
       title: 'مخرج حرف الضاد (ض)',
@@ -282,7 +282,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ അരികും അണപ്പല്ലുകളും',
       zoneLabel: 'അണപ്പല്ലുകളിൽ അമർത്തൽ',
       desc: 'നാവിന്റെ ഒന്നോ രണ്ടോ അരികുകൾ മേൽ അണപ്പല്ലുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവിന്റെ തുമ്പ് മുൻപല്ലുകളിൽ അമർത്താതെ മൃദുവായി തൊടുന്നു.',
-      sifah: 'കനം (ഇസ്തിത്വാലത്ത്)'
+      sifah: 'കനം (നീളൽ)'
     },
     gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
     greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
@@ -301,7 +301,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Sides (حافتا اللسان وطرفه)',
       zoneLabel: 'Flat Gum Shelf (اللثة ومقدم الحنك)',
       desc: 'Front sides and tip of tongue curl up to touch the flat alveolar gum shelf right up to the front teeth.',
-      sifah: 'Light (ترقيق وانحراف)'
+      sifah: 'Light (Drift)'
     },
     ar: {
       title: 'مخرج حرف اللام (ل)',
@@ -315,7 +315,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ അരികും തുമ്പും',
       zoneLabel: 'മേൽപല്ലുകളുടെ മോണ',
       desc: 'നാവിന്റെ അരികിന്റെ അറ്റം മുതൽ മുൻതുമ്പ് വരെ മുൻപല്ലുകളുടെ മോണയിൽ തട്ടുമ്പോൾ ശബ്ദം ഇരുവശങ്ങളിലൂടെയും ഒഴുകുന്നു.',
-      sifah: 'നേർത്തത് (ഇൻഹിറാഫ്)'
+      sifah: 'നേർത്തത് (ചായൽ)'
     },
     gears: { jawOpen: 28, tipElevation: 76, tipForward: 38, backIstila: 0, middleArch: -20, lateralSpread: 32, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.252, z: 0.84, rx: -0.49 }
@@ -334,7 +334,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Nose (طرف اللسان والخيشوم)',
       zoneLabel: 'Upper Gum Ridge (لثة الثنايا العليا)',
       desc: 'Tip seals against upper gum ridge while voice resonates nasally through the nasal cavity (Ghunnah).',
-      sifah: 'Light (ترقيق وغنة)'
+      sifah: 'Light (Nasal)'
     },
     ar: {
       title: 'مخرج حرف النون (ن)',
@@ -347,8 +347,8 @@ const LETTER_PRESETS: LetterPreset[] = [
       title: 'നൂൻ (ن) അക്ഷരത്തിന്റെ മഖ്റജ്',
       category: 'നാവിന്റെ തുമ്പും മൂക്കും',
       zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ മോണ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ മോണയിൽ മുട്ടി നിൽക്കുമ്പോൾ ശബ്ദം മൂക്കിലൂടെ ഗുണ്ണയോടെ മുഴങ്ങുന്നു.',
-      sifah: 'നേർത്തത് (ഗുണ്ണ)'
+      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ മോണയിൽ മുട്ടി നിൽക്കുമ്പോൾ ശബ്ദം മൂക്കിലൂടെ മുഴങ്ങുന്നു.',
+      sifah: 'നേർത്തത് (മൂക്കിലൂടെയുള്ള ശബ്ദം)'
     },
     gears: { jawOpen: 26, tipElevation: 78, tipForward: 36, backIstila: 0, middleArch: -18, lateralSpread: 22, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.254, z: 0.84, rx: -0.48 }
@@ -367,7 +367,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Blade (طرف اللسان وظهره)',
       zoneLabel: 'Upper Gum with Central Gap (لثة الثنايا)',
       desc: 'Tip and upper blade meet upper gums with a narrow central slit preventing excessive trill.',
-      sifah: 'Heavy (تفخيم وتكرير)'
+      sifah: 'Heavy / Light'
     },
     ar: {
       title: 'مخرج حرف الراء (ر)',
@@ -381,7 +381,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം',
       zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ മോണ',
       desc: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം മേൽ മോണയിൽ തട്ടുന്നു. നടുവിലെ നേർത്ത വിടവ് വഴി അമിതമായ വിറയൽ ഒഴിവാക്കുന്നു.',
-      sifah: 'കനം/നേർത്തത് (തക്രീറ് ഒഴിവാക്കൽ)'
+      sifah: 'കനം / നേർത്തത് (വിറയൽ ഒഴിവാക്കൽ)'
     },
     gears: { jawOpen: 26, tipElevation: 80, tipForward: 20, backIstila: 65, middleArch: -10, lateralSpread: 35, greenPointPos: 30, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.262, z: 0.78, rx: -0.46 }
@@ -400,7 +400,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
       zoneLabel: 'Upper Incisor Roots & Gums (أصول الثنايا)',
       desc: 'Rounded tongue tip presses firmly at the cervical roots of upper front teeth and gum shelf, with elevated back (Itbaaq).',
-      sifah: 'Heavy (تفخيم وإطباق)'
+      sifah: 'Heavy'
     },
     ar: {
       title: 'مخرج حرف الطاء (ط)',
@@ -414,7 +414,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ വേരും',
       zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ വേരുകൾ',
       desc: 'നാവിന്റെ വീതിയുള്ള തുമ്പ് മേൽ മുൻപല്ലുകളുടെ വേരുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവ് മുഴുവനായി അണ്ണാക്കിലേക്ക് ചേരുന്നു.',
-      sifah: 'കനം (ഇത്വ്ബാഖും ഖൽഖലത്തും)'
+      sifah: 'കനം (മുഴക്കം)'
     },
     gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -8, lateralSpread: 42, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
@@ -433,7 +433,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
       zoneLabel: 'Upper Incisor Roots (أصول الثنايا)',
       desc: 'Rounded tongue tip touches the root base of upper central incisors, released with clear voice and Qalqalah.',
-      sifah: 'Light (ترقيق وقلقلة)'
+      sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الدال (د)',
@@ -466,7 +466,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
       zoneLabel: 'Upper Incisor Roots (أصول الثنايا)',
       desc: 'Tongue tip touches the root base of upper incisors, followed by gentle unvoiced breath release (Hams).',
-      sifah: 'Light (ترقيق وهمس)'
+      sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف التاء (ت)',
@@ -499,7 +499,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Apex (أسلة اللسان)',
       zoneLabel: 'Lower Incisors Contact (الثنايا السفلى)',
       desc: 'Tongue tip points downward behind lower incisors with central whistle groove (Safir) and elevated back root.',
-      sifah: 'Heavy (تفخيم وصفير)'
+      sifah: 'Heavy (Whistle)'
     },
     ar: {
       title: 'مخرج حرف الصاد (ص)',
@@ -513,7 +513,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ അറ്റം (മുൻപല്ലുകൾ)',
       zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
       desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് നാവ് അണ്ണാക്കിലേക്ക് ഉയർത്തി മൂർച്ചയുള്ള വിസിൽ സ്വരത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'കനം (സ്വഫീറും ഇത്വ്ബാഖും)'
+      sifah: 'കനം (വിസിൽ)'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: 55, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -532,7 +532,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Apex (أسلة اللسان)',
       zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
       desc: 'Tip rests behind lower incisors with central groove directing sharp unvoiced whistle (Safir & Hams).',
-      sifah: 'Light (ترقيق وصفير)'
+      sifah: 'Light (Whistle)'
     },
     ar: {
       title: 'مخرج حرف السين (س)',
@@ -546,7 +546,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ അറ്റം',
       zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
       desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് ശ്വാസം ഒഴുക്കി നേർത്ത വിസിൽ ശബ്ദത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (സ്വഫീറും ഹംസും)'
+      sifah: 'നേർത്തത് (വിസിൽ & ശ്വാസം)'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 72, lateralSpread: 72, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -565,7 +565,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Apex (أسلة اللسان)',
       zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
       desc: 'Tip rests behind lower front incisors, allowing voiced air to buzz through the interdental slit.',
-      sifah: 'Light (ترقيق وصفير)'
+      sifah: 'Light (Whistle)'
     },
     ar: {
       title: 'مخرج حرف الزاي (ز)',
@@ -579,7 +579,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ അറ്റം',
       zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
       desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് ശബ്ദം മുഴക്കി വിസിൽ സ്വരത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (സ്വഫീറും ജഹ്റും)'
+      sifah: 'നേർത്തത് (വിസിൽ)'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 75, lateralSpread: 75, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -598,7 +598,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
       zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
       desc: 'Top of tongue tip extends gently to touch biting edges of upper central incisors with back elevation (Itbaaq).',
-      sifah: 'Heavy (تفخيم وإطباق)'
+      sifah: 'Heavy'
     },
     ar: {
       title: 'مخرج حرف الظاء (ظ)',
@@ -612,7 +612,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ അരികും',
       zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ അരികുകൾ',
       desc: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ തൊടുമ്പോൾ നാവിന്റെ മുരട് ഉയർന്ന് കനത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'കനം (ഇത്വ്ബാഖ്)'
+      sifah: 'കനം'
     },
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: 10, lateralSpread: 40, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
@@ -631,7 +631,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
       zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
       desc: 'Top of rounded tongue tip touches bottom biting edges of upper central incisors with flat relaxed back.',
-      sifah: 'Light (ترقيق ورخاوة)'
+      sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الذال (ذ)',
@@ -645,7 +645,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ അരികും',
       zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ അരികുകൾ',
       desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ നേർത്തതായി തൊട്ട് ശബ്ദം ഒഴുകി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (രിഖ്‌വ്)'
+      sifah: 'നേർത്തത് (മൃദുവായത്)'
     },
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 25, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
@@ -664,7 +664,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
       zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
       desc: 'Tongue tip meets biting edges of upper incisors, allowing soft friction and unvoiced breath flow (Hams).',
-      sifah: 'Light (ترقيق وهمس)'
+      sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الثاء (ث)',
@@ -699,7 +699,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Lower Lip & Upper Teeth (بطن الشفة السفلى)',
       zoneLabel: 'Incisors on Inner Wet Lower Lip',
       desc: 'Bottom edges of the two upper central incisors press against inner wet belly of the lower lip.',
-      sifah: 'Light (ترقيق وهمس)'
+      sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الفاء (ف)',
@@ -734,7 +734,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Both Lips (انطباق الشفتين)',
       zoneLabel: 'Both Lips Closing Firmly (الشفتان)',
       desc: 'Both lips close firmly together, creating instantaneous occlusion released with echoing bounce (Qalqalah).',
-      sifah: 'Light (ترقيق وشدة وقلقلة)'
+      sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الباء (ب)',
@@ -748,7 +748,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'ഇരുചുണ്ടുകൾ',
       zoneLabel: 'ഇരുചുണ്ടുകളും പൂർണ്ണമായി അടയൽ',
       desc: 'ഇരുചുണ്ടുകളും പരസ്പരം ശക്തിയായി അമർന്ന് അടഞ്ഞ് പെട്ടെന്ന് വിടുമ്പോൾ ഖൽഖലത്തോടെ ശബ്ദം മുഴങ്ങുന്നു.',
-      sifah: 'നേർത്തത് (ശിദ്ദത്തും ഖൽഖലത്തും)'
+      sifah: 'നേർത്തത് (മുഴക്കം)'
     },
     gears: { jawOpen: 10, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
@@ -769,7 +769,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Both Lips & Nose (الشفتان والغنة)',
       zoneLabel: 'Both Lips Gentle Closure + Ghunnah',
       desc: 'Lips meet gently while sound reverberates continuously up through the nasal cavity.',
-      sifah: 'Light (ترقيق وغنة)'
+      sifah: 'Light (Nasal)'
     },
     ar: {
       title: 'مخرج حرف الميم (م)',
@@ -783,7 +783,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'ഇരുചുണ്ടുകളും മൂക്കും',
       zoneLabel: 'ഇരുചുണ്ടുകളും മൃദുവായി ചേരൽ',
       desc: 'ഇരുചുണ്ടുകളും മൃദുവായി ചേർത്തുപിടിക്കുകയും ശബ്ദത്തിന്റെ പ്രധാന ഭാഗം മൂക്കിലൂടെ ഗുണ്ണയോടെ ഒഴുകുകയും ചെയ്യുന്നു.',
-      sifah: 'നേർത്തത് (ഗുണ്ണ)'
+      sifah: 'നേർത്തത് (മൂക്കിലൂടെയുള്ള ശബ്ദം)'
     },
     gears: { jawOpen: 12, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
@@ -804,7 +804,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       category: 'Both Lips (انضمام الشفتين)',
       zoneLabel: 'Circular Lip Rounding (انضمام الشفتين)',
       desc: 'Both lips purse and round forward leaving a circular opening, with the tongue relaxed and resting low.',
-      sifah: 'Light (ترقيق ورخاوة ولين)'
+      sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الواو غير المدية (و)',
@@ -1311,45 +1311,45 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
   {
     id: 'breath',
     pairNo: 1,
-    titleEn: '1. Flow of Breath (جَرَيَانُ النَّفَسِ وَانْحِبَاسُهُ)',
+    titleEn: '1. Flow of Breath',
     titleAr: '١. جريان النفس وانحباسه (الهمس والجهر)',
     titleMl: '1. കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
-    descEn: 'Whether breath continues (Hams) or is stopped (Jahr) during pronunciation.',
+    descEn: 'Whether breath continues or is stopped during pronunciation.',
     descAr: 'جريان النفس لضعف الاعتماد على المخرج (همس) أو انحباسه لقوته (جهر).',
-    descMl: 'ഹംസ് (ശ്വാസം നടക്കൽ) vs ജഹ്റ് (ശ്വാസം നടക്കാതിരിക്കൽ).',
+    descMl: 'ശ്വാസം നടക്കൽ vs ശ്വാസം നടക്കാതിരിക്കൽ.',
     itemIds: ['hams', 'jahr']
   },
   {
     id: 'sound',
     pairNo: 2,
-    titleEn: '2. Flow of Sound (جَرَيَانُ الصَّوْتِ وَانْحِبَاسُهُ)',
+    titleEn: '2. Flow of Sound',
     titleAr: '٢. جريان الصوت وانحباسه (الشدة والتوسط والرخاوة)',
     titleMl: '2. ശബ്ദത്തിന്റെ ഒഴുക്ക് (ശബ്ദം നടക്കലും നടക്കാതിരിക്കലും)',
-    descEn: 'Degree of sound flow: stopping (Shiddah), moderate (Tawassut), or continuing (Rikhwah).',
+    descEn: 'Degree of sound flow: stopping, moderate, or continuing.',
     descAr: 'انحباس الصوت تماماً (شدة)، أو اعتداله (توسط)، أو كمال جريانه (رخاوة).',
-    descMl: 'ശിദ്ദത്ത് (ശബ്ദം നിൽക്കൽ), തവസ്സുത്വ് (മധ്യമം), രിഖ്‌വ് (ശബ്ദം ഒഴുകൽ).',
+    descMl: 'ശബ്ദം നിൽക്കൽ, മധ്യമം, ശബ്ദം ഒഴുകൽ.',
     itemIds: ['shiddah', 'tawassut', 'rikhwah']
   },
   {
     id: 'elevation',
     pairNo: 3,
-    titleEn: '3. Elevation & Lowering — Root of Tongue (اسْتِعْلَاءُ أَقْصَى اللِّسَانِ وَانْخِفَاضُهُ)',
+    titleEn: '3. Elevation & Lowering — Root of Tongue',
     titleAr: '٣. استعلاء اللسان وانخفاضه — أقصى اللسان (جذره)',
     titleMl: '3. നാവിന്റെ മുരട് ഉയരലും താഴലും',
-    descEn: 'Focus: Root of Tongue (أقصى اللسان) — Raising the root towards the upper palate (Isti\'la\') vs Lowering it to mouth floor (Istifal).',
+    descEn: 'Focus: Root of Tongue — Raising the root towards the upper palate vs Lowering it to mouth floor.',
     descAr: 'الموضع: أقصى اللسان (الجذر) — ارتفاع جذر اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
-    descMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയരൽ (ഇസ്തിഅ്ലാഅ്) vs അടിഭാഗത്തേക്ക് താഴൽ (ഇസ്തിഫാൽ).',
+    descMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയരൽ vs അടിഭാഗത്തേക്ക് താഴൽ.',
     itemIds: ['istila', 'istifal']
   },
   {
     id: 'adhesion',
     pairNo: 4,
-    titleEn: '4. Adhesion & Opening — Middle of Tongue (إِطْبَاقُ وَسَطِ اللِّسَانِ وَانْفِتَاحُهُ)',
+    titleEn: '4. Adhesion & Opening — Middle of Tongue',
     titleAr: '٤. انحصار الصوت وانفتاحه — وسط اللسان (الإطباق والانفتاح)',
     titleMl: '4. നാവിന്റെ മധ്യമം ചേരലും അകലലും',
-    descEn: 'Focus: Middle of Tongue (وسط اللسان) — Adhering the middle of the tongue to the upper palate (Itbaq) vs Separating it (Infitah).',
+    descEn: 'Focus: Middle of Tongue — Adhering the middle of the tongue to the upper palate vs Separating it.',
     descAr: 'الموضع: وسط اللسان — إلصاق وسط اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
-    descMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ (ഇത്വ്ബാഖ്) vs അകന്നിരിക്കൽ (ഇൻഫിതാഹ്).',
+    descMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ vs അകന്നിരിക്കൽ.',
     itemIds: ['itbaq', 'infitah']
   }
 ];
@@ -3326,11 +3326,7 @@ export default function TajweedStudioPage() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
                 {LETTER_PRESETS.map(preset => {
                   const isSelected = preset.id === currentLetter.id;
-                  const label = lang === 'ar'
-                    ? (preset.ar.title.split(' ')[2] || preset.letter)
-                    : lang === 'ml'
-                      ? (preset.ml?.title.split(' ')[0] || preset.tag.split(' ')[0])
-                      : preset.tag.split(' ')[0];
+                  
                   return (
                     <button
                       key={preset.id}
@@ -3342,7 +3338,6 @@ export default function TajweedStudioPage() {
                       }`}
                     >
                       <span className="arabic-font text-xl sm:text-2xl leading-none font-bold">{preset.letter}</span>
-                      <span className="text-[11px] font-semibold">{label}</span>
                     </button>
                   );
                 })}
@@ -3736,9 +3731,8 @@ export default function TajweedStudioPage() {
                               <div className="flex flex-col gap-2">
                                 {/* Card Header: Chip + Meaning */}
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
                                     <span className="arabic-font text-xl sm:text-2xl font-bold">{item.ar}</span>
-                                    <span className="text-[11px] opacity-80">({lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en})</span>
                                   </span>
                                   <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
                                     {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
@@ -3821,9 +3815,8 @@ export default function TajweedStudioPage() {
                       <div className="flex flex-col gap-2">
                         {/* Header */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
                             <span className="arabic-font text-xl sm:text-2xl font-bold">{item.ar}</span>
-                            <span className="text-[11px] opacity-80">({lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en})</span>
                           </span>
                           <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
                             {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
@@ -3903,8 +3896,8 @@ export default function TajweedStudioPage() {
                       <span className="arabic-font text-3xl sm:text-4xl text-emerald-600 dark:text-emerald-400">
                         {selectedSifah.ar}
                       </span>
-                      <span className="text-slate-400 dark:text-gray-500 font-normal">/</span>
-                      <span className="text-base font-bold">{lang === 'ar' ? selectedSifah.ar : lang === 'ml' ? selectedSifah.ml : selectedSifah.en}</span>
+                      <span className="text-slate-400 dark:text-gray-500 font-normal">•</span>
+                      <span className="text-base font-bold text-slate-700 dark:text-gray-300">{lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn}</span>
                     </h3>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -3914,7 +3907,7 @@ export default function TajweedStudioPage() {
                         : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                     }`}>
                       {selectedSifah.category === 'opposite'
-                        ? (lang === 'ar' ? `صفة متضادة (ضد: ${selectedSifah.oppositeNameAr})` : lang === 'ml' ? `വിപരീതമുള്ളത് (എതിർ ഗുണം: ${selectedSifah.oppositeNameMl || selectedSifah.oppositeNameEn})` : `With Opposite (vs ${selectedSifah.oppositeNameEn})`)
+                        ? (lang === 'ar' ? `صفة متضادة (ضد: ${selectedSifah.oppositeNameAr})` : lang === 'ml' ? `വിപരീതമുള്ളത്` : `With Opposite`)
                         : (lang === 'ar' ? 'صفة لا ضد لها' : lang === 'ml' ? 'വിപരീതമില്ലാത്തത്' : 'Without Opposite')}
                     </span>
                     {selectedSifah.pairGroupEn && (
