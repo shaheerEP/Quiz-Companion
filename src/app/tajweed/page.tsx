@@ -3399,13 +3399,13 @@ export default function TajweedStudioPage() {
                     <button
                       key={preset.id}
                       onClick={() => selectLetter(preset)}
-                      className={`px-3 py-1.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 shrink-0 border active:scale-95 ${
+                      className={`min-w-[3.25rem] h-12 sm:h-14 px-3.5 py-1 rounded-2xl font-bold transition-all flex items-center justify-center shrink-0 border active:scale-95 ${
                         isSelected
                           ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
                           : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
                       }`}
                     >
-                      <span className="arabic-font text-xl sm:text-2xl leading-none font-bold">{preset.letter}</span>
+                      <span className="arabic-font text-3xl sm:text-4xl leading-none font-bold">{preset.letter}</span>
                     </button>
                   );
                 })}
@@ -3566,11 +3566,11 @@ export default function TajweedStudioPage() {
                   type="button"
                   onClick={() => playLetterAudio(currentLetter.letter)}
                   title={lang === 'ar' ? 'انقر للاستماع لنطق الحرف' : 'Click to hear pronunciation'}
-                  className="w-14 h-14 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-3xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none transition-all active:scale-95 cursor-pointer group relative"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-5xl sm:text-6xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none transition-all active:scale-95 cursor-pointer group relative"
                 >
                   {currentLetter.letter}
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-[10px]">
-                    <Volume2 className="w-2.5 h-2.5" />
+                  <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-xs">
+                    <Volume2 className="w-3 h-3" />
                   </span>
                 </button>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -3596,9 +3596,9 @@ export default function TajweedStudioPage() {
                       type="button"
                       onClick={() => setSelectedSifah(sifah)}
                       title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.literalMl : sifah.literalEn} (${sifah.ar})`}
-                      className={`text-xs font-bold px-3 py-1 rounded-xl border transition-all flex items-center justify-center active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
+                      className={`text-xs font-bold px-3.5 py-1.5 rounded-xl border transition-all flex items-center justify-center active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
                     >
-                      <span className="arabic-font text-base sm:text-lg font-bold">{sifah.ar}</span>
+                      <span className="arabic-font text-xl sm:text-2xl font-bold leading-none">{sifah.ar}</span>
                     </button>
                   ))}
                 </div>
@@ -3786,7 +3786,7 @@ export default function TajweedStudioPage() {
                                 {/* Card Header: Chip + Meaning */}
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
-                                    <span className="arabic-font text-xl sm:text-2xl font-bold">{item.ar}</span>
+                                    <span className="arabic-font text-2xl sm:text-3xl font-bold leading-none">{item.ar}</span>
                                   </span>
                                   <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
                                     {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
@@ -3810,7 +3810,7 @@ export default function TajweedStudioPage() {
 
                               {/* Letters & Mnemonic */}
                               <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
-                                <div className="flex flex-wrap items-center gap-1">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                   {item.letters.map((ltr, lIdx) => (
                                     <button
                                       key={lIdx}
@@ -3822,7 +3822,7 @@ export default function TajweedStudioPage() {
                                           setActiveMainTab('makharij');
                                         }
                                       }}
-                                      className="arabic-font text-base sm:text-lg font-bold w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                                      className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
                                       title={`View ${ltr} in Makharij`}
                                     >
                                       {ltr}
@@ -3830,9 +3830,9 @@ export default function TajweedStudioPage() {
                                   ))}
                                 </div>
                                 {item.mnemonic && (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
-                                    <span className="arabic-font text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <span className="text-xs font-semibold text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
+                                    <span className="arabic-font text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800/60 leading-none">
                                       ({item.mnemonic})
                                     </span>
                                   </div>
@@ -3870,7 +3870,7 @@ export default function TajweedStudioPage() {
                         {/* Header */}
                         <div className="flex items-center justify-between gap-2">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
-                            <span className="arabic-font text-xl sm:text-2xl font-bold">{item.ar}</span>
+                            <span className="arabic-font text-2xl sm:text-3xl font-bold leading-none">{item.ar}</span>
                           </span>
                           <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
                             {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
@@ -3893,8 +3893,8 @@ export default function TajweedStudioPage() {
                       </div>
 
                       {/* Letters & Mnemonic */}
-                      <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
-                        <div className="flex flex-wrap items-center gap-1">
+                      <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-gray-800">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           {item.letters.map((ltr, lIdx) => (
                             <button
                               key={lIdx}
@@ -3906,7 +3906,7 @@ export default function TajweedStudioPage() {
                                   setActiveMainTab('makharij');
                                 }
                               }}
-                              className="arabic-font text-base sm:text-lg font-bold w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                              className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
                               title={`View ${ltr} in Makharij`}
                             >
                               {ltr}
@@ -3914,9 +3914,9 @@ export default function TajweedStudioPage() {
                           ))}
                         </div>
                         {item.mnemonic && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
-                            <span className="arabic-font text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-xs font-semibold text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
+                            <span className="arabic-font text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800/60 leading-none">
                               ({item.mnemonic})
                             </span>
                           </div>
@@ -3946,7 +3946,7 @@ export default function TajweedStudioPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="arabic-font text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="arabic-font text-4xl sm:text-5xl font-bold text-emerald-600 dark:text-emerald-400">
                       {selectedSifah.ar}
                     </span>
                     <span className="text-sm font-semibold text-slate-600 dark:text-gray-300">
@@ -4000,7 +4000,7 @@ export default function TajweedStudioPage() {
                     <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">
                       {lang === 'ar' ? 'العبارة:' : lang === 'ml' ? 'സൂചന:' : 'Mnemonic:'}
                     </span>
-                    <span className="arabic-font text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                    <span className="arabic-font text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400">
                       {selectedSifah.mnemonic}
                     </span>
                   </div>
@@ -4028,7 +4028,7 @@ export default function TajweedStudioPage() {
                             setSelectedSifah(null);
                           }
                         }}
-                        className={`arabic-font text-xl font-bold w-10 h-10 rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
+                        className={`arabic-font text-3xl font-bold w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 leading-none ${
                           isCurrent
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-2 ring-emerald-400/30'
                             : preset

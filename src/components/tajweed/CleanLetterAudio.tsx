@@ -161,7 +161,7 @@ export default function CleanLetterAudio({
           </span>
         </div>
 
-        <span className="arabic-font text-2xl font-bold leading-none">
+        <span className="arabic-font text-4xl font-bold leading-none">
           {letter}
         </span>
       </button>

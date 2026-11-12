@@ -36,7 +36,7 @@ body {
 .lang-ar .arabic-font,
 .lang-ml .arabic-font,
 [dir="rtl"] .arabic-font {
-  font-size: 1.25em;
+  font-size: 1.35em;
   font-weight: 700;
   letter-spacing: 0.015em;
 }
