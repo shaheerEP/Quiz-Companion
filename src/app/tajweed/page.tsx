@@ -1041,50 +1041,11 @@ export const SIFAAT_DATA: SifahItem[] = [
     chipClass: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
     badgeHex: '#4f46e5'
   },
-  {
-    id: 'idhlaq',
-    order: 10,
-    category: 'opposite',
-    oppositeId: 'ismat',
-    oppositeNameEn: 'Ismat (إِصْمَات)',
-    oppositeNameAr: 'الإصمات',
-    pairGroupEn: 'Ease & Fluency (الإذلاق)',
-    pairGroupAr: 'سرعة النطق وخفته',
-    ar: 'إِذْلَاق',
-    en: 'Idhlaq',
-    literalAr: 'الحدة والفصاحة وخفة الطرف',
-    literalEn: 'Fluency / Slipping',
-    technicalAr: 'خفة الحرف وسرعة النطق به لخروجه من ذلق اللسان أو الشفتين.',
-    technicalEn: 'Pronouncing letters quickly and easily as they emerge from the tip of the tongue or lips.',
-    mnemonic: 'فَرَّ مِنْ لُبٍّ',
-    letters: ['ف', 'ر', 'م', 'ن', 'ل', 'ب'],
-    chipClass: 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-800',
-    badgeHex: '#0d9488'
-  },
-  {
-    id: 'ismat',
-    order: 11,
-    category: 'opposite',
-    oppositeId: 'idhlaq',
-    oppositeNameEn: 'Idhlaq (إِذْلَاق)',
-    oppositeNameAr: 'الإذلاق',
-    pairGroupEn: 'Ease & Fluency (الإذلاق)',
-    pairGroupAr: 'سرعة النطق وخفته',
-    ar: 'إِصْمَات',
-    en: 'Ismat',
-    literalAr: 'المنع والكف',
-    literalEn: 'Prevention / Restraint',
-    technicalAr: 'ثقل الحرف وصعوبة النطق به لخروجه بعيداً عن ذلق اللسان والشفتين.',
-    technicalEn: 'Pronouncing letters with heaviness as they do not come from the tip; root words cannot be purely composed of these.',
-    letters: ['ج', 'ز', 'غ', 'ش', 'س', 'ا', 'خ', 'ط', 'ص', 'د', 'ث', 'ق', 'ة', 'ذ', 'و', 'ع', 'ظ', 'ه', 'ي', 'ح', 'ض', 'ك', 'أ', 'ء'],
-    chipClass: 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700',
-    badgeHex: '#64748b'
-  },
 
   // 2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ)
   {
     id: 'safeer',
-    order: 12,
+    order: 10,
     category: 'non_opposite',
     ar: 'صَفِير',
     en: 'Safeer',
@@ -1098,7 +1059,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'qalqalah',
-    order: 13,
+    order: 11,
     category: 'non_opposite',
     ar: 'قَلْقَلَة',
     en: 'Qalqalah',
@@ -1113,7 +1074,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'leen',
-    order: 14,
+    order: 12,
     category: 'non_opposite',
     ar: 'لِين',
     en: 'Leen',
@@ -1128,7 +1089,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'inhiraf',
-    order: 15,
+    order: 13,
     category: 'non_opposite',
     ar: 'اِنْحِرَاف',
     en: 'Inhiraf',
@@ -1142,7 +1103,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'takreer',
-    order: 16,
+    order: 14,
     category: 'non_opposite',
     ar: 'تَكْرِير',
     en: 'Takreer',
@@ -1156,7 +1117,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'tafashshi',
-    order: 17,
+    order: 15,
     category: 'non_opposite',
     ar: 'تَفَشِّي',
     en: 'Tafashshi',
@@ -1170,7 +1131,7 @@ export const SIFAAT_DATA: SifahItem[] = [
   },
   {
     id: 'istitalah',
-    order: 18,
+    order: 16,
     category: 'non_opposite',
     ar: 'اِسْتِطَالَة',
     en: 'Istitalah',
@@ -1181,6 +1142,55 @@ export const SIFAAT_DATA: SifahItem[] = [
     letters: ['ض'],
     chipClass: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700',
     badgeHex: '#047857'
+  }
+];
+
+export interface SifahPairDef {
+  id: string;
+  pairNo: number;
+  titleEn: string;
+  titleAr: string;
+  descEn: string;
+  descAr: string;
+  itemIds: string[];
+}
+
+export const OPPOSITE_PAIRS: SifahPairDef[] = [
+  {
+    id: 'breath',
+    pairNo: 1,
+    titleEn: '1. Flow of Breath (جَرَيَانُ النَّفَسِ وَانْحِبَاسُهُ)',
+    titleAr: '١. جريان النفس وانحباسه (الهمس والجهر)',
+    descEn: 'Whether breath continues (Hams) or is stopped (Jahr) during pronunciation.',
+    descAr: 'جريان النفس لضعف الاعتماد على المخرج (همس) أو انحباسه لقوته (جهر).',
+    itemIds: ['hams', 'jahr']
+  },
+  {
+    id: 'sound',
+    pairNo: 2,
+    titleEn: '2. Flow of Sound (جَرَيَانُ الصَّوْتِ وَانْحِبَاسُهُ)',
+    titleAr: '٢. جريان الصوت وانحباسه (الشدة والتوسط والرخاوة)',
+    descEn: 'Degree of sound flow: stopping (Shiddah), moderate (Tawassut), or continuing (Rikhwah).',
+    descAr: 'انحباس الصوت تماماً (شدة)، أو اعتداله (توسط)، أو كمال جريانه (رخاوة).',
+    itemIds: ['shiddah', 'tawassut', 'rikhwah']
+  },
+  {
+    id: 'elevation',
+    pairNo: 3,
+    titleEn: '3. Tongue Elevation & Direction (اسْتِعْلَاءُ اللِّسَانِ وَانْخِفَاضُهُ)',
+    titleAr: '٣. استعلاء اللسان وانخفاضه (الاستعلاء والاستفال)',
+    descEn: 'Whether the back of the tongue elevates towards the palate (Isti\'la\') or rests low (Istifal).',
+    descAr: 'ارتفاع أقصى اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
+    itemIds: ['istila', 'istifal']
+  },
+  {
+    id: 'adhesion',
+    pairNo: 4,
+    titleEn: '4. Palate Adhesion & Sound Confinement (انْحِصَارُ الصَّوْتِ وَانْفِتَاحُهُ)',
+    titleAr: '٤. انحصار الصوت وانفتاحه (الإطباق والانفتاح)',
+    descEn: 'Whether the tongue adheres confining sound (Itbaq) or separates (Infitah).',
+    descAr: 'إلصاق طائفة من اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
+    itemIds: ['itbaq', 'infitah']
   }
 ];
 
@@ -2883,8 +2893,8 @@ export default function TajweedStudioPage() {
         sifaatTab: 'صفات الحروف',
         sifaatSectionTitle: 'صفات الحروف (أحكام التجويد الصوتية)',
         sifaatSectionDesc: 'الصفات الصوتية اللازمة التي تميز الحروف المشتركة في المخرج الواحد وتحدد كيفيات خروجها.',
-        withOppositesTitle: '١. الصفات المتضادة (ٱلصِّفَاتُ الْمُتَضَادَّةُ)',
-        withoutOppositesTitle: '٢. الصفات التي لا ضد لها (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ)',
+        withOppositesTitle: '١. الصفات المتضادة (ٱلصِّفَاتُ الْمُتَضَادَّةُ — ٤ أزواج)',
+        withoutOppositesTitle: '٢. الصفات التي لا ضد لها (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ — ٧ صفات)',
         characteristicCol: 'الصفة',
         literalCol: 'المعنى اللغوي (مَعْنًى)',
         technicalCol: 'المعنى الاصطلاحي (سَانْكِيتِكَ أَرْتَهَمْ)',
@@ -2895,8 +2905,8 @@ export default function TajweedStudioPage() {
         close: 'إغلاق',
         letterSifaatTitle: 'صفات الحرف:',
         clickToExplain: 'انقر للشرح',
-        filterAll: 'الكل (١٨)',
-        filterOpposite: 'المتضادة (١١)',
+        filterAll: 'الكل (١٦)',
+        filterOpposite: 'المتضادة (٤ أزواج)',
         filterNonOpposite: 'غير المتضادة (٧)'
       };
     }
@@ -2932,8 +2942,8 @@ export default function TajweedStudioPage() {
       sifaatTab: 'Sifaat al-Huroof (صفات الحروف)',
       sifaatSectionTitle: 'Sifaat al-Huroof (Characteristics of Arabic Letters)',
       sifaatSectionDesc: 'The essential phonetic attributes that distinguish letters sharing the same Makhraj.',
-      withOppositesTitle: '1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ)',
-      withoutOppositesTitle: '2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ)',
+      withOppositesTitle: '1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs)',
+      withoutOppositesTitle: '2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ — 7 Sifaat)',
       characteristicCol: 'Characteristic (الصفة)',
       literalCol: 'Literal Meaning (المعنى اللغوي)',
       technicalCol: 'Technical Meaning (المعنى الاصطلاحي)',
@@ -2944,8 +2954,8 @@ export default function TajweedStudioPage() {
       close: 'Close',
       letterSifaatTitle: 'Letter Sifaat (صفات الحرف):',
       clickToExplain: 'Click for details',
-      filterAll: 'All (18)',
-      filterOpposite: 'With Opposites (11)',
+      filterAll: 'All (16)',
+      filterOpposite: 'With Opposites (4 Pairs)',
       filterNonOpposite: 'Without Opposites (7)'
     };
   }, [lang]);
@@ -3105,16 +3115,6 @@ export default function TajweedStudioPage() {
               {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
               <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Simulate Motion Button */}
-                  <button
-                    onClick={triggerSimulation}
-                    title={t.simulateTitle}
-                    className="px-3 py-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
-                  >
-                    <Play className="w-3.5 h-3.5" />
-                    <span>{t.simulate}</span>
-                  </button>
-
                   {/* Anatomy Parts Toggle Button */}
                   <button
                     onClick={() => setShowAnatomy(!showAnatomy)}
@@ -3183,15 +3183,26 @@ export default function TajweedStudioPage() {
                   </button>
                 </div>
 
-                {/* Quick reset camera view */}
-                <button
-                  onClick={() => resetCameraToDefault(true)}
-                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
-                  title={t.resetView}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{t.resetView}</span>
-                </button>
+                {/* Viewport Actions: Simulate Motion & Quick reset camera */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={triggerSimulation}
+                    title={t.simulateTitle}
+                    className="px-3.5 py-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>{t.simulate}</span>
+                  </button>
+
+                  <button
+                    onClick={() => resetCameraToDefault(true)}
+                    className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
+                    title={t.resetView}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t.resetView}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
@@ -3545,150 +3556,171 @@ export default function TajweedStudioPage() {
               </div>
             </div>
 
-            {/* 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ) */}
+            {/* 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs) */}
             {(sifaatFilter === 'all' || sifaatFilter === 'opposite') && (
-              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3">
+              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                     <span>{t.withOppositesTitle}</span>
                   </h3>
-                  <span className="text-xs text-slate-400">
-                    {lang === 'ar' ? '٥ أزواج متقابلة (١١ صفة)' : '5 Opposite Pairs (11 Sifaat)'}
+                  <span className="text-xs text-slate-400 font-medium">
+                    {lang === 'ar' ? '٤ أزواج متقابلة (٩ صفات)' : '4 Opposite Pairs (9 Sifaat)'}
                   </span>
                 </div>
 
-                {/* Scannable Table */}
-                <div className="overflow-x-auto custom-scrollbar border border-slate-200/80 dark:border-gray-800 rounded-2xl">
-                  <table className="w-full text-xs text-start border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-gray-800/70 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200 dark:border-gray-800">
-                        <th className="py-2.5 px-3 text-start w-12">#</th>
-                        <th className="py-2.5 px-3 text-start">{t.characteristicCol}</th>
-                        <th className="py-2.5 px-3 text-start">{t.literalCol}</th>
-                        <th className="py-2.5 px-3 text-start min-w-[220px]">{t.technicalCol}</th>
-                        <th className="py-2.5 px-3 text-start min-w-[260px]">{t.lettersCol}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                      {SIFAAT_DATA.filter(s => s.category === 'opposite').map(item => (
-                        <tr
-                          key={item.id}
-                          onClick={() => setSelectedSifah(item)}
-                          className="hover:bg-slate-50/80 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
-                        >
-                          <td className="py-2.5 px-3 font-mono font-bold text-slate-400 text-xs">
-                            {item.order}
-                          </td>
-                          <td className="py-2.5 px-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
-                              <span className="arabic-font text-sm">{item.ar}</span>
-                              <span className="text-[11px] opacity-80">({item.en})</span>
+                {/* 4 Pairs Cards Stack */}
+                <div className="flex flex-col gap-4">
+                  {OPPOSITE_PAIRS.map(pair => {
+                    const items = pair.itemIds
+                      .map(id => SIFAAT_DATA.find(s => s.id === id))
+                      .filter((s): s is SifahItem => Boolean(s));
+
+                    return (
+                      <div
+                        key={pair.id}
+                        className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 dark:bg-gray-800/40 border border-slate-200/70 dark:border-gray-800 flex flex-col gap-3"
+                      >
+                        {/* Pair Header Banner */}
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-slate-200/60 dark:border-gray-700/60">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                              {pair.pairNo}
                             </span>
-                          </td>
-                          <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-gray-300">
-                            {lang === 'ar' ? item.literalAr : item.literalEn}
-                          </td>
-                          <td className="py-2.5 px-3 text-slate-600 dark:text-gray-400 leading-relaxed font-normal">
-                            {lang === 'ar' ? item.technicalAr : item.technicalEn}
-                          </td>
-                          <td className="py-2 px-3">
-                            <div className="flex flex-col gap-1.5">
-                              <div className="flex flex-wrap items-center gap-1">
-                                {item.letters.map((ltr, lIdx) => (
-                                  <span
-                                    key={lIdx}
-                                    className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center"
-                                  >
-                                    {ltr}
+                            <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                              {lang === 'ar' ? pair.titleAr : pair.titleEn}
+                            </h4>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-gray-400">
+                            {lang === 'ar' ? pair.descAr : pair.descEn}
+                          </span>
+                        </div>
+
+                        {/* Side-by-side Opposing Cards Grid */}
+                        <div className={`grid grid-cols-1 ${items.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3 items-stretch`}>
+                          {items.map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => setSelectedSifah(item)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === 'Enter') setSelectedSifah(item); }}
+                              className="group p-3 sm:p-3.5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2.5 cursor-pointer text-start"
+                            >
+                              <div className="flex flex-col gap-2">
+                                {/* Card Header: Chip + Meaning */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                                    <span className="arabic-font text-base">{item.ar}</span>
+                                    <span className="text-[11px] opacity-80">({item.en})</span>
                                   </span>
-                                ))}
+                                  <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
+                                    {lang === 'ar' ? item.literalAr : item.literalEn}
+                                  </span>
+                                </div>
+
+                                {/* Rule / Technical Definition */}
+                                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
+                                  {lang === 'ar' ? item.technicalAr : item.technicalEn}
+                                </p>
                               </div>
-                              {item.mnemonic && (
-                                <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 w-fit">
-                                  ({item.mnemonic})
-                                </span>
-                              )}
+
+                              {/* Letters & Mnemonic */}
+                              <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
+                                <div className="flex flex-wrap items-center gap-1">
+                                  {item.letters.map((ltr, lIdx) => (
+                                    <span
+                                      key={lIdx}
+                                      className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors"
+                                    >
+                                      {ltr}
+                                    </span>
+                                  ))}
+                                </div>
+                                {item.mnemonic && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : 'Mnemonic:'}</span>
+                                    <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                                      ({item.mnemonic})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
 
             {/* 2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ) */}
             {(sifaatFilter === 'all' || sifaatFilter === 'non_opposite') && (
-              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3">
+              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <span>{t.withoutOppositesTitle}</span>
                   </h3>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-400 font-medium">
                     {lang === 'ar' ? '٧ صفات فردية لازمة' : '7 Individual Sifaat'}
                   </span>
                 </div>
 
-                {/* Scannable Table */}
-                <div className="overflow-x-auto custom-scrollbar border border-slate-200/80 dark:border-gray-800 rounded-2xl">
-                  <table className="w-full text-xs text-start border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-gray-800/70 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200 dark:border-gray-800">
-                        <th className="py-2.5 px-3 text-start w-12">#</th>
-                        <th className="py-2.5 px-3 text-start">{t.characteristicCol}</th>
-                        <th className="py-2.5 px-3 text-start">{t.literalCol}</th>
-                        <th className="py-2.5 px-3 text-start min-w-[220px]">{t.technicalCol}</th>
-                        <th className="py-2.5 px-3 text-start min-w-[260px]">{t.lettersCol}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                      {SIFAAT_DATA.filter(s => s.category === 'non_opposite').map((item, idx) => (
-                        <tr
-                          key={item.id}
-                          onClick={() => setSelectedSifah(item)}
-                          className="hover:bg-slate-50/80 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
-                        >
-                          <td className="py-2.5 px-3 font-mono font-bold text-slate-400 text-xs">
-                            {idx + 1}
-                          </td>
-                          <td className="py-2.5 px-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
-                              <span className="arabic-font text-sm">{item.ar}</span>
-                              <span className="text-[11px] opacity-80">({item.en})</span>
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-3 font-medium text-slate-700 dark:text-gray-300">
+                {/* 7 Non-Opposite Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {SIFAAT_DATA.filter(s => s.category === 'non_opposite').map(item => (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedSifah(item)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setSelectedSifah(item); }}
+                      className="group p-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2.5 cursor-pointer text-start"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {/* Header */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                            <span className="arabic-font text-base">{item.ar}</span>
+                            <span className="text-[11px] opacity-80">({item.en})</span>
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
                             {lang === 'ar' ? item.literalAr : item.literalEn}
-                          </td>
-                          <td className="py-2.5 px-3 text-slate-600 dark:text-gray-400 leading-relaxed font-normal">
-                            {lang === 'ar' ? item.technicalAr : item.technicalEn}
-                          </td>
-                          <td className="py-2 px-3">
-                            <div className="flex flex-col gap-1.5">
-                              <div className="flex flex-wrap items-center gap-1">
-                                {item.letters.map((ltr, lIdx) => (
-                                  <span
-                                    key={lIdx}
-                                    className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center"
-                                  >
-                                    {ltr}
-                                  </span>
-                                ))}
-                              </div>
-                              {item.mnemonic && (
-                                <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 w-fit">
-                                  ({item.mnemonic})
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </span>
+                        </div>
+
+                        {/* Meaning */}
+                        <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
+                          {lang === 'ar' ? item.technicalAr : item.technicalEn}
+                        </p>
+                      </div>
+
+                      {/* Letters & Mnemonic */}
+                      <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
+                        <div className="flex flex-wrap items-center gap-1">
+                          {item.letters.map((ltr, lIdx) => (
+                            <span
+                              key={lIdx}
+                              className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 transition-colors"
+                            >
+                              {ltr}
+                            </span>
+                          ))}
+                        </div>
+                        {item.mnemonic && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : 'Mnemonic:'}</span>
+                            <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                              ({item.mnemonic})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             )}
