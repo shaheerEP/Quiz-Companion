@@ -3919,7 +3919,7 @@ export default function TajweedStudioPage() {
           </div>
         )}
 
-        {/* Sifah Explanation Modal (Very Simple, Concise & Scannable) */}
+        {/* Sifah Explanation Modal (Ultra-Clean, Zero Repetition) */}
         {selectedSifah && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150"
@@ -3928,41 +3928,43 @@ export default function TajweedStudioPage() {
             aria-modal="true"
           >
             <div
-              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-3xl p-4 sm:p-6 shadow-2xl max-w-lg w-full flex flex-col gap-4 relative animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto custom-scrollbar"
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-3xl p-5 sm:p-6 shadow-2xl max-w-md w-full flex flex-col gap-4 relative animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto custom-scrollbar"
               onClick={e => e.stopPropagation()}
               dir={lang === 'ar' ? 'rtl' : 'ltr'}
             >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-gray-800 pb-3">
+              {/* Header: Sifah Name + Literal Meaning + Meta & Close */}
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span className="arabic-font text-3xl sm:text-4xl text-emerald-600 dark:text-emerald-400">
-                        {selectedSifah.ar}
-                      </span>
-                      <span className="text-slate-400 dark:text-gray-500 font-normal">•</span>
-                      <span className="text-base font-bold text-slate-700 dark:text-gray-300">{lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn}</span>
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className={`px-2 py-0.5 rounded-lg border font-bold ${
-                      selectedSifah.category === 'opposite'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
-                        : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                    }`}>
-                      {selectedSifah.category === 'opposite'
-                        ? (lang === 'ar' ? `صفة متضادة (ضد: ${selectedSifah.oppositeNameAr})` : lang === 'ml' ? `വിപരീതമുള്ളത്` : `With Opposite`)
-                        : (lang === 'ar' ? 'صفة لا ضد لها' : lang === 'ml' ? 'വിപരീതമില്ലാത്തത്' : 'Without Opposite')}
+                  <div className="flex items-baseline gap-2">
+                    <span className="arabic-font text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {selectedSifah.ar}
                     </span>
-                    {selectedSifah.pairGroupEn && (
-                      <span className="text-slate-500 dark:text-gray-400 font-medium">
-                        • {lang === 'ar' ? selectedSifah.pairGroupAr : lang === 'ml' ? (selectedSifah.pairGroupMl || selectedSifah.pairGroupEn) : selectedSifah.pairGroupEn}
+                    <span className="text-sm font-semibold text-slate-600 dark:text-gray-300">
+                      ({lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn})
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
+                    {selectedSifah.category === 'opposite' ? (
+                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                        {lang === 'ar'
+                          ? `ضدها: ${selectedSifah.oppositeNameAr || ''}`
+                          : lang === 'ml'
+                          ? `എതിർ ഗുണം: ${selectedSifah.oppositeNameMl || selectedSifah.oppositeNameEn || ''}`
+                          : `Opposite: ${selectedSifah.oppositeNameEn || ''}`}
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {lang === 'ar' ? 'لا ضد لها' : lang === 'ml' ? 'വിപരീതമില്ലാത്തത്' : 'No opposite'}
                       </span>
                     )}
                     {selectedSifah.tonguePartEn && (
-                      <span className="px-2 py-0.5 rounded-lg border font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                        👅 {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
-                      </span>
+                      <>
+                        <span>•</span>
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">
+                          {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
@@ -3970,71 +3972,38 @@ export default function TajweedStudioPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedSifah(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-slate-600 dark:text-gray-300 transition-colors shrink-0"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-slate-500 dark:text-gray-400 transition-colors shrink-0"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Concise Meanings */}
-              <div className="flex flex-col gap-2.5 text-xs">
-                <div className="bg-slate-50 dark:bg-gray-800/50 rounded-2xl p-3 border border-slate-100 dark:border-gray-800 flex flex-col gap-1">
-                  <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">
-                    {lang === 'ar' ? 'المعنى اللغوي:' : lang === 'ml' ? 'അർത്ഥം:' : 'Literal Meaning:'}
-                  </span>
-                  <p className="font-semibold text-slate-800 dark:text-gray-200">
-                    {lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn}
-                  </p>
-                </div>
-
-                <div className="bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl p-3 border border-emerald-200/60 dark:border-emerald-800/60 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider text-[10px]">
-                    {lang === 'ar' ? 'المعنى الاصطلاحي:' : lang === 'ml' ? 'സാങ്കേതിക അർത്ഥം:' : 'Technical Meaning (Rule):'}
-                  </span>
-                  <p className="text-slate-700 dark:text-gray-300 leading-relaxed font-medium">
-                    {lang === 'ar' ? selectedSifah.technicalAr : lang === 'ml' ? selectedSifah.technicalMl : selectedSifah.technicalEn}
-                  </p>
-                </div>
-
-                {selectedSifah.tonguePartEn && (
-                  <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
-                      {lang === 'ar' ? 'موضع اللسان المعني (جزء اللسان):' : lang === 'ml' ? 'നാവിന്റെ ഭാഗം:' : 'Tongue Part Involved:'}
-                    </span>
-                    <span className="text-xs sm:text-sm font-black text-amber-900 dark:text-amber-200">
-                      👅 {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
-                    </span>
-                  </div>
-                )}
+              {/* Single Technical Rule Card (with integrated Mnemonic if available) */}
+              <div className="bg-slate-50 dark:bg-gray-800/60 rounded-2xl p-4 border border-slate-200/70 dark:border-gray-800 flex flex-col gap-2.5">
+                <p className="text-sm text-slate-700 dark:text-gray-200 leading-relaxed font-normal">
+                  {lang === 'ar' ? selectedSifah.technicalAr : lang === 'ml' ? selectedSifah.technicalMl : selectedSifah.technicalEn}
+                </p>
 
                 {selectedSifah.mnemonic && (
-                  <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
-                      {lang === 'ar' ? 'العبارة المجمِّعة للحروف:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic Phrase:'}
+                  <div className="pt-2.5 border-t border-slate-200/80 dark:border-gray-700/80 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">
+                      {lang === 'ar' ? 'العبارة:' : lang === 'ml' ? 'സൂചന:' : 'Mnemonic:'}
                     </span>
-                    <span className="arabic-font text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-200">
+                    <span className="arabic-font text-xl font-bold text-emerald-700 dark:text-emerald-400">
                       {selectedSifah.mnemonic}
                     </span>
                   </div>
                 )}
               </div>
 
-              {/* Letters using this Sifah */}
-              <div className="flex flex-col gap-2 pt-1 border-t border-slate-100 dark:border-gray-800">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700 dark:text-gray-300 flex items-center gap-1.5">
-                    <span>{t.modalLettersTitle}</span>
-                    <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      ({selectedSifah.letters.length})
-                    </span>
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {lang === 'ar' ? 'انقر على حرف لعرض مخرجه' : lang === 'ml' ? 'മഖ്റജ് കാണാൻ ഹർഫിൽ ക്ലിക്ക് ചെയ്യുക' : 'Click a letter to select'}
-                  </span>
-                </div>
+              {/* Letters */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-bold text-slate-600 dark:text-gray-400">
+                  {lang === 'ar' ? 'الحروف' : lang === 'ml' ? 'ഹർഫുകൾ' : 'Letters'} ({selectedSifah.letters.length})
+                </span>
 
-                <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-2xl bg-slate-50/70 dark:bg-gray-800/40 border border-slate-100 dark:border-gray-800">
+                <div className="flex flex-wrap items-center gap-1.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/40 border border-slate-200/70 dark:border-gray-800">
                   {selectedSifah.letters.map((ltr, idx) => {
                     const isCurrent = currentLetter.letter === ltr;
                     const preset = LETTER_PRESETS.find(p => p.letter === ltr);
@@ -4049,42 +4018,20 @@ export default function TajweedStudioPage() {
                             setSelectedSifah(null);
                           }
                         }}
-                        className={`arabic-font text-xl font-bold w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
+                        className={`arabic-font text-xl font-bold w-10 h-10 rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
                           isCurrent
-                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/40'
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-2 ring-emerald-400/30'
                             : preset
                             ? 'bg-white dark:bg-gray-900 text-slate-800 dark:text-gray-200 border-slate-200 dark:border-gray-700 hover:border-emerald-400 hover:scale-105'
                             : 'bg-slate-100 dark:bg-gray-800 text-slate-400 border-transparent cursor-default'
                         }`}
-                        title={preset ? (lang === 'ar' ? `اختر ${ltr}` : lang === 'ml' ? `${ltr} തിരഞ്ഞെടുക്കുക` : `Select ${ltr}`) : ltr}
+                        title={ltr}
                       >
                         {ltr}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-gray-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSifah(null);
-                    setActiveMainTab('makharij');
-                  }}
-                  className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{t.openIn3D}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSifah(null)}
-                  className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 font-bold text-xs transition-all"
-                >
-                  {t.close}
-                </button>
               </div>
             </div>
           </div>
