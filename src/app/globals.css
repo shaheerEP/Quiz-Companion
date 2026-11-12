@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Baloo+Chettan+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
@@ -27,7 +27,7 @@ body {
 }
 
 .arabic-font {
-  font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', 'Scheherazade New', serif;
+  font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', 'Scheherazade New', serif !important;
   display: inline-block;
   line-height: 1.35;
 }
@@ -39,6 +39,27 @@ body {
   font-size: 1.25em;
   font-weight: 700;
   letter-spacing: 0.015em;
+}
+
+/* In Malayalam mode, use Baloo Chettan 2 for all Malayalam texts */
+.lang-ml,
+.malayalam-font {
+  font-family: 'Baloo Chettan 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.lang-ml h1,
+.lang-ml h2,
+.lang-ml h3,
+.lang-ml h4,
+.lang-ml p,
+.lang-ml span:not(.arabic-font),
+.lang-ml button:not(.arabic-font),
+.lang-ml td:not(.arabic-font),
+.lang-ml th,
+.lang-ml input,
+.lang-ml select {
+  font-family: 'Baloo Chettan 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* In Arabic mode, increase base body font size so full Arabic interface is clear and readable */

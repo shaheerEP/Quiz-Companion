@@ -3543,11 +3543,10 @@ export default function TajweedStudioPage() {
                       key={sifah.id}
                       type="button"
                       onClick={() => setSelectedSifah(sifah)}
-                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.ml : sifah.en} (${sifah.ar}) - ${t.clickToExplain}`}
-                      className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all flex items-center gap-1 active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
+                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.literalMl : sifah.literalEn} (${sifah.ar}) - ${t.clickToExplain}`}
+                      className={`text-xs font-bold px-3 py-1 rounded-xl border transition-all flex items-center justify-center active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
                     >
-                      <span className="arabic-font text-sm sm:text-base font-bold">{sifah.ar}</span>
-                      <span className="text-[10px] font-normal opacity-85">({lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.ml : sifah.en})</span>
+                      <span className="arabic-font text-base sm:text-lg font-bold">{sifah.ar}</span>
                     </button>
                   ))}
                 </div>
