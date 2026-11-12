@@ -673,9 +673,10 @@ const ALIF_MAKHRAJ_GEARS: Record<string, number> = {
 // ----------------------------------------------------------------------------
 interface AnatomyLabelItem {
   id: string;
-  group: 'tongue' | 'palate' | 'teeth' | 'lips';
+  group: 'tongue';
   ar: string;
   en: string;
+  ml: string;
   hex: string;
   lightTextHex?: string;
   rgb: [number, number, number];
@@ -683,12 +684,13 @@ interface AnatomyLabelItem {
 }
 
 const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
-  // Tongue (5 parts)
+  // 4 Tongue Anatomy Parts based on Tajweed rules
   {
     id: 'aqsa_lisaan',
     group: 'tongue',
-    ar: 'أقصى اللسان',
+    ar: 'أقصى اللسان (الجذر)',
     en: 'Tongue Root',
+    ml: 'നാവിന്റെ മുരട്',
     hex: '#7c3aed',
     rgb: [0.49, 0.23, 0.93],
     letters: ['ق', 'ك']
@@ -698,6 +700,7 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
     group: 'tongue',
     ar: 'وسط اللسان',
     en: 'Middle Tongue',
+    ml: 'നാവിന്റെ മധ്യമം',
     hex: '#2563eb',
     rgb: [0.15, 0.39, 0.92],
     letters: ['ج', 'ش', 'ي']
@@ -706,7 +709,8 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
     id: 'haafah_lisaan',
     group: 'tongue',
     ar: 'حافتا اللسان',
-    en: 'Tongue Edges',
+    en: 'Tongue Sides / Edges',
+    ml: 'നാവിന്റെ അരിക്',
     hex: '#d97706',
     rgb: [0.85, 0.47, 0.02],
     letters: ['ض', 'ل']
@@ -716,124 +720,10 @@ const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
     group: 'tongue',
     ar: 'طرف اللسان',
     en: 'Tongue Tip',
+    ml: 'നാവിന്റെ തുമ്പ്',
     hex: '#059669',
     rgb: [0.02, 0.59, 0.41],
-    letters: ['ل', 'ن', 'ر', 'ط', 'د', 'ت', 'ظ', 'ذ', 'ث']
-  },
-  {
-    id: 'asalat_lisaan',
-    group: 'tongue',
-    ar: 'أسلة اللسان',
-    en: 'Tongue Apex',
-    hex: '#e11d48',
-    rgb: [0.88, 0.11, 0.28],
-    letters: ['ص', 'ز', 'س']
-  },
-
-  // Palate (3 zones)
-  {
-    id: 'lathah_palate',
-    group: 'palate',
-    ar: 'اللثة ومقدم الحنك',
-    en: 'Gum Shelf',
-    hex: '#eab368',
-    lightTextHex: '#b45309',
-    rgb: [0.92, 0.72, 0.42],
-    letters: ['ل', 'ن', 'ر']
-  },
-  {
-    id: 'hanak_adhmi',
-    group: 'palate',
-    ar: 'الحنك العظمي',
-    en: 'Hard Palate',
-    hex: '#38bdf8',
-    lightTextHex: '#0284c7',
-    rgb: [0.22, 0.74, 0.97],
-    letters: ['ك', 'ج', 'ش', 'ي']
-  },
-  {
-    id: 'hanak_lahmi',
-    group: 'palate',
-    ar: 'الحنك اللحمي',
-    en: 'Soft Palate',
-    hex: '#c084fc',
-    lightTextHex: '#9333ea',
-    rgb: [0.75, 0.52, 0.99],
-    letters: ['ق', 'ك']
-  },
-
-  // Teeth (6 types)
-  {
-    id: 'thanaayaa',
-    group: 'teeth',
-    ar: 'الثنايا (٤)',
-    en: 'Central Incisors',
-    hex: '#06b6d4',
-    lightTextHex: '#0891b2',
-    rgb: [0.02, 0.71, 0.83],
-    letters: ['ط', 'د', 'ت', 'ظ', 'ذ', 'ث', 'ص', 'ز', 'س', 'ف']
-  },
-  {
-    id: 'rubaaiyyaat',
-    group: 'teeth',
-    ar: 'الرباعيات (٤)',
-    en: 'Lateral Incisors',
-    hex: '#10b981',
-    lightTextHex: '#059669',
-    rgb: [0.06, 0.73, 0.51],
-    letters: ['ل']
-  },
-  {
-    id: 'anyaab',
-    group: 'teeth',
-    ar: 'الأنياب (٤)',
-    en: 'Canines',
-    hex: '#f59e0b',
-    lightTextHex: '#d97706',
-    rgb: [0.96, 0.62, 0.04],
-    letters: ['ل']
-  },
-  {
-    id: 'dawaahik',
-    group: 'teeth',
-    ar: 'الضواحك (٤)',
-    en: 'Premolars',
-    hex: '#a855f7',
-    lightTextHex: '#9333ea',
-    rgb: [0.66, 0.33, 0.97],
-    letters: ['ض', 'ل']
-  },
-  {
-    id: 'tawaaheen',
-    group: 'teeth',
-    ar: 'الطواحين (١٢)',
-    en: 'Molars',
-    hex: '#f97316',
-    lightTextHex: '#ea580c',
-    rgb: [0.98, 0.45, 0.09],
-    letters: ['ض']
-  },
-  {
-    id: 'nawaajidh',
-    group: 'teeth',
-    ar: 'النواجذ (٤)',
-    en: 'Wisdom Teeth',
-    hex: '#ec4899',
-    lightTextHex: '#db2777',
-    rgb: [0.93, 0.28, 0.60],
-    letters: ['ض']
-  },
-
-  // Lips
-  {
-    id: 'shafataan',
-    group: 'lips',
-    ar: 'الشفتان',
-    en: 'Lips',
-    hex: '#f43f5e',
-    lightTextHex: '#e11d48',
-    rgb: [0.96, 0.25, 0.37],
-    letters: ['ف', 'ب', 'م', 'و']
+    letters: ['ن', 'ر', 'ط', 'د', 'ت', 'ص', 'ز', 'س', 'ظ', 'ذ', 'ث']
   }
 ];
 
@@ -847,16 +737,22 @@ export interface SifahItem {
   oppositeId?: string;
   oppositeNameEn?: string;
   oppositeNameAr?: string;
+  oppositeNameMl?: string;
   pairGroupEn?: string;
   pairGroupAr?: string;
+  pairGroupMl?: string;
   tonguePartEn?: string;
   tonguePartAr?: string;
+  tonguePartMl?: string;
   ar: string;
   en: string;
+  ml: string;
   literalAr: string;
   literalEn: string;
+  literalMl: string;
   technicalAr: string;
   technicalEn: string;
+  technicalMl: string;
   mnemonic?: string;
   letters: string[];
   chipClass: string;
@@ -872,14 +768,19 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'hams',
     oppositeNameEn: 'Hams (هَمْس)',
     oppositeNameAr: 'الهمس',
+    oppositeNameMl: 'ഹംസ്',
     pairGroupEn: 'Breath (النفس)',
     pairGroupAr: 'جريان النفس وانحباسه',
+    pairGroupMl: 'ശ്വാസത്തിന്റെ ഒഴുക്ക്',
     ar: 'جَهْر',
     en: 'Jahr',
+    ml: 'ജഹ്റ്',
     literalAr: 'الوضوح والظهور',
     literalEn: 'Clarity / Loudness',
+    literalMl: 'വെളിവാക്കൽ',
     technicalAr: 'انحباس جريان النفس عند النطق بالحرف لقوة الاعتماد على المخرج.',
     technicalEn: 'Stopping the flow of breath due to strong reliance on the articulation point (Makhraj).',
+    technicalMl: 'മഖ്റജിൽ ശക്തിയായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കാതിരിക്കൽ',
     letters: ['ع', 'ظ', 'م', 'و', 'ز', 'ن', 'ق', 'ا', 'ر', 'ئ', 'ذ', 'ي', 'غ', 'ض', 'ج', 'د', 'ط', 'ل', 'ب', 'أ', 'ء'],
     chipClass: 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800',
     badgeHex: '#0284c7'
@@ -891,14 +792,19 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'jahr',
     oppositeNameEn: 'Jahr (جَهْر)',
     oppositeNameAr: 'الجهر',
+    oppositeNameMl: 'ജഹ്റ്',
     pairGroupEn: 'Breath (النفس)',
     pairGroupAr: 'جريان النفس وانحباسه',
+    pairGroupMl: 'ശ്വാസത്തിന്റെ ഒഴുക്ക്',
     ar: 'هَمْس',
     en: 'Hams',
+    ml: 'ഹംസ്',
     literalAr: 'الخفاء والصوت الخفي',
     literalEn: 'Whispering / Concealment',
+    literalMl: 'മറക്കൽ',
     technicalAr: 'جريان النفس عند النطق بالحرف لضعف الاعتماد على المخرج.',
     technicalEn: 'Continuation of the breath due to weak reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ബലഹീനമായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കൽ',
     mnemonic: 'فَحَثَّهُ شَخْصٌ سَكَتَ',
     letters: ['ف', 'ح', 'ث', 'ه', 'ش', 'خ', 'ص', 'س', 'ك', 'ت'],
     chipClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
@@ -911,14 +817,19 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'rikhwah',
     oppositeNameEn: 'Rikhwah & Tawassut (الرخاوة والتوسط)',
     oppositeNameAr: 'الرخاوة والتوسط',
+    oppositeNameMl: 'രിഖ്‌വും തവസ്സുത്വും',
     pairGroupEn: 'Sound (الصوت)',
     pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'شِدَّة',
     en: 'Shiddah',
+    ml: 'ശിദ്ദത്ത്',
     literalAr: 'القوة والصلابة',
     literalEn: 'Strength',
+    literalMl: 'ശക്തി',
     technicalAr: 'انحباس جريان الصوت لقوة الاعتماد على المخرج.',
     technicalEn: 'Stopping the flow of sound due to strong, firm reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ശക്തിയായി അമർത്തി ഉച്ചരിക്കുന്നതിനാൽ ശബ്ദം നടക്കാതിരിക്കൽ',
     mnemonic: 'أَجِدُ قَطٍ بَكَتْ',
     letters: ['أ', 'ء', 'ج', 'د', 'ق', 'ط', 'ب', 'ك', 'ت'],
     chipClass: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
@@ -931,14 +842,19 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'shiddah',
     oppositeNameEn: 'Shiddah & Tawassut (الشدة والتوسط)',
     oppositeNameAr: 'الشدة والتوسط',
+    oppositeNameMl: 'ശിദ്ദത്തും തവസ്സുത്വും',
     pairGroupEn: 'Sound (الصوت)',
     pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'رِخْو',
     en: 'Rikhwah',
+    ml: 'രിഖ്‌വ്',
     literalAr: 'اللين والرخاوة',
     literalEn: 'Softness / Looseness',
+    literalMl: 'പതം',
     technicalAr: 'جريان تام للصوت مع الحرف لضعف الاعتماد على المخرج.',
     technicalEn: 'Easy flow of sound due to weak reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ബലഹീനമായി സ്ഥിതി ചെയ്യുന്നതിനാൽ ശബ്ദം നടക്കൽ മൃദുവാകൽ',
     letters: ['خ', 'ذ', 'غ', 'ث', 'ح', 'ض', 'ف', 'ظ', 'ش', 'و', 'ص', 'ز', 'ي', 'س', 'ا', 'ه'],
     chipClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
     badgeHex: '#059669'
@@ -950,14 +866,19 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'shiddah',
     oppositeNameEn: 'Between Shiddah & Rikhwah',
     oppositeNameAr: 'بين الشدة والرخاوة',
+    oppositeNameMl: 'ശിദ്ദത്തിനും രിഖ്‌വിനുമിടയിൽ',
     pairGroupEn: 'Sound (الصوت)',
     pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'تَوَسُّط',
     en: 'Tawassut',
+    ml: 'തവസ്സുത്വ്',
     literalAr: 'الاعتدال والتوسط',
     literalEn: 'Moderation',
+    literalMl: 'മധ്യമം',
     technicalAr: 'اعتدال الصوت بين كمال الانحباس وكمال الجريان.',
     technicalEn: 'Moderate flow of sound between softness and strength.',
+    technicalMl: 'മൃദു കഠോരത്തിനിടയിൽ ശബ്ദം നടക്കൽ',
     mnemonic: 'لِنْ عُمَرْ',
     letters: ['ل', 'ن', 'ع', 'م', 'ر'],
     chipClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800',
@@ -970,16 +891,22 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'istifal',
     oppositeNameEn: 'Istifal (اِسْتِفَال)',
     oppositeNameAr: 'الاستفال',
+    oppositeNameMl: 'ഇസ്തിഫാൽ',
     pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
     pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    pairGroupMl: 'ഉയരൽ — നാവിന്റെ മുരട്',
     tonguePartEn: 'Root of Tongue (أقصى اللسان)',
     tonguePartAr: 'أقصى اللسان (الجذر)',
+    tonguePartMl: 'നാവിന്റെ മുരട് (Root)',
     ar: 'اِسْتِعْلَاء',
     en: 'Isti\'la\'',
+    ml: 'ഇസ്തിഅ്‌ലാഅ്',
     literalAr: 'الارتفاع والعلو',
     literalEn: 'Elevation',
+    literalMl: 'ഉയരൽ',
     technicalAr: 'ارتفاع أقصى اللسان (جذره) إلى الحنك الأعلى فيرتفع معه الصوت بالتفخيم.',
     technicalEn: 'Raising the root / back of the tongue (أقصى اللسان) towards the upper palate, directing sound upwards (Tafkheem).',
+    technicalMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയർന്നിരിക്കൽ',
     mnemonic: 'خُصَّ ضَغْطٍ قِظْ',
     letters: ['خ', 'ص', 'ض', 'غ', 'ط', 'ق', 'ظ'],
     chipClass: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800',
@@ -992,16 +919,22 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'istila',
     oppositeNameEn: 'Isti\'la\' (اِسْتِعْلَاء)',
     oppositeNameAr: 'الاستعلاء',
+    oppositeNameMl: 'ഇസ്തിഅ്‌ലാഅ്',
     pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
     pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    pairGroupMl: 'താഴുക — നാവിന്റെ മുരട്',
     tonguePartEn: 'Root of Tongue (أقصى اللسان)',
     tonguePartAr: 'أقصى اللسان (الجذر)',
+    tonguePartMl: 'നാവിന്റെ മുരട് (താഴുക)',
     ar: 'اِسْتِفَال',
     en: 'Istifal',
+    ml: 'ഇസ്തിഫാൽ',
     literalAr: 'الانخفاض والهبوط',
     literalEn: 'Lowering',
+    literalMl: 'താഴുക',
     technicalAr: 'انخفاض أقصى اللسان (جذره) عن الحنك الأعلى إلى قاع الفم فينحدر الصوت بالترقيق.',
     technicalEn: 'Lowering the root of the tongue (أقصى اللسان) to the mouth floor away from the palate, keeping sound flat (Tarqeeq).',
+    technicalMl: 'നാവ് വായയുടെ അടിഭാഗത്തേക്ക് താഴ്ന്നിരിക്കൽ',
     letters: ['ث', 'ب', 'ت', 'ع', 'ز', 'م', 'ن', 'ي', 'ج', 'و', 'د', 'ح', 'ر', 'ف', 'ه', 'ا', 'ذ', 'س', 'ل', 'ش', 'ك', 'أ', 'ء'],
     chipClass: 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800',
     badgeHex: '#2563eb'
@@ -1013,16 +946,22 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'infitah',
     oppositeNameEn: 'Infitah (اِنْفِتَاح)',
     oppositeNameAr: 'الانفتاح',
+    oppositeNameMl: 'ഇൻഫിതാഹ്',
     pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
     pairGroupAr: 'الإطباق — وسط اللسان',
+    pairGroupMl: 'ചേരൽ — നാവിന്റെ മധ്യമം',
     tonguePartEn: 'Middle of Tongue (وسط اللسان)',
     tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം (Middle)',
     ar: 'إِطْبَاق',
     en: 'Itbaq',
+    ml: 'ഇത്വ്ബാഖ്',
     literalAr: 'الإلصاق والتطابق',
     literalEn: 'Adhesion / Closing',
+    literalMl: 'ചേരൽ',
     technicalAr: 'إلصاق وسط اللسان وطائفة منه بالحنك الأعلى وانحصار الصوت بينهما بأعلى درجات التفخيم.',
     technicalEn: 'Adhering the middle of the tongue (وسط اللسان) to the upper palate, trapping and confining sound (strongest heaviness).',
+    technicalMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ',
     letters: ['ط', 'ص', 'ض', 'ظ'],
     chipClass: 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-800',
     badgeHex: '#6d28d9'
@@ -1034,16 +973,22 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'itbaq',
     oppositeNameEn: 'Itbaq (إِطْبَاق)',
     oppositeNameAr: 'الإطباق',
+    oppositeNameMl: 'ഇത്വ്ബാഖ്',
     pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
     pairGroupAr: 'الإطباق — وسط اللسان',
+    pairGroupMl: 'അകന്നിരിക്കൽ — നാവിന്റെ മധ്യമം',
     tonguePartEn: 'Middle of Tongue (وسط اللسان)',
     tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം (അകന്നിരിക്കൽ)',
     ar: 'اِنْفِتَاح',
     en: 'Infitah',
+    ml: 'ഇൻഫിതാഹ്',
     literalAr: 'الافتراق والانفراج',
     literalEn: 'Opening / Separation',
+    literalMl: 'അകന്നിരിക്കൽ',
     technicalAr: 'تجافي وسط اللسان وتباعده عن الحنك الأعلى فلا ينحصر الصوت بينهما.',
     technicalEn: 'Keeping the middle of the tongue (وسط اللسان) separated from the upper palate, allowing sound to escape unconfined.',
+    technicalMl: 'അണ്ണാക്കുമായി നാവ് അകന്നിരിക്കൽ',
     letters: ['م', 'ن', 'أ', 'ء', 'خ', 'ذ', 'و', 'ج', 'د', 'س', 'ع', 'ة', 'ف', 'ز', 'ك', 'ا', 'ح', 'ق', 'ل', 'ه', 'ش', 'ر', 'ب', 'غ', 'ي', 'ث'],
     chipClass: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
     badgeHex: '#4f46e5'
@@ -1056,12 +1001,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     tonguePartEn: 'Tip of Tongue (طرف اللسان)',
     tonguePartAr: 'طرف اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പ് (Tip)',
     ar: 'صَفِير',
     en: 'Safeer',
+    ml: 'സ്വഫീറ്',
     literalAr: 'صوت يشبه صفير الطائر',
     literalEn: 'Bird\'s chirp / Whistle',
+    literalMl: 'പക്ഷി സ്വരം',
     technicalAr: 'صوت زائد يخرج من بين الثنايا وطرف اللسان بصفير حاد ناصع.',
     technicalEn: 'A sharp sound resembling the chirping of a bird.',
+    technicalMl: 'പക്ഷി സ്വരത്തോട് തുല്യമായ ശബ്ദം',
     letters: ['ص', 'ز', 'س'],
     chipClass: 'bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border-pink-300 dark:border-pink-800',
     badgeHex: '#db2777'
@@ -1072,10 +1021,13 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     ar: 'قَلْقَلَة',
     en: 'Qalqalah',
+    ml: 'ഖൽഖലത്ത്',
     literalAr: 'التحريك والاضطراب',
     literalEn: 'Shaking / Echoing',
+    literalMl: 'ചലിക്കുക',
     technicalAr: 'اضطراب المخرج عند النطق بالحرف ساكناً حتى يُسمع له نبرة قوية.',
     technicalEn: 'An echoing or vibrating sound produced by pressing firmly on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ അമർത്തി ഉച്ചരിക്കുന്നത് കൊണ്ട് ശബ്ദത്തിന് മുഴക്കമുണ്ടാവൽ',
     mnemonic: 'قُطْبُ جَدٍّ',
     letters: ['ق', 'ط', 'ب', 'ج', 'د'],
     chipClass: 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800',
@@ -1087,10 +1039,13 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     ar: 'لِين',
     en: 'Leen',
+    ml: 'ലീൻ',
     literalAr: 'السهولة واليسر',
     literalEn: 'Gentleness / Ease',
+    literalMl: 'മയം',
     technicalAr: 'إخراج الحرف بسهولة ويسر من غير كلفة على اللسان (إذا سكنا وانفتح ما قبلهما).',
     technicalEn: 'Pronouncing the letter effortlessly without any strain on the tongue (when saakin preceded by fathah).',
+    technicalMl: 'നാവിന് വിഷമം കൂടാതെ പുറപ്പെടൽ',
     mnemonic: 'الواو والياء الساكنتان المفتوح ما قبلهما',
     letters: ['و', 'ي'],
     chipClass: 'bg-lime-50 dark:bg-lime-950/60 text-lime-700 dark:text-lime-300 border-lime-300 dark:border-lime-800',
@@ -1102,12 +1057,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     tonguePartEn: 'Tongue Tip & Sides (طرف وحافتي اللسان)',
     tonguePartAr: 'طرف وحافتي اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പും അരികും',
     ar: 'اِنْحِرَاف',
     en: 'Inhiraf',
+    ml: 'ഇൻഹിറാഫ്',
     literalAr: 'الميل والعدول',
     literalEn: 'Inclination / Drifting',
+    literalMl: 'തെറ്റൽ',
     technicalAr: 'ميل الحرف عن مخرجه (الراء تميل للسان واللام تميل للحافة والضاد).',
     technicalEn: 'Drifting from its own articulation point to another (ر inclines towards ل, and ل inclines towards ض).',
+    technicalMl: 'സ്വന്തം മഖ്റജിൽ നിന്ന് മറ്റു മഖ്റജിലേക്ക് ചായൽ (റാഅ് ലാമിലേക്കും ലാം ളാദിലേക്കും)',
     letters: ['ر', 'ل'],
     chipClass: 'bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-300 dark:border-fuchsia-800',
     badgeHex: '#c026d3'
@@ -1118,12 +1077,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     tonguePartEn: 'Tip of Tongue (طرف اللسان)',
     tonguePartAr: 'طرف/رأس اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പ് (Tip)',
     ar: 'تَكْرِير',
     en: 'Takreer',
+    ml: 'തക്രീറ്',
     literalAr: 'إعادة الشيء مرة بعد أخرى',
     literalEn: 'Repetition / Trilling',
+    literalMl: 'വിറക്കൽ',
     technicalAr: 'ارتعاد رأس اللسان عند النطق بالحرف، وتُعرف هذه الصفة لتُجتنب ولا يُبالغ فيها.',
     technicalEn: 'Shivering or trilling of the tip of the tongue (this trait is taught so that excessive trilling is avoided).',
+    technicalMl: 'നാവിന്റെ തല വിറക്കൽ (അത് ഒഴിവാക്കേണ്ടതാണ്)',
     letters: ['ر'],
     chipClass: 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800',
     badgeHex: '#dc2626'
@@ -1134,12 +1097,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     tonguePartEn: 'Middle of Tongue (وسط اللسان)',
     tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം (Middle)',
     ar: 'تَفَشِّي',
     en: 'Tafashshi',
+    ml: 'തഫശ്ശീ',
     literalAr: 'الاتساع والانتشار',
     literalEn: 'Spreading',
+    literalMl: 'പരക്കൽ',
     technicalAr: 'انتشار خروج الريح بين اللسان والحنك الأعلى حتى يتصل بمخرج الظاء.',
     technicalEn: 'Spreading of breath inside the mouth until it reaches the articulation point of ظ.',
+    technicalMl: 'ളാഇന്റെ മഖ്റജ് വരെ കാറ്റ് പരക്കൽ',
     letters: ['ش'],
     chipClass: 'bg-amber-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
     badgeHex: '#ca8a04'
@@ -1150,12 +1117,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     category: 'non_opposite',
     tonguePartEn: 'Side of Tongue (حافة اللسان)',
     tonguePartAr: 'إحدى حافتي اللسان',
+    tonguePartMl: 'നാവിന്റെ അരിക് (Sides)',
     ar: 'اِسْتِطَالَة',
     en: 'Istitalah',
+    ml: 'ഇസ്തിത്വാലത്ത്',
     literalAr: 'الامتداد والطول',
     literalEn: 'Elongation',
+    literalMl: 'നീളൽ',
     technicalAr: 'امتداد الصوت من أول إحدى حافتي اللسان إلى آخرها حتى يتصل بمخرج اللام.',
     technicalEn: 'Stretching of the sound along the entire length of the side of the tongue.',
+    technicalMl: 'നാവിന്റെ അരിക് നീളത്തിൽ ശബ്ദം നീളൽ',
     letters: ['ض'],
     chipClass: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700',
     badgeHex: '#047857'
@@ -1167,8 +1138,10 @@ export interface SifahPairDef {
   pairNo: number;
   titleEn: string;
   titleAr: string;
+  titleMl: string;
   descEn: string;
   descAr: string;
+  descMl: string;
   itemIds: string[];
 }
 
@@ -1178,8 +1151,10 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
     pairNo: 1,
     titleEn: '1. Flow of Breath (جَرَيَانُ النَّفَسِ وَانْحِبَاسُهُ)',
     titleAr: '١. جريان النفس وانحباسه (الهمس والجهر)',
+    titleMl: '1. കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
     descEn: 'Whether breath continues (Hams) or is stopped (Jahr) during pronunciation.',
     descAr: 'جريان النفس لضعف الاعتماد على المخرج (همس) أو انحباسه لقوته (جهر).',
+    descMl: 'ഹംസ് (ശ്വാസം നടക്കൽ) vs ജഹ്റ് (ശ്വാസം നടക്കാതിരിക്കൽ).',
     itemIds: ['hams', 'jahr']
   },
   {
@@ -1187,8 +1162,10 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
     pairNo: 2,
     titleEn: '2. Flow of Sound (جَرَيَانُ الصَّوْتِ وَانْحِبَاسُهُ)',
     titleAr: '٢. جريان الصوت وانحباسه (الشدة والتوسط والرخاوة)',
+    titleMl: '2. ശബ്ദത്തിന്റെ ഒഴുക്ക് (ശബ്ദം നടക്കലും നടക്കാതിരിക്കലും)',
     descEn: 'Degree of sound flow: stopping (Shiddah), moderate (Tawassut), or continuing (Rikhwah).',
     descAr: 'انحباس الصوت تماماً (شدة)، أو اعتداله (توسط)، أو كمال جريانه (رخاوة).',
+    descMl: 'ശിദ്ദത്ത് (ശബ്ദം നിൽക്കൽ), തവസ്സുത്വ് (മധ്യമം), രിഖ്‌വ് (ശബ്ദം ഒഴുകൽ).',
     itemIds: ['shiddah', 'tawassut', 'rikhwah']
   },
   {
@@ -1196,8 +1173,10 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
     pairNo: 3,
     titleEn: '3. Elevation & Lowering — Root of Tongue (اسْتِعْلَاءُ أَقْصَى اللِّسَانِ وَانْخِفَاضُهُ)',
     titleAr: '٣. استعلاء اللسان وانخفاضه — أقصى اللسان (جذره)',
+    titleMl: '3. നാവിന്റെ മുരട് ഉയരലും താഴലും (അഖ്‌സ്വൽ ലിസാൻ)',
     descEn: 'Focus: Root of Tongue (أقصى اللسان) — Raising the root towards the upper palate (Isti\'la\') vs Lowering it to mouth floor (Istifal).',
     descAr: 'الموضع: أقصى اللسان (الجذر) — ارتفاع جذر اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
+    descMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയരൽ (ഇസ്തിഅ്ലാഅ്) vs അടിഭാഗത്തേക്ക് താഴൽ (ഇസ്തിഫാൽ).',
     itemIds: ['istila', 'istifal']
   },
   {
@@ -1205,8 +1184,10 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
     pairNo: 4,
     titleEn: '4. Adhesion & Opening — Middle of Tongue (إِطْبَاقُ وَسَطِ اللِّسَانِ وَانْفِتَاحُهُ)',
     titleAr: '٤. انحصار الصوت وانفتاحه — وسط اللسان (الإطباق والانفتاح)',
+    titleMl: '4. നാവിന്റെ മധ്യമം ചേരലും അകലലും (വസത്വുൽ ലിസാൻ)',
     descEn: 'Focus: Middle of Tongue (وسط اللسان) — Adhering the middle of the tongue to the upper palate (Itbaq) vs Separating it (Infitah).',
     descAr: 'الموضع: وسط اللسان — إلصاق وسط اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
+    descMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ (ഇത്വ്ബാഖ്) vs അകന്നിരിക്കൽ (ഇൻഫിതാഹ്).',
     itemIds: ['itbaq', 'infitah']
   }
 ];
@@ -1217,20 +1198,19 @@ export const getSifaatForLetter = (letterChar: string): SifahItem[] => {
 
 export default function TajweedStudioPage() {
   const { resolvedTheme } = useTheme();
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
+  const [lang, setLang] = useState<'en' | 'ar' | 'ml'>('en');
 
   // Load language preference from localStorage if saved
   useEffect(() => {
     try {
       const savedLang = localStorage.getItem('tajweed_language');
-      if (savedLang === 'ar' || savedLang === 'en') {
+      if (savedLang === 'ar' || savedLang === 'en' || savedLang === 'ml') {
         setLang(savedLang);
       }
     } catch {}
   }, []);
 
-  const handleToggleLang = () => {
-    const nextLang = lang === 'en' ? 'ar' : 'en';
+  const changeLanguage = (nextLang: 'en' | 'ar' | 'ml') => {
     setLang(nextLang);
     try {
       localStorage.setItem('tajweed_language', nextLang);
@@ -2046,9 +2026,9 @@ export default function TajweedStudioPage() {
             posArr[pPtr++] = curCenterY + localY;
             posArr[pPtr++] = curCenterZ + localZ;
 
-            let rL = showAnatomyRef.current ? 0.96 : 0.72;
-            let gL = showAnatomyRef.current ? 0.25 : 0.25;
-            let bL = showAnatomyRef.current ? 0.37 : 0.30;
+            let rL = 0.72;
+            let gL = 0.25;
+            let bL = 0.30;
             if (showMarker && activeLetter) {
               const lid = activeLetter.id;
               let pW = 0.0, sW = 0.0;
@@ -2227,7 +2207,7 @@ export default function TajweedStudioPage() {
     let lastPalateKey = '';
     const updatePalateMakhrajColors = (mProg: number) => {
       const lid = currentLetterRef.current.id;
-      const isAnat = showAnatomyRef.current;
+      const isAnat = false;
       const showMarker = showMakhrajColorsRef.current && !isAnat;
       const stateKey = `${lid}|${showMarker}|${isAnat}`;
       const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
@@ -2415,9 +2395,9 @@ export default function TajweedStudioPage() {
 
       const activeLetter = currentLetterRef.current;
       lipsGroup.visible = Boolean(activeLetter.showLips);
-      realLipMaterial.transparent = showAnatomyRef.current;
-      realLipMaterial.opacity = showAnatomyRef.current ? 0.65 : 1.0;
-      realLipMaterial.depthWrite = !showAnatomyRef.current;
+      realLipMaterial.transparent = false;
+      realLipMaterial.opacity = 1.0;
+      realLipMaterial.depthWrite = true;
       if (lipsGroup.visible) {
         updateRealLipsGeometry(activeLetter.lipMode || 'bilabial_closed');
       }
@@ -2721,11 +2701,10 @@ export default function TajweedStudioPage() {
 
           if (showAnatomyRef.current) {
             const absC = Math.abs(cosT);
-            let zoneRGB = [0.49, 0.23, 0.93];
-            if (s > 0.88 && absC < 0.58 && sinT > -0.35) zoneRGB = [0.88, 0.11, 0.28];
-            else if (s > 0.68 && absC < 0.66) zoneRGB = [0.02, 0.59, 0.41];
-            else if (absC >= 0.58 && s >= 0.16 && s <= 0.84 && sinT > -0.45) zoneRGB = [0.85, 0.47, 0.02];
-            else if (s >= 0.36 && s <= 0.68) zoneRGB = [0.15, 0.39, 0.92];
+            let zoneRGB = [0.49, 0.23, 0.93]; // Root: നാവിന്റെ മുരട് (#7c3aed)
+            if (s > 0.68 && absC < 0.66) zoneRGB = [0.02, 0.59, 0.41]; // Tip: നാവിന്റെ തുമ്പ് (#059669)
+            else if (absC >= 0.58 && s >= 0.16 && s <= 0.84 && sinT > -0.45) zoneRGB = [0.85, 0.47, 0.02]; // Sides: നാവിന്റെ അരിക് (#d97706)
+            else if (s >= 0.36 && s <= 0.68) zoneRGB = [0.15, 0.39, 0.92]; // Middle: നാവിന്റെ മധ്യമം (#2563eb)
 
             const anatShade = Math.max(0.34, Math.min(1.06, shadeT * 1.08));
             rT = zoneRGB[0] * anatShade;
@@ -2811,7 +2790,7 @@ export default function TajweedStudioPage() {
       tongueGeom.attributes.position.needsUpdate = true;
       tongueGeom.attributes.color.needsUpdate = true;
       updatePalateMakhrajColors(morphProgressRef.current);
-      updateTeethAnatomyColors(showAnatomyRef.current);
+      updateTeethAnatomyColors(false);
       tongueGeom.computeVertexNormals();
 
       // Smooth camera transition back to default position if animating
@@ -2926,6 +2905,56 @@ export default function TajweedStudioPage() {
         filterNonOpposite: 'غير المتضادة (٧)'
       };
     }
+    if (lang === 'ml') {
+      return {
+        studioTitle: '3D തജ്‌വീദ് സ്റ്റുഡിയോ',
+        anatomy: 'നാവിന്റെ ഭാഗങ്ങൾ',
+        anatomyPartCol: 'ഭാഗം',
+        anatomyLettersCol: 'ഹർഫുകൾ',
+        selectLetter: 'ഹർഫ് തിരഞ്ഞെടുക്കുക:',
+        simulate: 'സിമുലേഷൻ',
+        simulateTitle: 'ഉച്ചാരണ ചലനം കാണുക',
+        resetView: 'റീസെറ്റ്',
+        makhrajColors: 'മഖ്റജ് അടയാളങ്ങൾ',
+        palate: 'അണ്ണാക്ക്',
+        upperTeeth: 'മേൽപല്ലുകൾ',
+        lowerTeeth: 'കീഴ്‌പല്ലുകൾ',
+        dhaadVariants: 'ളാദ് (ض) ഉച്ചാരണത്തിന്റെ 3 രീതികൾ:',
+        dhaadRight: '1. വലതുഭാഗത്തെ അണപ്പല്ലുകൾ',
+        dhaadLeft: '2. ഇടതുഭാഗത്തെ അണപ്പല്ലുകൾ',
+        dhaadBoth: '3. ഇരുഭാഗത്തെയും അണപ്പല്ലുകൾ',
+        shajariyyahNotice: 'നടുനാവിന്റെ അക്ഷരങ്ങൾ:',
+        jeemLabel: '1. ജീം (ജ)',
+        sheenLabel: '2. ശീൻ (ശ)',
+        yaaLabel: '3. യാഅ് (യ)',
+        controls: 'ഉച്ചാരണ നിയന്ത്രണം',
+        reset: 'യഥാർത്ഥ അവസ്ഥ',
+        firmPress: 'ശക്തിയായി അമർത്തൽ',
+        gentleTouch: 'നേർത്ത സ്പർശനം',
+        gumShelfBadge: 'മോണ',
+        tongueBadge: 'നാവ്',
+        toggleLanguage: 'English',
+        makharijTab: 'മഖാരിജ്',
+        sifaatTab: 'സ്വിഫാത്ത്',
+        sifaatSectionTitle: 'സ്വിഫാത്തുൽ ഹുറൂഫ് (അക്ഷരങ്ങളുടെ വിശേഷണങ്ങൾ)',
+        sifaatSectionDesc: 'ഒരു മഖ്റജിൽ നിന്ന് പുറപ്പെടുന്ന അക്ഷരങ്ങളെ വേർതിരിക്കുന്ന സ്വഭാവഗുണങ്ങൾ.',
+        withOppositesTitle: '1. അസ്സ്വിഫാത്തുൽ മുതളാദ്ദത്തു (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 ജോടികൾ)',
+        withoutOppositesTitle: '2. അസ്സ്വിഫാത്തുല്ലത്തീ ലൈസ ലഹൽ അള്ദാദു (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ — 7 എണ്ണം)',
+        characteristicCol: 'സ്വിഫത്ത്',
+        literalCol: 'മഅ്ന (അർത്ഥം)',
+        technicalCol: 'സാങ്കേതിക അർത്ഥം',
+        lettersCol: 'ഹർഫുകൾ',
+        mnemonicCol: 'സൂചന വാക്യം',
+        modalLettersTitle: 'ഈ സ്വിഫത്തുള്ള ഹർഫുകൾ:',
+        openIn3D: 'മഖ്റജിൽ കാണുക',
+        close: 'അടയ്ക്കുക',
+        letterSifaatTitle: 'ഹർഫിന്റെ സ്വിഫത്തുകൾ:',
+        clickToExplain: 'വിശദീകരണത്തിന് ക്ലിക്ക് ചെയ്യുക',
+        filterAll: 'എല്ലാം (16)',
+        filterOpposite: 'മുതളാദ്ദത്തു (4 ജോടികൾ)',
+        filterNonOpposite: 'ലൈസ ലഹൽ അള്ദാദു (7)'
+      };
+    }
     return {
       studioTitle: '3D Tajweed Studio',
       anatomy: 'Anatomy Parts (أقسام الفم)',
@@ -2989,7 +3018,7 @@ export default function TajweedStudioPage() {
           <td className="py-1.5 px-2.5 whitespace-nowrap">
             <span className="inline-flex items-center gap-1.5 font-bold text-xs" style={{ color: partColor }}>
               <span className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/10 dark:ring-white/20" style={{ backgroundColor: item.hex }} />
-              <span>{lang === 'ar' ? item.ar : item.en}</span>
+              <span>{lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en}</span>
             </span>
           </td>
           <td className="py-1 px-2">
@@ -3071,16 +3100,42 @@ export default function TajweedStudioPage() {
             </div>
           </div>
 
-          {/* Language Toggle Button */}
-          <button
-            onClick={handleToggleLang}
-            title={lang === 'en' ? 'Switch to Arabic (العربية)' : 'التبديل إلى الإنجليزية'}
-            aria-label="Language Toggle"
-            className="px-3.5 py-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/60 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-          >
-            <Globe className="w-4 h-4" />
-            <span>{t.toggleLanguage}</span>
-          </button>
+          {/* Language Selector: English | العربية | മലയാളം */}
+          <div className="flex items-center p-1 bg-slate-100/90 dark:bg-gray-800/90 rounded-2xl border border-slate-200/80 dark:border-gray-700/80 text-xs font-bold shadow-inner">
+            <button
+              type="button"
+              onClick={() => changeLanguage('en')}
+              className={`px-2.5 py-1 rounded-xl transition-all ${
+                lang === 'en'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              onClick={() => changeLanguage('ar')}
+              className={`px-2.5 py-1 rounded-xl transition-all arabic-font ${
+                lang === 'ar'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              العربية
+            </button>
+            <button
+              type="button"
+              onClick={() => changeLanguage('ml')}
+              className={`px-2.5 py-1 rounded-xl transition-all ${
+                lang === 'ml'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              മലയാളം
+            </button>
+          </div>
         </div>
 
         {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
@@ -3199,7 +3254,7 @@ export default function TajweedStudioPage() {
                   </button>
                 </div>
 
-                {/* Viewport Actions: Simulate Motion & Quick reset camera */}
+                {/* Viewport Actions: Simulate Motion */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={triggerSimulation}
@@ -3209,45 +3264,23 @@ export default function TajweedStudioPage() {
                     <Play className="w-3.5 h-3.5" />
                     <span>{t.simulate}</span>
                   </button>
-
-                  <button
-                    onClick={() => resetCameraToDefault(true)}
-                    className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1 font-bold text-xs"
-                    title={t.resetView}
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{t.resetView}</span>
-                  </button>
                 </div>
               </div>
 
               {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
               {showAnatomy ? (
                 <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-                  <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x rtl:md:divide-x-reverse divide-slate-200/80 dark:divide-gray-800">
-                    <table className="w-full text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
-                          <th className="py-1.5 px-2.5 text-start">{t.anatomyPartCol}</th>
-                          <th className="py-1.5 px-2 text-start">{t.anatomyLettersCol}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                        {renderAnatomyRows(ANATOMY_LABELS_DATA.filter(i => i.group === 'tongue' || i.group === 'palate'))}
-                      </tbody>
-                    </table>
-                    <table className="w-full text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
-                          <th className="py-1.5 px-2.5 text-start">{t.anatomyPartCol}</th>
-                          <th className="py-1.5 px-2 text-start">{t.anatomyLettersCol}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                        {renderAnatomyRows(ANATOMY_LABELS_DATA.filter(i => i.group === 'teeth' || i.group === 'lips'))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
+                        <th className="py-2 px-3 text-start">{t.anatomyPartCol}</th>
+                        <th className="py-2 px-3 text-start">{t.anatomyLettersCol}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                      {renderAnatomyRows(ANATOMY_LABELS_DATA)}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
@@ -3333,11 +3366,11 @@ export default function TajweedStudioPage() {
                       key={sifah.id}
                       type="button"
                       onClick={() => setSelectedSifah(sifah)}
-                      title={`${sifah.en} (${sifah.ar}) - ${t.clickToExplain}`}
+                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.ml : sifah.en} (${sifah.ar}) - ${t.clickToExplain}`}
                       className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all flex items-center gap-1 active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
                     >
                       <span className="arabic-font">{sifah.ar}</span>
-                      <span className="text-[10px] font-normal opacity-85">({sifah.en})</span>
+                      <span className="text-[10px] font-normal opacity-85">({lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.ml : sifah.en})</span>
                     </button>
                   ))}
                 </div>
@@ -3480,7 +3513,7 @@ export default function TajweedStudioPage() {
                     <span>{t.withOppositesTitle}</span>
                   </h3>
                   <span className="text-xs text-slate-400 font-medium">
-                    {lang === 'ar' ? '٤ أزواج متقابلة (٩ صفات)' : '4 Opposite Pairs (9 Sifaat)'}
+                    {lang === 'ar' ? '٤ أزواج متقابلة (٩ صفات)' : lang === 'ml' ? '4 ജോടികൾ (9 സ്വിഫത്തുകൾ)' : '4 Opposite Pairs (9 Sifaat)'}
                   </span>
                 </div>
 
@@ -3503,11 +3536,11 @@ export default function TajweedStudioPage() {
                               {pair.pairNo}
                             </span>
                             <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
-                              {lang === 'ar' ? pair.titleAr : pair.titleEn}
+                              {lang === 'ar' ? pair.titleAr : lang === 'ml' ? pair.titleMl : pair.titleEn}
                             </h4>
                           </div>
                           <span className="text-[11px] text-slate-500 dark:text-gray-400">
-                            {lang === 'ar' ? pair.descAr : pair.descEn}
+                            {lang === 'ar' ? pair.descAr : lang === 'ml' ? pair.descMl : pair.descEn}
                           </span>
                         </div>
 
@@ -3516,21 +3549,17 @@ export default function TajweedStudioPage() {
                           {items.map(item => (
                             <div
                               key={item.id}
-                              onClick={() => setSelectedSifah(item)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => { if (e.key === 'Enter') setSelectedSifah(item); }}
-                              className="group p-3 sm:p-3.5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2.5 cursor-pointer text-start"
+                              className="group p-3 sm:p-3.5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-700/80 shadow-sm flex flex-col justify-between gap-2.5 text-start"
                             >
                               <div className="flex flex-col gap-2">
                                 {/* Card Header: Chip + Meaning */}
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
                                     <span className="arabic-font text-base">{item.ar}</span>
-                                    <span className="text-[11px] opacity-80">({item.en})</span>
+                                    <span className="text-[11px] opacity-80">({lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en})</span>
                                   </span>
                                   <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
-                                    {lang === 'ar' ? item.literalAr : item.literalEn}
+                                    {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
                                   </span>
                                 </div>
 
@@ -3538,14 +3567,14 @@ export default function TajweedStudioPage() {
                                   <div className="flex items-center gap-1">
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                                       <span>👅</span>
-                                      <span>{lang === 'ar' ? item.tonguePartAr : item.tonguePartEn}</span>
+                                      <span>{lang === 'ar' ? item.tonguePartAr : lang === 'ml' ? (item.tonguePartMl || item.tonguePartEn) : item.tonguePartEn}</span>
                                     </span>
                                   </div>
                                 )}
 
                                 {/* Rule / Technical Definition */}
                                 <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
-                                  {lang === 'ar' ? item.technicalAr : item.technicalEn}
+                                  {lang === 'ar' ? item.technicalAr : lang === 'ml' ? item.technicalMl : item.technicalEn}
                                 </p>
                               </div>
 
@@ -3553,17 +3582,26 @@ export default function TajweedStudioPage() {
                               <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
                                 <div className="flex flex-wrap items-center gap-1">
                                   {item.letters.map((ltr, lIdx) => (
-                                    <span
+                                    <button
                                       key={lIdx}
-                                      className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors"
+                                      type="button"
+                                      onClick={() => {
+                                        const preset = LETTER_PRESETS.find(p => p.letter === ltr);
+                                        if (preset) {
+                                          selectLetter(preset);
+                                          setActiveMainTab('makharij');
+                                        }
+                                      }}
+                                      className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                                      title={`View ${ltr} in Makharij`}
                                     >
                                       {ltr}
-                                    </span>
+                                    </button>
                                   ))}
                                 </div>
                                 {item.mnemonic && (
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : 'Mnemonic:'}</span>
+                                    <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
                                     <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
                                       ({item.mnemonic})
                                     </span>
@@ -3587,7 +3625,7 @@ export default function TajweedStudioPage() {
                     <span>{t.withoutOppositesTitle}</span>
                   </h3>
                   <span className="text-xs text-slate-400 font-medium">
-                    {lang === 'ar' ? '٧ صفات فردية لازمة' : '7 Individual Sifaat'}
+                    {lang === 'ar' ? '٧ صفات فردية لازمة' : lang === 'ml' ? '7 ഒറ്റപ്പെട്ട സ്വിഫത്തുകൾ' : '7 Individual Sifaat'}
                   </span>
                 </div>
 
@@ -3596,21 +3634,17 @@ export default function TajweedStudioPage() {
                   {SIFAAT_DATA.filter(s => s.category === 'non_opposite').map(item => (
                     <div
                       key={item.id}
-                      onClick={() => setSelectedSifah(item)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter') setSelectedSifah(item); }}
-                      className="group p-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-2.5 cursor-pointer text-start"
+                      className="group p-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between gap-2.5 text-start"
                     >
                       <div className="flex flex-col gap-2">
                         {/* Header */}
                         <div className="flex items-center justify-between gap-2">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
                             <span className="arabic-font text-base">{item.ar}</span>
-                            <span className="text-[11px] opacity-80">({item.en})</span>
+                            <span className="text-[11px] opacity-80">({lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en})</span>
                           </span>
                           <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
-                            {lang === 'ar' ? item.literalAr : item.literalEn}
+                            {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
                           </span>
                         </div>
 
@@ -3618,14 +3652,14 @@ export default function TajweedStudioPage() {
                           <div className="flex items-center gap-1">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                               <span>👅</span>
-                              <span>{lang === 'ar' ? item.tonguePartAr : item.tonguePartEn}</span>
+                              <span>{lang === 'ar' ? item.tonguePartAr : lang === 'ml' ? (item.tonguePartMl || item.tonguePartEn) : item.tonguePartEn}</span>
                             </span>
                           </div>
                         )}
 
                         {/* Meaning */}
                         <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
-                          {lang === 'ar' ? item.technicalAr : item.technicalEn}
+                          {lang === 'ar' ? item.technicalAr : lang === 'ml' ? item.technicalMl : item.technicalEn}
                         </p>
                       </div>
 
@@ -3633,17 +3667,26 @@ export default function TajweedStudioPage() {
                       <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
                         <div className="flex flex-wrap items-center gap-1">
                           {item.letters.map((ltr, lIdx) => (
-                            <span
+                            <button
                               key={lIdx}
-                              className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 transition-colors"
+                              type="button"
+                              onClick={() => {
+                                const preset = LETTER_PRESETS.find(p => p.letter === ltr);
+                                if (preset) {
+                                  selectLetter(preset);
+                                  setActiveMainTab('makharij');
+                                }
+                              }}
+                              className="arabic-font text-sm font-bold w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                              title={`View ${ltr} in Makharij`}
                             >
                               {ltr}
-                            </span>
+                            </button>
                           ))}
                         </div>
                         {item.mnemonic && (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : 'Mnemonic:'}</span>
+                            <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
                             <span className="arabic-font text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
                               ({item.mnemonic})
                             </span>
@@ -3679,7 +3722,7 @@ export default function TajweedStudioPage() {
                         {selectedSifah.ar}
                       </span>
                       <span className="text-slate-400 dark:text-gray-500 font-normal">/</span>
-                      <span className="text-base font-bold">{selectedSifah.en}</span>
+                      <span className="text-base font-bold">{lang === 'ar' ? selectedSifah.ar : lang === 'ml' ? selectedSifah.ml : selectedSifah.en}</span>
                     </h3>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -3689,17 +3732,17 @@ export default function TajweedStudioPage() {
                         : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                     }`}>
                       {selectedSifah.category === 'opposite'
-                        ? (lang === 'ar' ? `صفة متضادة (ضد: ${selectedSifah.oppositeNameAr})` : `With Opposite (vs ${selectedSifah.oppositeNameEn})`)
-                        : (lang === 'ar' ? 'صفة لا ضد لها' : 'Without Opposite')}
+                        ? (lang === 'ar' ? `صفة متضادة (ضد: ${selectedSifah.oppositeNameAr})` : lang === 'ml' ? `മുതളാദ്ദത്തു (എതിർ സ്വിഫത്ത്: ${selectedSifah.oppositeNameMl || selectedSifah.oppositeNameEn})` : `With Opposite (vs ${selectedSifah.oppositeNameEn})`)
+                        : (lang === 'ar' ? 'صفة لا ضد لها' : lang === 'ml' ? 'ലൈസ ലഹൽ അള്ദാദു (എതിരില്ലാത്തത്)' : 'Without Opposite')}
                     </span>
                     {selectedSifah.pairGroupEn && (
                       <span className="text-slate-500 dark:text-gray-400 font-medium">
-                        • {lang === 'ar' ? selectedSifah.pairGroupAr : selectedSifah.pairGroupEn}
+                        • {lang === 'ar' ? selectedSifah.pairGroupAr : lang === 'ml' ? (selectedSifah.pairGroupMl || selectedSifah.pairGroupEn) : selectedSifah.pairGroupEn}
                       </span>
                     )}
                     {selectedSifah.tonguePartEn && (
                       <span className="px-2 py-0.5 rounded-lg border font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                        👅 {lang === 'ar' ? selectedSifah.tonguePartAr : selectedSifah.tonguePartEn}
+                        👅 {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
                       </span>
                     )}
                   </div>
@@ -3719,29 +3762,29 @@ export default function TajweedStudioPage() {
               <div className="flex flex-col gap-2.5 text-xs">
                 <div className="bg-slate-50 dark:bg-gray-800/50 rounded-2xl p-3 border border-slate-100 dark:border-gray-800 flex flex-col gap-1">
                   <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">
-                    {lang === 'ar' ? 'المعنى اللغوي (مَعْنًى):' : 'Literal Meaning:'}
+                    {lang === 'ar' ? 'المعنى اللغوي (مَعْنًى):' : lang === 'ml' ? 'മഅ്ന (അർത്ഥം):' : 'Literal Meaning:'}
                   </span>
                   <p className="font-semibold text-slate-800 dark:text-gray-200">
-                    {lang === 'ar' ? selectedSifah.literalAr : selectedSifah.literalEn}
+                    {lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn}
                   </p>
                 </div>
 
                 <div className="bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl p-3 border border-emerald-200/60 dark:border-emerald-800/60 flex flex-col gap-1">
                   <span className="font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider text-[10px]">
-                    {lang === 'ar' ? 'المعنى الاصطلاحي (سَانْكِيتِكَ أَرْتَهَمْ):' : 'Technical Meaning (Rule):'}
+                    {lang === 'ar' ? 'المعنى الاصطلاحي (سَانْكِيتِكَ أَرْتَهَمْ):' : lang === 'ml' ? 'സാങ്കേതിക അർത്ഥം:' : 'Technical Meaning (Rule):'}
                   </span>
                   <p className="text-slate-700 dark:text-gray-300 leading-relaxed font-medium">
-                    {lang === 'ar' ? selectedSifah.technicalAr : selectedSifah.technicalEn}
+                    {lang === 'ar' ? selectedSifah.technicalAr : lang === 'ml' ? selectedSifah.technicalMl : selectedSifah.technicalEn}
                   </p>
                 </div>
 
                 {selectedSifah.tonguePartEn && (
                   <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
                     <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
-                      {lang === 'ar' ? 'موضع اللسان المعني (جزء اللسان):' : 'Tongue Part Involved:'}
+                      {lang === 'ar' ? 'موضع اللسان المعني (جزء اللسان):' : lang === 'ml' ? 'നാവിന്റെ ഭാഗം:' : 'Tongue Part Involved:'}
                     </span>
                     <span className="text-xs sm:text-sm font-black text-amber-900 dark:text-amber-200">
-                      👅 {lang === 'ar' ? selectedSifah.tonguePartAr : selectedSifah.tonguePartEn}
+                      👅 {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
                     </span>
                   </div>
                 )}
@@ -3749,7 +3792,7 @@ export default function TajweedStudioPage() {
                 {selectedSifah.mnemonic && (
                   <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
                     <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
-                      {lang === 'ar' ? 'العبارة المجمِّعة للحروف:' : 'Mnemonic Phrase:'}
+                      {lang === 'ar' ? 'العبارة المجمِّعة للحروف:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic Phrase:'}
                     </span>
                     <span className="arabic-font text-base sm:text-lg font-black text-amber-900 dark:text-amber-200">
                       {selectedSifah.mnemonic}
@@ -3768,7 +3811,7 @@ export default function TajweedStudioPage() {
                     </span>
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    {lang === 'ar' ? 'انقر على حرف لعرض مخرجه' : 'Click a letter to select'}
+                    {lang === 'ar' ? 'انقر على حرف لعرض مخرجه' : lang === 'ml' ? 'മഖ്റജ് കാണാൻ ഹർഫിൽ ക്ലിക്ക് ചെയ്യുക' : 'Click a letter to select'}
                   </span>
                 </div>
 
