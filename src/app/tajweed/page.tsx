@@ -849,6 +849,8 @@ export interface SifahItem {
   oppositeNameAr?: string;
   pairGroupEn?: string;
   pairGroupAr?: string;
+  tonguePartEn?: string;
+  tonguePartAr?: string;
   ar: string;
   en: string;
   literalAr: string;
@@ -968,14 +970,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'istifal',
     oppositeNameEn: 'Istifal (اِسْتِفَال)',
     oppositeNameAr: 'الاستفال',
-    pairGroupEn: 'Tongue Elevation (الاستعلاء)',
-    pairGroupAr: 'تصعد الصوت إلى الحنك',
+    pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
+    pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    tonguePartEn: 'Root of Tongue (أقصى اللسان)',
+    tonguePartAr: 'أقصى اللسان (الجذر)',
     ar: 'اِسْتِعْلَاء',
     en: 'Isti\'la\'',
     literalAr: 'الارتفاع والعلو',
     literalEn: 'Elevation',
-    technicalAr: 'ارتفاع أقصى اللسان إلى الحنك الأعلى فيرتفع معه الصوت بالتفخيم.',
-    technicalEn: 'Raising the back of the tongue towards the upper palate.',
+    technicalAr: 'ارتفاع أقصى اللسان (جذره) إلى الحنك الأعلى فيرتفع معه الصوت بالتفخيم.',
+    technicalEn: 'Raising the root / back of the tongue (أقصى اللسان) towards the upper palate, directing sound upwards (Tafkheem).',
     mnemonic: 'خُصَّ ضَغْطٍ قِظْ',
     letters: ['خ', 'ص', 'ض', 'غ', 'ط', 'ق', 'ظ'],
     chipClass: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800',
@@ -988,14 +992,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'istila',
     oppositeNameEn: 'Isti\'la\' (اِسْتِعْلَاء)',
     oppositeNameAr: 'الاستعلاء',
-    pairGroupEn: 'Tongue Elevation (الاستعلاء)',
-    pairGroupAr: 'تصعد الصوت إلى الحنك',
+    pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
+    pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    tonguePartEn: 'Root of Tongue (أقصى اللسان)',
+    tonguePartAr: 'أقصى اللسان (الجذر)',
     ar: 'اِسْتِفَال',
     en: 'Istifal',
     literalAr: 'الانخفاض والهبوط',
     literalEn: 'Lowering',
-    technicalAr: 'انخفاض اللسان عن الحنك الأعلى إلى قاع الفم فينحدر الصوت بالترقيق.',
-    technicalEn: 'Lowering the tongue to the bottom of the mouth.',
+    technicalAr: 'انخفاض أقصى اللسان (جذره) عن الحنك الأعلى إلى قاع الفم فينحدر الصوت بالترقيق.',
+    technicalEn: 'Lowering the root of the tongue (أقصى اللسان) to the mouth floor away from the palate, keeping sound flat (Tarqeeq).',
     letters: ['ث', 'ب', 'ت', 'ع', 'ز', 'م', 'ن', 'ي', 'ج', 'و', 'د', 'ح', 'ر', 'ف', 'ه', 'ا', 'ذ', 'س', 'ل', 'ش', 'ك', 'أ', 'ء'],
     chipClass: 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800',
     badgeHex: '#2563eb'
@@ -1007,14 +1013,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'infitah',
     oppositeNameEn: 'Infitah (اِنْفِتَاح)',
     oppositeNameAr: 'الانفتاح',
-    pairGroupEn: 'Palate Adhesion (الإطباق)',
-    pairGroupAr: 'انحصار الصوت بين اللسان والحنك',
+    pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
+    pairGroupAr: 'الإطباق — وسط اللسان',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
     ar: 'إِطْبَاق',
     en: 'Itbaq',
     literalAr: 'الإلصاق والتطابق',
     literalEn: 'Adhesion / Closing',
-    technicalAr: 'إلصاق طائفة من اللسان بالحنك الأعلى وانحصار الصوت بينهما.',
-    technicalEn: 'Adhering the middle of the tongue to the upper palate.',
+    technicalAr: 'إلصاق وسط اللسان وطائفة منه بالحنك الأعلى وانحصار الصوت بينهما بأعلى درجات التفخيم.',
+    technicalEn: 'Adhering the middle of the tongue (وسط اللسان) to the upper palate, trapping and confining sound (strongest heaviness).',
     letters: ['ط', 'ص', 'ض', 'ظ'],
     chipClass: 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-800',
     badgeHex: '#6d28d9'
@@ -1026,14 +1034,16 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'itbaq',
     oppositeNameEn: 'Itbaq (إِطْبَاق)',
     oppositeNameAr: 'الإطباق',
-    pairGroupEn: 'Palate Adhesion (الإطباق)',
-    pairGroupAr: 'انحصار الصوت بين اللسان والحنك',
+    pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
+    pairGroupAr: 'الإطباق — وسط اللسان',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
     ar: 'اِنْفِتَاح',
     en: 'Infitah',
     literalAr: 'الافتراق والانفراج',
     literalEn: 'Opening / Separation',
-    technicalAr: 'تجافي اللسان وتباعده عن الحنك الأعلى فلا ينحصر الصوت بينهما.',
-    technicalEn: 'Keeping the tongue separated from the upper palate.',
+    technicalAr: 'تجافي وسط اللسان وتباعده عن الحنك الأعلى فلا ينحصر الصوت بينهما.',
+    technicalEn: 'Keeping the middle of the tongue (وسط اللسان) separated from the upper palate, allowing sound to escape unconfined.',
     letters: ['م', 'ن', 'أ', 'ء', 'خ', 'ذ', 'و', 'ج', 'د', 'س', 'ع', 'ة', 'ف', 'ز', 'ك', 'ا', 'ح', 'ق', 'ل', 'ه', 'ش', 'ر', 'ب', 'غ', 'ي', 'ث'],
     chipClass: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
     badgeHex: '#4f46e5'
@@ -1044,6 +1054,8 @@ export const SIFAAT_DATA: SifahItem[] = [
     id: 'safeer',
     order: 10,
     category: 'non_opposite',
+    tonguePartEn: 'Tip of Tongue (طرف اللسان)',
+    tonguePartAr: 'طرف اللسان',
     ar: 'صَفِير',
     en: 'Safeer',
     literalAr: 'صوت يشبه صفير الطائر',
@@ -1088,6 +1100,8 @@ export const SIFAAT_DATA: SifahItem[] = [
     id: 'inhiraf',
     order: 13,
     category: 'non_opposite',
+    tonguePartEn: 'Tongue Tip & Sides (طرف وحافتي اللسان)',
+    tonguePartAr: 'طرف وحافتي اللسان',
     ar: 'اِنْحِرَاف',
     en: 'Inhiraf',
     literalAr: 'الميل والعدول',
@@ -1102,6 +1116,8 @@ export const SIFAAT_DATA: SifahItem[] = [
     id: 'takreer',
     order: 14,
     category: 'non_opposite',
+    tonguePartEn: 'Tip of Tongue (طرف اللسان)',
+    tonguePartAr: 'طرف/رأس اللسان',
     ar: 'تَكْرِير',
     en: 'Takreer',
     literalAr: 'إعادة الشيء مرة بعد أخرى',
@@ -1116,6 +1132,8 @@ export const SIFAAT_DATA: SifahItem[] = [
     id: 'tafashshi',
     order: 15,
     category: 'non_opposite',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
     ar: 'تَفَشِّي',
     en: 'Tafashshi',
     literalAr: 'الاتساع والانتشار',
@@ -1130,6 +1148,8 @@ export const SIFAAT_DATA: SifahItem[] = [
     id: 'istitalah',
     order: 16,
     category: 'non_opposite',
+    tonguePartEn: 'Side of Tongue (حافة اللسان)',
+    tonguePartAr: 'إحدى حافتي اللسان',
     ar: 'اِسْتِطَالَة',
     en: 'Istitalah',
     literalAr: 'الامتداد والطول',
@@ -1174,19 +1194,19 @@ export const OPPOSITE_PAIRS: SifahPairDef[] = [
   {
     id: 'elevation',
     pairNo: 3,
-    titleEn: '3. Tongue Elevation & Direction (اسْتِعْلَاءُ اللِّسَانِ وَانْخِفَاضُهُ)',
-    titleAr: '٣. استعلاء اللسان وانخفاضه (الاستعلاء والاستفال)',
-    descEn: 'Whether the back of the tongue elevates towards the palate (Isti\'la\') or rests low (Istifal).',
-    descAr: 'ارتفاع أقصى اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
+    titleEn: '3. Elevation & Lowering — Root of Tongue (اسْتِعْلَاءُ أَقْصَى اللِّسَانِ وَانْخِفَاضُهُ)',
+    titleAr: '٣. استعلاء اللسان وانخفاضه — أقصى اللسان (جذره)',
+    descEn: 'Focus: Root of Tongue (أقصى اللسان) — Raising the root towards the upper palate (Isti\'la\') vs Lowering it to mouth floor (Istifal).',
+    descAr: 'الموضع: أقصى اللسان (الجذر) — ارتفاع جذر اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
     itemIds: ['istila', 'istifal']
   },
   {
     id: 'adhesion',
     pairNo: 4,
-    titleEn: '4. Palate Adhesion & Sound Confinement (انْحِصَارُ الصَّوْتِ وَانْفِتَاحُهُ)',
-    titleAr: '٤. انحصار الصوت وانفتاحه (الإطباق والانفتاح)',
-    descEn: 'Whether the tongue adheres confining sound (Itbaq) or separates (Infitah).',
-    descAr: 'إلصاق طائفة من اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
+    titleEn: '4. Adhesion & Opening — Middle of Tongue (إِطْبَاقُ وَسَطِ اللِّسَانِ وَانْفِتَاحُهُ)',
+    titleAr: '٤. انحصار الصوت وانفتاحه — وسط اللسان (الإطباق والانفتاح)',
+    descEn: 'Focus: Middle of Tongue (وسط اللسان) — Adhering the middle of the tongue to the upper palate (Itbaq) vs Separating it (Infitah).',
+    descAr: 'الموضع: وسط اللسان — إلصاق وسط اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
     itemIds: ['itbaq', 'infitah']
   }
 ];
@@ -3514,6 +3534,15 @@ export default function TajweedStudioPage() {
                                   </span>
                                 </div>
 
+                                {item.tonguePartEn && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                      <span>👅</span>
+                                      <span>{lang === 'ar' ? item.tonguePartAr : item.tonguePartEn}</span>
+                                    </span>
+                                  </div>
+                                )}
+
                                 {/* Rule / Technical Definition */}
                                 <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
                                   {lang === 'ar' ? item.technicalAr : item.technicalEn}
@@ -3584,6 +3613,15 @@ export default function TajweedStudioPage() {
                             {lang === 'ar' ? item.literalAr : item.literalEn}
                           </span>
                         </div>
+
+                        {item.tonguePartEn && (
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                              <span>👅</span>
+                              <span>{lang === 'ar' ? item.tonguePartAr : item.tonguePartEn}</span>
+                            </span>
+                          </div>
+                        )}
 
                         {/* Meaning */}
                         <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
@@ -3659,6 +3697,11 @@ export default function TajweedStudioPage() {
                         • {lang === 'ar' ? selectedSifah.pairGroupAr : selectedSifah.pairGroupEn}
                       </span>
                     )}
+                    {selectedSifah.tonguePartEn && (
+                      <span className="px-2 py-0.5 rounded-lg border font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                        👅 {lang === 'ar' ? selectedSifah.tonguePartAr : selectedSifah.tonguePartEn}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -3691,6 +3734,17 @@ export default function TajweedStudioPage() {
                     {lang === 'ar' ? selectedSifah.technicalAr : selectedSifah.technicalEn}
                   </p>
                 </div>
+
+                {selectedSifah.tonguePartEn && (
+                  <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                      {lang === 'ar' ? 'موضع اللسان المعني (جزء اللسان):' : 'Tongue Part Involved:'}
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-amber-900 dark:text-amber-200">
+                      👅 {lang === 'ar' ? selectedSifah.tonguePartAr : selectedSifah.tonguePartEn}
+                    </span>
+                  </div>
+                )}
 
                 {selectedSifah.mnemonic && (
                   <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl p-2.5 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-2">
