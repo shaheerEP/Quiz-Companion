@@ -1422,13 +1422,17 @@ export default function TajweedStudioPage() {
   const dhaadModeRef = useRef(dhaadMode);
   const showAnatomyRef = useRef(showAnatomy);
   const showMakhrajColorsRef = useRef(showMakhrajColors);
+  const activeMainTabRef = useRef(activeMainTab);
+  const forceDeformRef = useRef(true);
 
   useEffect(() => {
     currentLetterRef.current = currentLetter;
     dhaadModeRef.current = dhaadMode;
     showAnatomyRef.current = showAnatomy;
     showMakhrajColorsRef.current = showMakhrajColors;
-  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors]);
+    activeMainTabRef.current = activeMainTab;
+    forceDeformRef.current = true;
+  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors, activeMainTab]);
 
   const camAnimRef = useRef<{
     startRadius: number;
@@ -1452,6 +1456,7 @@ export default function TajweedStudioPage() {
     Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
       currentGearsRef.current[k] = ALIF_MAKHRAJ_GEARS[k];
     });
+    forceDeformRef.current = true;
     simulationStartTimeRef.current = performance.now();
   };
 
@@ -1517,6 +1522,7 @@ export default function TajweedStudioPage() {
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 1.0;
     const nextGears = { ...preset.gears, upperOpacity: upperTeethOpacity };
+    forceDeformRef.current = true;
     targetGearsRef.current = { ...nextGears };
     setGears(nextGears);
   };
@@ -1526,6 +1532,7 @@ export default function TajweedStudioPage() {
     isSimulatingRef.current = false;
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 1.0;
+    forceDeformRef.current = true;
     targetGearsRef.current[key] = value;
     setGears(prev => ({ ...prev, [key]: value }));
     if (key === 'upperOpacity') {
@@ -1537,6 +1544,7 @@ export default function TajweedStudioPage() {
     const neutral: Record<string, number> = {
       jawOpen: 20, tipElevation: 0, tipForward: 0, backIstila: 0, middleArch: 0, lateralSpread: 10, greenPointPos: 18, upperOpacity: 56
     };
+    forceDeformRef.current = true;
     targetGearsRef.current = { ...neutral };
     setGears({ ...neutral });
     setUpperTeethOpacity(56);
@@ -2121,50 +2129,6 @@ export default function TajweedStudioPage() {
           const isEnd = (iu === 0 || iu === LIP_SEGS_U);
           const cornerTaper = isEnd ? 0.0 : Math.pow(Math.max(0.0, 1.0 - u * u), 0.55);
 
-          if (lipMode === 'rounded_waw') {
-            const ringAngle = u * (Math.PI * 0.5);
-            const ringRadius = 0.148;
-            const cx = Math.sin(ringAngle) * ringRadius;
-            const cyDir = isUpper ? Math.cos(ringAngle) : -Math.cos(ringAngle);
-            const cy = 0.015 + cyDir * ringRadius;
-            const cz = 1.04 + Math.cos(ringAngle) * 0.085;
-            const tubeR = isEnd ? 0.0 : (0.024 + 0.042 * (0.35 + 0.65 * Math.cos(ringAngle)));
-            const radX = Math.sin(ringAngle);
-            const radY = cyDir;
-
-            for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
-              const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
-              const cosT = Math.cos(theta), sinT = Math.sin(theta);
-              const rOffset = sinT * tubeR;
-              const zOffset = cosT * tubeR * 1.15;
-
-              const alifX = Math.sin(u * (Math.PI * 0.36)) * 0.48;
-              const alifZ = 0.60 + Math.cos(u * (Math.PI * 0.36)) * 0.40 + rOffset * 0.6;
-              const alifY = (isUpper ? (0.01 + 0.14 * cornerTaper) : (0.01 - 0.14 * cornerTaper)) + rOffset;
-
-              const targetX = cx + radX * rOffset;
-              const targetY = cy + radY * rOffset;
-              const targetZ = cz + zOffset;
-
-              posArr[pPtr++] = alifX + (targetX - alifX) * makhrajMorphProgress;
-              posArr[pPtr++] = alifY + (targetY - alifY) * makhrajMorphProgress;
-              posArr[pPtr++] = alifZ + (targetZ - alifZ) * makhrajMorphProgress;
-
-              let rL = 0.72, gL = 0.25, bL = 0.30;
-              if (showMarker && activeLetter && activeLetter.id === 'waw') {
-                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.72, 2));
-                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.78, 2));
-                const pW = Math.min(0.85, innerRim * 0.88) * makhrajMorphProgress;
-                const sW = Math.min(0.68, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
-                rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
-                gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
-                bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
-              }
-              colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
-            }
-            continue;
-          }
-
           const archAngle = u * (Math.PI * 0.36);
           const baseArchX = Math.sin(archAngle) * 0.48;
           const baseArchZ = 0.60 + Math.cos(archAngle) * 0.40;
@@ -2179,8 +2143,16 @@ export default function TajweedStudioPage() {
             let centerZ = baseArchZ + 0.034 * cornerTaper;
             let localY = sinT * halfHeightY;
             let localZ = cosT * halfThickZ;
+            let curX = baseArchX;
 
-            if (lipMode === 'faa_labiodental') {
+            if (lipMode === 'rounded_waw') {
+              // Smooth anatomical rounding (انضمام الشفتين) keeping same plump 3D shape as meem & baa
+              centerY = isUpper ? (cornerY + 0.032 * cornerTaper) : (cornerY - 0.032 * cornerTaper);
+              centerZ = baseArchZ + 0.082 * cornerTaper;
+              localY = sinT * halfHeightY * (0.88 + 0.12 * cornerTaper);
+              localZ = cosT * halfThickZ * 1.15;
+              curX = baseArchX * (1.0 - 0.22 * cornerTaper * makhrajMorphProgress);
+            } else if (lipMode === 'faa_labiodental') {
               centerY = isUpper ? (cornerY + 0.22 * cornerTaper) : (cornerY - 0.036 * cornerTaper);
               centerZ = isUpper ? (baseArchZ + 0.028 * cornerTaper) : (baseArchZ - 0.024 * cornerTaper);
               if (!isUpper && sinT > 0 && cosT < 0.25) {
@@ -2194,7 +2166,7 @@ export default function TajweedStudioPage() {
             const curCenterY = alifCenterY + (centerY - alifCenterY) * makhrajMorphProgress;
             const curCenterZ = alifCenterZ + (centerZ - alifCenterZ) * makhrajMorphProgress;
 
-            posArr[pPtr++] = baseArchX;
+            posArr[pPtr++] = curX;
             posArr[pPtr++] = curCenterY + localY;
             posArr[pPtr++] = curCenterZ + localZ;
 
@@ -2204,7 +2176,12 @@ export default function TajweedStudioPage() {
             if (showMarker && activeLetter) {
               const lid = activeLetter.id;
               let pW = 0.0, sW = 0.0;
-              if (lid === 'faa' && !isUpper) {
+              if (lid === 'waw') {
+                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.55, 2));
+                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.65, 2));
+                pW = Math.min(0.85, innerRim * 0.90) * makhrajMorphProgress;
+                sW = Math.min(0.65, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
+              } else if (lid === 'faa' && !isUpper) {
                 const centerZone = Math.exp(-Math.pow(u / 0.28, 2));
                 const topBelly = Math.max(0.0, sinT);
                 pW = Math.min(0.88, centerZone * topBelly * 1.05) * makhrajMorphProgress;
@@ -2272,6 +2249,7 @@ export default function TajweedStudioPage() {
 
     // Orbit pointer events
     let isDragging = false;
+    let cameraDirty = true;
     let prevPointer = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -2287,6 +2265,7 @@ export default function TajweedStudioPage() {
       prevPointer = { x: e.clientX, y: e.clientY };
       spherical.theta -= dx * 0.0085;
       spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi - dy * 0.0085));
+      cameraDirty = true;
       updateCamPos();
     };
 
@@ -2296,6 +2275,7 @@ export default function TajweedStudioPage() {
       e.preventDefault();
       camAnimRef.current = null;
       spherical.radius = Math.max(1.8, Math.min(6.5, spherical.radius + e.deltaY * 0.0025));
+      cameraDirty = true;
       updateCamPos();
     };
 
@@ -2314,6 +2294,7 @@ export default function TajweedStudioPage() {
         if (prevTouchDist > 0) {
           const diff = prevTouchDist - dist;
           spherical.radius = Math.max(1.8, Math.min(6.5, spherical.radius + diff * 0.005));
+          cameraDirty = true;
           updateCamPos();
         }
         prevTouchDist = dist;
@@ -2508,17 +2489,26 @@ export default function TajweedStudioPage() {
     };
 
     // ------------------------------------------------------------------------
-    // RENDER / ANIMATION LOOP
+    // RENDER / ANIMATION LOOP (Optimized for minimal CPU & low FOT)
     // ------------------------------------------------------------------------
     let lastTime = performance.now();
+    let settleFrames = 4;
 
     const animate = (now: number) => {
       const animId = requestAnimationFrame(animate);
       if (sceneElementsRef.current) {
         sceneElementsRef.current.animFrameId = animId;
       }
+
+      // When on Sifaat tab, skip render calculations completely (0% CPU)
+      if (activeMainTabRef.current !== 'makharij') {
+        return;
+      }
+
       const delta = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
+
+      let gearDelta = 0;
 
       // Simulation interpolation
       if (isSimulatingRef.current) {
@@ -2531,6 +2521,7 @@ export default function TajweedStudioPage() {
           Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
             currentGearsRef.current[k] = ALIF_MAKHRAJ_GEARS[k];
           });
+          settleFrames = 3;
         } else {
           const tNorm = Math.max(0.0, Math.min(1.0, elapsed / duration));
           const env = 0.5 * (1.0 - Math.cos(2.0 * Math.PI * tNorm));
@@ -2542,13 +2533,36 @@ export default function TajweedStudioPage() {
               currentGearsRef.current[k] = alifBase + (simGears[k] - alifBase) * env;
             }
           });
+          settleFrames = 3;
         }
       } else if (!isRestingAtAlifRef.current) {
-        morphProgressRef.current += (1.0 - morphProgressRef.current) * Math.min(1, delta * 12);
+        const morphDiff = Math.abs(1.0 - morphProgressRef.current);
+        if (morphDiff > 0.002) {
+          gearDelta += morphDiff;
+          morphProgressRef.current += (1.0 - morphProgressRef.current) * Math.min(1, delta * 12);
+        } else {
+          morphProgressRef.current = 1.0;
+        }
         Object.keys(targetGearsRef.current).forEach(k => {
-          currentGearsRef.current[k] += (targetGearsRef.current[k] - currentGearsRef.current[k]) * Math.min(1, delta * 10);
+          const diff = targetGearsRef.current[k] - currentGearsRef.current[k];
+          if (Math.abs(diff) > 0.005) {
+            gearDelta += Math.abs(diff);
+            currentGearsRef.current[k] += diff * Math.min(1, delta * 10);
+          } else {
+            currentGearsRef.current[k] = targetGearsRef.current[k];
+          }
         });
       }
+
+      if (forceDeformRef.current || gearDelta > 0.001) {
+        settleFrames = 3;
+        forceDeformRef.current = false;
+      }
+
+      // Only recompute vertex deformation and normals when actively morphing or settling
+      if (settleFrames > 0) {
+        settleFrames--;
+        cameraDirty = true;
 
       // Deform geometries
       const jawOpenFactor = currentGearsRef.current.jawOpen / 100;
@@ -2959,11 +2973,12 @@ export default function TajweedStudioPage() {
         }
       }
 
-      tongueGeom.attributes.position.needsUpdate = true;
-      tongueGeom.attributes.color.needsUpdate = true;
-      updatePalateMakhrajColors(morphProgressRef.current);
-      updateTeethAnatomyColors(false);
-      tongueGeom.computeVertexNormals();
+        tongueGeom.attributes.position.needsUpdate = true;
+        tongueGeom.attributes.color.needsUpdate = true;
+        updatePalateMakhrajColors(morphProgressRef.current);
+        updateTeethAnatomyColors(false);
+        tongueGeom.computeVertexNormals();
+      }
 
       // Smooth camera transition back to default position if animating
       if (camAnimRef.current) {
@@ -2984,9 +2999,18 @@ export default function TajweedStudioPage() {
           spherical.target.copy(DEFAULT_CAM.target);
           updateCamPos();
         }
+        cameraDirty = true;
       }
 
-      renderer.render(scene, camera);
+      if (isDragging) {
+        cameraDirty = true;
+      }
+
+      // Only render when scene is dirty (during morphing, dragging, settling, or camera animation)
+      if (cameraDirty) {
+        renderer.render(scene, camera);
+        cameraDirty = false;
+      }
     };
 
     const animId = requestAnimationFrame(animate);
@@ -3083,7 +3107,7 @@ export default function TajweedStudioPage() {
         anatomy: 'നാവിന്റെ ഭാഗങ്ങൾ',
         anatomyPartCol: 'ഭാഗം',
         anatomyLettersCol: 'ഹർഫുകൾ',
-        selectLetter: 'ഹർഫ് തിരഞ്ഞെടുക്കുക:',
+        selectLetter: 'ഹർഫ് (الحرف):',
         simulate: 'സിമുലേഷൻ',
         simulateTitle: 'ഉച്ചാരണ ചലനം കാണുക',
         resetView: 'റീസെറ്റ്',
@@ -3120,7 +3144,7 @@ export default function TajweedStudioPage() {
         modalLettersTitle: 'ഈ സ്വിഫത്തുള്ള ഹർഫുകൾ:',
         openIn3D: 'മഖ്റജിൽ കാണുക',
         close: 'അടയ്ക്കുക',
-        letterSifaatTitle: 'ഹർഫിന്റെ സ്വിഫത്തുകൾ:',
+        letterSifaatTitle: 'സ്വിഫാത്തുകൾ (صفات الحرف):',
         clickToExplain: 'വിശദീകരണത്തിന് ക്ലിക്ക് ചെയ്യുക',
         filterAll: 'എല്ലാം (16)',
         filterOpposite: 'വിപരീതമുള്ളവ (4 ജോടികൾ)',
@@ -3493,31 +3517,17 @@ export default function TajweedStudioPage() {
 
             {/* Selected Letter Information (Small, Compact Space) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-3xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 select-none shadow-sm">
+              <div className="flex flex-col items-center justify-center text-center gap-2 py-1">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-3xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none">
                   {currentLetter.letter}
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
-                    </h2>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                      currentLetter.isHeavy
-                        ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                        : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-700'
-                    }`}>
-                      {lang === 'ar' ? currentLetter.ar.sifah : lang === 'ml' ? (currentLetter.ml?.sifah || currentLetter.en.sifah) : currentLetter.en.sifah}
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500 dark:text-gray-400">
-                    {lang === 'ar' ? currentLetter.ar.zoneLabel : lang === 'ml' ? (currentLetter.ml?.zoneLabel || currentLetter.ar.zoneLabel) : currentLetter.en.zoneLabel}
-                  </span>
-                </div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
+                </h2>
               </div>
 
               {/* Makhraj Articulation Description */}
-              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
+              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60 text-center">
                 {lang === 'ar' ? currentLetter.ar.desc : lang === 'ml' ? (currentLetter.ml?.desc || currentLetter.en.desc) : currentLetter.en.desc}
               </p>
 
