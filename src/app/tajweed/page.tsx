@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
-import AudioVoicePracticeStudio from "@/components/tajweed/AudioVoicePracticeStudio";
+import CleanLetterAudio from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
 import {
   Play,
@@ -2136,6 +2136,56 @@ export default function TajweedStudioPage() {
           const halfThickZ = isEnd ? 0.0 : (0.008 + 0.050 * cornerTaper);
           const halfHeightY = isEnd ? 0.0 : (0.008 + 0.052 * cornerTaper);
 
+          if (lipMode === 'rounded_waw') {
+            // Previous circular rounded lip makhraj position (انضمام الشفتين)
+            const ringAngle = u * (Math.PI * 0.5);
+            const ringRadius = 0.148;
+            const cx = Math.sin(ringAngle) * ringRadius;
+            const cyDir = isUpper ? Math.cos(ringAngle) : -Math.cos(ringAngle);
+            const cy = 0.015 + cyDir * ringRadius;
+            const cz = 1.04 + Math.cos(ringAngle) * 0.085;
+            const tubeR = isEnd ? 0.0 : (0.024 + 0.042 * (0.35 + 0.65 * Math.cos(ringAngle)));
+            const radX = Math.sin(ringAngle);
+            const radY = cyDir;
+
+            const alifCenterY = isUpper ? (cornerY + 0.14 * cornerTaper) : (cornerY - 0.14 * cornerTaper);
+            const alifCenterZ = baseArchZ + 0.015 * cornerTaper;
+
+            for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
+              const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
+              const cosT = Math.cos(theta), sinT = Math.sin(theta);
+              const rOffset = sinT * tubeR;
+              const zOffset = cosT * tubeR * 1.15;
+
+              // In normal position (Alif/resting pose), use the same plump 3D lip shape as meem & baa
+              const alifX = baseArchX;
+              const alifY = alifCenterY + sinT * halfHeightY;
+              const alifZ = alifCenterZ + cosT * halfThickZ;
+
+              // In Waw makhraj position, use the original circular rounded lip position
+              const targetX = cx + radX * rOffset;
+              const targetY = cy + radY * rOffset;
+              const targetZ = cz + zOffset;
+
+              posArr[pPtr++] = alifX + (targetX - alifX) * makhrajMorphProgress;
+              posArr[pPtr++] = alifY + (targetY - alifY) * makhrajMorphProgress;
+              posArr[pPtr++] = alifZ + (targetZ - alifZ) * makhrajMorphProgress;
+
+              let rL = 0.72, gL = 0.25, bL = 0.30;
+              if (showMarker && activeLetter && activeLetter.id === 'waw') {
+                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.72, 2));
+                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.78, 2));
+                const pW = Math.min(0.85, innerRim * 0.88) * makhrajMorphProgress;
+                const sW = Math.min(0.68, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
+                rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+                gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+                bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+              }
+              colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
+            }
+            continue;
+          }
+
           for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
             const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
             const cosT = Math.cos(theta), sinT = Math.sin(theta);
@@ -2143,16 +2193,8 @@ export default function TajweedStudioPage() {
             let centerZ = baseArchZ + 0.034 * cornerTaper;
             let localY = sinT * halfHeightY;
             let localZ = cosT * halfThickZ;
-            let curX = baseArchX;
 
-            if (lipMode === 'rounded_waw') {
-              // Smooth anatomical rounding (انضمام الشفتين) keeping same plump 3D shape as meem & baa
-              centerY = isUpper ? (cornerY + 0.032 * cornerTaper) : (cornerY - 0.032 * cornerTaper);
-              centerZ = baseArchZ + 0.082 * cornerTaper;
-              localY = sinT * halfHeightY * (0.88 + 0.12 * cornerTaper);
-              localZ = cosT * halfThickZ * 1.15;
-              curX = baseArchX * (1.0 - 0.22 * cornerTaper * makhrajMorphProgress);
-            } else if (lipMode === 'faa_labiodental') {
+            if (lipMode === 'faa_labiodental') {
               centerY = isUpper ? (cornerY + 0.22 * cornerTaper) : (cornerY - 0.036 * cornerTaper);
               centerZ = isUpper ? (baseArchZ + 0.028 * cornerTaper) : (baseArchZ - 0.024 * cornerTaper);
               if (!isUpper && sinT > 0 && cosT < 0.25) {
@@ -2166,7 +2208,7 @@ export default function TajweedStudioPage() {
             const curCenterY = alifCenterY + (centerY - alifCenterY) * makhrajMorphProgress;
             const curCenterZ = alifCenterZ + (centerZ - alifCenterZ) * makhrajMorphProgress;
 
-            posArr[pPtr++] = curX;
+            posArr[pPtr++] = baseArchX;
             posArr[pPtr++] = curCenterY + localY;
             posArr[pPtr++] = curCenterZ + localZ;
 
@@ -3533,22 +3575,17 @@ export default function TajweedStudioPage() {
 
               {/* Sifaat al-Huroof of Active Letter (Clickable Chips) */}
               <div className="bg-slate-50/80 dark:bg-gray-800/40 rounded-2xl p-2.5 border border-slate-100 dark:border-gray-700/60 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>{t.letterSifaatTitle}</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {t.clickToExplain}
-                  </span>
-                </div>
+                <span className="font-bold text-[11px] text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{t.letterSifaatTitle}</span>
+                </span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {getSifaatForLetter(currentLetter.letter).map(sifah => (
                     <button
                       key={sifah.id}
                       type="button"
                       onClick={() => setSelectedSifah(sifah)}
-                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.literalMl : sifah.literalEn} (${sifah.ar}) - ${t.clickToExplain}`}
+                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.literalMl : sifah.literalEn} (${sifah.ar})`}
                       className={`text-xs font-bold px-3 py-1 rounded-xl border transition-all flex items-center justify-center active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
                     >
                       <span className="arabic-font text-base sm:text-lg font-bold">{sifah.ar}</span>
@@ -3556,6 +3593,9 @@ export default function TajweedStudioPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Clean Pronunciation Audio Buttons (No Subtitles) */}
+              <CleanLetterAudio letter={currentLetter.letter} />
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
               {currentLetter.id === 'dhaad' && (
@@ -3599,12 +3639,6 @@ export default function TajweedStudioPage() {
                 </div>
               )}
             </section>
-
-            {/* Audio & Voice Pronunciation Studio */}
-            <AudioVoicePracticeStudio
-              letter={currentLetter.letter}
-              lang={lang}
-            />
 
             {/* Collapsible Mechanical Controls Accordion */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden transition-all">
