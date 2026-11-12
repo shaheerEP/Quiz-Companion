@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
@@ -27,7 +27,26 @@ body {
 }
 
 .arabic-font {
-  font-family: 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
+  font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', 'Scheherazade New', serif;
+  display: inline-block;
+  line-height: 1.35;
+}
+
+/* In both Arabic mode and Malayalam mode, make Arabic text and letters noticeably larger than English/Malayalam */
+.lang-ar .arabic-font,
+.lang-ml .arabic-font,
+[dir="rtl"] .arabic-font {
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+/* In Arabic mode, increase base body font size so full Arabic interface is clear and readable */
+.lang-ar,
+[dir="rtl"] {
+  font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', serif;
+  font-size: 1.04rem;
+  line-height: 1.6;
 }
 
 @keyframes slideDown {
