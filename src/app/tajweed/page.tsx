@@ -15,10 +15,7 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
-  X,
-  BookOpen,
-  Info,
-  ArrowRight
+  X
 } from "lucide-react";
 
 // ----------------------------------------------------------------------------
@@ -1229,7 +1226,6 @@ export default function TajweedStudioPage() {
   // Main navigation tab: 'makharij' (3D mouth) or 'sifaat' (phonetic rules)
   const [activeMainTab, setActiveMainTab] = useState<'makharij' | 'sifaat'>('makharij');
   const [selectedSifah, setSelectedSifah] = useState<SifahItem | null>(null);
-  const [sifaatFilter, setSifaatFilter] = useState<'all' | 'opposite' | 'non_opposite'>('all');
 
   // Toggles
   const [showMakhrajColors, setShowMakhrajColors] = useState<boolean>(true);
@@ -2889,8 +2885,8 @@ export default function TajweedStudioPage() {
         gumShelfBadge: 'اللثة ومقدم الحنك',
         tongueBadge: 'اللسان',
         toggleLanguage: 'English',
-        makharijTab: 'مخارج الحروف',
-        sifaatTab: 'صفات الحروف',
+        makharijTab: 'مخارج',
+        sifaatTab: 'صفات',
         sifaatSectionTitle: 'صفات الحروف (أحكام التجويد الصوتية)',
         sifaatSectionDesc: 'الصفات الصوتية اللازمة التي تميز الحروف المشتركة في المخرج الواحد وتحدد كيفيات خروجها.',
         withOppositesTitle: '١. الصفات المتضادة (ٱلصِّفَاتُ الْمُتَضَادَّةُ — ٤ أزواج)',
@@ -2938,8 +2934,8 @@ export default function TajweedStudioPage() {
       gumShelfBadge: 'Gum Shelf (اللثة)',
       tongueBadge: 'Tongue (اللسان)',
       toggleLanguage: 'عربي',
-      makharijTab: 'Makharijul Huroof (مخارج الحروف)',
-      sifaatTab: 'Sifaat al-Huroof (صفات الحروف)',
+      makharijTab: 'Makharij',
+      sifaatTab: 'Sifaat',
       sifaatSectionTitle: 'Sifaat al-Huroof (Characteristics of Arabic Letters)',
       sifaatSectionDesc: 'The essential phonetic attributes that distinguish letters sharing the same Makhraj.',
       withOppositesTitle: '1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs)',
@@ -3295,6 +3291,11 @@ export default function TajweedStudioPage() {
                 </div>
               </div>
 
+              {/* Makhraj Articulation Description */}
+              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
+                {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
+              </p>
+
               {/* Sifaat al-Huroof of Active Letter (Clickable Chips) */}
               <div className="bg-slate-50/80 dark:bg-gray-800/40 rounded-2xl p-2.5 border border-slate-100 dark:border-gray-700/60 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-[11px]">
@@ -3321,10 +3322,6 @@ export default function TajweedStudioPage() {
                   ))}
                 </div>
               </div>
-
-              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60">
-                {lang === 'ar' ? currentLetter.ar.desc : currentLetter.en.desc}
-              </p>
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
               {currentLetter.id === 'dhaad' && (
@@ -3363,57 +3360,6 @@ export default function TajweedStudioPage() {
                       }`}
                     >
                       {t.dhaadBoth}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Shajariyyah (ج ، ش ، ي) 3 Letters Compare */}
-              {(currentLetter.id === 'jeem' || currentLetter.id === 'sheen' || currentLetter.id === 'yaa_cons') && (
-                <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
-                  <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5 px-1">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{t.shajariyyahNotice}</span>
-                  </span>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      onClick={() => {
-                        const p = LETTER_PRESETS.find(l => l.id === 'jeem');
-                        if (p) selectLetter(p);
-                      }}
-                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                        currentLetter.id === 'jeem'
-                          ? 'bg-emerald-600 text-white shadow-sm'
-                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                      }`}
-                    >
-                      {t.jeemLabel}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const p = LETTER_PRESETS.find(l => l.id === 'sheen');
-                        if (p) selectLetter(p);
-                      }}
-                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                        currentLetter.id === 'sheen'
-                          ? 'bg-sky-600 text-white shadow-sm'
-                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                      }`}
-                    >
-                      {t.sheenLabel}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const p = LETTER_PRESETS.find(l => l.id === 'yaa_cons');
-                        if (p) selectLetter(p);
-                      }}
-                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                        currentLetter.id === 'yaa_cons'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
-                      }`}
-                    >
-                      {t.yaaLabel}
                     </button>
                   </div>
                 </div>
@@ -3503,62 +3449,11 @@ export default function TajweedStudioPage() {
 
         </div>
 
-        {/* Tab 2: Sifaat al-Huroof View (Phonetic Rules) */}
+        {/* Tab 2: Sifaat View (Phonetic Rules) */}
         {activeMainTab === 'sifaat' && (
           <div className="flex flex-col gap-4 animate-in fade-in duration-150">
-            {/* Header intro & Filters */}
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-emerald-500" />
-                  <span>{t.sifaatSectionTitle}</span>
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-gray-400">
-                  {t.sifaatSectionDesc}
-                </p>
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center p-1 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-slate-200 dark:border-gray-700 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setSifaatFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
-                    sifaatFilter === 'all'
-                      ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {t.filterAll}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSifaatFilter('opposite')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
-                    sifaatFilter === 'opposite'
-                      ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {t.filterOpposite}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSifaatFilter('non_opposite')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
-                    sifaatFilter === 'non_opposite'
-                      ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                      : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {t.filterNonOpposite}
-                </button>
-              </div>
-            </div>
-
             {/* 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs) */}
-            {(sifaatFilter === 'all' || sifaatFilter === 'opposite') && (
-              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
@@ -3654,11 +3549,9 @@ export default function TajweedStudioPage() {
                   })}
                 </div>
               </section>
-            )}
 
             {/* 2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ) */}
-            {(sifaatFilter === 'all' || sifaatFilter === 'non_opposite') && (
-              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -3723,7 +3616,6 @@ export default function TajweedStudioPage() {
                   ))}
                 </div>
               </section>
-            )}
           </div>
         )}
 
