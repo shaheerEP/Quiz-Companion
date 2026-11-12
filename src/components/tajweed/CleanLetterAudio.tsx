@@ -1,59 +1,110 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Volume2, Loader2 } from "lucide-react";
-import { TAJWEED_AUDIO_PROFILES, SyllableItem } from "@/data/tajweedAudioData";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Volume2, Play } from "lucide-react";
+
+/**
+ * Letter-to-audio mapping from razunatmohammed88-cyber/arabic-alphabet-audio
+ * Static human-recorded native pronunciations served directly from /public/audio/letters/
+ */
+export const ARABIC_LETTER_AUDIO_MAP: Record<string, string> = {
+  // Letters with authentic native recordings
+  'أ': '/audio/letters/alif.mp3',
+  'ا': '/audio/letters/alif.mp3',
+  'ب': '/audio/letters/baa.mp3',
+  'ت': '/audio/letters/taa.mp3',
+  'ث': '/audio/letters/thaa.mp3',
+  'ج': '/audio/letters/jiim.mp3',
+  'ح': '/audio/letters/haa_pharyngeal.mp3',
+  'خ': '/audio/letters/khaa.mp3',
+  'د': '/audio/letters/daal.mp3',
+  'ذ': '/audio/letters/thaal.mp3',
+  'ر': '/audio/letters/raa.mp3',
+  'ز': '/audio/letters/zaay.mp3',
+  'س': '/audio/letters/siin.mp3',
+  'ش': '/audio/letters/shiin.mp3',
+  'ص': '/audio/letters/saad.mp3',
+  'ض': '/audio/letters/daad.mp3',
+  'ط': '/audio/letters/taa_heavy.mp3',
+  'ظ': '/audio/letters/thaa_heavy.mp3',
+  'ع': '/audio/letters/ayn.mp3',
+  'غ': '/audio/letters/ghayn.mp3',
+  'ف': '/audio/letters/faa.mp3',
+  'ق': '/audio/letters/qaaf.mp3',
+  'ك': '/audio/letters/kaaf.mp3',
+  'ل': '/audio/letters/laam.mp3',
+  'م': '/audio/letters/miim.mp3',
+  'ن': '/audio/letters/nuun.mp3',
+  'ه': '/audio/letters/haa_light.mp3',
+  'و': '/audio/letters/waaw.mp3',
+  'ي': '/audio/letters/yaa.mp3',
+  'ء': '/audio/letters/hamzah.mp3',
+  'ئ': '/audio/letters/hamzah.mp3',
+  'ؤ': '/audio/letters/hamzah.mp3',
+  'ة': '/audio/letters/haa_light.mp3',
+  'لا': '/audio/letters/laam_alif.mp3',
+};
+
+/**
+ * Play letter audio anywhere imperatively
+ */
+export function playLetterAudio(letter: string): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null;
+  const audioSrc = ARABIC_LETTER_AUDIO_MAP[letter] || ARABIC_LETTER_AUDIO_MAP['ق'];
+  try {
+    const audio = new Audio(audioSrc);
+    audio.play().catch(() => {});
+    return audio;
+  } catch {
+    return null;
+  }
+}
 
 interface CleanLetterAudioProps {
   letter: string;
+  lang?: 'en' | 'ar' | 'ml';
+  className?: string;
 }
 
-export default function CleanLetterAudio({ letter }: CleanLetterAudioProps) {
-  const profile = TAJWEED_AUDIO_PROFILES[letter] || TAJWEED_AUDIO_PROFILES['ق'];
-  const [activeSyllable, setActiveSyllable] = useState<SyllableItem>(profile.syllables[0]);
+export default function CleanLetterAudio({
+  letter,
+  lang = 'en',
+  className = "",
+}: CleanLetterAudioProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Sync active syllable when letter changes
+  // Stop previous letter's audio whenever the selected letter changes
   useEffect(() => {
-    setActiveSyllable(profile.syllables[0]);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
     setIsPlaying(false);
-  }, [letter, profile]);
+  }, [letter]);
 
-  // Cleanup on unmount
+  // Clean up on component unmount
   useEffect(() => {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
     };
   }, []);
 
-  const playSound = (syl: SyllableItem) => {
-    setActiveSyllable(syl);
-    setIsPlaying(true);
+  const playAudio = useCallback(() => {
+    const audioSrc = ARABIC_LETTER_AUDIO_MAP[letter] || ARABIC_LETTER_AUDIO_MAP['ق'];
 
-    const soundText = syl.audioPrompt || syl.text;
-
-    // Stop current audio if playing
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current = null;
+      audioRef.current.currentTime = 0;
     }
 
-    // 1. Primary: Same-Origin API Proxy (Bypasses all Google referrer / CORS blocks)
     try {
-      const url = `/api/tajweed/audio?text=${encodeURIComponent(soundText)}`;
-      const audio = new Audio(url);
+      const audio = new Audio(audioSrc);
       audioRef.current = audio;
+      setIsPlaying(true);
 
       audio.onended = () => {
         setIsPlaying(false);
@@ -61,86 +112,58 @@ export default function CleanLetterAudio({ letter }: CleanLetterAudioProps) {
       };
 
       audio.onerror = () => {
-        fallbackSpeechSynthesis(soundText);
+        setIsPlaying(false);
+        audioRef.current = null;
       };
 
       audio.play().catch(() => {
-        fallbackSpeechSynthesis(soundText);
+        setIsPlaying(false);
+        audioRef.current = null;
       });
     } catch {
-      fallbackSpeechSynthesis(soundText);
-    }
-  };
-
-  const fallbackSpeechSynthesis = (text: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      setIsPlaying(false);
-      return;
-    }
-
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-SA";
-      utterance.rate = 0.85;
-      utterance.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const arVoice = voices.find(v => v.lang.startsWith("ar"));
-      if (arVoice) utterance.voice = arVoice;
-
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => setIsPlaying(false);
-
-      window.speechSynthesis.speak(utterance);
-    } catch {
       setIsPlaying(false);
     }
-  };
+  }, [letter]);
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-      {profile.syllables.map((syl) => {
-        const isSelected = activeSyllable.text === syl.text;
-        const isCurrentPlaying = isSelected && isPlaying;
-
-        return (
-          <button
-            key={syl.key}
-            type="button"
-            onClick={() => playSound(syl)}
-            aria-label={syl.text}
-            className={`h-11 min-w-[46px] px-3 rounded-2xl flex items-center justify-center transition-all select-none border active:scale-95 shadow-xs ${
-              isSelected
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/20'
-                : 'bg-slate-50 dark:bg-gray-800/80 text-slate-800 dark:text-gray-100 border-slate-200 dark:border-gray-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-white dark:hover:bg-gray-800'
-            }`}
-          >
-            <span className="arabic-font text-2xl font-bold leading-none translate-y-[-1px]">
-              {syl.text}
-            </span>
-            {isCurrentPlaying && (
-              <span className="ml-1.5 inline-flex items-center">
-                <Volume2 className="w-3.5 h-3.5 animate-pulse text-white" />
-              </span>
-            )}
-          </button>
-        );
-      })}
-
-      {/* Quick Replay button */}
+    <div className={`w-full ${className}`}>
       <button
         type="button"
-        onClick={() => playSound(activeSyllable)}
-        disabled={isPlaying}
-        aria-label="Play sound"
-        className="h-11 w-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all active:scale-95 shrink-0"
+        onClick={playAudio}
+        aria-label={lang === 'ar' ? `استمع لنطق الحرف ${letter}` : `Pronounce letter ${letter}`}
+        className={`w-full py-2.5 px-3.5 rounded-2xl flex items-center justify-between transition-all active:scale-[0.98] border shadow-xs select-none ${
+          isPlaying
+            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/30'
+            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+        }`}
       >
-        {isPlaying ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Volume2 className="w-4 h-4" />
-        )}
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              isPlaying
+                ? 'bg-white/20 text-white'
+                : 'bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+            }`}
+          >
+            {isPlaying ? (
+              <Volume2 className="w-4 h-4 animate-pulse" />
+            ) : (
+              <Play className="w-4 h-4 translate-x-[1px]" />
+            )}
+          </div>
+
+          <span className="text-xs font-bold">
+            {lang === 'ar'
+              ? 'استمع لنطق الحرف'
+              : lang === 'ml'
+              ? 'ശബ്ദം കേൾക്കുക'
+              : 'Play Pronunciation'}
+          </span>
+        </div>
+
+        <span className="arabic-font text-2xl font-bold leading-none">
+          {letter}
+        </span>
       </button>
     </div>
   );

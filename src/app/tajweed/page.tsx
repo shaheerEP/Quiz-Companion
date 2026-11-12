@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
-import CleanLetterAudio from "@/components/tajweed/CleanLetterAudio";
+import CleanLetterAudio, { playLetterAudio } from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
 import {
   Play,
@@ -16,7 +16,8 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
-  X
+  X,
+  Volume2
 } from "lucide-react";
 
 // ----------------------------------------------------------------------------
@@ -1458,6 +1459,7 @@ export default function TajweedStudioPage() {
     });
     forceDeformRef.current = true;
     simulationStartTimeRef.current = performance.now();
+    playLetterAudio(currentLetter.letter);
   };
 
   // Three.js scene refs
@@ -3560,9 +3562,17 @@ export default function TajweedStudioPage() {
             {/* Selected Letter Information (Small, Compact Space) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
               <div className="flex flex-col items-center justify-center text-center gap-2 py-1">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-3xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none">
+                <button
+                  type="button"
+                  onClick={() => playLetterAudio(currentLetter.letter)}
+                  title={lang === 'ar' ? 'انقر للاستماع لنطق الحرف' : 'Click to hear pronunciation'}
+                  className="w-14 h-14 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-3xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none transition-all active:scale-95 cursor-pointer group relative"
+                >
                   {currentLetter.letter}
-                </div>
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-[10px]">
+                    <Volume2 className="w-2.5 h-2.5" />
+                  </span>
+                </button>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
                 </h2>
@@ -3594,8 +3604,8 @@ export default function TajweedStudioPage() {
                 </div>
               </div>
 
-              {/* Clean Pronunciation Audio Buttons (No Subtitles) */}
-              <CleanLetterAudio letter={currentLetter.letter} />
+              {/* Native Letter Audio Pronunciation */}
+              <CleanLetterAudio letter={currentLetter.letter} lang={lang} />
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
               {currentLetter.id === 'dhaad' && (
