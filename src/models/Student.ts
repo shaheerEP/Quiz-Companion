@@ -87,6 +87,7 @@ export interface IStudent extends Document {
   revisionEnabled?: boolean;
   revisionRewindDays?: number[];
   tasks?: ITaskItem[];
+  notesEnabled?: boolean;
   notesText?: string;
   notes?: INoteItem[];
 }
@@ -200,6 +201,7 @@ const StudentSchema = new Schema<IStudent>(
       ],
       default: []
     },
+    notesEnabled: { type: Boolean, default: false },
     notesText: { type: String, default: "" },
     notes: {
       type: [

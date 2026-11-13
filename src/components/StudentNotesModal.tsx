@@ -69,12 +69,12 @@ export default function StudentNotesModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, notesText, student?._id]);
 
   // Debounced auto-save for notesText
   const triggerSaveNotesText = (text: string) => {
@@ -108,6 +108,21 @@ export default function StudentNotesModal({
     const val = e.target.value;
     setNotesText(val);
     triggerSaveNotesText(val);
+  };
+
+  const handleClose = () => {
+    if (saveTimerRef.current && student?._id) {
+      clearTimeout(saveTimerRef.current);
+      fetch("/api/notes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: student._id,
+          notesText,
+        }),
+      }).catch(console.error);
+    }
+    onClose();
   };
 
   // Add new item
@@ -262,7 +277,7 @@ export default function StudentNotesModal({
     <div
       className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div className="bg-slate-900 border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
@@ -302,7 +317,7 @@ export default function StudentNotesModal({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />

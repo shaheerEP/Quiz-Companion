@@ -24,6 +24,7 @@ import {
   Palette,
   Compass,
   Zap,
+  NotebookPen,
 } from "lucide-react";
 
 // --- Image Compression Utility ---
@@ -366,6 +367,7 @@ export default function SettingsPage() {
         mannersList: editingStudent.mannersList,
         profileImageUrl: editingStudent.profileImageUrl,
         isClassTime: editingStudent.isClassTime,
+        notesEnabled: editingStudent.notesEnabled,
       }),
     });
     setEditingStudent(null);
@@ -1960,6 +1962,27 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
+              </AppleGroupedSection>
+
+              {/* Student Notes Feature */}
+              <AppleGroupedSection
+                title="Student Notes Feature"
+                description="Enables a quick note-taking icon in the Teacher dashboard for this student."
+              >
+                <AppleGroupedRow
+                  icon={<NotebookPen className="w-4 h-4 text-amber-400" />}
+                  iconBg="bg-amber-600/30"
+                  title="Enable Student Notes"
+                  subtitle="Show NotebookPen note icon on the Teacher page"
+                >
+                  <CupertinoSwitch
+                    checked={editingStudent.notesEnabled || false}
+                    onChange={(checked) =>
+                      setEditingStudent({ ...editingStudent, notesEnabled: checked })
+                    }
+                    ariaLabel="Enable Student Notes"
+                  />
+                </AppleGroupedRow>
               </AppleGroupedSection>
 
               {/* Danger Zone */}

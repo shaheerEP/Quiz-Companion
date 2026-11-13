@@ -9,11 +9,12 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, History, Trophy, Globe, Star, Timer, BookOpen, Award, Users, Search, X, Check } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, History, Trophy, Globe, Star, Timer, BookOpen, Award, Users, Search, X, Check, NotebookPen } from "lucide-react";
 import Link from "next/link";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
 import StudentEPosterModal from "@/components/StudentEPosterModal";
 import TeacherTasksModal from "@/components/TeacherTasksModal";
+import StudentNotesModal from "@/components/StudentNotesModal";
 
 export default function TeacherDashboard() {
   const [settings, setSettings] = useState<any>(null);
@@ -22,6 +23,7 @@ export default function TeacherDashboard() {
   const [activeSession, setActiveSession] = useState<any>(null);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showTasksModal, setShowTasksModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [showStudentSelectModal, setShowStudentSelectModal] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
 
@@ -675,27 +677,45 @@ export default function TeacherDashboard() {
               <>
                 {/* Points balance and lifetime with explanatory labels */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex items-center gap-2.5">
-                    <span className="text-xl shrink-0">💎</span>
-                    <div className="min-w-0 flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2 sm:p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex flex-col justify-center min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-sm shrink-0">💎</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">
                         Balance
                       </span>
-                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-white truncate">
-                        {activeStudent.pointsBalance?.toLocaleString() || 0}
-                      </span>
                     </div>
+                    <span
+                      title={(activeStudent.pointsBalance || 0).toLocaleString()}
+                      className={`font-black text-slate-800 dark:text-white tabular-nums tracking-tight leading-none whitespace-nowrap overflow-visible select-all ${
+                        (activeStudent.pointsBalance?.toLocaleString() || "0").length > 10
+                          ? "text-[11px] sm:text-xs"
+                          : (activeStudent.pointsBalance?.toLocaleString() || "0").length > 7
+                          ? "text-xs sm:text-[13px]"
+                          : "text-xs sm:text-sm"
+                      }`}
+                    >
+                      {activeStudent.pointsBalance?.toLocaleString() || 0}
+                    </span>
                   </div>
-                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex items-center gap-2.5">
-                    <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
-                    <div className="min-w-0 flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
+                  <div className="bg-slate-50 dark:bg-gray-800/60 p-2 sm:p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700 flex flex-col justify-center min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Trophy className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">
                         Lifetime
                       </span>
-                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-white truncate">
-                        {activeStudent.lifetimePoints?.toLocaleString() || 0}
-                      </span>
                     </div>
+                    <span
+                      title={(activeStudent.lifetimePoints || 0).toLocaleString()}
+                      className={`font-black text-slate-800 dark:text-white tabular-nums tracking-tight leading-none whitespace-nowrap overflow-visible select-all ${
+                        (activeStudent.lifetimePoints?.toLocaleString() || "0").length > 10
+                          ? "text-[11px] sm:text-xs"
+                          : (activeStudent.lifetimePoints?.toLocaleString() || "0").length > 7
+                          ? "text-xs sm:text-[13px]"
+                          : "text-xs sm:text-sm"
+                      }`}
+                    >
+                      {activeStudent.lifetimePoints?.toLocaleString() || 0}
+                    </span>
                   </div>
                 </div>
 
@@ -741,6 +761,17 @@ export default function TeacherDashboard() {
                   >
                     <Trophy className="w-4 h-4" />
                   </button>
+                  {activeStudent.notesEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setShowNotesModal(true)}
+                      title="Notes"
+                      aria-label="Notes"
+                      className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                    >
+                      <NotebookPen className="w-4 h-4" />
+                    </button>
+                  )}
                   <a
                     href={`/world/${activeStudent._id}`}
                     target="_blank"
@@ -790,11 +821,11 @@ export default function TeacherDashboard() {
                 )}
 
                 {/* Weekly Progress */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-600">🚀 Weekly</span>
-                    <span className="text-xs font-black text-fuchsia-600">
-                      {historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)} pts
+                <div className="p-3 bg-slate-50 dark:bg-gray-800/60 rounded-2xl border border-slate-100 dark:border-gray-700 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-600 dark:text-gray-300 shrink-0">🚀 Weekly</span>
+                    <span className="text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 tabular-nums whitespace-nowrap">
+                      {(historyStats ? historyStats.thisWeekPoints : (activeStudent.weeklyPoints || 0)).toLocaleString()} pts
                     </span>
                   </div>
                   {historyStats && historyStats.bestWeekPoints > 0 && (
@@ -856,6 +887,17 @@ export default function TeacherDashboard() {
                         >
                           <Users className="w-4 h-4" />
                         </button>
+                        {activeStudent.notesEnabled && (
+                          <button
+                            type="button"
+                            onClick={() => setShowNotesModal(true)}
+                            title="Notes"
+                            aria-label="Notes"
+                            className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                          >
+                            <NotebookPen className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                       <div className="relative inline-block text-xl">
                         <div className="flex text-slate-200 dark:text-gray-700">★★★★★</div>
@@ -1049,6 +1091,16 @@ export default function TeacherDashboard() {
         />
       )}
 
+      {showNotesModal && activeStudent && (
+        <StudentNotesModal
+          isOpen={showNotesModal}
+          onClose={() => setShowNotesModal(false)}
+          student={activeStudent}
+          students={students}
+          onSelectStudent={(studentId) => selectStudent(studentId, students)}
+        />
+      )}
+
       {showStudentSelectModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 flex flex-col gap-3">
@@ -1104,9 +1156,9 @@ export default function TeacherDashboard() {
                         <User className="w-4 h-4 text-slate-500" />
                       )}
                     </div>
-                    <div className="truncate">
+                    <div className="min-w-0">
                       <p className="font-bold text-xs truncate">{s.name}</p>
-                      <p className="text-[10px] text-slate-500">💎 {s.pointsBalance?.toLocaleString() || 0}</p>
+                      <p className="text-[10px] text-slate-500 whitespace-nowrap tabular-nums">💎 {s.pointsBalance?.toLocaleString() || 0}</p>
                     </div>
                   </div>
                   {activeStudent?._id === s._id && (

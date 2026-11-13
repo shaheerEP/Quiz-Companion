@@ -110,7 +110,9 @@ export async function PUT(req: Request) {
     if (rewardSystem !== undefined) student.rewardSystem = rewardSystem;
     if (mannersEnabled !== undefined) student.mannersEnabled = mannersEnabled;
     if (mannersList !== undefined) student.mannersList = mannersList;
+    if (body.revisionEnabled !== undefined) student.revisionEnabled = body.revisionEnabled;
     if (body.revisionRewindDays !== undefined) (student as any).revisionRewindDays = body.revisionRewindDays;
+    if (body.notesEnabled !== undefined) student.notesEnabled = body.notesEnabled;
     
     if (profileImageUrl !== undefined) {
       if (student.profileImageUrl && student.profileImageUrl !== profileImageUrl) {

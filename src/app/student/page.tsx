@@ -441,39 +441,48 @@ export default function StudentDashboard() {
           {/* Points meaning with small-sized explanatory labels */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             {/* Balance */}
-            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-[120px]">
+            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-fit">
               <span className="text-xl sm:text-2xl shrink-0">💎</span>
-              <div className="min-w-0 flex flex-col">
+              <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
                   Balance
                 </span>
-                <span className="text-sm sm:text-base font-black text-slate-800 dark:text-white truncate">
+                <span 
+                  title={(user.student?.pointsBalance || 0).toLocaleString()}
+                  className="text-sm sm:text-base font-black text-slate-800 dark:text-white tabular-nums whitespace-nowrap"
+                >
                   {user.student?.pointsBalance?.toLocaleString() || 0}
                 </span>
               </div>
             </div>
 
             {/* Lifetime */}
-            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-[120px]">
+            <div className="bg-slate-50 dark:bg-gray-800/60 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-gray-700 shadow-sm flex items-center gap-2.5 min-w-fit">
               <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 shrink-0" />
-              <div className="min-w-0 flex flex-col">
+              <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">
                   Lifetime
                 </span>
-                <span className="text-sm sm:text-base font-black text-slate-800 dark:text-white truncate">
+                <span 
+                  title={lifetimePoints.toLocaleString()}
+                  className="text-sm sm:text-base font-black text-slate-800 dark:text-white tabular-nums whitespace-nowrap"
+                >
                   {lifetimePoints.toLocaleString()}
                 </span>
               </div>
             </div>
 
             {/* Today */}
-            <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 sm:p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center gap-2.5 min-w-[110px]">
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 sm:p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center gap-2.5 min-w-fit">
               <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 shrink-0" />
-              <div className="min-w-0 flex flex-col">
+              <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider leading-tight">
                   Today
                 </span>
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 truncate">
+                <span 
+                  title={(user.student?.dailyPoints || 0).toLocaleString()}
+                  className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap"
+                >
                   {user.student?.dailyPoints?.toLocaleString() || 0}
                 </span>
               </div>
