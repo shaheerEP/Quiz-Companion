@@ -10,6 +10,7 @@ import {
   Trash2,
   X,
   Loader2,
+  Save,
 } from "lucide-react";
 
 export interface StudentNoteItem {
@@ -39,11 +40,10 @@ export default function StudentNotesModal({
   const [items, setItems] = useState<StudentNoteItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
   const [isCheckboxMode, setIsCheckboxMode] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentStudentIdRef = useRef<string | null>(null);
 
   // Fetch student notes on open or student change
@@ -52,6 +52,7 @@ export default function StudentNotesModal({
 
     currentStudentIdRef.current = student._id;
     setLoading(true);
+    setSaved(false);
 
     fetch(`/api/notes?studentId=${student._id}`)
       .then((res) => res.json())
@@ -65,68 +66,53 @@ export default function StudentNotesModal({
       .finally(() => setLoading(false));
   }, [isOpen, student?._id]);
 
-  // Handle escape key
+  // Handle escape key to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        handleClose();
+        onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, notesText, student?._id]);
+  }, [isOpen, onClose]);
 
-  // Debounced auto-save for notesText
-  const triggerSaveNotesText = (text: string) => {
-    if (!student?._id) return;
-    setSaveStatus("saving");
-
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        await fetch("/api/notes", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId: student._id,
-            notesText: text,
-          }),
-        });
-
-        setSaveStatus("saved");
-        if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
-        statusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 1500);
-      } catch (err) {
-        console.error("Auto-save failed", err);
-        setSaveStatus("idle");
-      }
-    }, 500);
-  };
-
-  const handleNotesTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setNotesText(val);
-    triggerSaveNotesText(val);
-  };
-
-  const handleClose = () => {
-    if (saveTimerRef.current && student?._id) {
-      clearTimeout(saveTimerRef.current);
-      fetch("/api/notes", {
+  // Save only when clicking the Save button
+  const handleSave = async () => {
+    if (!student?._id || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/notes", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentId: student._id,
           notesText,
+          notes: items,
         }),
-      }).catch(console.error);
+      });
+
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        alert("Failed to save notes");
+      }
+    } catch (err) {
+      console.error("Save failed", err);
+      alert("Failed to save notes");
+    } finally {
+      setSaving(false);
     }
-    onClose();
   };
 
-  // Add new item
-  const handleAddItem = async (e?: React.FormEvent) => {
+  const handleNotesTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotesText(e.target.value);
+    setSaved(false);
+  };
+
+  // Add new item (local state only, saved when user clicks Save)
+  const handleAddItem = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newItemText.trim() || !student?._id) return;
 
@@ -143,132 +129,43 @@ export default function StudentNotesModal({
     };
 
     setItems((prev) => [...prev, newItem]);
-    setSaveStatus("saving");
-
-    try {
-      const res = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: student._id,
-          text: textToAdd,
-          isCheckbox: isCheckboxMode,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.notes) {
-          setItems(data.notes);
-        }
-        setSaveStatus("saved");
-        if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
-        statusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 1500);
-      }
-    } catch (err) {
-      console.error("Failed to add note item", err);
-      setSaveStatus("idle");
-    }
+    setSaved(false);
   };
 
-  // Toggle checkbox checked/unchecked
-  const handleToggleCheck = async (noteId: string) => {
-    if (!student?._id) return;
-
-    const targetItem = items.find((i) => i.id === noteId);
-    if (!targetItem) return;
-
-    const nextChecked = !targetItem.checked;
+  // Toggle checkbox checked/unchecked (local state only)
+  const handleToggleCheck = (noteId: string) => {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === noteId ? { ...item, checked: nextChecked } : item
+        item.id === noteId ? { ...item, checked: !item.checked } : item
       )
     );
-
-    try {
-      await fetch("/api/notes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: student._id,
-          noteId,
-          checked: nextChecked,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to toggle check", err);
-    }
+    setSaved(false);
   };
 
-  // Toggle isCheckbox mode for an individual item
-  const handleToggleItemCheckbox = async (noteId: string) => {
-    if (!student?._id) return;
-
-    const targetItem = items.find((i) => i.id === noteId);
-    if (!targetItem) return;
-
-    const nextIsCheckbox = !targetItem.isCheckbox;
+  // Toggle isCheckbox mode for an individual item (local state only)
+  const handleToggleItemCheckbox = (noteId: string) => {
     setItems((prev) =>
       prev.map((item) =>
         item.id === noteId
-          ? { ...item, isCheckbox: nextIsCheckbox, checked: nextIsCheckbox ? item.checked : false }
+          ? { ...item, isCheckbox: !item.isCheckbox, checked: !item.isCheckbox ? item.checked : false }
           : item
       )
     );
-
-    try {
-      await fetch("/api/notes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: student._id,
-          noteId,
-          isCheckbox: nextIsCheckbox,
-          checked: nextIsCheckbox ? targetItem.checked : false,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to toggle item checkbox mode", err);
-    }
+    setSaved(false);
   };
 
-  // Inline edit item text
+  // Inline edit item text (local state only)
   const handleItemTextChange = (noteId: string, text: string) => {
     setItems((prev) =>
       prev.map((item) => (item.id === noteId ? { ...item, text } : item))
     );
+    setSaved(false);
   };
 
-  const handleItemBlur = async (noteId: string, text: string) => {
-    if (!student?._id) return;
-    try {
-      await fetch("/api/notes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: student._id,
-          noteId,
-          text,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to update item text", err);
-    }
-  };
-
-  // Delete item
-  const handleDeleteItem = async (noteId: string) => {
-    if (!student?._id) return;
-
+  // Delete item (local state only)
+  const handleDeleteItem = (noteId: string) => {
     setItems((prev) => prev.filter((item) => item.id !== noteId));
-
-    try {
-      await fetch(`/api/notes?studentId=${student._id}&noteId=${noteId}`, {
-        method: "DELETE",
-      });
-    } catch (err) {
-      console.error("Failed to delete item", err);
-    }
+    setSaved(false);
   };
 
   if (!isOpen) return null;
@@ -277,7 +174,7 @@ export default function StudentNotesModal({
     <div
       className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
       onClick={(e) => {
-        if (e.target === e.currentTarget) handleClose();
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="bg-slate-900 border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
@@ -292,7 +189,7 @@ export default function StudentNotesModal({
               <select
                 value={student?._id || ""}
                 onChange={(e) => onSelectStudent(e.target.value)}
-                className="bg-transparent font-black text-base sm:text-lg text-white outline-none cursor-pointer truncate max-w-[200px] sm:max-w-[260px]"
+                className="bg-transparent font-black text-base sm:text-lg text-white outline-none cursor-pointer truncate max-w-[180px] sm:max-w-[220px]"
               >
                 {students.map((s) => (
                   <option key={s._id} value={s._id} className="bg-slate-900 text-white font-bold">
@@ -308,16 +205,36 @@ export default function StudentNotesModal({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {saveStatus === "saving" && (
-              <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-            )}
-            {saveStatus === "saved" && (
-              <Check className="w-4 h-4 text-emerald-400" />
-            )}
+            {/* Save Button */}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || loading}
+              title="Save"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer active:scale-95 disabled:opacity-50 ${
+                saved
+                  ? "bg-emerald-500 text-slate-950 shadow-emerald-500/20"
+                  : "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20"
+              }`}
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : saved ? (
+                <>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Saved</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save</span>
+                </>
+              )}
+            </button>
 
             <button
               type="button"
-              onClick={handleClose}
+              onClick={onClose}
               className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -347,7 +264,7 @@ export default function StudentNotesModal({
                 <button
                   type="button"
                   onClick={() => setIsCheckboxMode(!isCheckboxMode)}
-                  title={isCheckboxMode ? "Checkbox" : "Note"}
+                  title={isCheckboxMode ? "Checkbox line" : "Text line"}
                   className={`p-2.5 rounded-xl border transition-all cursor-pointer shrink-0 ${
                     isCheckboxMode
                       ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
@@ -407,7 +324,6 @@ export default function StudentNotesModal({
                           type="text"
                           value={item.text}
                           onChange={(e) => handleItemTextChange(item.id, e.target.value)}
-                          onBlur={(e) => handleItemBlur(item.id, e.target.value)}
                           className={`w-full bg-transparent border-0 outline-none text-sm transition-all focus:bg-slate-900/80 focus:px-2 focus:py-0.5 focus:rounded-lg ${
                             item.checked
                               ? "line-through text-slate-500"
