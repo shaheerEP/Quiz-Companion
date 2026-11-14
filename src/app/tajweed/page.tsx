@@ -1846,8 +1846,12 @@ export default function TajweedStudioPage() {
   // Simulate Motion (Alif -> Makhraj -> Alif) and optional letter audio
   const triggerSimulation = (playAudioOption: boolean | React.MouseEvent = true) => {
     const playAudio = typeof playAudioOption === 'boolean' ? playAudioOption : true;
-    // Guard against rapid duplicate clicks: if already simulating or playing, ignore extra clicks
-    if (isSimulatingRef.current || (playAudio && isLetterAudioPlaying(currentLetter.letter))) {
+    // Guard: if already simulating, OR audio is playing, OR an API call is currently PENDING:
+    // "even one API call is pending, shouldnt call another API when click on the button."
+    if (
+      isSimulatingRef.current ||
+      (playAudio && (isLetterAudioPlaying(currentLetter.letter) || isAudioFetchPending(currentLetter.letter) || isAudioLoading))
+    ) {
       return;
     }
     isSimulatingRef.current = true;
@@ -4069,16 +4073,16 @@ export default function TajweedStudioPage() {
                     <button
                       type="button"
                       onClick={() => triggerSimulation(true)}
-                      disabled={isPlayingSimulation}
+                      disabled={isPlayingSimulation || isAudioLoading}
                       title={t.simulateTitle}
                       aria-label={t.simulateTitle}
                       className={`ms-auto flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 select-none shrink-0 whitespace-nowrap ${
-                        isPlayingSimulation
+                        isPlayingSimulation || isAudioLoading
                           ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
                           : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95'
                       }`}
                     >
-                      <Play className={`w-3.5 h-3.5 fill-current shrink-0 ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
+                      <Play className={`w-3.5 h-3.5 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
                       <span>{t.simulate}</span>
                     </button>
                   </div>
