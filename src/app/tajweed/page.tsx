@@ -1991,10 +1991,10 @@ export default function TajweedStudioPage() {
     throatRoot?: THREE.Group;
     pharynxMesh?: THREE.Mesh;
     epiglottisPivot?: THREE.Group;
+    epiglottisMesh?: THREE.Mesh;
     leftVocalCord?: THREE.Mesh;
     rightVocalCord?: THREE.Mesh;
     airwayParticles?: THREE.Points;
-    throatRingMesh?: THREE.Mesh;
     particlePointsData?: { t: number; laneX: number; laneZ: number; speedOffset: number }[];
     animFrameId: number;
   } | null>(null);
@@ -2035,7 +2035,7 @@ export default function TajweedStudioPage() {
     };
   };
 
-  // Change active letter with smooth intelligent camera transition between throat and oral view
+  // Change active letter: maintains current camera perspective without resetting
   const selectLetter = (preset: LetterPreset) => {
     stopLetterAudio();
     setIsPlayingSimulation(false);
@@ -2047,51 +2047,6 @@ export default function TajweedStudioPage() {
     forceDeformRef.current = true;
     targetGearsRef.current = { ...nextGears };
     setGears(nextGears);
-
-    // Smooth intelligent camera glide between oral dental perspective and throat stations
-    if (sceneElementsRef.current) {
-      const { spherical } = sceneElementsRef.current;
-      let targetCamRadius = DEFAULT_CAM.radius;
-      let targetCamTheta = DEFAULT_CAM.theta;
-      let targetCamPhi = DEFAULT_CAM.phi;
-      const targetCamTarget = DEFAULT_CAM.target.clone();
-
-      if (preset.isThroat) {
-        if (preset.throatFloor === 'aqsa') {
-          targetCamTarget.set(0.0, -0.48, -0.48);
-          targetCamRadius = 3.35;
-          targetCamTheta = -1.26;
-          targetCamPhi = 1.62;
-        } else if (preset.throatFloor === 'wasat') {
-          targetCamTarget.set(0.0, -0.34, -0.42);
-          targetCamRadius = 3.30;
-          targetCamTheta = -1.28;
-          targetCamPhi = 1.55;
-        } else {
-          targetCamTarget.set(0.0, -0.20, -0.28);
-          targetCamRadius = 3.28;
-          targetCamTheta = -1.32;
-          targetCamPhi = 1.50;
-        }
-      }
-
-      let diffTheta = (targetCamTheta - (spherical.theta % (Math.PI * 2)));
-      while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
-      while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
-
-      camAnimRef.current = {
-        startRadius: spherical.radius,
-        targetRadius: targetCamRadius,
-        startTheta: spherical.theta,
-        targetTheta: spherical.theta + diffTheta,
-        startPhi: spherical.phi,
-        targetPhi: targetCamPhi,
-        startTarget: spherical.target.clone(),
-        targetTarget: targetCamTarget,
-        startTime: performance.now(),
-        duration: 420
-      };
-    }
   };
 
   // Adjust gear slider
@@ -2838,87 +2793,141 @@ export default function TajweedStudioPage() {
     };
 
     // ------------------------------------------------------------------------
-    // 3D THROAT ANATOMY SYSTEM (Al-Halq - Pharynx, Epiglottis, Vocal Cords, Particles)
+    // 3D REALISTIC THROAT ANATOMY (Al-Halq - Pharynx Wall, Epiglottis, Vocal Cords)
+    // No confusing artificial rings or symbols; pure anatomical tissue with dynamic vertex colors
     // ------------------------------------------------------------------------
     const throatRoot = new THREE.Group();
     throatRoot.name = 'throatRoot';
     mouthRoot.add(throatRoot);
 
-    // 1. Pharyngeal Airway Channel (Translucent soft-tissue pharynx tube)
-    const pharynxCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.0, -0.88, -0.62), // Trachea / Subglottis (Station 1 entrance)
-      new THREE.Vector3(0.0, -0.70, -0.60), // Glottis / Vocal Cords Gate
-      new THREE.Vector3(0.0, -0.48, -0.58), // Hypopharynx / Epiglottis (Station 2)
-      new THREE.Vector3(0.0, -0.28, -0.52), // Oropharynx
-      new THREE.Vector3(0.0, -0.12, -0.44), // Nasopharynx / Uvula junction (Station 3)
-      new THREE.Vector3(0.0, 0.04, -0.28)   // Blends forward into oral cavity
-    ]);
-
-    const pharynxGeom = new THREE.TubeGeometry(pharynxCurve, 40, 0.165, 24, false);
-    const pharynxMaterial = new THREE.MeshLambertMaterial({
-      color: 0x64748b,
-      transparent: true,
-      opacity: 0.30,
-      side: THREE.BackSide,
-      depthWrite: false
-    });
-    const pharynxMesh = new THREE.Mesh(pharynxGeom, pharynxMaterial);
-    pharynxMesh.renderOrder = 0;
-    throatRoot.add(pharynxMesh);
-
-    const pharynxOuterGeom = new THREE.TubeGeometry(pharynxCurve, 40, 0.175, 24, false);
-    const pharynxOuterMaterial = new THREE.MeshLambertMaterial({
-      color: 0x475569,
-      transparent: true,
-      opacity: 0.18,
-      side: THREE.FrontSide,
-      depthWrite: false
-    });
-    const pharynxOuterMesh = new THREE.Mesh(pharynxOuterGeom, pharynxOuterMaterial);
-    pharynxOuterMesh.renderOrder = 0;
-    throatRoot.add(pharynxOuterMesh);
-
-    // 2. Epiglottis Leaf Valve (لسان المزمار - Station 2: Middle Throat)
-    const epiglottisPivot = new THREE.Group();
-    epiglottisPivot.position.set(0.0, -0.48, -0.48);
-    throatRoot.add(epiglottisPivot);
-
-    const createEpiglottisGeometry = () => {
+    // 1. Posterior & Lateral Pharyngeal Wall (الجدار الخلفي للحلق - Open crescent anatomical cavity)
+    const createPharyngealWallGeometry = () => {
+      const segsY = 36;
+      const segsU = 28;
       const geom = new THREE.BufferGeometry();
-      const width = 0.15;
-      const height = 0.22;
-      const segsX = 16;
-      const segsY = 20;
-      const pos: number[] = [];
+      const positions: number[] = [];
+      const colors: number[] = [];
       const indices: number[] = [];
+
       for (let iy = 0; iy <= segsY; iy++) {
         const v = iy / segsY;
-        const y = v * height;
-        const leafWidth = width * Math.sin(v * Math.PI * 0.85 + 0.15);
-        for (let ix = 0; ix <= segsX; ix++) {
-          const u = (ix / segsX) * 2 - 1;
-          const x = u * leafWidth * 0.5;
-          const z = (1 - u * u) * 0.025 - Math.sin(v * Math.PI) * 0.02;
-          pos.push(x, y, z);
+        // Y extends smoothly from behind soft palate (+0.08) down to larynx (-0.88)
+        const y = 0.08 - v * 0.96;
+        // Smooth anatomical curvature of posterior wall
+        const zCenter = -0.58 - Math.sin(v * Math.PI * 0.9) * 0.08;
+        // Half-width: wider at oropharynx (0.33), tapering gently to larynx (0.19)
+        const halfWidth = 0.33 - v * 0.14;
+        const archDepth = 0.16 + (1.0 - v) * 0.08;
+
+        for (let iu = 0; iu <= segsU; iu++) {
+          const u = (iu / segsU) * 2.0 - 1.0;
+          const theta = u * (Math.PI * 0.48);
+
+          const x = Math.sin(theta) * halfWidth;
+          const z = zCenter + (1.0 - Math.cos(theta)) * archDepth;
+          positions.push(x, y, z);
+
+          // Natural mucosal tissue tone matching oral cavity
+          const shade = 0.82 + Math.cos(theta) * 0.18 - v * 0.10;
+          const rBase = 0.74 * shade;
+          const gBase = 0.32 * shade;
+          const bBase = 0.36 * shade;
+          colors.push(rBase, gBase, bBase);
         }
       }
+
+      const ringStride = segsU + 1;
       for (let iy = 0; iy < segsY; iy++) {
-        for (let ix = 0; ix < segsX; ix++) {
-          const a = iy * (segsX + 1) + ix;
+        for (let iu = 0; iu < segsU; iu++) {
+          const a = iy * ringStride + iu;
           const b = a + 1;
-          const c = (iy + 1) * (segsX + 1) + ix;
+          const c = (iy + 1) * ringStride + iu;
           const d = c + 1;
           indices.push(a, b, c, b, d, c);
         }
       }
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geom.setIndex(indices);
       geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
+      return geom;
+    };
+
+    const pharynxMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.82,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const pharynxMesh = new THREE.Mesh(createPharyngealWallGeometry(), pharynxMaterial);
+    pharynxMesh.renderOrder = 0;
+    throatRoot.add(pharynxMesh);
+
+    // 2. Anatomical Epiglottis Leaf Valve (لسان المزمار - Station 2: Middle Throat)
+    const epiglottisPivot = new THREE.Group();
+    epiglottisPivot.position.set(0.0, -0.34, -0.50);
+    throatRoot.add(epiglottisPivot);
+
+    const createEpiglottisGeometry = () => {
+      const geom = new THREE.BufferGeometry();
+      const segsY = 24;
+      const segsX = 18;
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      const height = 0.22;
+      const maxWidth = 0.16;
+
+      for (let iy = 0; iy <= segsY; iy++) {
+        const v = iy / segsY;
+        const y = v * height;
+        const leafWidth = maxWidth * Math.sin(v * Math.PI * 0.82 + 0.18);
+        const thickness = 0.024 * (1.0 - v * 0.65);
+        const concaveCurve = Math.sin(v * Math.PI) * 0.020;
+
+        for (let ix = 0; ix <= segsX; ix++) {
+          const u = (ix / segsX) * 2.0 - 1.0;
+          const x = u * leafWidth * 0.5;
+          const z = (1.0 - u * u) * thickness - concaveCurve;
+          positions.push(x, y, z);
+
+          // Mucosal tissue tone matching tongue base
+          const rimHighlight = (1.0 - Math.abs(u)) * 0.10 + v * 0.08;
+          const shade = 0.88 + rimHighlight;
+          const rBase = 0.77 * shade;
+          const gBase = 0.35 * shade;
+          const bBase = 0.39 * shade;
+          colors.push(rBase, gBase, bBase);
+        }
+      }
+
+      const ringStride = segsX + 1;
+      for (let iy = 0; iy < segsY; iy++) {
+        for (let ix = 0; ix < segsX; ix++) {
+          const a = iy * ringStride + ix;
+          const b = a + 1;
+          const c = (iy + 1) * ringStride + ix;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
       return geom;
     };
 
     const epiglottisMat = new THREE.MeshLambertMaterial({
-      color: 0xf59e0b, // Amber cartilage tone
+      color: 0xffffff,
+      vertexColors: true,
       side: THREE.DoubleSide,
       depthWrite: true
     });
@@ -2926,32 +2935,77 @@ export default function TajweedStudioPage() {
     epiglottisMesh.renderOrder = 2;
     epiglottisPivot.add(epiglottisMesh);
 
-    // 3. Vocal Cords Gate (الأوتار الصوتية - Station 1: Bottom Throat)
+    // 3. Anatomical True Vocal Cords (الأوتار الصوتية الحقيقية - Station 1: Bottom Throat)
     const vocalCordsPivot = new THREE.Group();
-    vocalCordsPivot.position.set(0.0, -0.70, -0.60);
+    vocalCordsPivot.position.set(0.0, -0.72, -0.58);
     throatRoot.add(vocalCordsPivot);
 
-    const glottisRingGeom = new THREE.TorusGeometry(0.12, 0.024, 12, 32);
-    glottisRingGeom.rotateX(Math.PI / 2);
-    const glottisRingMesh = new THREE.Mesh(glottisRingGeom, new THREE.MeshLambertMaterial({ color: 0x1e293b, side: THREE.DoubleSide }));
-    vocalCordsPivot.add(glottisRingMesh);
+    const createVocalCordGeometry = (isLeft: boolean) => {
+      const segsZ = 22;
+      const segsCross = 12;
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
 
-    const cordMat = new THREE.MeshLambertMaterial({
-      color: 0x38bdf8,
+      const cordLength = 0.16;
+      const maxHalfWidth = 0.055;
+      const sideSign = isLeft ? -1 : 1;
+
+      for (let iz = 0; iz <= segsZ; iz++) {
+        const vz = iz / segsZ;
+        const lz = 0.08 - vz * cordLength;
+        const lateralSpan = vz * maxHalfWidth;
+        const foldThickness = 0.026 * (1.0 - vz * 0.30);
+
+        for (let ic = 0; ic <= segsCross; ic++) {
+          const uCross = ic / segsCross;
+          const lx = sideSign * (uCross * lateralSpan);
+          const ly = Math.sin((1.0 - uCross) * Math.PI * 0.5) * foldThickness;
+          positions.push(lx, ly, lz);
+
+          // Pearly white at medial vibratory margin (uCross ~ 0), pink mucosa at base
+          const pearlyFactor = Math.pow(1.0 - uCross, 1.8);
+          const rBase = 0.76 * (1.0 - pearlyFactor) + 0.96 * pearlyFactor;
+          const gBase = 0.36 * (1.0 - pearlyFactor) + 0.94 * pearlyFactor;
+          const bBase = 0.40 * (1.0 - pearlyFactor) + 0.90 * pearlyFactor;
+          colors.push(rBase, gBase, bBase);
+        }
+      }
+
+      const ringStride = segsCross + 1;
+      for (let iz = 0; iz < segsZ; iz++) {
+        for (let ic = 0; ic < segsCross; ic++) {
+          const a = iz * ringStride + ic;
+          const b = a + 1;
+          const c = (iz + 1) * ringStride + ic;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
+      return geom;
+    };
+
+    const vocalCordMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      vertexColors: true,
       side: THREE.DoubleSide,
       depthWrite: true
     });
-    const cordGeom = new THREE.BoxGeometry(0.065, 0.024, 0.12);
-    const leftVocalCord = new THREE.Mesh(cordGeom, cordMat);
-    leftVocalCord.position.set(-0.045, 0, 0);
+    const leftVocalCord = new THREE.Mesh(createVocalCordGeometry(true), vocalCordMat);
     vocalCordsPivot.add(leftVocalCord);
 
-    const rightVocalCord = new THREE.Mesh(cordGeom, cordMat);
-    rightVocalCord.position.set(0.045, 0, 0);
+    const rightVocalCord = new THREE.Mesh(createVocalCordGeometry(false), vocalCordMat);
     vocalCordsPivot.add(rightVocalCord);
 
-    // 4. Acoustic Airflow Particles (Flowing 3D points)
-    const PARTICLE_COUNT = 48;
+    // 4. Acoustic Airflow Particles (Flowing 3D stream showing where air touches)
+    const PARTICLE_COUNT = 64;
     const particlePointsData: { t: number; laneX: number; laneZ: number; speedOffset: number }[] = [];
     const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
     const particleColors = new Float32Array(PARTICLE_COUNT * 3);
@@ -2959,8 +3013,8 @@ export default function TajweedStudioPage() {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       particlePointsData.push({
         t: i / PARTICLE_COUNT,
-        laneX: (Math.random() - 0.5) * 0.07,
-        laneZ: (Math.random() - 0.5) * 0.07,
+        laneX: (Math.random() - 0.5) * 0.08,
+        laneZ: (Math.random() - 0.5) * 0.08,
         speedOffset: 0.85 + Math.random() * 0.3
       });
     }
@@ -2970,26 +3024,15 @@ export default function TajweedStudioPage() {
     particleGeom.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.042,
+      size: 0.038,
       vertexColors: true,
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.90,
       depthWrite: false
     });
     const airwayParticles = new THREE.Points(particleGeom, particleMat);
     airwayParticles.renderOrder = 3;
     throatRoot.add(airwayParticles);
-
-    // 5. Pulsing Makhraj Target Ring
-    const throatRingGeom = new THREE.TorusGeometry(0.075, 0.012, 12, 28);
-    const throatRingMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
-      transparent: true,
-      opacity: 0.88
-    });
-    const throatRingMesh = new THREE.Mesh(throatRingGeom, throatRingMat);
-    throatRingMesh.renderOrder = 4;
-    throatRoot.add(throatRingMesh);
 
     // Store refs
     sceneElementsRef.current = {
@@ -3010,10 +3053,10 @@ export default function TajweedStudioPage() {
       throatRoot,
       pharynxMesh,
       epiglottisPivot,
+      epiglottisMesh,
       leftVocalCord,
       rightVocalCord,
       airwayParticles,
-      throatRingMesh,
       particlePointsData,
       animFrameId: 0
     };
@@ -3194,6 +3237,39 @@ export default function TajweedStudioPage() {
         if (sBase) {
           (softPalateMesh.geometry.attributes.color.array as Float32Array).set(sBase);
           softPalateMesh.geometry.attributes.color.needsUpdate = true;
+        }
+      }
+
+      // Update soft palate contact colors for top throat letters (Ghayn غ & Khaa خ)
+      const sGeom = softPalateMesh.geometry;
+      const sBase = sGeom.userData.baseColors as Float32Array | undefined;
+      if (sBase) {
+        const sPosArr = sGeom.attributes.position.array as Float32Array;
+        const sColArr = sGeom.attributes.color.array as Float32Array;
+        if (lid === 'ghayn' || lid === 'khaa') {
+          for (let i = 0; i < sBase.length; i += 3) {
+            const wx = sPosArr[i];
+            const wz = sPosArr[i + 2];
+            let pW = 0.0, sW = 0.0;
+            const uvulaDist = Math.hypot(wx / 0.22, (wz - (-0.56)) / 0.16);
+            if (uvulaDist < 1.0) {
+              const falloff = Math.cos(uvulaDist * Math.PI * 0.5);
+              if (lid === 'ghayn') {
+                pW = 0.88 * falloff * targetProg;
+                sW = 0.70 * falloff * (1.0 - pW) * targetProg;
+              } else {
+                pW = 0.35 * falloff * targetProg;
+                sW = 0.85 * falloff * (1.0 - pW) * targetProg;
+              }
+            }
+            sColArr[i] = sBase[i] * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+            sColArr[i + 1] = sBase[i + 1] * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+            sColArr[i + 2] = sBase[i + 2] * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+          }
+          sGeom.attributes.color.needsUpdate = true;
+        } else if (!wasAnat) {
+          sColArr.set(sBase);
+          sGeom.attributes.color.needsUpdate = true;
         }
       }
 
@@ -3711,6 +3787,16 @@ export default function TajweedStudioPage() {
               pW = Math.pow(Math.max(0.0, (s - 0.64) / 0.36), 0.85) * edgeMask * 0.90;
             } else if (lid === 'qaaf' || lid === 'kaaf') {
               pW = Math.exp(-Math.pow((s - 0.22) / 0.12, 2)) * topMask * 0.90;
+            } else if (lid === 'ghayn') {
+              // Ghayn: Root of tongue touches soft palate (أقصى وجذر اللسان)
+              const rootCore = Math.exp(-Math.pow((s - 0.18) / 0.11, 2)) * topMask;
+              pW = rootCore * 0.88;
+              sW = Math.exp(-Math.pow((s - 0.24) / 0.14, 2)) * topMask * 0.70 * (1.0 - pW);
+            } else if (lid === 'khaa') {
+              // Khaa: Root of tongue creates unvoiced air friction scrape
+              const rootFric = Math.exp(-Math.pow((s - 0.18) / 0.12, 2)) * topMask;
+              pW = rootFric * 0.35;
+              sW = rootFric * 0.85 * (1.0 - pW);
             } else if (lid === 'jeem') {
               const zEnv = Math.exp(-Math.pow((s - 0.54) / 0.11, 2));
               const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
@@ -3793,41 +3879,177 @@ export default function TajweedStudioPage() {
       }
 
       // ----------------------------------------------------------------------
-      // 3D THROAT ANATOMY & ACOUSTIC PARTICLE STREAM UPDATES
+      // 3D REALISTIC THROAT ANATOMY & DYNAMIC GREEN/YELLOW CONTACT SPREADING
+      // Spreads green (firm pressing) and yellow (air touch & pressure glow) on tissue based on power of pressing
       // ----------------------------------------------------------------------
       const epiglottisPivot = sceneElementsRef.current?.epiglottisPivot;
+      const epiglottisMesh = sceneElementsRef.current?.epiglottisMesh;
+      const pharynxMesh = sceneElementsRef.current?.pharynxMesh;
       const leftVocalCord = sceneElementsRef.current?.leftVocalCord;
       const rightVocalCord = sceneElementsRef.current?.rightVocalCord;
       const airwayParticles = sceneElementsRef.current?.airwayParticles;
-      const throatRingMesh = sceneElementsRef.current?.throatRingMesh;
       const particlePointsData = sceneElementsRef.current?.particlePointsData;
       const curPreset = currentLetterRef.current;
       const isThroatActive = Boolean(curPreset.isThroat);
+      const mProg = morphProgressRef.current;
 
-      if (epiglottisPivot && leftVocalCord && rightVocalCord && airwayParticles && throatRingMesh && particlePointsData) {
-        // Epiglottis Tilt backward toward posterior pharyngeal wall
+      if (epiglottisPivot && epiglottisMesh && pharynxMesh && leftVocalCord && rightVocalCord && airwayParticles && particlePointsData) {
         const epiTilt = (currentGearsRef.current.epiglottisTilt || 0) / 100;
-        epiglottisPivot.rotation.x = -0.15 - epiTilt * 0.82;
+        epiglottisPivot.rotation.x = -0.16 - epiTilt * 0.84;
 
-        // Vocal Cords Constriction (0 = open gap, 100 = 100% airtight closure in midline)
         const cordConstrict = (currentGearsRef.current.vocalCordsConstriction || 0) / 100;
-        const isHamzahShut = curPreset.id === 'hamzah' && cordConstrict > 0.85;
-        const cordFlutter = (curPreset.isHeavy || curPreset.id === 'ayn' || curPreset.id === 'ghayn') ? Math.sin(now * 0.05) * 0.0035 : 0;
+        const isHamzah = curPreset.id === 'hamzah';
+        const isHaaLight = curPreset.id === 'haa_light';
+        const isAyn = curPreset.id === 'ayn';
+        const isHaaPharyngeal = curPreset.id === 'haa_pharyngeal';
+        const isGhayn = curPreset.id === 'ghayn';
+        const isKhaa = curPreset.id === 'khaa';
+        const isVoicedThroat = isAyn || isGhayn;
+        const isHamzahShut = isHamzah && cordConstrict > 0.82;
 
-        leftVocalCord.position.x = -0.045 + (cordConstrict * 0.045) + cordFlutter;
-        rightVocalCord.position.x = 0.045 - (cordConstrict * 0.045) - cordFlutter;
+        const cordGap = (1.0 - cordConstrict) * 0.045;
+        const cordFlutter = isVoicedThroat ? Math.sin(now * 0.05) * 0.003 : 0;
+        leftVocalCord.position.x = -cordGap + cordFlutter;
+        rightVocalCord.position.x = cordGap - cordFlutter;
 
-        // Pulsing Makhraj Target Ring
-        if (isThroatActive) {
-          throatRingMesh.visible = true;
-          throatRingMesh.position.set(curPreset.greenCoords.x, curPreset.greenCoords.y, curPreset.greenCoords.z);
-          const ringPulse = 1.0 + Math.sin(now * 0.008) * 0.12;
-          throatRingMesh.scale.set(ringPulse, ringPulse, ringPulse);
-        } else {
-          throatRingMesh.visible = false;
+        // 1. SPREAD GREEN & YELLOW ON VOCAL CORDS (Station 1: أقصى الحلق - ء ، هـ)
+        [leftVocalCord, rightVocalCord].forEach(cordMesh => {
+          const geom = cordMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const lx = Math.abs(pos[idx]);
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isHamzah) {
+                // Hamzah: Strongest pressing! (الشدة وانحباس الصوت)
+                // Medial contact seam presses tight: intense emerald green
+                const medialPress = Math.exp(-Math.pow(lx / 0.016, 2));
+                pW = Math.min(0.95, medialPress * 1.15 * cordConstrict) * mProg;
+                // Yellow pressure heat spreading across folds based on pressing power
+                const foldHeat = Math.exp(-Math.pow(lx / 0.045, 2));
+                sW = Math.min(0.85, foldHeat * 0.85 * (1.0 - pW) * cordConstrict) * mProg;
+              } else if (isHaaLight) {
+                // Haa Light: Open vocal slit, gentle breath flow (رخاوة وهمس)
+                // Zero green pressing. Soft yellow breath outline where air glides
+                const marginGlow = Math.exp(-Math.pow(lx / 0.024, 2));
+                sW = Math.min(0.72, marginGlow * 0.75) * mProg;
+              } else if (isVoicedThroat) {
+                const voiceRes = Math.exp(-Math.pow(lx / 0.035, 2));
+                sW = Math.min(0.40, voiceRes * 0.40) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
+        });
+
+        // 2. SPREAD GREEN & YELLOW ON EPIGLOTTIS (Station 2: وسط الحلق - ع ، ح)
+        if (epiglottisMesh) {
+          const geom = epiglottisMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const ly = pos[idx + 1];
+            const apexFactor = Math.max(0.0, Math.min(1.0, (ly - 0.08) / 0.14));
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isAyn) {
+                // Ayn: Strong backward pressing against posterior wall (توسط وجهر)
+                // Emerald green at the pressing apex
+                pW = Math.min(0.92, Math.pow(apexFactor, 1.25) * 1.10 * (epiTilt / 0.85)) * mProg;
+                // Yellow spreading downward reflecting pressing power
+                const spreadHeat = Math.pow(Math.max(0.0, (ly - 0.04) / 0.18), 1.1);
+                sW = Math.min(0.80, spreadHeat * 0.80 * (1.0 - pW)) * mProg;
+              } else if (isHaaPharyngeal) {
+                // Haa pharyngeal: Breath friction through narrow channel (همس ورخاوة)
+                // Predominantly glowing yellow breath friction touching apex
+                const fricApex = Math.pow(apexFactor, 1.2);
+                pW = Math.min(0.30, fricApex * 0.30) * mProg;
+                sW = Math.min(0.85, fricApex * 0.85 * (1.0 - pW)) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
         }
 
-        // Acoustic Particle Stream Update along the Curved Airway
+        // 3. SPREAD GREEN & YELLOW ON POSTERIOR PHARYNGEAL WALL (الجدار الخلفي للحلق)
+        if (pharynxMesh) {
+          const geom = pharynxMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const px = pos[idx];
+            const py = pos[idx + 1];
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isAyn) {
+                // Direct contact area opposite epiglottis tip at Y ~ -0.34
+                const dist = Math.hypot(px, (py - (-0.34)) * 1.4);
+                const contactCore = Math.exp(-Math.pow(dist / 0.08, 2));
+                const contactSpread = Math.exp(-Math.pow(dist / 0.16, 2));
+                pW = Math.min(0.90, contactCore * 1.10 * (epiTilt / 0.85)) * mProg;
+                sW = Math.min(0.78, contactSpread * 0.80 * (1.0 - pW)) * mProg;
+              } else if (isHaaPharyngeal) {
+                // Air friction channel where air touches the back wall
+                const dist = Math.hypot(px, (py - (-0.34)) * 1.3);
+                const fricSpread = Math.exp(-Math.pow(dist / 0.15, 2));
+                pW = Math.min(0.20, fricSpread * 0.25) * mProg;
+                sW = Math.min(0.84, fricSpread * 0.85 * (1.0 - pW)) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
+        }
+
+        // 4. ACOUSTIC AIRFLOW STREAM (Where the Air Touches)
         if (isSimulatingRef.current || isThroatActive) {
           cameraDirty = true;
           const posAttr = airwayParticles.geometry.attributes.position as THREE.BufferAttribute;
@@ -3837,39 +4059,39 @@ export default function TajweedStudioPage() {
 
           for (let pi = 0; pi < particlePointsData.length; pi++) {
             const p = particlePointsData[pi];
-            p.t = (p.t + delta * 0.38 * p.speedOffset) % 1.0;
+            p.t = (p.t + delta * 0.36 * p.speedOffset) % 1.0;
 
             let activeT = p.t;
             if (isHamzahShut) {
-              activeT = p.t * 0.22; // trapped beneath vocal cords
+              // Air trapped completely below closed vocal cords (شدة وانحباس)
+              activeT = p.t * 0.18;
             }
 
-            // Curve interpolation: Y from -0.88 to 0.04
-            const py = -0.88 + activeT * 0.92;
-            const pz = -0.62 + Math.sin(activeT * Math.PI * 0.5) * 0.34;
-            const px = p.laneX;
+            // Continuous curved airway from trachea (-0.88) through throat into mouth (+0.02)
+            const py = -0.88 + activeT * 0.90;
+            const pz = -0.62 + Math.sin(activeT * Math.PI * 0.48) * 0.36;
+            const px = p.laneX * (1.0 - activeT * 0.3);
 
             const pIdx = pi * 3;
             posArray[pIdx] = px;
             posArray[pIdx + 1] = py;
             posArray[pIdx + 2] = pz + p.laneZ;
 
-            // Acoustic Color
             if (isHamzahShut) {
-              // Trapped air below closed vocal gate (Crimson)
+              // Crimson/amber pooling below closed vocal cords
               colArray[pIdx] = 0.96;
               colArray[pIdx + 1] = 0.25;
-              colArray[pIdx + 2] = 0.36;
-            } else if (curPreset.id === 'ayn' || curPreset.id === 'ghayn') {
+              colArray[pIdx + 2] = 0.22;
+            } else if (isVoicedThroat || isAyn) {
               // Golden buzzing acoustic waves for Voiced letters (جهر)
               colArray[pIdx] = 0.98;
-              colArray[pIdx + 1] = 0.75;
-              colArray[pIdx + 2] = 0.14;
+              colArray[pIdx + 1] = 0.78;
+              colArray[pIdx + 2] = 0.16;
             } else {
               // Sky-blue smooth breath flow for Unvoiced letters (همس)
-              colArray[pIdx] = 0.22;
-              colArray[pIdx + 1] = 0.74;
-              colArray[pIdx + 2] = 0.97;
+              colArray[pIdx] = 0.26;
+              colArray[pIdx + 1] = 0.78;
+              colArray[pIdx + 2] = 0.98;
             }
           }
           posAttr.needsUpdate = true;
