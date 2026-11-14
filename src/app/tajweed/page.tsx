@@ -1211,7 +1211,7 @@ export const SIFAAT_DATA: SifahItem[] = [
     technicalEn: 'Stopping the flow of sound due to strong, firm reliance on the articulation point.',
     technicalMl: 'മഖ്റജിൽ ശക്തിയായി അമർത്തി ഉച്ചരിക്കുന്നതിനാൽ ശബ്ദം നടക്കാതിരിക്കൽ',
     mnemonic: 'أَجِدُ قَطٍ بَكَتْ',
-    letters: ['أ', 'ء', 'ج', 'د', 'ق', 'ط', 'ب', 'ك', 'ت'],
+    letters: ['أ', 'ج', 'د', 'ق', 'ط', 'ب', 'ك', 'ت'],
     chipClass: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
     badgeHex: '#e11d48'
   },
