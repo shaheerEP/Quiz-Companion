@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
-import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlaying } from "@/components/tajweed/CleanLetterAudio";
+import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlaying, isAudioFetchPending } from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
 import {
   Play,
@@ -1607,6 +1607,41 @@ export default function TajweedStudioPage() {
   const [activeMainTab, setActiveMainTab] = useState<'makharij' | 'sifaat'>('makharij');
   const [selectedSifah, setSelectedSifah] = useState<SifahItem | null>(null);
   const [sifaat3DOpen, setSifaat3DOpen] = useState<boolean>(false);
+  const [sifaatWindowPos, setSifaatWindowPos] = useState<{ x: number; y: number } | null>(null);
+  const sifaatWindowRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingWindowRef = useRef(false);
+  const dragStartPointerRef = useRef({ x: 0, y: 0 });
+  const dragStartWindowRef = useRef({ x: 0, y: 0 });
+
+  const handleWindowDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!sifaatWindowRef.current) return;
+    const rect = sifaatWindowRef.current.getBoundingClientRect();
+    isDraggingWindowRef.current = true;
+    dragStartPointerRef.current = { x: e.clientX, y: e.clientY };
+    dragStartWindowRef.current = { x: rect.left, y: rect.top };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleWindowDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingWindowRef.current || !sifaatWindowRef.current) return;
+    const dx = e.clientX - dragStartPointerRef.current.x;
+    const dy = e.clientY - dragStartPointerRef.current.y;
+    const rect = sifaatWindowRef.current.getBoundingClientRect();
+    const maxX = Math.max(0, window.innerWidth - rect.width - 8);
+    const maxY = Math.max(0, window.innerHeight - rect.height - 8);
+    const newX = Math.max(8, Math.min(maxX, dragStartWindowRef.current.x + dx));
+    const newY = Math.max(8, Math.min(maxY, dragStartWindowRef.current.y + dy));
+    setSifaatWindowPos({ x: newX, y: newY });
+  };
+
+  const handleWindowDragEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingWindowRef.current) {
+      isDraggingWindowRef.current = false;
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  };
   const sifaat3DOpenRef = useRef<boolean>(false);
 
   // Toggles
@@ -1623,10 +1658,16 @@ export default function TajweedStudioPage() {
   const morphProgressRef = useRef(1.0);
   const isRestingAtAlifRef = useRef(false);
   const [isPlayingSimulation, setIsPlayingSimulation] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
 
   // Preload letter audio blob into memory on mount and whenever letter changes (strictly 1 network call)
   useEffect(() => {
-    preloadLetterAudio(currentLetter.letter).catch(() => {});
+    setIsAudioLoading(true);
+    preloadLetterAudio(currentLetter.letter)
+      .catch(() => {})
+      .finally(() => {
+        setIsAudioLoading(false);
+      });
   }, [currentLetter.letter]);
 
   // Clean up audio on unmount
@@ -1802,10 +1843,11 @@ export default function TajweedStudioPage() {
     };
   }, []);
 
-  // Simulate Motion (Alif -> Makhraj -> Alif) and play letter audio
-  const triggerSimulation = () => {
+  // Simulate Motion (Alif -> Makhraj -> Alif) and optional letter audio
+  const triggerSimulation = (playAudioOption: boolean | React.MouseEvent = true) => {
+    const playAudio = typeof playAudioOption === 'boolean' ? playAudioOption : true;
     // Guard against rapid duplicate clicks: if already simulating or playing, ignore extra clicks
-    if (isSimulatingRef.current || isLetterAudioPlaying(currentLetter.letter)) {
+    if (isSimulatingRef.current || (playAudio && isLetterAudioPlaying(currentLetter.letter))) {
       return;
     }
     isSimulatingRef.current = true;
@@ -1818,9 +1860,15 @@ export default function TajweedStudioPage() {
     forceDeformRef.current = true;
     simulationStartTimeRef.current = performance.now();
 
-    playLetterAudio(currentLetter.letter, () => {
-      setIsPlayingSimulation(false);
-    });
+    if (playAudio) {
+      playLetterAudio(currentLetter.letter, () => {
+        setIsPlayingSimulation(false);
+      });
+    } else {
+      setTimeout(() => {
+        setIsPlayingSimulation(false);
+      }, 1000);
+    }
   };
 
   // Three.js scene refs
@@ -3642,13 +3690,14 @@ export default function TajweedStudioPage() {
     if (preset) selectLetter(preset);
   };
 
-  // Click handler for letters in Sifaat tab: shows 3D makhraj at top-right without redirecting to Makharij tab
+  // Click handler for letters in Sifaat tab: shows clean 3D animation at top-right without audio and without redirecting
   const handleSifaatLetterClick = (ltr: string) => {
     const preset = findPresetByLetter(ltr);
     if (preset) {
       selectLetter(preset);
       setSifaat3DOpen(true);
-      triggerSimulation();
+      // Clean 3D animation only (no audio)
+      triggerSimulation(false);
     }
   };
 
@@ -3817,77 +3866,62 @@ export default function TajweedStudioPage() {
               </div>
             </section>
 
-            {/* 3D Viewport Section: Either embedded in Makharij tab, or floating at the top-right corner in Sifaat tab */}
+            {/* 3D Viewport Section: Ultra-minimal draggable floating in Sifaat tab, embedded in Makharij tab */}
             <section
+              ref={sifaatWindowRef}
+              style={
+                activeMainTab === 'sifaat' && sifaatWindowPos
+                  ? { top: `${sifaatWindowPos.y}px`, left: `${sifaatWindowPos.x}px`, right: 'auto', bottom: 'auto' }
+                  : undefined
+              }
               className={
                 activeMainTab === 'makharij'
                   ? "flex flex-col gap-2"
                   : sifaat3DOpen
-                  ? "fixed top-18 sm:top-20 right-3 sm:right-6 z-40 w-[330px] sm:w-[380px] lg:w-[420px] max-w-[calc(100vw-1.5rem)] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none"
+                  ? "fixed top-20 right-3 sm:right-6 z-40 w-[310px] sm:w-[335px] max-w-[calc(100vw-1.5rem)] bg-slate-900/95 dark:bg-black/95 backdrop-blur-xl border border-slate-700/80 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none group ring-1 ring-white/10"
                   : "hidden"
               }
             >
-              {/* Sifaat Top-Right Floating Header (Only visible when floating in Sifaat tab) */}
+              {/* Sifaat Mode Overlays: Drag Handle, Translucent Watermark & Close Button (Ultra-minimal: No Header, No Text, No Extra Buttons, No Audio) */}
               {activeMainTab === 'sifaat' && (
-                <div className="flex items-center justify-between p-3 border-b border-slate-200/80 dark:border-gray-800 bg-slate-50/70 dark:bg-gray-800/40">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 select-none shrink-0 shadow-xs leading-none">
-                      {currentLetter.letter}
-                    </span>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                        {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
-                      </span>
-                      <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
-                        {lang === 'ar' ? currentLetter.ar.category : lang === 'ml' ? (currentLetter.ml?.category || currentLetter.ar.category) : currentLetter.en.category}
-                      </span>
-                    </div>
+                <>
+                  {/* Top Drag Handle (allows dragging floating 3D window anywhere on screen) */}
+                  <div
+                    onPointerDown={handleWindowDragStart}
+                    onPointerMove={handleWindowDragMove}
+                    onPointerUp={handleWindowDragEnd}
+                    onPointerCancel={handleWindowDragEnd}
+                    title={lang === 'ar' ? 'اسحب لتحريك النافذة' : lang === 'ml' ? 'വിൻഡോ നീക്കാൻ ഡ്രാഗ് ചെയ്യുക' : 'Drag to reposition'}
+                    className="absolute top-0 inset-x-0 h-7 z-30 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none bg-gradient-to-b from-black/50 to-transparent"
+                  >
+                    <div className="w-10 h-1 rounded-full bg-white/40 group-hover:bg-white/70 transition-colors" />
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={triggerSimulation}
-                      disabled={isPlayingSimulation}
-                      title={t.simulateTitle}
-                      className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition-all select-none ${
-                        isPlayingSimulation
-                          ? 'bg-emerald-700/80 text-white/80 cursor-not-allowed opacity-90'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'
-                      }`}
-                    >
-                      <Play className={`w-3 h-3 fill-current ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
-                      <span>{t.simulate}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMainTab('makharij');
-                        setSifaat3DOpen(false);
-                      }}
-                      title={lang === 'ar' ? 'عرض في استوديو المخارج الكامل' : lang === 'ml' ? 'പൂർണ്ണ മഖ്റജ് പേജിലേക്ക് പോകുക' : 'Open in Full Makharij Studio'}
-                      className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-800 transition-all"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSifaat3DOpen(false)}
-                      title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
-                      className="p-1.5 rounded-xl text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  {/* Subtle Translucent Letter Watermark in Top-Left Corner */}
+                  <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none select-none">
+                    <span className="arabic-font text-2xl font-bold text-white/85 bg-black/45 backdrop-blur-xs px-2.5 py-0.5 rounded-xl border border-white/20 shadow-xs leading-none">
+                      {currentLetter.letter}
+                    </span>
                   </div>
-                </div>
+
+                  {/* Small Close (X) Button in Top-Right Corner */}
+                  <button
+                    type="button"
+                    onClick={() => setSifaat3DOpen(false)}
+                    title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
+                    className="absolute top-2 right-2 z-30 p-1.5 rounded-xl bg-black/45 hover:bg-rose-600/90 text-white/80 hover:text-white backdrop-blur-xs border border-white/20 transition-all shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </>
               )}
 
               {/* 3D Canvas Container */}
               <div
-                className={`bg-slate-100 dark:bg-gray-950 overflow-hidden shadow-inner border-slate-200/80 dark:border-gray-800 relative w-full ${
+                className={`bg-slate-100 dark:bg-gray-950 overflow-hidden shadow-inner relative w-full ${
                   activeMainTab === 'makharij'
-                    ? "rounded-3xl border h-[360px] sm:h-[420px] lg:h-[460px]"
-                    : "h-[220px] sm:h-[260px]"
+                    ? "rounded-3xl border border-slate-200/80 dark:border-gray-800 h-[360px] sm:h-[420px] lg:h-[460px]"
+                    : "h-[235px] sm:h-[255px]"
                 }`}
               >
                 <div
@@ -3895,7 +3929,7 @@ export default function TajweedStudioPage() {
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
                 />
 
-                {/* Mobile Virtual Joystick Controller (stepped down into the exact corner without '3D' text) */}
+                {/* Mobile Virtual Joystick Controller (stepped down into the exact corner without '3D' text, low sensitivity) */}
                 <div
                   className="flex md:hidden absolute bottom-1.5 right-1.5 z-20 select-none pointer-events-auto"
                   title={lang === 'ar' ? 'عصا التحكم في المنظور ثلاثي الأبعاد' : lang === 'ml' ? 'കാഴ്ച നിയന്ത്രിക്കാനുള്ള ജോയ്സ്റ്റിക്' : 'Camera Joystick'}
@@ -3940,123 +3974,113 @@ export default function TajweedStudioPage() {
                 </div>
               </div>
 
-              {/* Sifaat Top-Right Floating Footer (Only visible when floating in Sifaat tab) */}
-              {activeMainTab === 'sifaat' && (
-                <div className="p-2.5 bg-slate-50/80 dark:bg-gray-950/60 border-t border-slate-200/70 dark:border-gray-800 flex flex-col gap-1.5 text-xs">
-                  <p className="text-[11px] text-slate-600 dark:text-gray-300 leading-snug">
-                    {lang === 'ar' ? currentLetter.ar.desc : lang === 'ml' ? (currentLetter.ml?.desc || currentLetter.ar.desc) : currentLetter.en.desc}
-                  </p>
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-gray-800/80 text-[10px] text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#0d6828]" />
-                        <span>{t.firmPress}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#7be89a]" />
-                        <span>{t.gentleTouch}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#eab368]" />
-                        <span>{t.palate}</span>
-                      </span>
-                    </div>
-                    <span>{lang === 'ar' ? 'سحب للتدوير' : lang === 'ml' ? 'തിരിക്കാൻ ഡ്രാഗ്' : 'Drag to rotate'}</span>
-                  </div>
-                </div>
-              )}
-
               {/* Div 1 & Div 2 under 3D Section (Only visible when on Makharij tab) */}
               {activeMainTab === 'makharij' && (
                 <>
                   {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
-                  <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Anatomy Parts Toggle Button */}
-                      <button
-                        onClick={() => setShowAnatomy(!showAnatomy)}
-                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                          showAnatomy
-                            ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
-                            : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <Layers className="w-3.5 h-3.5" />
-                        <span>{t.anatomy}</span>
-                      </button>
+                  <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 shadow-sm flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+                    {/* Anatomy Parts Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAnatomy(!showAnatomy)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showAnatomy
+                          ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                          : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                      }`}
+                      title={t.anatomy}
+                    >
+                      <Layers className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {lang === 'en' ? (
+                          <>
+                            <span>Anatomy Parts</span>
+                            <span className="hidden md:inline"> (أقسام الفم)</span>
+                          </>
+                        ) : (
+                          t.anatomy
+                        )}
+                      </span>
+                    </button>
 
-                      <button
-                        onClick={() => setShowMakhrajColors(!showMakhrajColors)}
-                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                          showMakhrajColors
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                            : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
-                        }`}
-                      >
-                        <Palette className="w-3.5 h-3.5" />
-                        <span>{t.makhrajColors}</span>
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMakhrajColors(!showMakhrajColors)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showMakhrajColors
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                      }`}
+                      title={t.makhrajColors}
+                    >
+                      <Palette className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t.makhrajColors}</span>
+                    </button>
 
-                      <button
-                        onClick={() => setShowPalate(!showPalate)}
-                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                          showPalate
-                            ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                            : 'opacity-50 border-transparent text-slate-400'
-                        }`}
-                      >
-                        <span>{t.palate}</span>
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowPalate(!showPalate)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showPalate
+                          ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
+                          : 'opacity-50 border-transparent text-slate-400 hover:opacity-80'
+                      }`}
+                      title={t.palate}
+                    >
+                      <span>{t.palate}</span>
+                    </button>
 
-                      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
-                        <button
-                          onClick={() => setShowUpperTeeth(!showUpperTeeth)}
-                          className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{t.upperTeeth}</span>
-                        </button>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={upperTeethOpacity}
-                          onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
-                          className="w-14 accent-emerald-500 cursor-pointer"
-                          title="Upper Teeth Opacity"
-                        />
-                        <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
-                      </div>
-
+                    <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-gray-700 shrink-0 select-none">
                       <button
-                        onClick={() => setShowLowerTeeth(!showLowerTeeth)}
-                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                          showLowerTeeth
-                            ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                            : 'opacity-50 border-transparent text-slate-400'
-                        }`}
+                        type="button"
+                        onClick={() => setShowUpperTeeth(!showUpperTeeth)}
+                        className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300 whitespace-nowrap"
+                        title={t.upperTeeth}
                       >
-                        <span>{t.lowerTeeth}</span>
+                        <Eye className="w-3.5 h-3.5 shrink-0" />
+                        <span className="hidden sm:inline">{t.upperTeeth}</span>
                       </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={upperTeethOpacity}
+                        onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
+                        className="w-12 sm:w-16 accent-emerald-500 cursor-pointer"
+                        title={`${t.upperTeeth} Opacity`}
+                      />
+                      <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 min-w-[26px] text-end">{upperTeethOpacity}%</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLowerTeeth(!showLowerTeeth)}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showLowerTeeth
+                          ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
+                          : 'opacity-50 border-transparent text-slate-400 hover:opacity-80'
+                      }`}
+                      title={t.lowerTeeth}
+                    >
+                      <span>{t.lowerTeeth}</span>
+                    </button>
 
                     {/* Viewport Actions: Play (Simulate Motion & Sound) */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={triggerSimulation}
-                        disabled={isPlayingSimulation}
-                        title={t.simulateTitle}
-                        aria-label={t.simulateTitle}
-                        className={`px-4 py-2 rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 select-none ${
-                          isPlayingSimulation
-                            ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95'
-                        }`}
-                      >
-                        <Play className={`w-3.5 h-3.5 fill-current ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
-                        <span>{t.simulate}</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => triggerSimulation(true)}
+                      disabled={isPlayingSimulation}
+                      title={t.simulateTitle}
+                      aria-label={t.simulateTitle}
+                      className={`ms-auto flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 select-none shrink-0 whitespace-nowrap ${
+                        isPlayingSimulation
+                          ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95'
+                      }`}
+                    >
+                      <Play className={`w-3.5 h-3.5 fill-current shrink-0 ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
+                      <span>{t.simulate}</span>
+                    </button>
                   </div>
 
                   {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}

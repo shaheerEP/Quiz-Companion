@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Volume2, Play } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Volume2, Play, Loader2 } from "lucide-react";
 
 /**
  * Letter-to-audio mapping from razunatmohammed88-cyber/arabic-alphabet-audio
@@ -49,7 +49,8 @@ export const ARABIC_LETTER_AUDIO_MAP: Record<string, string> = {
 // SINGLETON AUDIO CACHE & CONCURRENCY CONTROLLER
 // Guarantees:
 // 1. Each letter audio file is fetched over the network AT MOST ONCE (cached as in-memory Blob URL).
-// 2. Extra clicks while playing are ignored ("should call one time and play also only one time").
+// 2. Even if an API call is currently PENDING, clicking the button will NEVER fire another API call.
+// 3. Extra clicks while playing or while an API call is pending are safely ignored/blocked.
 // ============================================================================
 
 // In-memory cache of HTMLAudioElement instances per audio source
@@ -61,14 +62,32 @@ const audioBlobCache = new Map<string, string>();
 // In-flight fetch promises to prevent parallel duplicate fetches
 const audioFetchPromises = new Map<string, Promise<string>>();
 
-// Global playback lock & tracking
+// Set of URLs currently being fetched
+const pendingFetchUrls = new Set<string>();
+
+// Set of letters for which a play call is currently queued waiting on a pending fetch
+const playQueuedForLetter = new Set<string>();
+
+// Global playback tracking
 let activeAudioElement: HTMLAudioElement | null = null;
 let currentlyPlayingLetter: string | null = null;
 const activeEndCallbacks = new Set<() => void>();
 
 /**
+ * Check if a network fetch / API call is currently in-flight
+ */
+export function isAudioFetchPending(letter?: string): boolean {
+  if (letter !== undefined) {
+    const src = ARABIC_LETTER_AUDIO_MAP[letter] || ARABIC_LETTER_AUDIO_MAP['ق'];
+    return pendingFetchUrls.has(src);
+  }
+  return pendingFetchUrls.size > 0;
+}
+
+/**
  * Preload a letter's audio into memory as a Blob URL.
  * Network request is made ONLY ONCE per audio file for the entire session.
+ * If a fetch is already in-flight, it returns the existing in-flight promise.
  */
 export async function preloadLetterAudio(letter: string): Promise<string> {
   if (typeof window === 'undefined') return '';
@@ -79,10 +98,12 @@ export async function preloadLetterAudio(letter: string): Promise<string> {
     return audioBlobCache.get(src)!;
   }
 
-  // Already fetching? Return existing promise to prevent duplicate network call
+  // Already fetching? Return the existing in-flight promise to prevent duplicate API call
   if (audioFetchPromises.has(src)) {
     return audioFetchPromises.get(src)!;
   }
+
+  pendingFetchUrls.add(src);
 
   const fetchPromise = (async () => {
     try {
@@ -106,6 +127,9 @@ export async function preloadLetterAudio(letter: string): Promise<string> {
     } catch {
       // Fallback to static src path
       return src;
+    } finally {
+      pendingFetchUrls.delete(src);
+      audioFetchPromises.delete(src);
     }
   })();
 
@@ -148,65 +172,83 @@ export function stopLetterAudio(): void {
  * Play letter audio imperatively.
  * Strict rules:
  * - If this letter is ALREADY playing, extra clicks are IGNORED (plays only 1 time).
- * - Audio is played from in-memory cached instance (API called only 1 time).
+ * - If an API call is ALREADY pending, extra clicks DO NOT fire another API call.
+ * - Audio is played strictly from in-memory cached Blob instance.
  */
-export function playLetterAudio(letter: string, onEnd?: () => void): HTMLAudioElement | null {
+export async function playLetterAudio(
+  letter: string,
+  onEnd?: () => void
+): Promise<HTMLAudioElement | null> {
   if (typeof window === 'undefined') return null;
 
-  // RULE: If this letter is already playing, DO NOT duplicate or re-call!
+  // RULE 1: If this letter is already playing, DO NOT duplicate or re-call!
   if (isLetterAudioPlaying(letter)) {
     if (onEnd) activeEndCallbacks.add(onEnd);
     return activeAudioElement;
   }
 
-  // If another letter was playing, stop it first
-  if (activeAudioElement && !activeAudioElement.paused) {
-    stopLetterAudio();
-  }
-
   const src = ARABIC_LETTER_AUDIO_MAP[letter] || ARABIC_LETTER_AUDIO_MAP['ق'];
-  let audio = audioElementCache.get(src);
 
-  if (!audio) {
-    const cachedBlobUrl = audioBlobCache.get(src);
-    audio = new Audio(cachedBlobUrl || src);
-    audio.preload = 'auto';
-    audioElementCache.set(src, audio);
-
-    // If blob was not yet cached, fetch once in background for all future plays
-    if (!cachedBlobUrl) {
-      preloadLetterAudio(letter).catch(() => {});
-    }
+  // RULE 2: If an API call is currently pending and a play is already queued for this letter,
+  // do NOT start another API call or duplicate action!
+  if (playQueuedForLetter.has(letter)) {
+    if (onEnd) activeEndCallbacks.add(onEnd);
+    return null;
   }
 
-  activeAudioElement = audio;
-  currentlyPlayingLetter = letter;
-  if (onEnd) activeEndCallbacks.add(onEnd);
-
-  const handleEnded = () => {
-    if (currentlyPlayingLetter === letter) {
-      currentlyPlayingLetter = null;
-      activeAudioElement = null;
-    }
-    activeEndCallbacks.forEach(fn => {
-      try { fn(); } catch {}
-    });
-    activeEndCallbacks.clear();
-  };
-
-  audio.onended = handleEnded;
-  audio.onerror = handleEnded;
+  playQueuedForLetter.add(letter);
 
   try {
+    // If not in blob cache, wait for existing pending fetch or start single fetch
+    let blobUrl = audioBlobCache.get(src);
+    if (!blobUrl) {
+      blobUrl = await preloadLetterAudio(letter);
+    }
+
+    // Stop another letter if it was playing
+    if (activeAudioElement && !activeAudioElement.paused) {
+      stopLetterAudio();
+    }
+
+    // Retrieve or create the cached HTMLAudioElement ONLY with the blobUrl
+    let audio = audioElementCache.get(src);
+    if (!audio) {
+      audio = new Audio(blobUrl);
+      audio.preload = 'auto';
+      audioElementCache.set(src, audio);
+    } else if (audio.src !== blobUrl) {
+      audio.src = blobUrl;
+    }
+
+    activeAudioElement = audio;
+    currentlyPlayingLetter = letter;
+    if (onEnd) activeEndCallbacks.add(onEnd);
+
+    const handleEnded = () => {
+      if (currentlyPlayingLetter === letter) {
+        currentlyPlayingLetter = null;
+        activeAudioElement = null;
+      }
+      activeEndCallbacks.forEach(fn => {
+        try { fn(); } catch {}
+      });
+      activeEndCallbacks.clear();
+    };
+
+    audio.onended = handleEnded;
+    audio.onerror = handleEnded;
+
     audio.currentTime = 0;
-    audio.play().catch(() => {
+    await audio.play().catch(() => {
       handleEnded();
     });
-  } catch {
-    handleEnded();
-  }
 
-  return audio;
+    return audio;
+  } catch {
+    return null;
+  } finally {
+    playQueuedForLetter.delete(letter);
+  }
 }
 
 // ============================================================================
@@ -225,10 +267,16 @@ export default function CleanLetterAudio({
   className = "",
 }: CleanLetterAudioProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Preload audio blob into memory on mount or when letter changes
   useEffect(() => {
-    preloadLetterAudio(letter).catch(() => {});
+    setIsLoading(true);
+    preloadLetterAudio(letter)
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
     setIsPlaying(false);
   }, [letter]);
 
@@ -239,25 +287,27 @@ export default function CleanLetterAudio({
     };
   }, []);
 
-  const handlePlay = useCallback(() => {
-    // Ignore extra clicks while already playing
-    if (isLetterAudioPlaying(letter)) return;
+  const handlePlay = useCallback(async () => {
+    // If already playing or fetch is pending, ignore extra clicks completely
+    if (isLetterAudioPlaying(letter) || isAudioFetchPending(letter)) return;
 
     setIsPlaying(true);
-    playLetterAudio(letter, () => {
+    await playLetterAudio(letter, () => {
       setIsPlaying(false);
     });
   }, [letter]);
+
+  const isBusy = isPlaying || isLoading;
 
   return (
     <div className={`w-full ${className}`}>
       <button
         type="button"
         onClick={handlePlay}
-        disabled={isPlaying}
+        disabled={isBusy}
         aria-label={lang === 'ar' ? `استمع لنطق الحرف ${letter}` : `Pronounce letter ${letter}`}
         className={`w-full py-2.5 px-3.5 rounded-2xl flex items-center justify-between transition-all border shadow-xs select-none ${
-          isPlaying
+          isBusy
             ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/30 cursor-not-allowed opacity-90'
             : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 active:scale-[0.98]'
         }`}
@@ -265,12 +315,14 @@ export default function CleanLetterAudio({
         <div className="flex items-center gap-2.5">
           <div
             className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-              isPlaying
+              isBusy
                 ? 'bg-white/20 text-white'
                 : 'bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
             }`}
           >
-            {isPlaying ? (
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isPlaying ? (
               <Volume2 className="w-4 h-4 animate-pulse" />
             ) : (
               <Play className="w-4 h-4 translate-x-[1px]" />
@@ -278,11 +330,9 @@ export default function CleanLetterAudio({
           </div>
 
           <span className="text-xs font-bold">
-            {lang === 'ar'
-              ? 'استمع لنطق الحرف'
-              : lang === 'ml'
-              ? 'ശബ്ദം കേൾക്കുക'
-              : 'Play Pronunciation'}
+            {isLoading
+              ? (lang === 'ar' ? 'جاري التحميل...' : lang === 'ml' ? 'ലോഡ് ചെയ്യുന്നു...' : 'Loading audio...')
+              : (lang === 'ar' ? 'استمع لنطق الحرف' : lang === 'ml' ? 'ശബ്ദം കേൾക്കുക' : 'Play Pronunciation')}
           </span>
         </div>
 
