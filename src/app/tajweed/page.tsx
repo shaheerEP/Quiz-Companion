@@ -86,11 +86,309 @@ interface LetterPreset {
     desc: string;
     sifah: string;
   };
+  isThroat?: boolean;
+  throatFloor?: 'aqsa' | 'wasat' | 'adna';
+  throatTwinId?: string;
+  fingerGuide?: {
+    en: string;
+    ar: string;
+    ml: string;
+  };
+  twinSummary?: {
+    en: string;
+    ar: string;
+    ml: string;
+  };
   gears: Record<string, number>;
   greenCoords: { x: number; y: number; z: number; rx: number };
 }
 
 const LETTER_PRESETS: LetterPreset[] = [
+  // ==========================================================================
+  // AL-HALQ (الحلق - THE 6 THROAT LETTERS IN ANATOMICAL ORDER: BOTTOM -> TOP)
+  // ==========================================================================
+
+  // 1. Hamzah (ء) - Station 1: Bottom Throat (أقصى الحلق)
+  {
+    id: 'hamzah',
+    tag: 'Hamzah (ء)',
+    letter: 'ء',
+    sukoonText: 'ءْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَءْ',
+    isThroat: true,
+    throatFloor: 'aqsa',
+    throatTwinId: 'haa_light',
+    fingerGuide: {
+      en: 'Place 2 fingers in the soft hollow pit right above your collarbone. Say "أَءْ" — feel the sudden firm stop inside your voice box!',
+      ar: 'ضع إصبعين في نقرة الحنجرة فوق عظم الترقوة تماماً. انطق (أَءْ) وستشعر بالقفل الفوري للأوتار الصوتية وانحباس النفس والصوت!',
+      ml: 'കോളർ ബോണിന് മുകളിലുള്ള കുഴിയിൽ 2 വിരലുകൾ വെച്ച് "അഅ്" എന്ന് പറയുമ്പോൾ ശബ്ദവാതിൽ പെട്ടെന്ന് അടയുന്നത് അനുഭവപ്പെടും!'
+    },
+    twinSummary: {
+      en: 'Gate 100% Shut (قفل تام بلا نَفَس)',
+      ar: 'قفل تام للأوتار (انحباس الصوت والنفس)',
+      ml: 'ശബ്ദവാതിൽ പൂർണ്ണമായി അടയുന്നു'
+    },
+    en: {
+      title: 'Makhraj of Hamzah (ء / أ)',
+      category: 'Bottom Throat (أقصى الحلق)',
+      zoneLabel: 'Vocal Cords Gate (الأوتار الصوتية)',
+      desc: 'Deepest throat right above the chest. For Sukoon (أَءْ), both vocal cords snap 100% shut, stopping all air and sound completely!',
+      sifah: 'Light • Complete Stop (شدة وجهر)'
+    },
+    ar: {
+      title: 'مخرج حرف الهمزة (ء / أ)',
+      category: 'أقصى الحلق (عند الأوتار الصوتية)',
+      zoneLabel: 'الأوتار الصوتية (الحنجرة)',
+      desc: 'يخرج من أقصى الحلق عند الأوتار الصوتية بانطباقهما انطباقاً تاماً في الساكنة فيقفل المجرى وينحبس الصوت والنفس.',
+      sifah: 'مرقق (شدة وجهر)'
+    },
+    ml: {
+      title: 'ഹംസ (ء / أ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
+      zoneLabel: 'വോക്കൽ കോഡുകൾ (ശബ്ദതന്തുക്കൾ)',
+      desc: 'തൊണ്ടയുടെ ഏറ്റവും അടിഭാഗത്ത് വോക്കൽ കോഡുകൾ തമ്മിൽ അമർന്ന് പൂർണ്ണമായി അടയുമ്പോൾ ശബ്ദവും ശ്വാസവും തടസ്സപ്പെട്ട് പുറപ്പെടുന്നു.',
+      sifah: 'നേർത്തത് (ശബ്ദം തടയൽ)'
+    },
+    gears: { jawOpen: 32, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 100, epiglottisTilt: 0, throatStation: 1 },
+    greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
+  },
+  // 2. Haa (هـ) - Station 1: Bottom Throat (أقصى الحلق)
+  {
+    id: 'haa_light',
+    tag: 'Haa (هـ)',
+    letter: 'ه',
+    sukoonText: 'هْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَهْ',
+    isThroat: true,
+    throatFloor: 'aqsa',
+    throatTwinId: 'hamzah',
+    fingerGuide: {
+      en: 'Keep 2 fingers above your collarbone and say "أَهْ". Unlike Hamzah, feel warm, continuous air gliding smoothly without a hard stop.',
+      ar: 'أبق إصبعين فوق الترقوة وانطق (أَهْ). بعكس الهمزة، ستشعر بجريان هواء دافئ مستمر دون أي انغلاق حاد.',
+      ml: 'കോളർ ബോണിന് മുകളിൽ വിരലുകൾ വെച്ച് "അഹ്" എന്ന് പറയുമ്പോൾ ശ്വാസം തടസ്സമില്ലാതെ ഒഴുകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Gate Slightly Open (جريان النفس الدافئ)',
+      ar: 'انفتاح جزئي للأوتار وجريان النفس',
+      ml: 'ശബ്ദവാതിൽ തുറന്ന് ശ്വാസം ഒഴുകുന്നു'
+    },
+    en: {
+      title: 'Makhraj of Haa (هـ)',
+      category: 'Bottom Throat (أقصى الحلق)',
+      zoneLabel: 'Vocal Cords Gate (الأوتار الصوتية)',
+      desc: 'Same bottom vocal cords as Hamzah, but the gate stays slightly open so warm breath (أَهْ) glides through smoothly with pure whisper (Hams).',
+      sifah: 'Light • Pure Breath Flow (همس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الهاء (هـ)',
+      category: 'أقصى الحلق (عند الأوتار الصوتية)',
+      zoneLabel: 'الأوتار الصوتية (الحنجرة)',
+      desc: 'يخرج من نفس مخرج الهمزة لكن بانفتاح جزئي للأوتار ليجري النفس الدافئ بلطف وخفاء دون انحباس.',
+      sifah: 'مرقق (همس ورخاوة وخفاء)'
+    },
+    ml: {
+      title: 'ഹാ (هـ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
+      zoneLabel: 'വോക്കൽ കോഡുകൾ',
+      desc: 'ഹംസയുടെ അതേ അടിത്തൊണ്ടയിൽ വോക്കൽ കോഡുകൾ ചെറുതായി തുറന്നുവെച്ച് ചൂടുള്ള ശ്വാസം ഒഴുക്കിവിട്ട് ഉച്ചരിക്കുന്നു.',
+      sifah: 'നേർത്തത് (ശ്വാസമൊഴുക്ക്)'
+    },
+    gears: { jawOpen: 34, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 40, epiglottisTilt: 0, throatStation: 1 },
+    greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
+  },
+  // 3. 'Ayn (ع) - Station 2: Middle Throat (وسط الحلق)
+  {
+    id: 'ayn',
+    tag: 'Ayn (ع)',
+    letter: 'ع',
+    sukoonText: 'عْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَعْ',
+    isThroat: true,
+    throatFloor: 'wasat',
+    throatTwinId: 'haa_pharyngeal',
+    fingerGuide: {
+      en: 'Place 2 fingers right on the middle of your neck (Adam’s apple). Say "أَعْ" — feel the throat squeeze inward and buzz warmly!',
+      ar: 'ضع إصبعين على تفاحة آدم في وسط الرقبة. انطق (أَعْ) وستشعر بلسان المزمار يرجع للوراء واهتزاز صوتي واضح!',
+      ml: 'തൊണ്ടമുഴയിൽ വിരലുകൾ വെച്ച് "അഅ്" എന്ന് പറയുമ്പോൾ നടുഭാഗം ഉള്ളിലേക്ക് വലിഞ്ഞ് വൈബ്രേഷൻ ഉണ്ടാകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Firm Squeeze + Voice Buzz (جهر وتوسط)',
+      ar: 'رجوع لسان المزمار مع جهر الصوت',
+      ml: 'ശക്തമായ സങ്കോചവും ശബ്ദ വൈബ്രേഷനും'
+    },
+    en: {
+      title: 'Makhraj of Ayn (ع)',
+      category: 'Middle Throat (وسط الحلق)',
+      zoneLabel: 'Epiglottis Valve (لسان المزمار)',
+      desc: 'At the Adam’s apple, the leaf-shaped epiglottis valve tilts backward toward the back throat wall while your voice vibrates with rich resonance (أَعْ).',
+      sifah: 'Light • Voiced Squeeze (جهر وتوسط)'
+    },
+    ar: {
+      title: 'مخرج حرف العين (ع)',
+      category: 'وسط الحلق (عند لسان المزمار)',
+      zoneLabel: 'لسان المزمار مع الجدار الخلفي',
+      desc: 'يخرج من وسط الحلق برجوع لسان المزمار بقوة نحو الجدار الخلفي للحلق مع جريان بيني معتدل للصوت واهتزاز الأوتار.',
+      sifah: 'مرقق (جهر وتوسط)'
+    },
+    ml: {
+      title: 'ഐൻ (ع) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'നടു തൊണ്ട (എപ്പിഗ്ലോട്ടിസ്)',
+      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ് വാൽവ്',
+      desc: 'തൊണ്ടയുടെ മധ്യഭാഗത്ത് എപ്പിഗ്ലോട്ടിസ് പിൻഭിത്തിയിലേക്ക് ചേർന്ന് ശബ്ദം ഭാഗികമായി തടഞ്ഞ് വ്യക്തമായ മുഴക്കത്തോടെ പുറപ്പെടുന്നു.',
+      sifah: 'നേർത്തത് (ഇടത്തരം ശബ്ദം)'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 15, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 65, epiglottisTilt: 85, throatStation: 2 },
+    greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
+  },
+  // 4. Haa Pharyngeal (ح) - Station 2: Middle Throat (وسط الحلق)
+  {
+    id: 'haa_pharyngeal',
+    tag: 'Haa (ح)',
+    letter: 'ح',
+    sukoonText: 'حْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَحْ',
+    isThroat: true,
+    throatFloor: 'wasat',
+    throatTwinId: 'ayn',
+    fingerGuide: {
+      en: 'Touch the middle of your neck and compare "أَعْ" (buzzing) with "أَحْ" (smooth air!). Feel the throat narrow with zero vocal cord buzz.',
+      ar: 'المس وسط الرقبة وقارن بين (أَعْ) بالاهتزاز و(أَحْ) بالنفس الصافي. ستشعر بتضيق الحلق مع سكون تام للأوتار.',
+      ml: 'തൊണ്ടയുടെ മധ്യത്തിൽ തൊട്ട് നോക്കുക: ഐനിൽ (ع) വിറയൽ ഉണ്ടാകുമ്പോൾ, ഹാഇൽ (ح) യാതൊരു വിറയലുമില്ലാതെ വെറും കാറ്റ് മാത്രം ഒഴുകുന്നു!'
+    },
+    twinSummary: {
+      en: 'Smooth Squeeze + Whisper Air (همس صافٍ)',
+      ar: 'تضيق لطيف مع جريان النفس بلا اهتزاز',
+      ml: 'മൃദുവായ ചുരുങ്ങലും വെറും കാറ്റും'
+    },
+    en: {
+      title: 'Makhraj of Haa (ح)',
+      category: 'Middle Throat (وسط الحلق)',
+      zoneLabel: 'Epiglottis Valve (لسان المزمار)',
+      desc: "Same middle throat valve as 'Ayn, but vocal cords stay open: no buzz, just a clean, polished, soothing whisper (أَحْ).",
+      sifah: 'Light • Smooth Whisper (همس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الحاء (ح)',
+      category: 'وسط الحلق (عند لسان المزمار)',
+      zoneLabel: 'لسان المزمار مع جريان النفس',
+      desc: 'يخرج من نفس مخرج العين بانقباض عضلات وسط الحلق، مع انفتاح الأوتار ليجري النفس النقي باحتكاك لطيف دون اهتزاز.',
+      sifah: 'مرقق (همس ورخاوة)'
+    },
+    ml: {
+      title: 'ഹാഅ് (ح) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'നടു തൊണ്ട (എപ്പിഗ്ലോട്ടിസ്)',
+      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ് വാൽവ്',
+      desc: 'ഐനിന്റെ അതേ നടു തൊണ്ടയിൽ നിന്ന് എപ്പിഗ്ലോട്ടിസ് ചുരുങ്ങി വോക്കൽ കോഡുകൾ തുറന്ന് വെറും കാറ്റായി ഉച്ചരിക്കുന്നു.',
+      sifah: 'നേർത്തത് (ശ്വാസമൊഴുക്ക്)'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 12, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 25, epiglottisTilt: 72, throatStation: 2 },
+    greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
+  },
+  // 5. Ghayn (غ) - Station 3: Top Throat (أدنى الحلق)
+  {
+    id: 'ghayn',
+    tag: 'Ghayn (غ)',
+    letter: 'غ',
+    sukoonText: 'غْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَغْ',
+    isThroat: true,
+    throatFloor: 'adna',
+    throatTwinId: 'khaa',
+    fingerGuide: {
+      en: 'Tuck 2 fingers right under your chin where the jaw meets the top of your neck. Say "أَغْ" — feel the back tongue push up and vibrate!',
+      ar: 'ضع إصبعين أسفل الذقن مباشرة عند التقاء الفك بالرقبة. انطق (أَغْ) وستشعر بارتفاع جذر اللسان واهتزاز الصوت المفخّم!',
+      ml: 'താടിയെല്ലിന് തൊട്ടുതാഴെ വിരലുകൾ വെച്ച് "അഗ്" എന്ന് പറയുമ്പോൾ നാവിന്റെ മുരട് ഉയർന്നു വിറക്കുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Voiced Vibration + Heavy (جهر + تفخيم)',
+      ar: 'استعلاء اللسان مع اهتزاز مجهور وتفخيم',
+      ml: 'കനത്ത ശബ്ദവും നാവിന്റെ ഉയർച്ചയും'
+    },
+    en: {
+      title: 'Makhraj of Ghayn (غ)',
+      category: 'Top Throat (أدنى الحلق)',
+      zoneLabel: 'Tongue Root & Uvula (جذر اللسان واللهاة)',
+      desc: 'At the top of the throat closest to the mouth, the back root of the tongue elevates toward the soft palate and uvula with deep voiced resonance (أَغْ).',
+      sifah: 'Heavy • Voiced Resonance (استعلاء وجهر ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الغين (غ)',
+      category: 'أدنى الحلق (مما يلي الفم)',
+      zoneLabel: 'جذر اللسان مع الحنك اللحمي واللهاة',
+      desc: 'يخرج من أدنى الحلق قرب اللهاة بارتفاع أقصى وجذر اللسان نحو الحنك الرخو مع جريان الصوت الرخيم واهتزازه (مفخم).',
+      sifah: 'مفخم (استعلاء ورخاوة وجهر)'
+    },
+    ml: {
+      title: 'ഗൈൻ (غ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
+      zoneLabel: 'നാവിന്റെ മുരടും അണ്ണാക്കും',
+      desc: 'വായിലേക്ക് അടുത്ത തൊണ്ടയുടെ ഏറ്റവും മുകൾഭാഗത്ത് നാവിന്റെ മുരട് അണ്ണാക്കിലേക്ക് ഉയർത്തി കനത്ത ശബ്ദത്തോടെ പുറപ്പെടുന്നു.',
+      sifah: 'കനം (ഉയർച്ചയും ശബ്ദമൊഴുക്കും)'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 92, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 60, epiglottisTilt: 20, throatStation: 3 },
+    greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
+  },
+  // 6. Khaa (خ) - Station 3: Top Throat (أدنى الحلق)
+  {
+    id: 'khaa',
+    tag: 'Khaa (خ)',
+    letter: 'خ',
+    sukoonText: 'خْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَخْ',
+    isThroat: true,
+    throatFloor: 'adna',
+    throatTwinId: 'ghayn',
+    fingerGuide: {
+      en: 'Place 2 fingers under the corner of your chin and say "أَخْ". Feel the back tongue rise while unvoiced air scrapes across the top of the throat.',
+      ar: 'ضع إصبعين تحت زاوية الفك وانطق (أَخْ). ستشعر بارتفاع اللسان واحتكاك خشن للنفس دون اهتزاز الأوتار الصوتية.',
+      ml: 'താടിയുടെ താഴെ വിരലുകൾ വെച്ച് "അഖ്" എന്ന് പറയുമ്പോൾ നാവിന്റെ അടിഭാഗം ഉയർന്ന് വിറയലില്ലാതെ പരുക്കൻ ശ്വാസം ഉരസിപ്പോകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Unvoiced Air Scrape + Heavy (همس + تفخيم)',
+      ar: 'احتكاك خشن للنفس مع استعلاء وتفخيم',
+      ml: 'പരുക്കൻ ശ്വാസ ഉരസലും കനവും'
+    },
+    en: {
+      title: 'Makhraj of Khaa (خ)',
+      category: 'Top Throat (أدنى الحلق)',
+      zoneLabel: 'Tongue Root & Uvula (جذر اللسان واللهاة)',
+      desc: 'Same top throat spot as Ghayn, but with NO vocal cord vibration—producing a strong, heavy, raspy friction scrape of breath (أَخْ).',
+      sifah: 'Heavy • Raspy Breath Scrape (استعلاء وهمس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الخاء (خ)',
+      category: 'أدنى الحلق (مما يلي الفم)',
+      zoneLabel: 'جذر اللسان مع الحنك اللحمي',
+      desc: 'يخرج من أدنى الحلق بارتفاع جذر اللسان مع احتكاك خشن وجريان واضح ومستمر للنفس والصوت دون اهتزاز الأوتار (مفخم).',
+      sifah: 'مفخم (استعلاء وهمس ورخاوة)'
+    },
+    ml: {
+      title: 'ഖാഅ് (خ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
+      zoneLabel: 'നാവിന്റെ മുരടും അണ്ണാക്കും',
+      desc: 'ഗൈനിന്റെ അതേ സ്ഥലത്ത് നാവിന്റെ അടിഭാഗം അണ്ണാക്കിലേക്ക് ഉയർന്ന് വിറയലില്ലാതെ പരുക്കൻ ശ്വാസത്തോടെ പുറപ്പെടുന്നു.',
+      sifah: 'കനം (പരുക്കൻ ശ്വാസ ഘർഷണം)'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 94, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 20, epiglottisTilt: 20, throatStation: 3 },
+    greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
+  },
+
+  // ==========================================================================
+  // AL-LISAAN & ASH-SHAFATAAN (اللسان والشفتان - 22 ORAL & LIP LETTERS)
+  // ==========================================================================
+
   // 1. Qaaf (ق) - Deep Tongue Root
   {
     id: 'qaaf',
@@ -828,209 +1126,6 @@ const LETTER_PRESETS: LetterPreset[] = [
 ];
 
 // Resting pose for Alif simulation
-// Throat Letter Presets (Halq - Throat letters for complete coverage across Sifaat al-Huroof)
-export const THROAT_LETTER_PRESETS: LetterPreset[] = [
-  // 1. Hamzah / Alif (ء / أ / ئ / ا)
-  {
-    id: 'hamzah',
-    tag: 'Hamzah (ء)',
-    letter: 'ء',
-    sukoonText: 'أْ',
-    isHeavy: false,
-    dorsalMode: 'normal',
-    phoneticSound: 'أَءْ',
-    en: {
-      title: 'Makhraj of Hamzah (ء / أ)',
-      category: 'Deep Throat (أقصى الحلق - الأوتار الصوتية)',
-      zoneLabel: 'Vocal Cords / Glottis (الحنجرة والأوتار الصوتية)',
-      desc: 'Originates from the deepest part of the throat at the vocal cords by firm instantaneous closure and abrupt release.',
-      sifah: 'Light (Shiddah & Jahr)'
-    },
-    ar: {
-      title: 'مخرج حرف الهمزة (ء / أ)',
-      category: 'أقصى الحلق عند الأوتار الصوتية',
-      zoneLabel: 'الحنجرة والأوتار الصوتية',
-      desc: 'يخرج من أقصى الحلق عند الأوتار الصوتية بانطباقهما انطباقاً تاماً في الساكنة وانفتاحهما في المتحركة.',
-      sifah: 'مرقق (شدة وجهر)'
-    },
-    ml: {
-      title: 'ഹംസ (ء / أ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
-      zoneLabel: 'ശബ്ദതന്തുക്കൾ (വോക്കൽ കോഡുകൾ)',
-      desc: 'തൊണ്ടയുടെ ഏറ്റവും താഴ്ഭാഗത്ത് വോക്കൽ കോഡുകൾ തമ്മിൽ അമർന്ന് അടഞ്ഞു പെട്ടെന്ന് തുറക്കുമ്പോൾ പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (ശബ്ദം തടയൽ)'
-    },
-    gears: { jawOpen: 32, tipElevation: -20, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.20, z: -0.65, rx: 0.2 }
-  },
-  // 2. Haa (هـ / ة)
-  {
-    id: 'haa_light',
-    tag: 'Haa (هـ)',
-    letter: 'ه',
-    sukoonText: 'هْ',
-    isHeavy: false,
-    dorsalMode: 'normal',
-    phoneticSound: 'أَهْ',
-    en: {
-      title: 'Makhraj of Haa (هـ)',
-      category: 'Deep Throat (أقصى الحلق)',
-      zoneLabel: 'Deepest Throat (أقصى الحلق)',
-      desc: 'Originates from the deepest throat with an open glottis, allowing a gentle continuous whisper of breath (Hams).',
-      sifah: 'Light (Hams & Rakhawah)'
-    },
-    ar: {
-      title: 'مخرج حرف الهاء (هـ)',
-      category: 'أقصى الحلق بانفتاح الأوتار الصوتية',
-      zoneLabel: 'أقصى الحلق',
-      desc: 'يخرج من أقصى الحلق مع انفتاح الأوتار الصوتية وجريان النفس اللطيف دون انحباس.',
-      sifah: 'مرقق (همس ورخاوة وخفاء)'
-    },
-    ml: {
-      title: 'ഹാ (هـ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'അടിത്തൊണ്ട',
-      zoneLabel: 'തൊണ്ടയുടെ താഴ്ഭാഗം',
-      desc: 'തൊണ്ടയുടെ ഏറ്റവും അടിഭാഗത്ത് നിന്ന് ശ്വാസം തടസ്സമില്ലാതെ ഒഴുക്കിവിട്ട് മൃദുവായി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ശ്വാസം ഒഴുകൽ)'
-    },
-    gears: { jawOpen: 34, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.20, z: -0.65, rx: 0.2 }
-  },
-  // 3. Ayn (ع)
-  {
-    id: 'ayn',
-    tag: 'Ayn (ع)',
-    letter: 'ع',
-    sukoonText: 'عْ',
-    isHeavy: false,
-    dorsalMode: 'normal',
-    phoneticSound: 'أَعْ',
-    en: {
-      title: 'Makhraj of Ayn (ع)',
-      category: 'Mid Throat (وسط الحلق)',
-      zoneLabel: 'Epiglottis (لسان المزمار)',
-      desc: 'Originates from the middle of the throat by retraction of the epiglottis towards the back pharyngeal wall with moderate sound flow.',
-      sifah: 'Light (Tawassut & Jahr)'
-    },
-    ar: {
-      title: 'مخرج حرف العين (ع)',
-      category: 'وسط الحلق عند لسان المزمار',
-      zoneLabel: 'لسان المزمار',
-      desc: 'يخرج من وسط الحلق برجوع لسان المزمار إلى الجدار الخلفي للحلق مع جريان بيني معتدل للصوت.',
-      sifah: 'مرقق (توسط وجهر)'
-    },
-    ml: {
-      title: 'ഐൻ (ع) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നടു തൊണ്ട',
-      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ്',
-      desc: 'തൊണ്ടയുടെ മധ്യഭാഗത്തുനിന്ന് എപ്പിഗ്ലോട്ടിസ് തൊണ്ടയുടെ പിൻഭിത്തിയിലേക്ക് ചേർന്ന് ശബ്ദം പാതി തടഞ്ഞ് പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (ഇടത്തരം ശബ്ദം)'
-    },
-    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 15, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.22, z: -0.58, rx: 0.25 }
-  },
-  // 4. Haa Pharyngeal (ح)
-  {
-    id: 'haa_pharyngeal',
-    tag: 'Haa (ح)',
-    letter: 'ح',
-    sukoonText: 'حْ',
-    isHeavy: false,
-    dorsalMode: 'normal',
-    phoneticSound: 'أَحْ',
-    en: {
-      title: 'Makhraj of Haa (ح)',
-      category: 'Mid Throat (وسط الحلق)',
-      zoneLabel: 'Epiglottis (لسان المزمار)',
-      desc: 'Originates from the middle of the throat with continuous whisper of breath and clear pharyngeal friction at the epiglottis.',
-      sifah: 'Light (Hams & Rakhawah)'
-    },
-    ar: {
-      title: 'مخرج حرف الحاء (ح)',
-      category: 'وسط الحلق مع جريان النفس',
-      zoneLabel: 'لسان المزمار',
-      desc: 'يخرج من وسط الحلق بانقباض خفيف في عضلات الحلق وجريان واضح ومستمر للنفس والصوت.',
-      sifah: 'مرقق (همس ورخاوة)'
-    },
-    ml: {
-      title: 'ഹാഅ് (ح) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നടു തൊണ്ട',
-      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ്',
-      desc: 'നടു തൊണ്ടയിൽ നിന്ന് എപ്പിഗ്ലോട്ടിസ് ചുരുങ്ങി ശ്വാസം വ്യക്തമായി ഒഴുക്കിവിട്ട് ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ശ്വാസം ഒഴുകൽ)'
-    },
-    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 12, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.22, z: -0.58, rx: 0.25 }
-  },
-  // 5. Ghayn (غ)
-  {
-    id: 'ghayn',
-    tag: 'Ghayn (غ)',
-    letter: 'غ',
-    sukoonText: 'غْ',
-    isHeavy: true,
-    dorsalMode: 'qaaf_posterior',
-    phoneticSound: 'أَغْ',
-    en: {
-      title: 'Makhraj of Ghayn (غ)',
-      category: 'Upper Throat (أدنى الحلق)',
-      zoneLabel: 'Upper Pharynx / Uvula (أدنى الحلق مما يلي الفم)',
-      desc: 'Originates from the upper throat closest to the mouth near the uvula, with deep velar-pharyngeal resonance and elevated back tongue.',
-      sifah: 'Heavy (Isti\'la & Rakhawah)'
-    },
-    ar: {
-      title: 'مخرج حرف الغين (غ)',
-      category: 'أدنى الحلق بالقرب من اللهاة',
-      zoneLabel: 'أدنى الحلق مما يلي الفم',
-      desc: 'يخرج من أدنى الحلق بالقرب من أصل اللسان واللهاة مع استعلاء أقصى اللسان وجريان رخو للصوت.',
-      sifah: 'مفخم (استعلاء ورخاوة وجهر)'
-    },
-    ml: {
-      title: 'ഗൈൻ (غ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
-      zoneLabel: 'തൊണ്ടയുടെ മുകൾഭാഗം (വായിലേക്ക് അടുത്തത്)',
-      desc: 'വായിലേക്ക് അടുത്ത തൊണ്ടയുടെ ഏറ്റവും മുകൾഭാഗത്ത് നാവിന്റെ മുരട് അണ്ണാക്കിലേക്ക് ഉയർത്തി ഘർഷണത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'കനം (ഉയർച്ചയും ശബ്ദമൊഴുക്കും)'
-    },
-    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 88, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.28, z: -0.48, rx: 0.32 }
-  },
-  // 6. Khaa (خ)
-  {
-    id: 'khaa',
-    tag: 'Khaa (خ)',
-    letter: 'خ',
-    sukoonText: 'خْ',
-    isHeavy: true,
-    dorsalMode: 'qaaf_posterior',
-    phoneticSound: 'أَخْ',
-    en: {
-      title: 'Makhraj of Khaa (خ)',
-      category: 'Upper Throat (أدنى الحلق)',
-      zoneLabel: 'Upper Pharynx / Uvula (أدنى الحلق مما يلي الفم)',
-      desc: 'Originates from the upper throat near the uvula with heavy raspy friction and continuous flow of breath (Hams & Rakhawah).',
-      sifah: 'Heavy (Isti\'la, Hams & Rakhawah)'
-    },
-    ar: {
-      title: 'مخرج حرف الخاء (خ)',
-      category: 'أدنى الحلق مع جريان النفس',
-      zoneLabel: 'أدنى الحلق مما يلي الفم',
-      desc: 'يخرج من أدنى الحلق بالقرب من أصل اللسان مع احتكاك خشن وجريان واضح ومستمر للنفس والصوت.',
-      sifah: 'مفخم (استعلاء وهمس ورخاوة)'
-    },
-    ml: {
-      title: 'ഖാഅ് (خ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
-      zoneLabel: 'തൊണ്ടയുടെ മുകൾഭാഗം',
-      desc: 'തൊണ്ടയുടെ മുകൾഭാഗത്ത് നാവിന്റെ അടിഭാഗം മൃദുവായ അണ്ണാക്കിലേക്ക് ഉയർന്ന് ഘർഷണത്തോടെ ശ്വാസത്തോടൊപ്പം പുറപ്പെടുന്നു.',
-      sifah: 'കനം (ശ്വാസമൊഴുക്ക്)'
-    },
-    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 92, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.28, z: -0.48, rx: 0.32 }
-  }
-];
-
-// Helper to find preset for any Arabic letter across oral and throat categories
 export const findPresetByLetter = (ltr: string): LetterPreset | undefined => {
   let target = ltr;
   if (['أ', 'ء', 'ئ', 'ا', 'ؤ'].includes(ltr)) target = 'ء';
@@ -1038,9 +1133,7 @@ export const findPresetByLetter = (ltr: string): LetterPreset | undefined => {
 
   return (
     LETTER_PRESETS.find(p => p.letter === target) ||
-    THROAT_LETTER_PRESETS.find(p => p.letter === target) ||
-    LETTER_PRESETS.find(p => p.letter === ltr) ||
-    THROAT_LETTER_PRESETS.find(p => p.letter === ltr)
+    LETTER_PRESETS.find(p => p.letter === ltr)
   );
 };
 
@@ -1711,9 +1804,13 @@ export default function TajweedStudioPage() {
 
   const camAnimRef = useRef<{
     startRadius: number;
+    targetRadius?: number;
     startTheta: number;
     targetTheta: number;
     startPhi: number;
+    targetPhi?: number;
+    startTarget?: THREE.Vector3;
+    targetTarget?: THREE.Vector3;
     startTime: number;
     duration: number;
   } | null>(null);
@@ -1891,6 +1988,14 @@ export default function TajweedStudioPage() {
     lipsGroup: THREE.Group;
     upperLipMesh: THREE.Mesh;
     lowerLipMesh: THREE.Mesh;
+    throatRoot?: THREE.Group;
+    pharynxMesh?: THREE.Mesh;
+    epiglottisPivot?: THREE.Group;
+    leftVocalCord?: THREE.Mesh;
+    rightVocalCord?: THREE.Mesh;
+    airwayParticles?: THREE.Points;
+    throatRingMesh?: THREE.Mesh;
+    particlePointsData?: { t: number; laneX: number; laneZ: number; speedOffset: number }[];
     animFrameId: number;
   } | null>(null);
 
@@ -1930,7 +2035,7 @@ export default function TajweedStudioPage() {
     };
   };
 
-  // Change active letter (preserve current 3D camera viewpoint and upper teeth opacity)
+  // Change active letter with smooth intelligent camera transition between throat and oral view
   const selectLetter = (preset: LetterPreset) => {
     stopLetterAudio();
     setIsPlayingSimulation(false);
@@ -1942,6 +2047,51 @@ export default function TajweedStudioPage() {
     forceDeformRef.current = true;
     targetGearsRef.current = { ...nextGears };
     setGears(nextGears);
+
+    // Smooth intelligent camera glide between oral dental perspective and throat stations
+    if (sceneElementsRef.current) {
+      const { spherical } = sceneElementsRef.current;
+      let targetCamRadius = DEFAULT_CAM.radius;
+      let targetCamTheta = DEFAULT_CAM.theta;
+      let targetCamPhi = DEFAULT_CAM.phi;
+      const targetCamTarget = DEFAULT_CAM.target.clone();
+
+      if (preset.isThroat) {
+        if (preset.throatFloor === 'aqsa') {
+          targetCamTarget.set(0.0, -0.48, -0.48);
+          targetCamRadius = 3.35;
+          targetCamTheta = -1.26;
+          targetCamPhi = 1.62;
+        } else if (preset.throatFloor === 'wasat') {
+          targetCamTarget.set(0.0, -0.34, -0.42);
+          targetCamRadius = 3.30;
+          targetCamTheta = -1.28;
+          targetCamPhi = 1.55;
+        } else {
+          targetCamTarget.set(0.0, -0.20, -0.28);
+          targetCamRadius = 3.28;
+          targetCamTheta = -1.32;
+          targetCamPhi = 1.50;
+        }
+      }
+
+      let diffTheta = (targetCamTheta - (spherical.theta % (Math.PI * 2)));
+      while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
+      while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
+
+      camAnimRef.current = {
+        startRadius: spherical.radius,
+        targetRadius: targetCamRadius,
+        startTheta: spherical.theta,
+        targetTheta: spherical.theta + diffTheta,
+        startPhi: spherical.phi,
+        targetPhi: targetCamPhi,
+        startTarget: spherical.target.clone(),
+        targetTarget: targetCamTarget,
+        startTime: performance.now(),
+        duration: 420
+      };
+    }
   };
 
   // Adjust gear slider
@@ -2687,6 +2837,160 @@ export default function TajweedStudioPage() {
       return a * h + b * (1.0 - h) - k * h * (1.0 - h);
     };
 
+    // ------------------------------------------------------------------------
+    // 3D THROAT ANATOMY SYSTEM (Al-Halq - Pharynx, Epiglottis, Vocal Cords, Particles)
+    // ------------------------------------------------------------------------
+    const throatRoot = new THREE.Group();
+    throatRoot.name = 'throatRoot';
+    mouthRoot.add(throatRoot);
+
+    // 1. Pharyngeal Airway Channel (Translucent soft-tissue pharynx tube)
+    const pharynxCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.0, -0.88, -0.62), // Trachea / Subglottis (Station 1 entrance)
+      new THREE.Vector3(0.0, -0.70, -0.60), // Glottis / Vocal Cords Gate
+      new THREE.Vector3(0.0, -0.48, -0.58), // Hypopharynx / Epiglottis (Station 2)
+      new THREE.Vector3(0.0, -0.28, -0.52), // Oropharynx
+      new THREE.Vector3(0.0, -0.12, -0.44), // Nasopharynx / Uvula junction (Station 3)
+      new THREE.Vector3(0.0, 0.04, -0.28)   // Blends forward into oral cavity
+    ]);
+
+    const pharynxGeom = new THREE.TubeGeometry(pharynxCurve, 40, 0.165, 24, false);
+    const pharynxMaterial = new THREE.MeshLambertMaterial({
+      color: 0x64748b,
+      transparent: true,
+      opacity: 0.30,
+      side: THREE.BackSide,
+      depthWrite: false
+    });
+    const pharynxMesh = new THREE.Mesh(pharynxGeom, pharynxMaterial);
+    pharynxMesh.renderOrder = 0;
+    throatRoot.add(pharynxMesh);
+
+    const pharynxOuterGeom = new THREE.TubeGeometry(pharynxCurve, 40, 0.175, 24, false);
+    const pharynxOuterMaterial = new THREE.MeshLambertMaterial({
+      color: 0x475569,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.FrontSide,
+      depthWrite: false
+    });
+    const pharynxOuterMesh = new THREE.Mesh(pharynxOuterGeom, pharynxOuterMaterial);
+    pharynxOuterMesh.renderOrder = 0;
+    throatRoot.add(pharynxOuterMesh);
+
+    // 2. Epiglottis Leaf Valve (لسان المزمار - Station 2: Middle Throat)
+    const epiglottisPivot = new THREE.Group();
+    epiglottisPivot.position.set(0.0, -0.48, -0.48);
+    throatRoot.add(epiglottisPivot);
+
+    const createEpiglottisGeometry = () => {
+      const geom = new THREE.BufferGeometry();
+      const width = 0.15;
+      const height = 0.22;
+      const segsX = 16;
+      const segsY = 20;
+      const pos: number[] = [];
+      const indices: number[] = [];
+      for (let iy = 0; iy <= segsY; iy++) {
+        const v = iy / segsY;
+        const y = v * height;
+        const leafWidth = width * Math.sin(v * Math.PI * 0.85 + 0.15);
+        for (let ix = 0; ix <= segsX; ix++) {
+          const u = (ix / segsX) * 2 - 1;
+          const x = u * leafWidth * 0.5;
+          const z = (1 - u * u) * 0.025 - Math.sin(v * Math.PI) * 0.02;
+          pos.push(x, y, z);
+        }
+      }
+      for (let iy = 0; iy < segsY; iy++) {
+        for (let ix = 0; ix < segsX; ix++) {
+          const a = iy * (segsX + 1) + ix;
+          const b = a + 1;
+          const c = (iy + 1) * (segsX + 1) + ix;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      return geom;
+    };
+
+    const epiglottisMat = new THREE.MeshLambertMaterial({
+      color: 0xf59e0b, // Amber cartilage tone
+      side: THREE.DoubleSide,
+      depthWrite: true
+    });
+    const epiglottisMesh = new THREE.Mesh(createEpiglottisGeometry(), epiglottisMat);
+    epiglottisMesh.renderOrder = 2;
+    epiglottisPivot.add(epiglottisMesh);
+
+    // 3. Vocal Cords Gate (الأوتار الصوتية - Station 1: Bottom Throat)
+    const vocalCordsPivot = new THREE.Group();
+    vocalCordsPivot.position.set(0.0, -0.70, -0.60);
+    throatRoot.add(vocalCordsPivot);
+
+    const glottisRingGeom = new THREE.TorusGeometry(0.12, 0.024, 12, 32);
+    glottisRingGeom.rotateX(Math.PI / 2);
+    const glottisRingMesh = new THREE.Mesh(glottisRingGeom, new THREE.MeshLambertMaterial({ color: 0x1e293b, side: THREE.DoubleSide }));
+    vocalCordsPivot.add(glottisRingMesh);
+
+    const cordMat = new THREE.MeshLambertMaterial({
+      color: 0x38bdf8,
+      side: THREE.DoubleSide,
+      depthWrite: true
+    });
+    const cordGeom = new THREE.BoxGeometry(0.065, 0.024, 0.12);
+    const leftVocalCord = new THREE.Mesh(cordGeom, cordMat);
+    leftVocalCord.position.set(-0.045, 0, 0);
+    vocalCordsPivot.add(leftVocalCord);
+
+    const rightVocalCord = new THREE.Mesh(cordGeom, cordMat);
+    rightVocalCord.position.set(0.045, 0, 0);
+    vocalCordsPivot.add(rightVocalCord);
+
+    // 4. Acoustic Airflow Particles (Flowing 3D points)
+    const PARTICLE_COUNT = 48;
+    const particlePointsData: { t: number; laneX: number; laneZ: number; speedOffset: number }[] = [];
+    const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const particleColors = new Float32Array(PARTICLE_COUNT * 3);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particlePointsData.push({
+        t: i / PARTICLE_COUNT,
+        laneX: (Math.random() - 0.5) * 0.07,
+        laneZ: (Math.random() - 0.5) * 0.07,
+        speedOffset: 0.85 + Math.random() * 0.3
+      });
+    }
+
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeom.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.042,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false
+    });
+    const airwayParticles = new THREE.Points(particleGeom, particleMat);
+    airwayParticles.renderOrder = 3;
+    throatRoot.add(airwayParticles);
+
+    // 5. Pulsing Makhraj Target Ring
+    const throatRingGeom = new THREE.TorusGeometry(0.075, 0.012, 12, 28);
+    const throatRingMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.88
+    });
+    const throatRingMesh = new THREE.Mesh(throatRingGeom, throatRingMat);
+    throatRingMesh.renderOrder = 4;
+    throatRoot.add(throatRingMesh);
+
     // Store refs
     sceneElementsRef.current = {
       scene,
@@ -2703,6 +3007,14 @@ export default function TajweedStudioPage() {
       lipsGroup,
       upperLipMesh,
       lowerLipMesh,
+      throatRoot,
+      pharynxMesh,
+      epiglottisPivot,
+      leftVocalCord,
+      rightVocalCord,
+      airwayParticles,
+      throatRingMesh,
+      particlePointsData,
       animFrameId: 0
     };
 
@@ -3456,26 +3768,113 @@ export default function TajweedStudioPage() {
         tongueGeom.computeVertexNormals();
       }
 
-      // Smooth camera transition back to default position if animating
+      // Smooth camera transition if animating (between oral dental view and throat stations)
       if (camAnimRef.current) {
         const elapsed = performance.now() - camAnimRef.current.startTime;
         const tNorm = Math.min(1.0, elapsed / camAnimRef.current.duration);
         const ease = tNorm < 0.5 ? 2 * tNorm * tNorm : -1 + (4 - 2 * tNorm) * tNorm;
-        spherical.radius = camAnimRef.current.startRadius + (DEFAULT_CAM.radius - camAnimRef.current.startRadius) * ease;
+        const targetR = camAnimRef.current.targetRadius ?? DEFAULT_CAM.radius;
+        const targetP = camAnimRef.current.targetPhi ?? DEFAULT_CAM.phi;
+        spherical.radius = camAnimRef.current.startRadius + (targetR - camAnimRef.current.startRadius) * ease;
         spherical.theta = camAnimRef.current.startTheta + (camAnimRef.current.targetTheta - camAnimRef.current.startTheta) * ease;
-        spherical.phi = camAnimRef.current.startPhi + (DEFAULT_CAM.phi - camAnimRef.current.startPhi) * ease;
-        spherical.target.copy(DEFAULT_CAM.target);
+        spherical.phi = camAnimRef.current.startPhi + (targetP - camAnimRef.current.startPhi) * ease;
+        if (camAnimRef.current.startTarget && camAnimRef.current.targetTarget) {
+          spherical.target.lerpVectors(camAnimRef.current.startTarget, camAnimRef.current.targetTarget, ease);
+        } else {
+          spherical.target.copy(DEFAULT_CAM.target);
+        }
         updateCamPos();
 
         if (tNorm >= 1.0) {
           camAnimRef.current = null;
-          spherical.theta = DEFAULT_CAM.theta;
-          spherical.radius = DEFAULT_CAM.radius;
-          spherical.phi = DEFAULT_CAM.phi;
-          spherical.target.copy(DEFAULT_CAM.target);
           updateCamPos();
         }
         cameraDirty = true;
+      }
+
+      // ----------------------------------------------------------------------
+      // 3D THROAT ANATOMY & ACOUSTIC PARTICLE STREAM UPDATES
+      // ----------------------------------------------------------------------
+      const epiglottisPivot = sceneElementsRef.current?.epiglottisPivot;
+      const leftVocalCord = sceneElementsRef.current?.leftVocalCord;
+      const rightVocalCord = sceneElementsRef.current?.rightVocalCord;
+      const airwayParticles = sceneElementsRef.current?.airwayParticles;
+      const throatRingMesh = sceneElementsRef.current?.throatRingMesh;
+      const particlePointsData = sceneElementsRef.current?.particlePointsData;
+      const curPreset = currentLetterRef.current;
+      const isThroatActive = Boolean(curPreset.isThroat);
+
+      if (epiglottisPivot && leftVocalCord && rightVocalCord && airwayParticles && throatRingMesh && particlePointsData) {
+        // Epiglottis Tilt backward toward posterior pharyngeal wall
+        const epiTilt = (currentGearsRef.current.epiglottisTilt || 0) / 100;
+        epiglottisPivot.rotation.x = -0.15 - epiTilt * 0.82;
+
+        // Vocal Cords Constriction (0 = open gap, 100 = 100% airtight closure in midline)
+        const cordConstrict = (currentGearsRef.current.vocalCordsConstriction || 0) / 100;
+        const isHamzahShut = curPreset.id === 'hamzah' && cordConstrict > 0.85;
+        const cordFlutter = (curPreset.isHeavy || curPreset.id === 'ayn' || curPreset.id === 'ghayn') ? Math.sin(now * 0.05) * 0.0035 : 0;
+
+        leftVocalCord.position.x = -0.045 + (cordConstrict * 0.045) + cordFlutter;
+        rightVocalCord.position.x = 0.045 - (cordConstrict * 0.045) - cordFlutter;
+
+        // Pulsing Makhraj Target Ring
+        if (isThroatActive) {
+          throatRingMesh.visible = true;
+          throatRingMesh.position.set(curPreset.greenCoords.x, curPreset.greenCoords.y, curPreset.greenCoords.z);
+          const ringPulse = 1.0 + Math.sin(now * 0.008) * 0.12;
+          throatRingMesh.scale.set(ringPulse, ringPulse, ringPulse);
+        } else {
+          throatRingMesh.visible = false;
+        }
+
+        // Acoustic Particle Stream Update along the Curved Airway
+        if (isSimulatingRef.current || isThroatActive) {
+          cameraDirty = true;
+          const posAttr = airwayParticles.geometry.attributes.position as THREE.BufferAttribute;
+          const colAttr = airwayParticles.geometry.attributes.color as THREE.BufferAttribute;
+          const posArray = posAttr.array as Float32Array;
+          const colArray = colAttr.array as Float32Array;
+
+          for (let pi = 0; pi < particlePointsData.length; pi++) {
+            const p = particlePointsData[pi];
+            p.t = (p.t + delta * 0.38 * p.speedOffset) % 1.0;
+
+            let activeT = p.t;
+            if (isHamzahShut) {
+              activeT = p.t * 0.22; // trapped beneath vocal cords
+            }
+
+            // Curve interpolation: Y from -0.88 to 0.04
+            const py = -0.88 + activeT * 0.92;
+            const pz = -0.62 + Math.sin(activeT * Math.PI * 0.5) * 0.34;
+            const px = p.laneX;
+
+            const pIdx = pi * 3;
+            posArray[pIdx] = px;
+            posArray[pIdx + 1] = py;
+            posArray[pIdx + 2] = pz + p.laneZ;
+
+            // Acoustic Color
+            if (isHamzahShut) {
+              // Trapped air below closed vocal gate (Crimson)
+              colArray[pIdx] = 0.96;
+              colArray[pIdx + 1] = 0.25;
+              colArray[pIdx + 2] = 0.36;
+            } else if (curPreset.id === 'ayn' || curPreset.id === 'ghayn') {
+              // Golden buzzing acoustic waves for Voiced letters (جهر)
+              colArray[pIdx] = 0.98;
+              colArray[pIdx + 1] = 0.75;
+              colArray[pIdx + 2] = 0.14;
+            } else {
+              // Sky-blue smooth breath flow for Unvoiced letters (همس)
+              colArray[pIdx] = 0.22;
+              colArray[pIdx + 1] = 0.74;
+              colArray[pIdx + 2] = 0.97;
+            }
+          }
+          posAttr.needsUpdate = true;
+          colAttr.needsUpdate = true;
+        }
       }
 
       // Virtual joystick camera rotation (mobile analog control - inverted to exact opposite side with refined sensitivity)
@@ -3842,29 +4241,55 @@ export default function TajweedStudioPage() {
           {/* Left Column (Desktop): Letter Selection + 3D Viewport + 2 Divs under 3D */}
           <div className={activeMainTab === 'makharij' ? "lg:col-span-7 flex flex-col gap-3" : sifaat3DOpen ? "contents" : "hidden"}>
 
-            {/* 22 Arabic Letters Bar (in mouth order: from Qaaf ق to Waw و) */}
+            {/* All 28 Arabic Letters Bar (in Anatomical Order: 6 Throat + 22 Oral) */}
             <section className={activeMainTab === 'makharij' ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2" : "hidden"}>
               <div className="flex items-center justify-between px-1 text-xs">
                 <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
-                  {t.selectLetter}
+                  {lang === 'ar' ? 'حروف الهجاء حسب ترتيب المخارج (من أقصى الحلق إلى الشفتين):' : lang === 'ml' ? 'അക്ഷരങ്ങൾ മഖ്റജ് ക്രമത്തിൽ (തൊണ്ട മുതൽ ചുണ്ട് വരെ):' : 'Letters in Anatomical Order (Bottom Throat → Lips):'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-                {LETTER_PRESETS.map(preset => {
+                {LETTER_PRESETS.map((preset, pIdx) => {
                   const isSelected = preset.id === currentLetter.id;
+                  const isFirstThroatAqsa = pIdx === 0;
+                  const isFirstThroatWasat = pIdx === 2;
+                  const isFirstThroatAdna = pIdx === 4;
+                  const isFirstOral = pIdx === 6;
                   
                   return (
-                    <button
-                      key={preset.id}
-                      onClick={() => selectLetter(preset)}
-                      className={`min-w-[3.25rem] h-12 sm:h-14 px-3.5 py-1 rounded-2xl font-bold transition-all flex items-center justify-center shrink-0 border active:scale-95 ${
-                        isSelected
-                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
-                          : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="arabic-font text-3xl sm:text-4xl leading-none font-bold">{preset.letter}</span>
-                    </button>
+                    <div key={preset.id} className="flex items-center gap-1.5 shrink-0">
+                      {isFirstThroatAqsa && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أقصى الحلق' : lang === 'ml' ? 'അടിത്തൊണ്ട' : 'Bottom Throat'}
+                        </span>
+                      )}
+                      {isFirstThroatWasat && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'وسط الحلق' : lang === 'ml' ? 'നടു തൊണ്ട' : 'Mid Throat'}
+                        </span>
+                      )}
+                      {isFirstThroatAdna && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أدنى الحلق' : lang === 'ml' ? 'മേൽതൊണ്ട' : 'Top Throat'}
+                        </span>
+                      )}
+                      {isFirstOral && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-gray-700 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'اللسان والشفتان' : lang === 'ml' ? 'നാവ് / ചുണ്ട്' : 'Mouth & Lips'}
+                        </span>
+                      )}
+
+                      <button
+                        onClick={() => selectLetter(preset)}
+                        className={`min-w-[3.25rem] h-12 sm:h-14 px-3.5 py-1 rounded-2xl font-bold transition-all flex items-center justify-center shrink-0 border active:scale-95 ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
+                            : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className="arabic-font text-3xl sm:text-4xl leading-none font-bold">{preset.letter}</span>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -4181,6 +4606,76 @@ export default function TajweedStudioPage() {
               </div>
 
 
+
+              {/* Throat Letter Student Learning Aids: Twin Comparison + Feel It on Neck */}
+              {currentLetter.isThroat && (
+                <div className="flex flex-col gap-2.5">
+                  {/* Same Spot, Different Sound! (Twin Comparison Box) */}
+                  {currentLetter.throatTwinId && (() => {
+                    const twin = LETTER_PRESETS.find(p => p.id === currentLetter.throatTwinId);
+                    if (!twin) return null;
+                    return (
+                      <div className="bg-slate-50/90 dark:bg-gray-800/60 border border-slate-200/80 dark:border-gray-700/80 rounded-2xl p-3 flex flex-col gap-2 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{lang === 'ar' ? 'الفرق بين التوأمين (نفس المخرج)' : lang === 'ml' ? 'ഒരേ മഖ്റജിലെ രണ്ട് അക്ഷരങ്ങൾ' : 'Same Spot, Different Sound!'}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => selectLetter(twin)}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
+                          >
+                            {lang === 'ar' ? `مقارنة ${twin.letter} ←` : lang === 'ml' ? `${twin.letter} താരതമ്യം ←` : `Compare ${twin.letter} →`}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {/* Active Letter Box */}
+                          <div className="rounded-xl p-2 bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="arabic-font text-2xl font-bold text-emerald-700 dark:text-emerald-300 leading-none">{currentLetter.letter}</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
+                                {currentLetter.isHeavy ? (lang === 'ar' ? 'مفخم' : 'Heavy') : (lang === 'ar' ? 'مرقق' : 'Light')}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-700 dark:text-gray-200 leading-tight">
+                              {lang === 'ar' ? currentLetter.twinSummary?.ar : lang === 'ml' ? currentLetter.twinSummary?.ml : currentLetter.twinSummary?.en}
+                            </span>
+                          </div>
+                          {/* Twin Letter Box */}
+                          <div
+                            onClick={() => selectLetter(twin)}
+                            className="rounded-xl p-2 bg-white dark:bg-gray-900/80 border border-slate-200 dark:border-gray-700 hover:border-emerald-400 transition-all cursor-pointer flex flex-col gap-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="arabic-font text-2xl font-bold text-slate-700 dark:text-gray-300 leading-none">{twin.letter}</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400">
+                                {twin.isHeavy ? (lang === 'ar' ? 'مفخم' : 'Heavy') : (lang === 'ar' ? 'مرقق' : 'Light')}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-600 dark:text-gray-400 leading-tight">
+                              {lang === 'ar' ? twin.twinSummary?.ar : lang === 'ml' ? twin.twinSummary?.ml : twin.twinSummary?.en}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Feel It On Your Own Neck! (2-Finger Touch Guide) */}
+                  <div className="bg-gradient-to-br from-slate-50 to-emerald-50/50 dark:from-gray-900 dark:to-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-2xl p-3 flex items-start gap-2.5 shadow-xs">
+                    <span className="text-xl select-none shrink-0 mt-0.5">✌️</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
+                        {lang === 'ar' ? 'جرّب بيدك الآن (اللمس الحسي)' : lang === 'ml' ? 'വിരലുകൾ വെച്ച് തൊട്ട് നോക്കൂ!' : 'Try It With 2 Fingers! (Feel It On Neck)'}
+                      </span>
+                      <p className="text-[11px] text-slate-700 dark:text-gray-300 leading-relaxed font-medium">
+                        {lang === 'ar' ? currentLetter.fingerGuide?.ar : lang === 'ml' ? currentLetter.fingerGuide?.ml : currentLetter.fingerGuide?.en}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
               {currentLetter.id === 'dhaad' && (
