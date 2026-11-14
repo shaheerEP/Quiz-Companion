@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
-import { playLetterAudio } from "@/components/tajweed/CleanLetterAudio";
+import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlaying } from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
 import {
   Play,
@@ -17,7 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Compass
+  Compass,
+  ExternalLink
 } from "lucide-react";
 
 // ----------------------------------------------------------------------------
@@ -827,6 +828,222 @@ const LETTER_PRESETS: LetterPreset[] = [
 ];
 
 // Resting pose for Alif simulation
+// Throat Letter Presets (Halq - Throat letters for complete coverage across Sifaat al-Huroof)
+export const THROAT_LETTER_PRESETS: LetterPreset[] = [
+  // 1. Hamzah / Alif (ء / أ / ئ / ا)
+  {
+    id: 'hamzah',
+    tag: 'Hamzah (ء)',
+    letter: 'ء',
+    sukoonText: 'أْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَءْ',
+    en: {
+      title: 'Makhraj of Hamzah (ء / أ)',
+      category: 'Deep Throat (أقصى الحلق - الأوتار الصوتية)',
+      zoneLabel: 'Vocal Cords / Glottis (الحنجرة والأوتار الصوتية)',
+      desc: 'Originates from the deepest part of the throat at the vocal cords by firm instantaneous closure and abrupt release.',
+      sifah: 'Light (Shiddah & Jahr)'
+    },
+    ar: {
+      title: 'مخرج حرف الهمزة (ء / أ)',
+      category: 'أقصى الحلق عند الأوتار الصوتية',
+      zoneLabel: 'الحنجرة والأوتار الصوتية',
+      desc: 'يخرج من أقصى الحلق عند الأوتار الصوتية بانطباقهما انطباقاً تاماً في الساكنة وانفتاحهما في المتحركة.',
+      sifah: 'مرقق (شدة وجهر)'
+    },
+    ml: {
+      title: 'ഹംസ (ء / أ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
+      zoneLabel: 'ശബ്ദതന്തുക്കൾ (വോക്കൽ കോഡുകൾ)',
+      desc: 'തൊണ്ടയുടെ ഏറ്റവും താഴ്ഭാഗത്ത് വോക്കൽ കോഡുകൾ തമ്മിൽ അമർന്ന് അടഞ്ഞു പെട്ടെന്ന് തുറക്കുമ്പോൾ പുറപ്പെടുന്നു.',
+      sifah: 'നേർത്തത് (ശബ്ദം തടയൽ)'
+    },
+    gears: { jawOpen: 32, tipElevation: -20, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.20, z: -0.65, rx: 0.2 }
+  },
+  // 2. Haa (هـ / ة)
+  {
+    id: 'haa_light',
+    tag: 'Haa (هـ)',
+    letter: 'ه',
+    sukoonText: 'هْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَهْ',
+    en: {
+      title: 'Makhraj of Haa (هـ)',
+      category: 'Deep Throat (أقصى الحلق)',
+      zoneLabel: 'Deepest Throat (أقصى الحلق)',
+      desc: 'Originates from the deepest throat with an open glottis, allowing a gentle continuous whisper of breath (Hams).',
+      sifah: 'Light (Hams & Rakhawah)'
+    },
+    ar: {
+      title: 'مخرج حرف الهاء (هـ)',
+      category: 'أقصى الحلق بانفتاح الأوتار الصوتية',
+      zoneLabel: 'أقصى الحلق',
+      desc: 'يخرج من أقصى الحلق مع انفتاح الأوتار الصوتية وجريان النفس اللطيف دون انحباس.',
+      sifah: 'مرقق (همس ورخاوة وخفاء)'
+    },
+    ml: {
+      title: 'ഹാ (هـ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'അടിത്തൊണ്ട',
+      zoneLabel: 'തൊണ്ടയുടെ താഴ്ഭാഗം',
+      desc: 'തൊണ്ടയുടെ ഏറ്റവും അടിഭാഗത്ത് നിന്ന് ശ്വാസം തടസ്സമില്ലാതെ ഒഴുക്കിവിട്ട് മൃദുവായി ഉച്ചരിക്കുന്നു.',
+      sifah: 'നേർത്തത് (ശ്വാസം ഒഴുകൽ)'
+    },
+    gears: { jawOpen: 34, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.20, z: -0.65, rx: 0.2 }
+  },
+  // 3. Ayn (ع)
+  {
+    id: 'ayn',
+    tag: 'Ayn (ع)',
+    letter: 'ع',
+    sukoonText: 'عْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَعْ',
+    en: {
+      title: 'Makhraj of Ayn (ع)',
+      category: 'Mid Throat (وسط الحلق)',
+      zoneLabel: 'Epiglottis (لسان المزمار)',
+      desc: 'Originates from the middle of the throat by retraction of the epiglottis towards the back pharyngeal wall with moderate sound flow.',
+      sifah: 'Light (Tawassut & Jahr)'
+    },
+    ar: {
+      title: 'مخرج حرف العين (ع)',
+      category: 'وسط الحلق عند لسان المزمار',
+      zoneLabel: 'لسان المزمار',
+      desc: 'يخرج من وسط الحلق برجوع لسان المزمار إلى الجدار الخلفي للحلق مع جريان بيني معتدل للصوت.',
+      sifah: 'مرقق (توسط وجهر)'
+    },
+    ml: {
+      title: 'ഐൻ (ع) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'നടു തൊണ്ട',
+      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ്',
+      desc: 'തൊണ്ടയുടെ മധ്യഭാഗത്തുനിന്ന് എപ്പിഗ്ലോട്ടിസ് തൊണ്ടയുടെ പിൻഭിത്തിയിലേക്ക് ചേർന്ന് ശബ്ദം പാതി തടഞ്ഞ് പുറപ്പെടുന്നു.',
+      sifah: 'നേർത്തത് (ഇടത്തരം ശബ്ദം)'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 15, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.22, z: -0.58, rx: 0.25 }
+  },
+  // 4. Haa Pharyngeal (ح)
+  {
+    id: 'haa_pharyngeal',
+    tag: 'Haa (ح)',
+    letter: 'ح',
+    sukoonText: 'حْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَحْ',
+    en: {
+      title: 'Makhraj of Haa (ح)',
+      category: 'Mid Throat (وسط الحلق)',
+      zoneLabel: 'Epiglottis (لسان المزمار)',
+      desc: 'Originates from the middle of the throat with continuous whisper of breath and clear pharyngeal friction at the epiglottis.',
+      sifah: 'Light (Hams & Rakhawah)'
+    },
+    ar: {
+      title: 'مخرج حرف الحاء (ح)',
+      category: 'وسط الحلق مع جريان النفس',
+      zoneLabel: 'لسان المزمار',
+      desc: 'يخرج من وسط الحلق بانقباض خفيف في عضلات الحلق وجريان واضح ومستمر للنفس والصوت.',
+      sifah: 'مرقق (همس ورخاوة)'
+    },
+    ml: {
+      title: 'ഹാഅ് (ح) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'നടു തൊണ്ട',
+      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ്',
+      desc: 'നടു തൊണ്ടയിൽ നിന്ന് എപ്പിഗ്ലോട്ടിസ് ചുരുങ്ങി ശ്വാസം വ്യക്തമായി ഒഴുക്കിവിട്ട് ഉച്ചരിക്കുന്നു.',
+      sifah: 'നേർത്തത് (ശ്വാസം ഒഴുകൽ)'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 12, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.22, z: -0.58, rx: 0.25 }
+  },
+  // 5. Ghayn (غ)
+  {
+    id: 'ghayn',
+    tag: 'Ghayn (غ)',
+    letter: 'غ',
+    sukoonText: 'غْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَغْ',
+    en: {
+      title: 'Makhraj of Ghayn (غ)',
+      category: 'Upper Throat (أدنى الحلق)',
+      zoneLabel: 'Upper Pharynx / Uvula (أدنى الحلق مما يلي الفم)',
+      desc: 'Originates from the upper throat closest to the mouth near the uvula, with deep velar-pharyngeal resonance and elevated back tongue.',
+      sifah: 'Heavy (Isti\'la & Rakhawah)'
+    },
+    ar: {
+      title: 'مخرج حرف الغين (غ)',
+      category: 'أدنى الحلق بالقرب من اللهاة',
+      zoneLabel: 'أدنى الحلق مما يلي الفم',
+      desc: 'يخرج من أدنى الحلق بالقرب من أصل اللسان واللهاة مع استعلاء أقصى اللسان وجريان رخو للصوت.',
+      sifah: 'مفخم (استعلاء ورخاوة وجهر)'
+    },
+    ml: {
+      title: 'ഗൈൻ (غ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
+      zoneLabel: 'തൊണ്ടയുടെ മുകൾഭാഗം (വായിലേക്ക് അടുത്തത്)',
+      desc: 'വായിലേക്ക് അടുത്ത തൊണ്ടയുടെ ഏറ്റവും മുകൾഭാഗത്ത് നാവിന്റെ മുരട് അണ്ണാക്കിലേക്ക് ഉയർത്തി ഘർഷണത്തോടെ ഉച്ചരിക്കുന്നു.',
+      sifah: 'കനം (ഉയർച്ചയും ശബ്ദമൊഴുക്കും)'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 88, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.28, z: -0.48, rx: 0.32 }
+  },
+  // 6. Khaa (خ)
+  {
+    id: 'khaa',
+    tag: 'Khaa (خ)',
+    letter: 'خ',
+    sukoonText: 'خْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَخْ',
+    en: {
+      title: 'Makhraj of Khaa (خ)',
+      category: 'Upper Throat (أدنى الحلق)',
+      zoneLabel: 'Upper Pharynx / Uvula (أدنى الحلق مما يلي الفم)',
+      desc: 'Originates from the upper throat near the uvula with heavy raspy friction and continuous flow of breath (Hams & Rakhawah).',
+      sifah: 'Heavy (Isti\'la, Hams & Rakhawah)'
+    },
+    ar: {
+      title: 'مخرج حرف الخاء (خ)',
+      category: 'أدنى الحلق مع جريان النفس',
+      zoneLabel: 'أدنى الحلق مما يلي الفم',
+      desc: 'يخرج من أدنى الحلق بالقرب من أصل اللسان مع احتكاك خشن وجريان واضح ومستمر للنفس والصوت.',
+      sifah: 'مفخم (استعلاء وهمس ورخاوة)'
+    },
+    ml: {
+      title: 'ഖാഅ് (خ) അക്ഷരത്തിന്റെ മഖ്റജ്',
+      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
+      zoneLabel: 'തൊണ്ടയുടെ മുകൾഭാഗം',
+      desc: 'തൊണ്ടയുടെ മുകൾഭാഗത്ത് നാവിന്റെ അടിഭാഗം മൃദുവായ അണ്ണാക്കിലേക്ക് ഉയർന്ന് ഘർഷണത്തോടെ ശ്വാസത്തോടൊപ്പം പുറപ്പെടുന്നു.',
+      sifah: 'കനം (ശ്വാസമൊഴുക്ക്)'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 92, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.28, z: -0.48, rx: 0.32 }
+  }
+];
+
+// Helper to find preset for any Arabic letter across oral and throat categories
+export const findPresetByLetter = (ltr: string): LetterPreset | undefined => {
+  let target = ltr;
+  if (['أ', 'ء', 'ئ', 'ا', 'ؤ'].includes(ltr)) target = 'ء';
+  if (['ه', 'ة'].includes(ltr)) target = 'ه';
+
+  return (
+    LETTER_PRESETS.find(p => p.letter === target) ||
+    THROAT_LETTER_PRESETS.find(p => p.letter === target) ||
+    LETTER_PRESETS.find(p => p.letter === ltr) ||
+    THROAT_LETTER_PRESETS.find(p => p.letter === ltr)
+  );
+};
+
 const ALIF_MAKHRAJ_GEARS: Record<string, number> = {
   jawOpen: 36, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15
 };
@@ -1389,6 +1606,8 @@ export default function TajweedStudioPage() {
   // Main navigation tab: 'makharij' (3D mouth) or 'sifaat' (phonetic rules)
   const [activeMainTab, setActiveMainTab] = useState<'makharij' | 'sifaat'>('makharij');
   const [selectedSifah, setSelectedSifah] = useState<SifahItem | null>(null);
+  const [sifaat3DOpen, setSifaat3DOpen] = useState<boolean>(false);
+  const sifaat3DOpenRef = useRef<boolean>(false);
 
   // Toggles
   const [showMakhrajColors, setShowMakhrajColors] = useState<boolean>(true);
@@ -1403,6 +1622,19 @@ export default function TajweedStudioPage() {
   const simulationStartTimeRef = useRef(0);
   const morphProgressRef = useRef(1.0);
   const isRestingAtAlifRef = useRef(false);
+  const [isPlayingSimulation, setIsPlayingSimulation] = useState(false);
+
+  // Preload letter audio blob into memory on mount and whenever letter changes (strictly 1 network call)
+  useEffect(() => {
+    preloadLetterAudio(currentLetter.letter).catch(() => {});
+  }, [currentLetter.letter]);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      stopLetterAudio();
+    };
+  }, []);
 
   // Default camera viewpoint (3/4 dental perspective)
   const DEFAULT_CAM = useMemo(() => ({
@@ -1432,8 +1664,9 @@ export default function TajweedStudioPage() {
     showAnatomyRef.current = showAnatomy;
     showMakhrajColorsRef.current = showMakhrajColors;
     activeMainTabRef.current = activeMainTab;
+    sifaat3DOpenRef.current = sifaat3DOpen;
     forceDeformRef.current = true;
-  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors, activeMainTab]);
+  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors, activeMainTab, sifaat3DOpen]);
 
   const camAnimRef = useRef<{
     startRadius: number;
@@ -1569,9 +1802,14 @@ export default function TajweedStudioPage() {
     };
   }, []);
 
-  // Simulate Motion (Alif -> Makhraj -> Alif)
+  // Simulate Motion (Alif -> Makhraj -> Alif) and play letter audio
   const triggerSimulation = () => {
+    // Guard against rapid duplicate clicks: if already simulating or playing, ignore extra clicks
+    if (isSimulatingRef.current || isLetterAudioPlaying(currentLetter.letter)) {
+      return;
+    }
     isSimulatingRef.current = true;
+    setIsPlayingSimulation(true);
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 0.0;
     Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
@@ -1579,7 +1817,10 @@ export default function TajweedStudioPage() {
     });
     forceDeformRef.current = true;
     simulationStartTimeRef.current = performance.now();
-    playLetterAudio(currentLetter.letter);
+
+    playLetterAudio(currentLetter.letter, () => {
+      setIsPlayingSimulation(false);
+    });
   };
 
   // Three.js scene refs
@@ -1639,6 +1880,8 @@ export default function TajweedStudioPage() {
 
   // Change active letter (preserve current 3D camera viewpoint and upper teeth opacity)
   const selectLetter = (preset: LetterPreset) => {
+    stopLetterAudio();
+    setIsPlayingSimulation(false);
     setCurrentLetter(preset);
     isSimulatingRef.current = false;
     isRestingAtAlifRef.current = false;
@@ -2470,16 +2713,31 @@ export default function TajweedStudioPage() {
     domEl.addEventListener('touchmove', onTouchMove);
     domEl.addEventListener('touchend', onTouchEnd);
 
-    // Resize handler
+    // Resize handler with ResizeObserver for fluid docking and mobile adjustments
     const onResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth || 640;
       const h = containerRef.current.clientHeight || 420;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        forceDeformRef.current = true;
+      }
     };
     window.addEventListener('resize', onResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            onResize();
+          }
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+    }
 
     const TEETH_ANATOMY_RGB: Record<number, [number, number, number]> = {
       0: [0.02, 0.71, 0.83],
@@ -2666,8 +2924,8 @@ export default function TajweedStudioPage() {
         sceneElementsRef.current.animFrameId = animId;
       }
 
-      // When on Sifaat tab, skip render calculations completely (0% CPU)
-      if (activeMainTabRef.current !== 'makharij') {
+      // When on Sifaat tab and 3D preview is closed, skip render calculations completely (0% CPU)
+      if (activeMainTabRef.current !== 'makharij' && !sifaat3DOpenRef.current) {
         return;
       }
 
@@ -3199,6 +3457,9 @@ export default function TajweedStudioPage() {
       domEl.removeEventListener('wheel', onWheel);
       domEl.removeEventListener('touchmove', onTouchMove);
       domEl.removeEventListener('touchend', onTouchEnd);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       window.removeEventListener('resize', onResize);
       if (domEl.parentNode) {
         domEl.parentNode.removeChild(domEl);
@@ -3377,8 +3638,18 @@ export default function TajweedStudioPage() {
   }, [lang]);
 
   const selectLetterByArabic = (ltr: string) => {
-    const preset = LETTER_PRESETS.find(p => p.letter === ltr);
+    const preset = findPresetByLetter(ltr);
     if (preset) selectLetter(preset);
+  };
+
+  // Click handler for letters in Sifaat tab: shows 3D makhraj at top-right without redirecting to Makharij tab
+  const handleSifaatLetterClick = (ltr: string) => {
+    const preset = findPresetByLetter(ltr);
+    if (preset) {
+      selectLetter(preset);
+      setSifaat3DOpen(true);
+      triggerSimulation();
+    }
   };
 
   const renderAnatomyRows = (items: AnatomyLabelItem[]) =>
@@ -3447,7 +3718,10 @@ export default function TajweedStudioPage() {
             <div className="flex items-center p-1 bg-slate-100/90 dark:bg-gray-800/90 rounded-2xl border border-slate-200/80 dark:border-gray-700/80 text-xs font-bold shadow-inner">
               <button
                 type="button"
-                onClick={() => setActiveMainTab('makharij')}
+                onClick={() => {
+                  setActiveMainTab('makharij');
+                  setSifaat3DOpen(false);
+                }}
                 className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
                   activeMainTab === 'makharij'
                     ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
@@ -3510,13 +3784,13 @@ export default function TajweedStudioPage() {
         </div>
 
         {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
-        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 items-start ${activeMainTab === 'makharij' ? '' : 'hidden'}`}>
+        <div className={activeMainTab === 'makharij' ? "grid grid-cols-1 lg:grid-cols-12 gap-3 items-start" : sifaat3DOpen ? "contents" : "hidden"}>
 
           {/* Left Column (Desktop): Letter Selection + 3D Viewport + 2 Divs under 3D */}
-          <div className="lg:col-span-7 flex flex-col gap-3">
+          <div className={activeMainTab === 'makharij' ? "lg:col-span-7 flex flex-col gap-3" : sifaat3DOpen ? "contents" : "hidden"}>
 
             {/* 22 Arabic Letters Bar (in mouth order: from Qaaf ق to Waw و) */}
-            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2">
+            <section className={activeMainTab === 'makharij' ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2" : "hidden"}>
               <div className="flex items-center justify-between px-1 text-xs">
                 <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
                   {t.selectLetter}
@@ -3543,11 +3817,79 @@ export default function TajweedStudioPage() {
               </div>
             </section>
 
-            {/* 3D Viewport Section (Immediately after Letter Selection Tab) */}
-            <section className="flex flex-col gap-2">
+            {/* 3D Viewport Section: Either embedded in Makharij tab, or floating at the top-right corner in Sifaat tab */}
+            <section
+              className={
+                activeMainTab === 'makharij'
+                  ? "flex flex-col gap-2"
+                  : sifaat3DOpen
+                  ? "fixed top-18 sm:top-20 right-3 sm:right-6 z-40 w-[330px] sm:w-[380px] lg:w-[420px] max-w-[calc(100vw-1.5rem)] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none"
+                  : "hidden"
+              }
+            >
+              {/* Sifaat Top-Right Floating Header (Only visible when floating in Sifaat tab) */}
+              {activeMainTab === 'sifaat' && (
+                <div className="flex items-center justify-between p-3 border-b border-slate-200/80 dark:border-gray-800 bg-slate-50/70 dark:bg-gray-800/40">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-2xl font-bold text-indigo-600 dark:text-indigo-400 select-none shrink-0 shadow-xs leading-none">
+                      {currentLetter.letter}
+                    </span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
+                        {lang === 'ar' ? currentLetter.ar.category : lang === 'ml' ? (currentLetter.ml?.category || currentLetter.ar.category) : currentLetter.en.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={triggerSimulation}
+                      disabled={isPlayingSimulation}
+                      title={t.simulateTitle}
+                      className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition-all select-none ${
+                        isPlayingSimulation
+                          ? 'bg-emerald-700/80 text-white/80 cursor-not-allowed opacity-90'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'
+                      }`}
+                    >
+                      <Play className={`w-3 h-3 fill-current ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
+                      <span>{t.simulate}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMainTab('makharij');
+                        setSifaat3DOpen(false);
+                      }}
+                      title={lang === 'ar' ? 'عرض في استوديو المخارج الكامل' : lang === 'ml' ? 'പൂർണ്ണ മഖ്റജ് പേജിലേക്ക് പോകുക' : 'Open in Full Makharij Studio'}
+                      className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-gray-800 transition-all"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSifaat3DOpen(false)}
+                      title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
+                      className="p-1.5 rounded-xl text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* 3D Canvas Container */}
-              <div className="bg-slate-100 dark:bg-gray-950 rounded-3xl overflow-hidden shadow-inner border border-slate-200/80 dark:border-gray-800 relative w-full h-[360px] sm:h-[420px] lg:h-[460px]">
+              <div
+                className={`bg-slate-100 dark:bg-gray-950 overflow-hidden shadow-inner border-slate-200/80 dark:border-gray-800 relative w-full ${
+                  activeMainTab === 'makharij'
+                    ? "rounded-3xl border h-[360px] sm:h-[420px] lg:h-[460px]"
+                    : "h-[220px] sm:h-[260px]"
+                }`}
+              >
                 <div
                   ref={containerRef}
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
@@ -3598,133 +3940,170 @@ export default function TajweedStudioPage() {
                 </div>
               </div>
 
-              {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
-              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Anatomy Parts Toggle Button */}
-                  <button
-                    onClick={() => setShowAnatomy(!showAnatomy)}
-                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                      showAnatomy
-                        ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
-                        : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>{t.anatomy}</span>
-                  </button>
+              {/* Sifaat Top-Right Floating Footer (Only visible when floating in Sifaat tab) */}
+              {activeMainTab === 'sifaat' && (
+                <div className="p-2.5 bg-slate-50/80 dark:bg-gray-950/60 border-t border-slate-200/70 dark:border-gray-800 flex flex-col gap-1.5 text-xs">
+                  <p className="text-[11px] text-slate-600 dark:text-gray-300 leading-snug">
+                    {lang === 'ar' ? currentLetter.ar.desc : lang === 'ml' ? (currentLetter.ml?.desc || currentLetter.ar.desc) : currentLetter.en.desc}
+                  </p>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-gray-800/80 text-[10px] text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#0d6828]" />
+                        <span>{t.firmPress}</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#7be89a]" />
+                        <span>{t.gentleTouch}</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#eab368]" />
+                        <span>{t.palate}</span>
+                      </span>
+                    </div>
+                    <span>{lang === 'ar' ? 'سحب للتدوير' : lang === 'ml' ? 'തിരിക്കാൻ ഡ്രാഗ്' : 'Drag to rotate'}</span>
+                  </div>
+                </div>
+              )}
 
-                  <button
-                    onClick={() => setShowMakhrajColors(!showMakhrajColors)}
-                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                      showMakhrajColors
-                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                        : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
-                    }`}
-                  >
-                    <Palette className="w-3.5 h-3.5" />
-                    <span>{t.makhrajColors}</span>
-                  </button>
+              {/* Div 1 & Div 2 under 3D Section (Only visible when on Makharij tab) */}
+              {activeMainTab === 'makharij' && (
+                <>
+                  {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
+                  <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Anatomy Parts Toggle Button */}
+                      <button
+                        onClick={() => setShowAnatomy(!showAnatomy)}
+                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                          showAnatomy
+                            ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                            : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>{t.anatomy}</span>
+                      </button>
 
-                  <button
-                    onClick={() => setShowPalate(!showPalate)}
-                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                      showPalate
-                        ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                        : 'opacity-50 border-transparent text-slate-400'
-                    }`}
-                  >
-                    <span>{t.palate}</span>
-                  </button>
+                      <button
+                        onClick={() => setShowMakhrajColors(!showMakhrajColors)}
+                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                          showMakhrajColors
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                            : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700'
+                        }`}
+                      >
+                        <Palette className="w-3.5 h-3.5" />
+                        <span>{t.makhrajColors}</span>
+                      </button>
 
-                  <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
-                    <button
-                      onClick={() => setShowUpperTeeth(!showUpperTeeth)}
-                      className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{t.upperTeeth}</span>
-                    </button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={upperTeethOpacity}
-                      onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
-                      className="w-14 accent-emerald-500 cursor-pointer"
-                      title="Upper Teeth Opacity"
-                    />
-                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
+                      <button
+                        onClick={() => setShowPalate(!showPalate)}
+                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                          showPalate
+                            ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                            : 'opacity-50 border-transparent text-slate-400'
+                        }`}
+                      >
+                        <span>{t.palate}</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-2xl border border-slate-200 dark:border-gray-700">
+                        <button
+                          onClick={() => setShowUpperTeeth(!showUpperTeeth)}
+                          className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">{t.upperTeeth}</span>
+                        </button>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={upperTeethOpacity}
+                          onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
+                          className="w-14 accent-emerald-500 cursor-pointer"
+                          title="Upper Teeth Opacity"
+                        />
+                        <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">{upperTeethOpacity}%</span>
+                      </div>
+
+                      <button
+                        onClick={() => setShowLowerTeeth(!showLowerTeeth)}
+                        className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
+                          showLowerTeeth
+                            ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
+                            : 'opacity-50 border-transparent text-slate-400'
+                        }`}
+                      >
+                        <span>{t.lowerTeeth}</span>
+                      </button>
+                    </div>
+
+                    {/* Viewport Actions: Play (Simulate Motion & Sound) */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={triggerSimulation}
+                        disabled={isPlayingSimulation}
+                        title={t.simulateTitle}
+                        aria-label={t.simulateTitle}
+                        className={`px-4 py-2 rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 select-none ${
+                          isPlayingSimulation
+                            ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95'
+                        }`}
+                      >
+                        <Play className={`w-3.5 h-3.5 fill-current ${isPlayingSimulation ? 'animate-pulse' : ''}`} />
+                        <span>{t.simulate}</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => setShowLowerTeeth(!showLowerTeeth)}
-                    className={`px-3 py-1.5 rounded-2xl font-bold border transition-all flex items-center gap-1.5 ${
-                      showLowerTeeth
-                        ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700'
-                        : 'opacity-50 border-transparent text-slate-400'
-                    }`}
-                  >
-                    <span>{t.lowerTeeth}</span>
-                  </button>
-                </div>
-
-                {/* Viewport Actions: Play (Simulate Motion & Sound) */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={triggerSimulation}
-                    title={t.simulateTitle}
-                    className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 active:scale-95"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>{t.simulate}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
-              {showAnatomy ? (
-                <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-                  <table className="w-full text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
-                        <th className="py-2 px-3 text-start">{t.anatomyPartCol}</th>
-                        <th className="py-2 px-3 text-start">{t.anatomyLettersCol}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                      {renderAnatomyRows(ANATOMY_LABELS_DATA)}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
-                  <div className="flex flex-wrap items-center gap-3 font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
-                      <span>{t.firmPress}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
-                      <span>{t.gentleTouch}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
-                      <span>{t.gumShelfBadge}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
-                      <span>{t.palate}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
-                      <span>{t.tongueBadge}</span>
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : lang === 'ml' ? 'തിരിക്കാൻ ഡ്രാഗ് ചെയ്യുക • സൂം ചെയ്യാൻ വീൽ തിരിക്കുക' : 'Drag to rotate • Wheel to zoom'}
-                  </span>
-                </div>
+                  {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
+                  {showAnatomy ? (
+                    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
+                            <th className="py-2 px-3 text-start">{t.anatomyPartCol}</th>
+                            <th className="py-2 px-3 text-start">{t.anatomyLettersCol}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                          {renderAnatomyRows(ANATOMY_LABELS_DATA)}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
+                      <div className="flex flex-wrap items-center gap-3 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
+                          <span>{t.firmPress}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
+                          <span>{t.gentleTouch}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
+                          <span>{t.gumShelfBadge}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
+                          <span>{t.palate}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
+                          <span>{t.tongueBadge}</span>
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : lang === 'ml' ? 'തിരിക്കാൻ ഡ്രാഗ് ചെയ്യുക • സൂം ചെയ്യാൻ വീൽ തിരിക്കുക' : 'Drag to rotate • Wheel to zoom'}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
 
             </section>
@@ -3732,7 +4111,7 @@ export default function TajweedStudioPage() {
           </div>
 
           {/* Right Column (Desktop): Selected Letter Info & Controls */}
-          <div className="lg:col-span-5 flex flex-col gap-3">
+          <div className={activeMainTab === 'makharij' ? "lg:col-span-5 flex flex-col gap-3" : "hidden"}>
 
             {/* Selected Letter Information (Small, Compact Space) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
@@ -3983,15 +4362,9 @@ export default function TajweedStudioPage() {
                                     <button
                                       key={lIdx}
                                       type="button"
-                                      onClick={() => {
-                                        const preset = LETTER_PRESETS.find(p => p.letter === ltr);
-                                        if (preset) {
-                                          selectLetter(preset);
-                                          setActiveMainTab('makharij');
-                                        }
-                                      }}
+                                      onClick={() => handleSifaatLetterClick(ltr)}
                                       className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
-                                      title={`View ${ltr} in Makharij`}
+                                      title={lang === 'ar' ? `عرض مخرج حرف ${ltr}` : lang === 'ml' ? `${ltr} ന്റെ മഖ്റജ് കാണുക` : `View Makhraj of ${ltr}`}
                                     >
                                       {ltr}
                                     </button>
@@ -4067,15 +4440,9 @@ export default function TajweedStudioPage() {
                             <button
                               key={lIdx}
                               type="button"
-                              onClick={() => {
-                                const preset = LETTER_PRESETS.find(p => p.letter === ltr);
-                                if (preset) {
-                                  selectLetter(preset);
-                                  setActiveMainTab('makharij');
-                                }
-                              }}
+                              onClick={() => handleSifaatLetterClick(ltr)}
                               className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
-                              title={`View ${ltr} in Makharij`}
+                              title={lang === 'ar' ? `عرض مخرج حرف ${ltr}` : lang === 'ml' ? `${ltr} ന്റെ മഖ്റജ് കാണുക` : `View Makhraj of ${ltr}`}
                             >
                               {ltr}
                             </button>
@@ -4190,11 +4557,8 @@ export default function TajweedStudioPage() {
                         key={idx}
                         type="button"
                         onClick={() => {
-                          if (preset) {
-                            selectLetter(preset);
-                            setActiveMainTab('makharij');
-                            setSelectedSifah(null);
-                          }
+                          handleSifaatLetterClick(ltr);
+                          setSelectedSifah(null);
                         }}
                         className={`arabic-font text-3xl font-bold w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 leading-none ${
                           isCurrent
