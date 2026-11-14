@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/context/ThemeContext";
-import CleanLetterAudio, { playLetterAudio } from "@/components/tajweed/CleanLetterAudio";
+import { playLetterAudio } from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
 import {
   Play,
@@ -17,7 +17,6 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Volume2,
   Compass
 } from "lucide-react";
 
@@ -3169,11 +3168,11 @@ export default function TajweedStudioPage() {
         cameraDirty = true;
       }
 
-      // Virtual joystick camera rotation (mobile analog control)
+      // Virtual joystick camera rotation (mobile analog control - inverted to exact opposite side with refined sensitivity)
       if (joystickDeltaRef.current && (joystickDeltaRef.current.x !== 0 || joystickDeltaRef.current.y !== 0)) {
-        const speed = 2.4 * delta;
-        spherical.theta -= joystickDeltaRef.current.x * speed;
-        spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi + joystickDeltaRef.current.y * speed));
+        const speed = 1.15 * delta;
+        spherical.theta += joystickDeltaRef.current.x * speed;
+        spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi - joystickDeltaRef.current.y * speed));
         cameraDirty = true;
         updateCamPos();
       }
@@ -3234,8 +3233,8 @@ export default function TajweedStudioPage() {
         anatomyPartCol: 'العضو',
         anatomyLettersCol: 'حروف المخرج',
         selectLetter: 'اختر الحرف:',
-        simulate: 'محاكاة',
-        simulateTitle: 'محاكاة الحركة (ألف ← المخرج)',
+        simulate: 'تشغيل',
+        simulateTitle: 'تشغيل الحركة والصوت (ألف ← المخرج)',
         resetView: 'إعادة العرض',
         makhrajColors: 'ألوان المخرج',
         palate: 'الحنك',
@@ -3284,8 +3283,8 @@ export default function TajweedStudioPage() {
         anatomyPartCol: 'ഭാഗം',
         anatomyLettersCol: 'ഹർഫുകൾ',
         selectLetter: 'ഹർഫ് (الحرف):',
-        simulate: 'സിമുലേഷൻ',
-        simulateTitle: 'ഉച്ചാരണ ചലനം കാണുക',
+        simulate: 'പ്ലേ',
+        simulateTitle: 'ഉച്ചാരണ ചലനവും ശബ്ദവും പ്ലേ ചെയ്യുക',
         resetView: 'റീസെറ്റ്',
         makhrajColors: 'മഖ്റജ് അടയാളങ്ങൾ',
         palate: 'അണ്ണാക്ക്',
@@ -3333,8 +3332,8 @@ export default function TajweedStudioPage() {
       anatomyPartCol: 'Part',
       anatomyLettersCol: 'Letters',
       selectLetter: 'Letter (الحرف):',
-      simulate: 'Simulate',
-      simulateTitle: 'Simulate Motion (ألف ← المخرج)',
+      simulate: 'Play',
+      simulateTitle: 'Play Motion & Sound (ألف ← المخرج)',
       resetView: 'Reset View',
       makhrajColors: 'Makhraj Marks',
       palate: 'Palate',
@@ -3554,10 +3553,10 @@ export default function TajweedStudioPage() {
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
                 />
 
-                {/* Mobile Virtual Joystick Controller (positioned at bottom-right corner of 3D container) */}
+                {/* Mobile Virtual Joystick Controller (stepped down into the exact corner without '3D' text) */}
                 <div
-                  className="flex md:hidden absolute bottom-3 right-3 z-20 flex-col items-center gap-1 select-none pointer-events-auto"
-                  title={lang === 'ar' ? 'عصا التحكم في المنظور ثلاثي الأبعاد' : lang === 'ml' ? '3D കാഴ്ച നിയന്ത്രിക്കാനുള്ള ജോയ്സ്റ്റിക്' : '3D Camera Joystick'}
+                  className="flex md:hidden absolute bottom-1.5 right-1.5 z-20 select-none pointer-events-auto"
+                  title={lang === 'ar' ? 'عصا التحكم في المنظور ثلاثي الأبعاد' : lang === 'ml' ? 'കാഴ്ച നിയന്ത്രിക്കാനുള്ള ജോയ്സ്റ്റിക്' : 'Camera Joystick'}
                 >
                   <div
                     onPointerDown={handleJoystickPointerDown}
@@ -3568,10 +3567,10 @@ export default function TajweedStudioPage() {
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchEnd}
-                    className={`relative w-16 h-16 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
+                    className={`relative w-15 h-15 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
                       isJoystickActive
-                        ? 'bg-slate-900/80 dark:bg-black/90 border-emerald-400 scale-105 shadow-emerald-500/25 ring-2 ring-emerald-400/30'
-                        : 'bg-slate-900/50 dark:bg-black/60 border-white/35 dark:border-white/20 hover:border-white/60'
+                        ? 'bg-slate-900/85 dark:bg-black/90 border-emerald-400 scale-105 shadow-emerald-500/30 ring-2 ring-emerald-400/30'
+                        : 'bg-slate-900/55 dark:bg-black/65 border-white/35 dark:border-white/20 hover:border-white/60'
                     }`}
                     style={{ touchAction: 'none' }}
                   >
@@ -3596,9 +3595,6 @@ export default function TajweedStudioPage() {
                       <Compass className="w-3.5 h-3.5 opacity-90" />
                     </div>
                   </div>
-                  <span className="text-[9px] font-black tracking-wider text-slate-700 dark:text-gray-200 bg-white/85 dark:bg-gray-900/85 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-xs border border-slate-200/80 dark:border-gray-800 leading-none">
-                    3D
-                  </span>
                 </div>
               </div>
 
@@ -3673,14 +3669,14 @@ export default function TajweedStudioPage() {
                   </button>
                 </div>
 
-                {/* Viewport Actions: Simulate Motion */}
+                {/* Viewport Actions: Play (Simulate Motion & Sound) */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={triggerSimulation}
                     title={t.simulateTitle}
-                    className="px-3.5 py-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                    className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 active:scale-95"
                   >
-                    <Play className="w-3.5 h-3.5" />
+                    <Play className="w-3.5 h-3.5 fill-current" />
                     <span>{t.simulate}</span>
                   </button>
                 </div>
@@ -3741,17 +3737,11 @@ export default function TajweedStudioPage() {
             {/* Selected Letter Information (Small, Compact Space) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
               <div className="flex flex-col items-center justify-center text-center gap-2 py-1">
-                <button
-                  type="button"
-                  onClick={() => playLetterAudio(currentLetter.letter)}
-                  title={lang === 'ar' ? 'انقر للاستماع لنطق الحرف' : 'Click to hear pronunciation'}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-5xl sm:text-6xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none transition-all active:scale-95 cursor-pointer group relative"
+                <div
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-5xl sm:text-6xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none"
                 >
                   {currentLetter.letter}
-                  <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-xs">
-                    <Volume2 className="w-3 h-3" />
-                  </span>
-                </button>
+                </div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
                 </h2>
@@ -3783,8 +3773,7 @@ export default function TajweedStudioPage() {
                 </div>
               </div>
 
-              {/* Native Letter Audio Pronunciation */}
-              <CleanLetterAudio letter={currentLetter.letter} lang={lang} />
+
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
               {currentLetter.id === 'dhaad' && (
