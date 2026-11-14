@@ -4476,7 +4476,11 @@ export default function TajweedStudioPage() {
                   const isFirstThroatAqsa = pIdx === 0;
                   const isFirstThroatWasat = pIdx === 2;
                   const isFirstThroatAdna = pIdx === 4;
-                  const isFirstOral = pIdx === 6;
+                  const isFirstBackRoot = pIdx === 6;
+                  const isFirstMidTongue = pIdx === 8;
+                  const isFirstTongueEdge = pIdx === 11;
+                  const isFirstTongueTip = pIdx === 13;
+                  const isFirstLips = pIdx === 24;
                   
                   return (
                     <div key={preset.id} className="flex items-center gap-1.5 shrink-0">
@@ -4495,9 +4499,29 @@ export default function TajweedStudioPage() {
                           {lang === 'ar' ? 'أدنى الحلق' : lang === 'ml' ? 'മേൽതൊണ്ട' : 'Top Throat'}
                         </span>
                       )}
-                      {isFirstOral && (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-gray-700 whitespace-nowrap select-none">
-                          {lang === 'ar' ? 'اللسان والشفتان' : lang === 'ml' ? 'നാവ് / ചുണ്ട്' : 'Mouth & Lips'}
+                      {isFirstBackRoot && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أقصى اللسان' : lang === 'ml' ? 'നാവിന്റെ മുരട്' : 'Back Root'}
+                        </span>
+                      )}
+                      {isFirstMidTongue && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'وسط اللسان' : lang === 'ml' ? 'നാവിന്റെ മധ്യം' : 'Middle Tongue'}
+                        </span>
+                      )}
+                      {isFirstTongueEdge && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'حافة اللسان' : lang === 'ml' ? 'നാവിന്റെ അരിക്' : 'Tongue Edge'}
+                        </span>
+                      )}
+                      {isFirstTongueTip && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'طرف اللسان' : lang === 'ml' ? 'നാവിന്റെ തുമ്പ്' : 'Tongue Tip'}
+                        </span>
+                      )}
+                      {isFirstLips && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'الشفتان' : lang === 'ml' ? 'ചുണ്ടുകൾ' : 'Lips'}
                         </span>
                       )}
 
