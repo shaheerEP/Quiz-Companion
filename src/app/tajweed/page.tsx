@@ -17,7 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Volume2
+  Volume2,
+  Compass
 } from "lucide-react";
 
 // ----------------------------------------------------------------------------
@@ -1449,6 +1450,126 @@ export default function TajweedStudioPage() {
   const currentGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Virtual Joystick State for Mobile 3D Camera Control
+  const [joystickKnob, setJoystickKnob] = useState({ x: 0, y: 0 });
+  const [isJoystickActive, setIsJoystickActive] = useState(false);
+  const joystickCenterRef = useRef({ x: 0, y: 0 });
+  const joystickActiveRef = useRef(false);
+  const joystickDeltaRef = useRef<{ x: number; y: number } | null>(null);
+
+  const JOYSTICK_MAX_R = 22;
+
+  const updateJoystickDelta = (clientX: number, clientY: number) => {
+    const dx = clientX - joystickCenterRef.current.x;
+    const dy = clientY - joystickCenterRef.current.y;
+    const dist = Math.hypot(dx, dy);
+    const clampedDist = Math.min(JOYSTICK_MAX_R, dist);
+    const angle = Math.atan2(dy, dx);
+    const kx = dist === 0 ? 0 : Math.cos(angle) * clampedDist;
+    const ky = dist === 0 ? 0 : Math.sin(angle) * clampedDist;
+
+    setJoystickKnob({ x: kx, y: ky });
+    joystickDeltaRef.current = {
+      x: kx / JOYSTICK_MAX_R,
+      y: ky / JOYSTICK_MAX_R
+    };
+  };
+
+  const handleJoystickPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = true;
+    setIsJoystickActive(true);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    joystickCenterRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+
+    updateJoystickDelta(e.clientX, e.clientY);
+
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleJoystickPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    updateJoystickDelta(e.clientX, e.clientY);
+  };
+
+  const handleJoystickPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = false;
+    setIsJoystickActive(false);
+    setJoystickKnob({ x: 0, y: 0 });
+    joystickDeltaRef.current = null;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = true;
+    setIsJoystickActive(true);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    joystickCenterRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+
+    if (e.touches.length > 0) {
+      updateJoystickDelta(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length > 0) {
+      updateJoystickDelta(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = false;
+    setIsJoystickActive(false);
+    setJoystickKnob({ x: 0, y: 0 });
+    joystickDeltaRef.current = null;
+  };
+
+  useEffect(() => {
+    const handleGlobalRelease = () => {
+      if (joystickActiveRef.current) {
+        joystickActiveRef.current = false;
+        setIsJoystickActive(false);
+        setJoystickKnob({ x: 0, y: 0 });
+        joystickDeltaRef.current = null;
+      }
+    };
+    window.addEventListener('pointerup', handleGlobalRelease);
+    window.addEventListener('pointercancel', handleGlobalRelease);
+    window.addEventListener('touchend', handleGlobalRelease);
+    window.addEventListener('touchcancel', handleGlobalRelease);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalRelease);
+      window.removeEventListener('pointercancel', handleGlobalRelease);
+      window.removeEventListener('touchend', handleGlobalRelease);
+      window.removeEventListener('touchcancel', handleGlobalRelease);
+    };
+  }, []);
+
   // Simulate Motion (Alif -> Makhraj -> Alif)
   const triggerSimulation = () => {
     isSimulatingRef.current = true;
@@ -2297,6 +2418,8 @@ export default function TajweedStudioPage() {
     let prevPointer = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
+      // Touch events on mobile shouldn't change viewpoint outside the joystick button
+      if (e.pointerType === 'touch') return;
       camAnimRef.current = null;
       isDragging = true;
       prevPointer = { x: e.clientX, y: e.clientY };
@@ -3046,6 +3169,15 @@ export default function TajweedStudioPage() {
         cameraDirty = true;
       }
 
+      // Virtual joystick camera rotation (mobile analog control)
+      if (joystickDeltaRef.current && (joystickDeltaRef.current.x !== 0 || joystickDeltaRef.current.y !== 0)) {
+        const speed = 2.4 * delta;
+        spherical.theta -= joystickDeltaRef.current.x * speed;
+        spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi + joystickDeltaRef.current.y * speed));
+        cameraDirty = true;
+        updateCamPos();
+      }
+
       if (isDragging) {
         cameraDirty = true;
       }
@@ -3421,6 +3553,53 @@ export default function TajweedStudioPage() {
                   ref={containerRef}
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
                 />
+
+                {/* Mobile Virtual Joystick Controller (positioned at bottom-right corner of 3D container) */}
+                <div
+                  className="flex md:hidden absolute bottom-3 right-3 z-20 flex-col items-center gap-1 select-none pointer-events-auto"
+                  title={lang === 'ar' ? 'عصا التحكم في المنظور ثلاثي الأبعاد' : lang === 'ml' ? '3D കാഴ്ച നിയന്ത്രിക്കാനുള്ള ജോയ്സ്റ്റിക്' : '3D Camera Joystick'}
+                >
+                  <div
+                    onPointerDown={handleJoystickPointerDown}
+                    onPointerMove={handleJoystickPointerMove}
+                    onPointerUp={handleJoystickPointerUp}
+                    onPointerCancel={handleJoystickPointerUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                    className={`relative w-16 h-16 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
+                      isJoystickActive
+                        ? 'bg-slate-900/80 dark:bg-black/90 border-emerald-400 scale-105 shadow-emerald-500/25 ring-2 ring-emerald-400/30'
+                        : 'bg-slate-900/50 dark:bg-black/60 border-white/35 dark:border-white/20 hover:border-white/60'
+                    }`}
+                    style={{ touchAction: 'none' }}
+                  >
+                    {/* Direction Indicators */}
+                    <span className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full bg-white/40" />
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full bg-white/40" />
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1.5 rounded-full bg-white/40" />
+                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-1.5 rounded-full bg-white/40" />
+
+                    {/* Joystick Inner Knob */}
+                    <div
+                      className={`w-7 h-7 rounded-full shadow-md flex items-center justify-center border transition-transform ${
+                        isJoystickActive
+                          ? 'bg-emerald-400 text-slate-950 border-white shadow-emerald-400/50 scale-110'
+                          : 'bg-white/95 dark:bg-gray-200 text-slate-700 border-white/70'
+                      }`}
+                      style={{
+                        transform: `translate(${joystickKnob.x}px, ${joystickKnob.y}px)`,
+                        willChange: 'transform'
+                      }}
+                    >
+                      <Compass className="w-3.5 h-3.5 opacity-90" />
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-black tracking-wider text-slate-700 dark:text-gray-200 bg-white/85 dark:bg-gray-900/85 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-xs border border-slate-200/80 dark:border-gray-800 leading-none">
+                    3D
+                  </span>
+                </div>
               </div>
 
               {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
