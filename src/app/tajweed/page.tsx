@@ -1701,7 +1701,140 @@ export default function TajweedStudioPage() {
   const [selectedSifah, setSelectedSifah] = useState<SifahItem | null>(null);
   const [sifaat3DOpen, setSifaat3DOpen] = useState<boolean>(false);
   const [sifaatWindowPos, setSifaatWindowPos] = useState<{ x: number; y: number } | null>(null);
+  const [sifaatWindowSize, setSifaatWindowSize] = useState<{ width: number; height: number }>({ width: 335, height: 260 });
   const sifaatWindowRef = useRef<HTMLDivElement | null>(null);
+
+  // Resizing state for floating 3D window in Sifaat tab
+  const isResizingRef = useRef<{
+    active: boolean;
+    edge: 'left' | 'bottom' | 'corner' | null;
+    startX: number;
+    startY: number;
+    startW: number;
+    startH: number;
+    startLeft: number;
+  }>({
+    active: false,
+    edge: null,
+    startX: 0,
+    startY: 0,
+    startW: 335,
+    startH: 260,
+    startLeft: 0
+  });
+
+  const handleResizePointerDown = (edge: 'left' | 'bottom' | 'corner', e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const rect = sifaatWindowRef.current?.getBoundingClientRect();
+    isResizingRef.current = {
+      active: true,
+      edge,
+      startX: e.clientX,
+      startY: e.clientY,
+      startW: rect ? rect.width : sifaatWindowSize.width,
+      startH: rect ? rect.height : sifaatWindowSize.height,
+      startLeft: rect ? rect.left : 0
+    };
+  };
+
+  const handleResizePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current.active) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const { edge, startX, startY, startW, startH, startLeft } = isResizingRef.current;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    let newW = startW;
+    let newH = startH;
+
+    if (edge === 'left' || edge === 'corner') {
+      newW = Math.max(240, Math.min(window.innerWidth - 24, startW - dx));
+      const widthDiff = newW - startW;
+      setSifaatWindowPos(prev => prev ? { ...prev, x: startLeft - widthDiff } : prev);
+    }
+    if (edge === 'bottom' || edge === 'corner') {
+      newH = Math.max(180, Math.min(window.innerHeight * 0.85, startH + dy));
+    }
+
+    setSifaatWindowSize({ width: newW, height: newH });
+  };
+
+  const handleResizePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current.active) return;
+    isResizingRef.current.active = false;
+    isResizingRef.current.edge = null;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Camera elevation adjustment (pedestal/crane vertical rising and lowering)
+  const adjustCameraElevation = (deltaY: number) => {
+    if (!sceneElementsRef.current) return;
+    const { spherical } = sceneElementsRef.current;
+    spherical.target.y = Math.max(-0.95, Math.min(0.70, spherical.target.y + deltaY));
+    camPoseRef.current.target.copy(spherical.target);
+    const { camera } = sceneElementsRef.current;
+    if (camera) {
+      camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(spherical.target);
+    }
+  };
+
+  const elevationAnimRef = useRef<number | null>(null);
+  const elevationDirRef = useRef<number>(0);
+
+  const startElevation = (dir: number) => {
+    elevationDirRef.current = dir;
+    adjustCameraElevation(dir * 0.04);
+    if (elevationAnimRef.current === null) {
+      let lastAnimTime = performance.now();
+      const step = (now: number) => {
+        if (elevationDirRef.current !== 0) {
+          const dt = Math.min(0.05, (now - lastAnimTime) / 1000);
+          lastAnimTime = now;
+          adjustCameraElevation(elevationDirRef.current * 0.55 * dt);
+          elevationAnimRef.current = requestAnimationFrame(step);
+        } else {
+          elevationAnimRef.current = null;
+        }
+      };
+      elevationAnimRef.current = requestAnimationFrame(step);
+    }
+  };
+
+  const stopElevation = () => {
+    elevationDirRef.current = 0;
+    if (elevationAnimRef.current !== null) {
+      cancelAnimationFrame(elevationAnimRef.current);
+      elevationAnimRef.current = null;
+    }
+  };
+
+  // Keyboard shortcut listener: Space to rise up, Shift to lower down
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        adjustCameraElevation(0.035);
+      } else if (e.key === 'Shift') {
+        adjustCameraElevation(-0.035);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const isDraggingWindowRef = useRef(false);
   const dragStartPointerRef = useRef({ x: 0, y: 0 });
   const dragStartWindowRef = useRef({ x: 0, y: 0 });
@@ -4099,10 +4232,10 @@ export default function TajweedStudioPage() {
         }
       }
 
-      // Virtual joystick camera rotation (mobile analog control - inverted to exact opposite side with refined sensitivity)
+      // Virtual joystick camera rotation (analog control with flipped left/right direction and smooth sensitivity)
       if (joystickDeltaRef.current && (joystickDeltaRef.current.x !== 0 || joystickDeltaRef.current.y !== 0)) {
         const speed = 1.15 * delta;
-        spherical.theta += joystickDeltaRef.current.x * speed;
+        spherical.theta -= joystickDeltaRef.current.x * speed; // Flipped left/right as requested
         spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi - joystickDeltaRef.current.y * speed));
         cameraDirty = true;
         updateCamPos();
@@ -4315,14 +4448,13 @@ export default function TajweedStudioPage() {
     if (preset) selectLetter(preset);
   };
 
-  // Click handler for letters in Sifaat tab: shows clean 3D animation at top-right without audio and without redirecting
+  // Click handler for letters in Sifaat tab: displays held static makhraj at top-right without audio, without simulating/resetting to Alif, and without redirecting
   const handleSifaatLetterClick = (ltr: string) => {
     const preset = findPresetByLetter(ltr);
     if (preset) {
       selectLetter(preset);
       setSifaat3DOpen(true);
-      // Clean 3D animation only (no audio)
-      triggerSimulation(false);
+      // Stays in place holding the articulated makhraj position with contact colors and airflow
     }
   };
 
@@ -4545,19 +4677,25 @@ export default function TajweedStudioPage() {
             <section
               ref={sifaatWindowRef}
               style={
-                activeMainTab === 'sifaat' && sifaatWindowPos
-                  ? { top: `${sifaatWindowPos.y}px`, left: `${sifaatWindowPos.x}px`, right: 'auto', bottom: 'auto' }
+                activeMainTab === 'sifaat'
+                  ? {
+                      top: sifaatWindowPos ? `${sifaatWindowPos.y}px` : undefined,
+                      left: sifaatWindowPos ? `${sifaatWindowPos.x}px` : undefined,
+                      right: sifaatWindowPos ? 'auto' : undefined,
+                      bottom: sifaatWindowPos ? 'auto' : undefined,
+                      width: `${sifaatWindowSize.width}px`
+                    }
                   : undefined
               }
               className={
                 activeMainTab === 'makharij'
                   ? "flex flex-col gap-2"
                   : sifaat3DOpen
-                  ? "fixed top-20 right-3 sm:right-6 z-40 w-[310px] sm:w-[335px] max-w-[calc(100vw-1.5rem)] bg-slate-900/95 dark:bg-black/95 backdrop-blur-xl border border-slate-700/80 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none group ring-1 ring-white/10"
+                  ? "fixed top-20 right-3 sm:right-6 z-40 max-w-[calc(100vw-1.5rem)] bg-slate-900/95 dark:bg-black/95 backdrop-blur-xl border border-slate-700/80 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none group ring-1 ring-white/10"
                   : "hidden"
               }
             >
-              {/* Sifaat Mode Overlays: Drag Handle, Translucent Watermark & Close Button (Ultra-minimal: No Header, No Text, No Extra Buttons, No Audio) */}
+              {/* Sifaat Mode Overlays: Drag Handle, Resizable Borders, Translucent Watermark, Minimal Play & Close Buttons */}
               {activeMainTab === 'sifaat' && (
                 <>
                   {/* Top Drag Handle (allows dragging floating 3D window anywhere on screen) */}
@@ -4572,31 +4710,74 @@ export default function TajweedStudioPage() {
                     <div className="w-10 h-1 rounded-full bg-white/40 group-hover:bg-white/70 transition-colors" />
                   </div>
 
+                  {/* Resizable Border Handles (expand/collapse by dragging side borders) */}
+                  {/* Left Border */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('left', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير العرض' : lang === 'ml' ? 'വീതി മാറ്റാൻ വലിക്കുക' : 'Drag to resize width'}
+                    className="absolute inset-y-0 left-0 w-2.5 z-40 cursor-ew-resize hover:bg-emerald-500/30 transition-colors touch-none"
+                  />
+                  {/* Bottom Border */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('bottom', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير الارتفاع' : lang === 'ml' ? 'ഉയരം മാറ്റാൻ വലിക്കുക' : 'Drag to resize height'}
+                    className="absolute inset-x-0 bottom-0 h-2.5 z-40 cursor-ns-resize hover:bg-emerald-500/30 transition-colors touch-none"
+                  />
+                  {/* Bottom-Left Corner */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('corner', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير الحجم' : lang === 'ml' ? 'വലുപ്പം മാറ്റാൻ വലിക്കുക' : 'Drag to resize'}
+                    className="absolute bottom-0 left-0 w-4 h-4 z-50 cursor-nesw-resize hover:bg-emerald-500/50 flex items-end justify-start p-0.5 touch-none"
+                  >
+                    <div className="w-2 h-2 border-b-2 border-l-2 border-white/60 rounded-bl-xs" />
+                  </div>
+
                   {/* Subtle Translucent Letter Watermark in Top-Left Corner */}
-                  <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none select-none">
+                  <div className="absolute top-2.5 left-3.5 z-20 pointer-events-none select-none">
                     <span className="arabic-font text-2xl font-bold text-white/85 bg-black/45 backdrop-blur-xs px-2.5 py-0.5 rounded-xl border border-white/20 shadow-xs leading-none">
                       {currentLetter.letter}
                     </span>
                   </div>
 
-                  {/* Small Close (X) Button in Top-Right Corner */}
-                  <button
-                    type="button"
-                    onClick={() => setSifaat3DOpen(false)}
-                    title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
-                    className="absolute top-2 right-2 z-30 p-1.5 rounded-xl bg-black/45 hover:bg-rose-600/90 text-white/80 hover:text-white backdrop-blur-xs border border-white/20 transition-all shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Minimal Top-Right Action Buttons: Play (Icon only) & Close */}
+                  <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5">
+                    {/* Small Play Icon button (audio + simulation) */}
+                    <button
+                      type="button"
+                      onClick={() => triggerSimulation(true)}
+                      disabled={isPlayingSimulation || isAudioLoading}
+                      title={t.simulateTitle}
+                      aria-label={t.simulateTitle}
+                      className="p-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-xs border border-emerald-400/30 transition-all shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                    {/* Small Close (X) Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSifaat3DOpen(false)}
+                      title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
+                      className="p-1.5 rounded-xl bg-black/45 hover:bg-rose-600/90 text-white/80 hover:text-white backdrop-blur-xs border border-white/20 transition-all shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </>
               )}
 
               {/* 3D Canvas Container */}
               <div
+                style={activeMainTab === 'sifaat' ? { height: `${sifaatWindowSize.height}px` } : undefined}
                 className={`bg-slate-100 dark:bg-gray-950 overflow-hidden shadow-inner relative w-full ${
                   activeMainTab === 'makharij'
                     ? "rounded-3xl border border-slate-200/80 dark:border-gray-800 h-[360px] sm:h-[420px] lg:h-[460px]"
-                    : "h-[235px] sm:h-[255px]"
+                    : ""
                 }`}
               >
                 <div
@@ -4604,11 +4785,40 @@ export default function TajweedStudioPage() {
                   className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
                 />
 
-                {/* Mobile Virtual Joystick Controller (stepped down into the exact corner without '3D' text, low sensitivity) */}
+                {/* 3D Camera Controls: Elevation (Rising Up/Down) Buttons + Joystick */}
                 <div
-                  className="flex md:hidden absolute bottom-1.5 right-1.5 z-20 select-none pointer-events-auto"
-                  title={lang === 'ar' ? 'عصا التحكم في المنظور ثلاثي الأبعاد' : lang === 'ml' ? 'കാഴ്ച നിയന്ത്രിക്കാനുള്ള ജോയ്സ്റ്റിക്' : 'Camera Joystick'}
+                  className="flex flex-col items-center gap-1.5 absolute bottom-1.5 right-1.5 z-20 select-none pointer-events-auto"
+                  title={lang === 'ar' ? 'التحكم في المنظور والكاميرا' : lang === 'ml' ? 'ക്യാമറ നിയന്ത്രണം' : 'Camera Controls'}
                 >
+                  {/* Up & Down Camera Elevation (Pedestal / Crane Rising) Buttons */}
+                  <div className="flex flex-col gap-1 items-center bg-slate-900/65 dark:bg-black/75 backdrop-blur-md p-1 rounded-2xl border border-white/25 dark:border-white/15 shadow-xl">
+                    {/* Up Button (▲ Rise Camera Up - Spacebar) */}
+                    <button
+                      type="button"
+                      title={lang === 'ar' ? 'رفع الكاميرا لأعلى (المسافة Space)' : lang === 'ml' ? 'ക്യാമറ ഉയർത്തുക (Space)' : 'Rise Camera Up (Space)'}
+                      aria-label="Rise Camera Up"
+                      onPointerDown={() => startElevation(1)}
+                      onPointerUp={stopElevation}
+                      onPointerLeave={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                    {/* Down Button (▼ Lower Camera Down - Shift) */}
+                    <button
+                      type="button"
+                      title={lang === 'ar' ? 'خفض الكاميرا لأسفل (Shift)' : lang === 'ml' ? 'ക്യാമറ താഴ്ത്തുക (Shift)' : 'Lower Camera Down (Shift)'}
+                      aria-label="Lower Camera Down"
+                      onPointerDown={() => startElevation(-1)}
+                      onPointerUp={stopElevation}
+                      onPointerLeave={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                  </div>
+
+                  {/* Circular Camera Joystick (rotates camera angle - desktop & mobile) */}
                   <div
                     onPointerDown={handleJoystickPointerDown}
                     onPointerMove={handleJoystickPointerMove}
@@ -4618,7 +4828,7 @@ export default function TajweedStudioPage() {
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchEnd}
-                    className={`relative w-15 h-15 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
+                    className={`relative w-14 h-14 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
                       isJoystickActive
                         ? 'bg-slate-900/85 dark:bg-black/90 border-emerald-400 scale-105 shadow-emerald-500/30 ring-2 ring-emerald-400/30'
                         : 'bg-slate-900/55 dark:bg-black/65 border-white/35 dark:border-white/20 hover:border-white/60'
@@ -4626,14 +4836,14 @@ export default function TajweedStudioPage() {
                     style={{ touchAction: 'none' }}
                   >
                     {/* Direction Indicators */}
-                    <span className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full bg-white/40" />
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full bg-white/40" />
-                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1.5 rounded-full bg-white/40" />
-                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-1.5 rounded-full bg-white/40" />
+                    <span className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 rounded-full bg-white/40" />
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 rounded-full bg-white/40" />
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 rounded-full bg-white/40" />
+                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 rounded-full bg-white/40" />
 
                     {/* Joystick Inner Knob */}
                     <div
-                      className={`w-7 h-7 rounded-full shadow-md flex items-center justify-center border transition-transform ${
+                      className={`w-6.5 h-6.5 rounded-full shadow-md flex items-center justify-center border transition-transform ${
                         isJoystickActive
                           ? 'bg-emerald-400 text-slate-950 border-white shadow-emerald-400/50 scale-110'
                           : 'bg-white/95 dark:bg-gray-200 text-slate-700 border-white/70'
@@ -4740,21 +4950,20 @@ export default function TajweedStudioPage() {
                       <span>{t.lowerTeeth}</span>
                     </button>
 
-                    {/* Viewport Actions: Play (Simulate Motion & Sound) */}
+                    {/* Viewport Actions: Play (Minimal Icon-only Button) */}
                     <button
                       type="button"
                       onClick={() => triggerSimulation(true)}
                       disabled={isPlayingSimulation || isAudioLoading}
                       title={t.simulateTitle}
                       aria-label={t.simulateTitle}
-                      className={`ms-auto flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 select-none shrink-0 whitespace-nowrap ${
+                      className={`ms-auto p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 ${
                         isPlayingSimulation || isAudioLoading
                           ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95 cursor-pointer'
                       }`}
                     >
-                      <Play className={`w-3.5 h-3.5 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
-                      <span>{t.simulate}</span>
+                      <Play className={`w-4 h-4 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
                     </button>
                   </div>
 
