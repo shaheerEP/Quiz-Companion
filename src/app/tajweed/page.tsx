@@ -585,7 +585,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'നാവിന്റെ ഒന്നോ രണ്ടോ അരികുകൾ മേൽ അണപ്പല്ലുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവിന്റെ തുമ്പ് മുൻപല്ലുകളിൽ അമർത്താതെ മൃദുവായി തൊടുന്നു.',
       sifah: 'കനം (നീളൽ)'
     },
-    gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: -10, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
+    gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
     greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
   },
   // 7. Laam (ل)
@@ -717,7 +717,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'നാവിന്റെ വീതിയുള്ള തുമ്പ് മേൽ മുൻപല്ലുകളുടെ വേരുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവ് മുഴുവനായി അണ്ണാക്കിലേക്ക് ചേരുന്നു.',
       sifah: 'കനം (മുഴക്കം)'
     },
-    gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -18, lateralSpread: 46, greenPointPos: 18, upperOpacity: 56 },
+    gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -8, lateralSpread: 42, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
   },
   // 11. Daal (د)
@@ -816,7 +816,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് നാവ് അണ്ണാക്കിലേക്ക് ഉയർത്തി മൂർച്ചയുള്ള വിസിൽ സ്വരത്തോടെ ഉച്ചരിക്കുന്നു.',
       sifah: 'കനം (വിസിൽ)'
     },
-    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: -10, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
+    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: 55, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
   },
   // 14. Seen (س)
@@ -915,7 +915,7 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ തൊടുമ്പോൾ നാവിന്റെ മുരട് ഉയർന്ന് കനത്തോടെ ഉച്ചരിക്കുന്നു.',
       sifah: 'കനം'
     },
-    gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: -14, lateralSpread: 42, greenPointPos: 8, upperOpacity: 56 },
+    gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: 10, lateralSpread: 40, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
   },
   // 17. Dhaal (ذ)
@@ -3588,8 +3588,6 @@ export default function TajweedStudioPage() {
 
       // Tongue vertices deformation
       const dorsalMode = activeLetter.dorsalMode || 'istila_cup';
-      // The 4 authentic Tajweed Itbaaq letters (حروف الإطباق الأربعة: ط ، ظ ، ص ، ض)
-      const isItbaqLetter = activeLetter.id === 'taa_heavy' || activeLetter.id === 'thaa_heavy' || activeLetter.id === 'saad' || activeLetter.id === 'dhaad';
       const isWideLateral = (activeLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
       const isNatiyyah = activeLetter.id === 'taa_heavy' || activeLetter.id === 'daal' || activeLetter.id === 'taa_light';
       const isAlveolar = activeLetter.id === 'laam' || activeLetter.id === 'noon' || activeLetter.id === 'raa';
@@ -3616,8 +3614,7 @@ export default function TajweedStudioPage() {
           const backDome = Math.exp(-Math.pow((s - 0.28) / 0.28, 2));
           const midMolarArch = Math.sin(Math.pow(s, 0.58) * Math.PI);
           const frontCurveDrop = 0.052 * Math.pow(Math.max(0.0, (s - 0.56) / 0.44), 1.55);
-          const midItbaqDip = -0.11 * Math.exp(-Math.pow((s - 0.48) / 0.18, 2)) * istilaFactor;
-          yTopTarget = 0.242 + molarWall.speeLift + 0.032 * midMolarArch + 0.056 * istilaFactor * backDome - frontCurveDrop + midItbaqDip;
+          yTopTarget = 0.242 + molarWall.speeLift + 0.032 * midMolarArch + 0.056 * istilaFactor * backDome - frontCurveDrop;
 
           const backRootDrop = -0.37 * Math.pow(Math.max(0.0, (0.36 - s) / 0.36), 1.45);
           const midFloorAttach = -0.26 * Math.exp(-Math.pow((s - 0.34) / 0.22, 2));
@@ -3628,10 +3625,9 @@ export default function TajweedStudioPage() {
           yBotTarget = baseUnderCurve * (1.0 - tipBlend) + tipPlumpBottom * tipBlend;
         } else if (dorsalMode === 'safir_hook') {
           const wHook = Math.pow(Math.max(0.0, (s - 0.70) / 0.30), 1.65);
-          const bladeArch = (0.24 + Math.max(0.0, midArchFactor) * 0.07) * Math.exp(-Math.pow((s - 0.60) / 0.27, 2));
-          const backIstilaArch = istilaFactor * 0.38 * Math.exp(-Math.pow((s - 0.18) / 0.20, 2));
-          const midItbaqDip = isItbaqLetter ? (-0.12 * Math.exp(-Math.pow((s - 0.46) / 0.16, 2)) * istilaFactor) : 0.0;
-          yTopTarget = (0.04 + bladeArch + backIstilaArch * 0.78 + midItbaqDip) * (1.0 - wHook) + yTipTopTarget * wHook;
+          const bladeArch = (0.27 + Math.max(0.0, midArchFactor) * 0.07) * Math.exp(-Math.pow((s - 0.60) / 0.27, 2));
+          const backIstilaArch = istilaFactor * 0.31 * Math.exp(-Math.pow((s - 0.24) / 0.26, 2));
+          yTopTarget = (0.06 + bladeArch + backIstilaArch * 0.78) * (1.0 - wHook) + yTipTopTarget * wHook;
           const backRootDrop = -0.22 * Math.pow(Math.max(0.0, (0.38 - s) / 0.38), 1.4);
           yBotTarget = (-0.16 + backRootDrop + 0.10 * yTopTarget) * (1.0 - wHook) + (yTipTopTarget - 0.115) * wHook;
         } else {
@@ -3652,15 +3648,6 @@ export default function TajweedStudioPage() {
             dorsalArch = Math.max(0, midArchFactor) * 0.52 * Math.exp(-Math.pow((s - 0.56) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'neutral') {
             dorsalArch = -0.045 * (1.0 - wTip) + istilaFactor * 0.32 * Math.exp(-Math.pow((s - 0.26) / 0.28, 2));
-          } else if (dorsalMode === 'istila_cup' && (isItbaqLetter || istilaFactor > 0.40)) {
-            // Authentic Tajweed Itbaaq Spoon / Cup (حروف الإطباق: ط ، ظ):
-            // 1. Back root (أقصى وجذر اللسان) elevated high toward soft palate (الاستعلاء)
-            // 2. Middle tongue (وسط اللسان) deeply depressed/concave downward (تقعر وسط اللسان كالملعقة)
-            // 3. Tip (طرف اللسان) anchored firmly at upper incisor roots (ط) or edges (ظ)
-            const backIstilaPeak = istilaFactor * 0.44 * Math.exp(-Math.pow((s - 0.18) / 0.18, 2));
-            const midCupDepression = -0.165 * Math.exp(-Math.pow((s - 0.50) / 0.16, 2)) * (0.75 + 0.25 * istilaFactor);
-            const midManualTune = midArchFactor * 0.12 * Math.exp(-Math.pow((s - 0.52) / 0.20, 2));
-            dorsalArch = backIstilaPeak + midCupDepression + midManualTune;
           } else {
             dorsalArch = istilaFactor * 0.38 * Math.exp(-Math.pow((s - 0.26) / 0.28, 2)) + midArchFactor * 0.15 * Math.sin(s * Math.PI);
           }
@@ -3757,48 +3744,26 @@ export default function TajweedStudioPage() {
               yOffset += vaultIndent;
             }
           } else {
-            const isItbaq = isItbaqLetter;
-            const allowMidConcavity = (dorsalMode === 'safir_hook' || dorsalMode === 'middle_dome' || isItbaq);
-            const grooveEndS = (dorsalMode === 'safir_hook') ? 0.86 : (isItbaq ? 0.76 : 0.68);
-            const grooveStartS = isItbaq ? 0.22 : 0.10;
-            const archPresence = isItbaq
-              ? (0.80 + 0.20 * istilaFactor)
-              : ((dorsalMode === 'middle_dome')
-                ? Math.min(1.0, Math.max(0.0, midArchFactor / 0.85))
-                : Math.min(1.0, Math.max(0.0, (midArchFactor + spreadFactor) / 0.90)));
-            const grooveEnv = (allowMidConcavity && s > grooveStartS && s < grooveEndS)
-              ? Math.sin(((s - grooveStartS) / (grooveEndS - grooveStartS)) * Math.PI) * archPresence
+            const allowMidConcavity = (dorsalMode === 'safir_hook' || dorsalMode === 'middle_dome');
+            const grooveEndS = (dorsalMode === 'safir_hook') ? 0.86 : 0.68;
+            const archPresence = (dorsalMode === 'middle_dome')
+              ? Math.min(1.0, Math.max(0.0, midArchFactor / 0.85))
+              : Math.min(1.0, Math.max(0.0, (midArchFactor + spreadFactor) / 0.90));
+            const grooveEnv = (allowMidConcavity && s > 0.10 && s < grooveEndS)
+              ? Math.sin(((s - 0.10) / (grooveEndS - 0.10)) * Math.PI) * archPresence
               : 0.0;
             if (sinT > 0.0 && grooveEnv > 0.0) {
-              let centerDip = 0;
-              let shoulderLift = 0;
-
-              if (isItbaq) {
-                // Authentic Itbaaq cupping / spoon depression:
-                // Center dips down into the spoon cavity
-                const vWidth = 0.46;
-                const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / vWidth, 1.6));
-                const dipDepth = Math.min(halfThick * 0.78, 0.125 * grooveEnv);
-                centerDip = dipDepth * vSharp;
-
-                // Lateral edges (shoulders) rise up to form the rim of the bowl against upper teeth
-                const shoulderPeak = 0.68;
-                const lateralRimLift = 0.115 * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - shoulderPeak) / 0.22, 2));
-                shoulderLift = lateralRimLift;
-              } else {
-                const vWidth = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.42 : 0.32;
-                const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / vWidth, 1.45));
-                const dipBase = (dorsalMode === 'safir_hook')
-                  ? (isWideLateral ? 0.16 : 0.105)
-                  : 0.075;
-                centerDip = Math.min(halfThick * 0.72, dipBase * grooveEnv) * vSharp;
-                const shoulderPeak = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.64 : 0.50;
-                const liftBase = (dorsalMode === 'safir_hook')
-                  ? (isWideLateral ? 0.15 : 0.155)
-                  : 0.13;
-                shoulderLift = liftBase * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - shoulderPeak) / 0.30, 2));
-              }
-
+              const vWidth = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.42 : 0.32;
+              const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / vWidth, 1.45));
+              const dipBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.16 : 0.105)
+                : 0.075;
+              const centerDip = Math.min(halfThick * 0.72, dipBase * grooveEnv) * vSharp;
+              const shoulderPeak = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.64 : 0.50;
+              const liftBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.15 : 0.155)
+                : 0.13;
+              const shoulderLift = liftBase * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - shoulderPeak) / 0.30, 2));
               yOffset += (-centerDip + shoulderLift) * sinT;
             }
 
