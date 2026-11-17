@@ -5027,9 +5027,13 @@ export default function TajweedStudioPage() {
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
               <div className="flex flex-col items-center justify-center text-center gap-2 py-1">
                 <div
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center arabic-font text-5xl sm:text-6xl font-bold text-indigo-600 dark:text-indigo-400 select-none shadow-sm leading-none"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center select-none shadow-sm overflow-hidden"
                 >
-                  {currentLetter.letter}
+                  <span
+                    className="arabic-font !text-5xl sm:!text-6xl font-bold text-indigo-600 dark:text-indigo-400 !leading-none flex items-center justify-center text-center w-full h-full select-none pointer-events-none"
+                  >
+                    {currentLetter.letter}
+                  </span>
                 </div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
@@ -5540,7 +5544,7 @@ export default function TajweedStudioPage() {
                           handleSifaatLetterClick(ltr);
                           setSelectedSifah(null);
                         }}
-                        className={`arabic-font text-3xl font-bold w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 leading-none ${
+                        className={`w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 ${
                           isCurrent
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-2 ring-emerald-400/30'
                             : preset
@@ -5549,7 +5553,9 @@ export default function TajweedStudioPage() {
                         }`}
                         title={ltr}
                       >
-                        {ltr}
+                        <span className="arabic-font text-3xl font-bold leading-none select-none pointer-events-none">
+                          {ltr}
+                        </span>
                       </button>
                     );
                   })}

@@ -28,14 +28,12 @@ body {
 
 .arabic-font {
   font-family: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', 'Scheherazade New', serif !important;
-  display: inline-block;
-  line-height: 1.35;
 }
 
-/* In both Arabic mode and Malayalam mode, make Arabic text and letters noticeably larger than English/Malayalam */
-.lang-ar .arabic-font,
-.lang-ml .arabic-font,
-[dir="rtl"] .arabic-font {
+/* In both Arabic mode and Malayalam mode, make Arabic text and letters noticeably larger than English/Malayalam only when no explicit utility font size is specified */
+.lang-ar .arabic-font:not([class*="text-"]):not([class*="!text-"]),
+.lang-ml .arabic-font:not([class*="text-"]):not([class*="!text-"]),
+[dir="rtl"] .arabic-font:not([class*="text-"]):not([class*="!text-"]) {
   font-size: 1.35em;
   font-weight: 700;
   letter-spacing: 0.015em;
