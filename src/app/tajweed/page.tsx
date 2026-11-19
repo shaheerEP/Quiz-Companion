@@ -1779,12 +1779,18 @@ export default function TajweedStudioPage() {
     const { spherical } = sceneElementsRef.current;
     spherical.target.y = Math.max(-0.95, Math.min(0.70, spherical.target.y + deltaY));
     camPoseRef.current.target.copy(spherical.target);
-    const { camera } = sceneElementsRef.current;
+    const { camera, scene, renderer, markDirty } = sceneElementsRef.current;
     if (camera) {
       camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
       camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
       camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
       camera.lookAt(spherical.target);
+    }
+    if (markDirty) {
+      markDirty(2);
+    }
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
     }
   };
 
@@ -2130,12 +2136,14 @@ export default function TajweedStudioPage() {
     airwayParticles?: THREE.Points;
     particlePointsData?: { t: number; laneX: number; laneZ: number; speedOffset: number }[];
     animFrameId: number;
+    upperToothMaterial?: THREE.MeshLambertMaterial;
+    markDirty: (frames?: number) => void;
   } | null>(null);
 
   // Reset camera viewpoint to default perspective
   const resetCameraToDefault = (smooth = true) => {
     if (!sceneElementsRef.current) return;
-    const { spherical, camera } = sceneElementsRef.current;
+    const { spherical, camera, scene, renderer, markDirty } = sceneElementsRef.current;
     if (!smooth) {
       camAnimRef.current = null;
       spherical.radius = DEFAULT_CAM.radius;
@@ -2150,6 +2158,8 @@ export default function TajweedStudioPage() {
       camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
       camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
       camera.lookAt(spherical.target);
+      if (markDirty) markDirty(2);
+      if (renderer && scene && camera) renderer.render(scene, camera);
       return;
     }
 
@@ -3167,6 +3177,17 @@ export default function TajweedStudioPage() {
     airwayParticles.renderOrder = 3;
     throatRoot.add(airwayParticles);
 
+    // Orbit pointer events & render dirty state
+    let isDragging = false;
+    let cameraDirty = true;
+    let settleFrames = 4;
+    let prevPointer = { x: 0, y: 0 };
+
+    const markDirty = (frames = 1) => {
+      cameraDirty = true;
+      settleFrames = Math.max(settleFrames, frames);
+    };
+
     // Store refs
     sceneElementsRef.current = {
       scene,
@@ -3191,13 +3212,10 @@ export default function TajweedStudioPage() {
       rightVocalCord,
       airwayParticles,
       particlePointsData,
-      animFrameId: 0
+      animFrameId: 0,
+      upperToothMaterial,
+      markDirty
     };
-
-    // Orbit pointer events
-    let isDragging = false;
-    let cameraDirty = true;
-    let prevPointer = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
       // Touch events on mobile shouldn't change viewpoint outside the joystick button
@@ -3324,7 +3342,7 @@ export default function TajweedStudioPage() {
     let lastPalateKey = '';
     const updatePalateMakhrajColors = (mProg: number) => {
       const lid = currentLetterRef.current.id;
-      const isAnat = false;
+      const isAnat = showAnatomyRef.current;
       const showMarker = showMakhrajColorsRef.current && !isAnat;
       const stateKey = `${lid}|${showMarker}|${isAnat}`;
       const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
@@ -3370,6 +3388,11 @@ export default function TajweedStudioPage() {
         if (sBase) {
           (softPalateMesh.geometry.attributes.color.array as Float32Array).set(sBase);
           softPalateMesh.geometry.attributes.color.needsUpdate = true;
+        }
+        const hBase = hardPalateMesh.geometry.userData.baseColors as Float32Array | undefined;
+        if (hBase) {
+          (hardPalateMesh.geometry.attributes.color.array as Float32Array).set(hBase);
+          hardPalateMesh.geometry.attributes.color.needsUpdate = true;
         }
       }
 
@@ -3433,7 +3456,7 @@ export default function TajweedStudioPage() {
           let sW = 0.0;
 
           if (lid === 'jeem') {
-            const d = Math.hypot(wx / 0.28, (wz - 0.12) / 0.18);
+            const d = Math.hypot(wx / 0.28, (wz - 0.48) / 0.16);
             if (d < 1.0) {
               const w = Math.cos(d * Math.PI * 0.5);
               const press = 0.40 + 0.60 * w;
@@ -3489,7 +3512,6 @@ export default function TajweedStudioPage() {
     // RENDER / ANIMATION LOOP (Optimized for minimal CPU & low FOT)
     // ------------------------------------------------------------------------
     let lastTime = performance.now();
-    let settleFrames = 4;
 
     const animate = (now: number) => {
       const animId = requestAnimationFrame(animate);
@@ -3642,7 +3664,7 @@ export default function TajweedStudioPage() {
           } else if (dorsalMode === 'kaaf_velar') {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
           } else if (dorsalMode === 'jeem_touch') {
-            dorsalArch = Math.max(0, midArchFactor) * 0.54 * Math.exp(-Math.pow((s - 0.54) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
+            dorsalArch = Math.max(0, midArchFactor) * 0.56 * Math.exp(-Math.pow((s - 0.70) / 0.20, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'middle_dome') {
             dorsalArch = Math.max(0, midArchFactor) * 0.52 * Math.exp(-Math.pow((s - 0.56) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'neutral') {
@@ -3863,7 +3885,7 @@ export default function TajweedStudioPage() {
             ? 0.001
             : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
           const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
-          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.32 && s < 0.72) ? 0.012 : 0.024;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.48 && s < 0.84) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           posArr[ptr++] = x;
@@ -3931,8 +3953,8 @@ export default function TajweedStudioPage() {
               pW = rootFric * 0.35;
               sW = rootFric * 0.85 * (1.0 - pW);
             } else if (lid === 'jeem') {
-              const zEnv = Math.exp(-Math.pow((s - 0.54) / 0.11, 2));
-              const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
+              const zEnv = Math.exp(-Math.pow((s - 0.70) / 0.10, 2));
+              const xCenter = Math.exp(-Math.pow(absCos / 0.64, 2));
               pW = zEnv * xCenter * topMask * 0.92;
               sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.58;
             } else if (lid === 'sheen') {
@@ -3983,7 +4005,7 @@ export default function TajweedStudioPage() {
         tongueGeom.attributes.position.needsUpdate = true;
         tongueGeom.attributes.color.needsUpdate = true;
         updatePalateMakhrajColors(morphProgressRef.current);
-        updateTeethAnatomyColors(false);
+        updateTeethAnatomyColors(showAnatomyRef.current);
         tongueGeom.computeVertexNormals();
       }
 
@@ -4277,18 +4299,32 @@ export default function TajweedStudioPage() {
   // Sync mesh visibilities
   useEffect(() => {
     if (!sceneElementsRef.current) return;
-    const { hardPalateMesh, softPalateMesh, alveolarArcMesh, upperTeethGroup, lowerTeethGroup } = sceneElementsRef.current;
+    const { hardPalateMesh, softPalateMesh, alveolarArcMesh, upperTeethGroup, lowerTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
     hardPalateMesh.visible = showPalate;
     softPalateMesh.visible = showPalate;
     alveolarArcMesh.visible = showPalate;
     upperTeethGroup.visible = showUpperTeeth;
     lowerTeethGroup.visible = showLowerTeeth;
+    if (markDirty) markDirty(2);
+    if (renderer && scene && camera) renderer.render(scene, camera);
   }, [showPalate, showUpperTeeth, showLowerTeeth]);
 
   // Opacity slider sync
   useEffect(() => {
     targetGearsRef.current.upperOpacity = upperTeethOpacity;
+    currentGearsRef.current.upperOpacity = upperTeethOpacity;
     setGears(prev => (prev.upperOpacity === upperTeethOpacity ? prev : { ...prev, upperOpacity: upperTeethOpacity }));
+    if (sceneElementsRef.current) {
+      const { upperToothMaterial, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+      if (upperToothMaterial) {
+        const val = upperTeethOpacity / 100;
+        upperToothMaterial.opacity = Math.max(0.0, Math.min(1.0, val));
+        upperToothMaterial.transparent = upperToothMaterial.opacity < 0.995;
+        upperToothMaterial.needsUpdate = true;
+      }
+      if (markDirty) markDirty(2);
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    }
   }, [upperTeethOpacity]);
 
   // Translations object
@@ -4797,10 +4833,14 @@ export default function TajweedStudioPage() {
                       type="button"
                       title={lang === 'ar' ? 'رفع الكاميرا لأعلى (المسافة Space)' : lang === 'ml' ? 'ക്യാമറ ഉയർത്തുക (Space)' : 'Rise Camera Up (Space)'}
                       aria-label="Rise Camera Up"
-                      onPointerDown={() => startElevation(1)}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        startElevation(1);
+                      }}
                       onPointerUp={stopElevation}
                       onPointerLeave={stopElevation}
-                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+                      onPointerCancel={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 touch-none select-none"
                     >
                       <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
                     </button>
@@ -4809,10 +4849,14 @@ export default function TajweedStudioPage() {
                       type="button"
                       title={lang === 'ar' ? 'خفض الكاميرا لأسفل (Shift)' : lang === 'ml' ? 'ക്യാമറ താഴ്ത്തുക (Shift)' : 'Lower Camera Down (Shift)'}
                       aria-label="Lower Camera Down"
-                      onPointerDown={() => startElevation(-1)}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        startElevation(-1);
+                      }}
                       onPointerUp={stopElevation}
                       onPointerLeave={stopElevation}
-                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+                      onPointerCancel={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 touch-none select-none"
                     >
                       <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
                     </button>
@@ -4867,7 +4911,13 @@ export default function TajweedStudioPage() {
                     {/* Anatomy Parts Toggle Button */}
                     <button
                       type="button"
-                      onClick={() => setShowAnatomy(!showAnatomy)}
+                      onClick={() => {
+                        const next = !showAnatomy;
+                        setShowAnatomy(next);
+                        showAnatomyRef.current = next;
+                        forceDeformRef.current = true;
+                        sceneElementsRef.current?.markDirty(4);
+                      }}
                       className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
                         showAnatomy
                           ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
@@ -4890,7 +4940,13 @@ export default function TajweedStudioPage() {
 
                     <button
                       type="button"
-                      onClick={() => setShowMakhrajColors(!showMakhrajColors)}
+                      onClick={() => {
+                        const next = !showMakhrajColors;
+                        setShowMakhrajColors(next);
+                        showMakhrajColorsRef.current = next;
+                        forceDeformRef.current = true;
+                        sceneElementsRef.current?.markDirty(4);
+                      }}
                       className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
                         showMakhrajColors
                           ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
@@ -4904,7 +4960,18 @@ export default function TajweedStudioPage() {
 
                     <button
                       type="button"
-                      onClick={() => setShowPalate(!showPalate)}
+                      onClick={() => {
+                        const next = !showPalate;
+                        setShowPalate(next);
+                        if (sceneElementsRef.current) {
+                          const { hardPalateMesh, softPalateMesh, alveolarArcMesh, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                          hardPalateMesh.visible = next;
+                          softPalateMesh.visible = next;
+                          alveolarArcMesh.visible = next;
+                          if (markDirty) markDirty(2);
+                          if (renderer && scene && camera) renderer.render(scene, camera);
+                        }
+                      }}
                       className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
                         showPalate
                           ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
@@ -4918,8 +4985,17 @@ export default function TajweedStudioPage() {
                     <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-gray-700 shrink-0 select-none">
                       <button
                         type="button"
-                        onClick={() => setShowUpperTeeth(!showUpperTeeth)}
-                        className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300 whitespace-nowrap"
+                        onClick={() => {
+                          const next = !showUpperTeeth;
+                          setShowUpperTeeth(next);
+                          if (sceneElementsRef.current) {
+                            const { upperTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                            upperTeethGroup.visible = next;
+                            if (markDirty) markDirty(2);
+                            if (renderer && scene && camera) renderer.render(scene, camera);
+                          }
+                        }}
+                        className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300 whitespace-nowrap cursor-pointer"
                         title={t.upperTeeth}
                       >
                         <Eye className="w-3.5 h-3.5 shrink-0" />
@@ -4930,7 +5006,23 @@ export default function TajweedStudioPage() {
                         min="0"
                         max="100"
                         value={upperTeethOpacity}
-                        onChange={(e) => setUpperTeethOpacity(parseInt(e.target.value, 10))}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setUpperTeethOpacity(val);
+                          targetGearsRef.current.upperOpacity = val;
+                          currentGearsRef.current.upperOpacity = val;
+                          if (sceneElementsRef.current) {
+                            const { upperToothMaterial, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                            if (upperToothMaterial) {
+                              const op = val / 100;
+                              upperToothMaterial.opacity = Math.max(0.0, Math.min(1.0, op));
+                              upperToothMaterial.transparent = upperToothMaterial.opacity < 0.995;
+                              upperToothMaterial.needsUpdate = true;
+                            }
+                            if (markDirty) markDirty(2);
+                            if (renderer && scene && camera) renderer.render(scene, camera);
+                          }
+                        }}
                         className="w-12 sm:w-16 accent-emerald-500 cursor-pointer"
                         title={`${t.upperTeeth} Opacity`}
                       />
@@ -4939,7 +5031,16 @@ export default function TajweedStudioPage() {
 
                     <button
                       type="button"
-                      onClick={() => setShowLowerTeeth(!showLowerTeeth)}
+                      onClick={() => {
+                        const next = !showLowerTeeth;
+                        setShowLowerTeeth(next);
+                        if (sceneElementsRef.current) {
+                          const { lowerTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                          lowerTeethGroup.visible = next;
+                          if (markDirty) markDirty(2);
+                          if (renderer && scene && camera) renderer.render(scene, camera);
+                        }
+                      }}
                       className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
                         showLowerTeeth
                           ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
