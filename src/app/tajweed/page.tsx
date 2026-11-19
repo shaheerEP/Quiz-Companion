@@ -145,11 +145,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (شدة وجهر)'
     },
     ml: {
-      title: 'ഹംസ (ء / أ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
-      zoneLabel: 'വോക്കൽ കോഡുകൾ (ശബ്ദതന്തുക്കൾ)',
-      desc: 'തൊണ്ടയുടെ ഏറ്റവും അടിഭാഗത്ത് വോക്കൽ കോഡുകൾ തമ്മിൽ അമർന്ന് പൂർണ്ണമായി അടയുമ്പോൾ ശബ്ദവും ശ്വാസവും തടസ്സപ്പെട്ട് പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (ശബ്ദം തടയൽ)'
+      title: 'ഹംസ (ء / أ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ താഴെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ താഴെ അറ്റം.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
     gears: { jawOpen: 32, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 100, epiglottisTilt: 0, throatStation: 1 },
     greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
@@ -191,11 +191,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (همس ورخاوة وخفاء)'
     },
     ml: {
-      title: 'ഹാ (هـ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'അടിത്തൊണ്ട (ശബ്ദതന്തുക്കൾ)',
-      zoneLabel: 'വോക്കൽ കോഡുകൾ',
-      desc: 'ഹംസയുടെ അതേ അടിത്തൊണ്ടയിൽ വോക്കൽ കോഡുകൾ ചെറുതായി തുറന്നുവെച്ച് ചൂടുള്ള ശ്വാസം ഒഴുക്കിവിട്ട് ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ശ്വാസമൊഴുക്ക്)'
+      title: 'ഹാ (هـ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ താഴെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ താഴെ അറ്റം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 34, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 40, epiglottisTilt: 0, throatStation: 1 },
     greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
@@ -237,11 +237,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (جهر وتوسط)'
     },
     ml: {
-      title: 'ഐൻ (ع) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നടു തൊണ്ട (എപ്പിഗ്ലോട്ടിസ്)',
-      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ് വാൽവ്',
-      desc: 'തൊണ്ടയുടെ മധ്യഭാഗത്ത് എപ്പിഗ്ലോട്ടിസ് പിൻഭിത്തിയിലേക്ക് ചേർന്ന് ശബ്ദം ഭാഗികമായി തടഞ്ഞ് വ്യക്തമായ മുഴക്കത്തോടെ പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (ഇടത്തരം ശബ്ദം)'
+      title: 'ഐൻ (ع)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മധ്യം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മധ്യം.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 15, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 65, epiglottisTilt: 85, throatStation: 2 },
     greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
@@ -283,11 +283,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
-      title: 'ഹാഅ് (ح) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നടു തൊണ്ട (എപ്പിഗ്ലോട്ടിസ്)',
-      zoneLabel: 'എപ്പിഗ്ലോട്ടിസ് വാൽവ്',
-      desc: 'ഐനിന്റെ അതേ നടു തൊണ്ടയിൽ നിന്ന് എപ്പിഗ്ലോട്ടിസ് ചുരുങ്ങി വോക്കൽ കോഡുകൾ തുറന്ന് വെറും കാറ്റായി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ശ്വാസമൊഴുക്ക്)'
+      title: 'ഹാഅ് (ح)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മധ്യം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മധ്യം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 12, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 25, epiglottisTilt: 72, throatStation: 2 },
     greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
@@ -329,11 +329,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (استعلاء ورخاوة وجهر)'
     },
     ml: {
-      title: 'ഗൈൻ (غ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
-      zoneLabel: 'നാവിന്റെ മുരടും അണ്ണാക്കും',
-      desc: 'വായിലേക്ക് അടുത്ത തൊണ്ടയുടെ ഏറ്റവും മുകൾഭാഗത്ത് നാവിന്റെ മുരട് അണ്ണാക്കിലേക്ക് ഉയർത്തി കനത്ത ശബ്ദത്തോടെ പുറപ്പെടുന്നു.',
-      sifah: 'കനം (ഉയർച്ചയും ശബ്ദമൊഴുക്കും)'
+      title: 'ഗൈൻ (غ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മേലെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മേലെ അറ്റം.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 92, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 60, epiglottisTilt: 20, throatStation: 3 },
     greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
@@ -375,11 +375,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (استعلاء وهمس ورخاوة)'
     },
     ml: {
-      title: 'ഖാഅ് (خ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'തൊണ്ടയുടെ മേൽഭാഗം',
-      zoneLabel: 'നാവിന്റെ മുരടും അണ്ണാക്കും',
-      desc: 'ഗൈനിന്റെ അതേ സ്ഥലത്ത് നാവിന്റെ അടിഭാഗം അണ്ണാക്കിലേക്ക് ഉയർന്ന് വിറയലില്ലാതെ പരുക്കൻ ശ്വാസത്തോടെ പുറപ്പെടുന്നു.',
-      sifah: 'കനം (പരുക്കൻ ശ്വാസ ഘർഷണം)'
+      title: 'ഖാഅ് (خ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മേലെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മേലെ അറ്റം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 94, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 20, epiglottisTilt: 20, throatStation: 3 },
     greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
@@ -413,11 +413,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (استعلاء وقلقلة)'
     },
     ml: {
-      title: 'ഖാഫ് (ق) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ മുരട് (അണ്ണാക്ക്)',
-      zoneLabel: 'മൃദു അണ്ണാക്ക്',
-      desc: 'നാവിന്റെ ഏറ്റവും പിന്നിലെ മുരട് മേലണ്ണാക്കിലെ മൃദുവായ മാംസഭാഗത്ത് ശക്തിയായി തട്ടുമ്പോൾ പുറപ്പെടുന്നു. നാവിന്റെ തുമ്പ് കീഴ്പല്ലുകൾക്ക് പിന്നിൽ സ്ഥിതിചെയ്യുന്നു.',
-      sifah: 'കനം (മുഴക്കം)'
+      title: 'ഖാഫ് (ق)',
+      category: 'ലഹവിയ്യത്ത് (لهوية)',
+      zoneLabel: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും',
+      desc: 'ലഹവിയ്യത്ത് (لهوية) — നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
     gears: { jawOpen: 26, tipElevation: -26, tipForward: -15, backIstila: 98, middleArch: 12, lateralSpread: 30, greenPointPos: 88, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.302, z: -0.44, rx: 0.36 }
@@ -446,11 +446,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (استفال وهمس)'
     },
     ml: {
-      title: 'കാഫ് (ك) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ മുരട്',
-      zoneLabel: 'മൃദു-കഠിന അണ്ണാക്കുകളുടെ സന്ധി',
-      desc: 'നാവിന്റെ മുരട് ഖാഫിനേക്കാൾ അല്പം താഴെയായി ഉറച്ചതും മൃദുവായതുമായ അണ്ണാക്കിന്റെ സന്ധിയിൽ തട്ടി ശ്വാസം ഒഴുക്കി (ഹംസ്) പുറപ്പെടുന്നു.',
-      sifah: 'നേർത്തത് (ശ്വാസം)'
+      title: 'കാഫ് (ك)',
+      category: 'ലഹവിയ്യത്ത് (لهوية)',
+      zoneLabel: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ',
+      desc: 'ലഹവിയ്യത്ത് (لهوية) — ഖാഫോടടുത്ത അൽപ്പം താഴെ.',
+      sifah: 'ശിദ്ദത്ത്, ഹംസ്'
     },
     gears: { jawOpen: 25, tipElevation: -25, tipForward: -10, backIstila: 90, middleArch: 48, lateralSpread: 25, greenPointPos: 72, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.364, z: -0.22, rx: 0.13 }
@@ -479,14 +479,14 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (شدة وقلقلة)'
     },
     ml: {
-      title: 'ജീം (ج) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ മധ്യഭാഗം',
-      zoneLabel: 'മേലണ്ണാക്കിൽ പൂർണ്ണ അടയൽ',
-      desc: 'നാവിന്റെ മധ്യഭാഗം മേലണ്ണാക്കിൽ പൂർണ്ണമായി അമർന്ന് വായു തടഞ്ഞുനിർത്തി പെട്ടെന്ന് തുറന്ന് (ഖൽഖലത്തോടെ) ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (മുഴക്കം)'
+      title: 'ജീം (ج)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
-    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 54, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.463, z: 0.12, rx: 0.15 }
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 70, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.448, z: 0.48, rx: -0.22 }
   },
   // 4. Sheen (ش)
   {
@@ -512,11 +512,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (تفشٍّ ورخاوة)'
     },
     ml: {
-      title: 'ശീൻ (ش) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ മധ്യഭാഗം',
-      zoneLabel: 'വായു പരക്കുന്ന ഭാഗം',
-      desc: 'നാവിന്റെ മധ്യഭാഗം ഉയർന്ന് അണ്ണാക്കിലേക്ക് വായു പരന്ന് മുൻപല്ലുകൾ വരെ ഒഴുകി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (കാറ്റ് പരക്കൽ)'
+      title: 'ശീൻ (ش)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും. (തഫശ്ശീ: ളാഇന്റെ മഖ്റജ് വരെ കാറ്റ് പരക്കൽ).',
+      sifah: 'തഫശ്ശീ, ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 24, tipElevation: -22, tipForward: -5, backIstila: 15, middleArch: 90, lateralSpread: 65, greenPointPos: 52, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.467, z: 0.15, rx: 0.11 }
@@ -545,11 +545,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (رخاوة ولين)'
     },
     ml: {
-      title: 'യാഅ് (ي) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ മധ്യഭാഗം',
-      zoneLabel: 'അണ്ണാക്കിലേക്ക് ഉയരൽ',
-      desc: 'നാവിന്റെ മധ്യഭാഗം മേലണ്ണാക്കിലേക്ക് പൂർണ്ണമായി അടയാതെ ഉയർന്ന് ശബ്ദം മൃദുവായി ഒഴുക്കി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (മൃദുവായത്)'
+      title: 'യാഅ് (ي)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും. (മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ യാഅ് നാവിൽ നിന്നും പുറപ്പെടുന്നു).',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 14, middleArch: 92, lateralSpread: 60, greenPointPos: 52, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.466, z: 0.14, rx: 0.13 }
@@ -578,11 +578,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (استعلاء واستطالة)'
     },
     ml: {
-      title: 'ളാദ് (ض) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ അരികും അണപ്പല്ലുകളും',
-      zoneLabel: 'അണപ്പല്ലുകളിൽ അമർത്തൽ',
-      desc: 'നാവിന്റെ ഒന്നോ രണ്ടോ അരികുകൾ മേൽ അണപ്പല്ലുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവിന്റെ തുമ്പ് മുൻപല്ലുകളിൽ അമർത്താതെ മൃദുവായി തൊടുന്നു.',
-      sifah: 'കനം (നീളൽ)'
+      title: 'ളാദ് (ض)',
+      category: 'ളർസിയ്യത്ത് (ضرسية)',
+      zoneLabel: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും',
+      desc: 'ളർസിയ്യത്ത് (ضرسية) — നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും. (ഇസ്തിത്വാലത്ത്: നാവിന്റെ അരിക് നീളത്തിൽ ശബ്ദം നീളൽ).',
+      sifah: 'ഇസ്തിത്വാലത്ത്, രിഖ്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
     greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
@@ -611,11 +611,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (انحراف وتوسط)'
     },
     ml: {
-      title: 'ലാം (ل) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ അരികും തുമ്പും',
-      zoneLabel: 'മേൽപല്ലുകളുടെ മോണ',
-      desc: 'നാവിന്റെ അരികിന്റെ അറ്റം മുതൽ മുൻതുമ്പ് വരെ മുൻപല്ലുകളുടെ മോണയിൽ തട്ടുമ്പോൾ ശബ്ദം ഇരുവശങ്ങളിലൂടെയും ഒഴുകുന്നു.',
-      sifah: 'നേർത്തത് (ചായൽ)'
+      title: 'ലാം (ل)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 28, tipElevation: 76, tipForward: 38, backIstila: 0, middleArch: -20, lateralSpread: 32, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.252, z: 0.84, rx: -0.49 }
@@ -644,11 +644,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (غنة وتوسط)'
     },
     ml: {
-      title: 'നൂൻ (ن) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും മൂക്കും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ മോണ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ മോണയിൽ മുട്ടി നിൽക്കുമ്പോൾ ശബ്ദം മൂക്കിലൂടെ മുഴങ്ങുന്നു.',
-      sifah: 'നേർത്തത് (മൂക്കിലൂടെയുള്ള ശബ്ദം)'
+      title: 'നൂൻ (ن)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും. (ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ നൂൻ നാവിൽ നിന്നും പുറപ്പെടുന്നു).',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 26, tipElevation: 78, tipForward: 36, backIstila: 0, middleArch: -18, lateralSpread: 22, greenPointPos: 24, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.254, z: 0.84, rx: -0.48 }
@@ -677,11 +677,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (انحراف وتكرير)'
     },
     ml: {
-      title: 'റാഅ് (ر) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ മോണ',
-      desc: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം മേൽ മോണയിൽ തട്ടുന്നു. നടുവിലെ നേർത്ത വിടവ് വഴി അമിതമായ വിറയൽ ഒഴിവാക്കുന്നു.',
-      sifah: 'കനം / നേർത്തത് (വിറയൽ ഒഴിവാക്കൽ)'
+      title: 'റാഅ് (ر)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 26, tipElevation: 80, tipForward: 20, backIstila: 65, middleArch: -10, lateralSpread: 35, greenPointPos: 30, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.262, z: 0.78, rx: -0.46 }
@@ -710,11 +710,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (إطباق وقلقلة)'
     },
     ml: {
-      title: 'ത്വാഅ് (ط) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ വേരും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ വേരുകൾ',
-      desc: 'നാവിന്റെ വീതിയുള്ള തുമ്പ് മേൽ മുൻപല്ലുകളുടെ വേരുകളിൽ ശക്തിയായി അമരുമ്പോൾ നാവ് മുഴുവനായി അണ്ണാക്കിലേക്ക് ചേരുന്നു.',
-      sifah: 'കനം (മുഴക്കം)'
+      title: 'ത്വാഅ് (ط)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ, ഇത്വ്ബാഖ്'
     },
     gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -8, lateralSpread: 42, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
@@ -743,11 +743,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (جهر وقلقلة)'
     },
     ml: {
-      title: 'ദാൽ (د) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ വേരും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ വേരുകൾ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ വേരുകളിൽ തട്ടി ശബ്ദം തടഞ്ഞ് പെട്ടെന്ന് വിടുമ്പോൾ ഖൽഖലത്തുണ്ടാകുന്നു.',
-      sifah: 'നേർത്തത് (ഖൽഖലത്ത്)'
+      title: 'ദാൽ (د)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
     gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
@@ -776,11 +776,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (شدة وهمس)'
     },
     ml: {
-      title: 'താഅ് (ت) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ വേരും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ വേരുകൾ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ വേരുകളിൽ തട്ടി മൃദുവായി ശ്വാസം വിട്ടു ഉച്ചരിക്കുന്നു (ഹംസ്).',
-      sifah: 'നേർത്തത് (ഹംസ്)'
+      title: 'താഅ് (ت)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ഹംസ്'
     },
     gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
@@ -809,11 +809,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (صفير وإطباق)'
     },
     ml: {
-      title: 'സ്വാദ് (ص) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ അറ്റം (മുൻപല്ലുകൾ)',
-      zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
-      desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് നാവ് അണ്ണാക്കിലേക്ക് ഉയർത്തി മൂർച്ചയുള്ള വിസിൽ സ്വരത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'കനം (വിസിൽ)'
+      title: 'സ്വാദ് (ص)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: 55, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -842,11 +842,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (همس وصفير)'
     },
     ml: {
-      title: 'സീൻ (സ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ അറ്റം',
-      zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
-      desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് ശ്വാസം ഒഴുക്കി നേർത്ത വിസിൽ ശബ്ദത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (വിസിൽ & ശ്വാസം)'
+      title: 'സീൻ (س)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 72, lateralSpread: 72, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -875,11 +875,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (جهر وصفير)'
     },
     ml: {
-      title: 'സായ് (ز) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ അറ്റം',
-      zoneLabel: 'കീഴ് മുൻപല്ലുകളുടെ ഉൾഭാഗം',
-      desc: 'നാവിന്റെ അറ്റം കീഴ് മുൻപല്ലുകൾക്ക് പിന്നിൽ വെച്ച് ശബ്ദം മുഴക്കി വിസിൽ സ്വരത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (വിസിൽ)'
+      title: 'സാഇ (ز)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ജഹ്ർ, രിഖ്വ്'
     },
     gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 75, lateralSpread: 75, greenPointPos: 2, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
@@ -908,11 +908,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مفخم (إطباق ورخاوة)'
     },
     ml: {
-      title: 'ളാഅ് (ظ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ അരികും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ അരികുകൾ',
-      desc: 'നാവിന്റെ തുമ്പിന്റെ പുറംഭാഗം മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ തൊടുമ്പോൾ നാവിന്റെ മുരട് ഉയർന്ന് കനത്തോടെ ഉച്ചരിക്കുന്നു.',
-      sifah: 'കനം'
+      title: 'ളാഅ് (ظ)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ, ഇത്വ്ബാഖ്'
     },
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: 10, lateralSpread: 40, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
@@ -941,11 +941,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (جهر ورخاوة)'
     },
     ml: {
-      title: 'ദാൽ (ذ) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ അരികും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ അരികുകൾ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ നേർത്തതായി തൊട്ട് ശബ്ദം ഒഴുകി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (മൃദുവായത്)'
+      title: 'ദാൽ (ذ)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 25, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
@@ -974,11 +974,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
-      title: 'ഥാഅ് (ث) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'നാവിന്റെ തുമ്പും പല്ലിന്റെ അരികും',
-      zoneLabel: 'മേൽ മുൻപല്ലുകളുടെ അരികുകൾ',
-      desc: 'നാവിന്റെ തുമ്പ് മേൽ മുൻപല്ലുകളുടെ അരികുകളിൽ തൊട്ട് കാറ്റ് പുറത്തേക്ക് ഒഴുക്കി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ഹംസ്)'
+      title: 'ഥാഅ് (ث)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 20, greenPointPos: 8, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
@@ -1009,11 +1009,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
-      title: 'ഫാഅ് (ف) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'കീഴ്ച്ചുണ്ടും മേൽപല്ലുകളും',
-      zoneLabel: 'കീഴ്ച്ചുണ്ടിന്റെ ഉൾഭാഗം',
-      desc: 'മേൽ മുൻപല്ലുകളുടെ അഗ്രങ്ങൾ കീഴ്ച്ചുണ്ടിന്റെ ഉൾഭാഗത്ത് തട്ടുമ്പോൾ കാറ്റ് ഒഴുകി ഉച്ചരിക്കുന്നു.',
-      sifah: 'നേർത്തത് (ഹംസ്)'
+      title: 'ഫാഅ് (ف)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
     },
     gears: { jawOpen: 18, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 6, upperOpacity: 92 },
     greenCoords: { x: 0.0, y: 0.005, z: 0.94, rx: 0.0 }
@@ -1044,11 +1044,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (شدة وقلقلة)'
     },
     ml: {
-      title: 'ബാഅ് (ب) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'ഇരുചുണ്ടുകൾ',
-      zoneLabel: 'ഇരുചുണ്ടുകളും പൂർണ്ണമായി അടയൽ',
-      desc: 'ഇരുചുണ്ടുകളും പരസ്പരം ശക്തിയായി അമർന്ന് അടഞ്ഞ് പെട്ടെന്ന് വിടുമ്പോൾ ഖൽഖലത്തോടെ ശബ്ദം മുഴങ്ങുന്നു.',
-      sifah: 'നേർത്തത് (മുഴക്കം)'
+      title: 'ബാഅ് (ب)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. ബാഇൽ മീമിനേക്കാൾ ശക്തിപൂർവ്വം രണ്ടു ചുണ്ടും തമ്മിൽ ചേർന്നിരിക്കേണ്ടതുമാണ്.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
     gears: { jawOpen: 10, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
@@ -1079,11 +1079,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (غنة وتوسط)'
     },
     ml: {
-      title: 'മീം (م) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'ഇരുചുണ്ടുകളും മൂക്കും',
-      zoneLabel: 'ഇരുചുണ്ടുകളും മൃദുവായി ചേരൽ',
-      desc: 'ഇരുചുണ്ടുകളും മൃദുവായി ചേർത്തുപിടിക്കുകയും ശബ്ദത്തിന്റെ പ്രധാന ഭാഗം മൂക്കിലൂടെ ഗുണ്ണയോടെ ഒഴുകുകയും ചെയ്യുന്നു.',
-      sifah: 'നേർത്തത് (മൂക്കിലൂടെയുള്ള ശബ്ദം)'
+      title: 'മീം (م)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ മീം ചുണ്ടിൽ നിന്നും പുറപ്പെടുന്നു.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 12, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
@@ -1114,11 +1114,11 @@ const LETTER_PRESETS: LetterPreset[] = [
       sifah: 'مرقق (رخاوة ولين)'
     },
     ml: {
-      title: 'വാവ് (و) അക്ഷരത്തിന്റെ മഖ്റജ്',
-      category: 'ഇരുചുണ്ടുകൾ',
-      zoneLabel: 'ചുണ്ടുകൾ ഉരുട്ടി വൃത്തമാക്കൽ',
-      desc: 'ഇരുചുണ്ടുകളും മുന്നോട്ട് നീട്ടി വൃത്ത രൂപത്തിലാക്കി നാവ് താഴ്ത്തിവെച്ച് ശബ്ദം ഒഴുക്കുന്നു.',
-      sifah: 'നേർത്തത് (മൃദുവായത്)'
+      title: 'വാവ് (و)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. വാവിൽ ചുണ്ട് തുറന്നിരിക്കേണ്ടതാണ്. മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ വാവ് ചുണ്ടിൽ നിന്നും പുറപ്പെടുന്നു.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
     },
     gears: { jawOpen: 20, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
     greenCoords: { x: 0.0, y: 0.02, z: 1.08, rx: 0.0 }
@@ -1155,6 +1155,33 @@ interface AnatomyLabelItem {
   rgb: [number, number, number];
   letters: string[];
 }
+
+interface MakhrajItem17 {
+  num: number;
+  letters: string;
+  name: string;
+  makhraj: string;
+}
+
+const MAKHARIJ_17_DATA: MakhrajItem17[] = [
+  { num: 1, letters: 'ا و ي', name: 'ജൗഫിയ്യത്ത് (جوفية)', makhraj: 'വായയുടെ അന്തരീക്ഷം' },
+  { num: 2, letters: 'ء ه', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ താഴെ അറ്റം' },
+  { num: 3, letters: 'ع ح', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ മധ്യം' },
+  { num: 4, letters: 'غ خ', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ മേലെ അറ്റം' },
+  { num: 5, letters: 'ق', name: 'ലഹവിയ്യത്ത് (لهوية)', makhraj: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും' },
+  { num: 6, letters: 'ك', name: 'ലഹവിയ്യത്ത് (لهوية)', makhraj: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ' },
+  { num: 7, letters: 'ج ش ي', name: 'ശജരിയ്യത്ത് (شجرية)', makhraj: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും' },
+  { num: 8, letters: 'ض', name: 'ളർസിയ്യത്ത് (ضرسية)', makhraj: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും' },
+  { num: 9, letters: 'ل', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 10, letters: 'ن', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും' },
+  { num: 11, letters: 'ر', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 12, letters: 'ط د ت', name: 'നിത്ഇയ്യത്ത് (نطعية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും' },
+  { num: 13, letters: 'ص ز س', name: 'അസലിയ്യത്ത് (اسلية)', makhraj: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും' },
+  { num: 14, letters: 'ظ ذ ث', name: 'ലിസവിയ്യത്ത് (لثوية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 15, letters: 'ف', name: 'ശഫവിയ്യത്ത് (شفوية)', makhraj: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 16, letters: 'و ب م', name: 'ശഫവിയ്യത്ത് (شفوية)', makhraj: 'രണ്ട് ചുണ്ടുകളുടെ ഇട' },
+  { num: 17, letters: '(م ن)', name: 'ഗുന്നത്ത് (غُنَّةٌ)', makhraj: 'തരിമൂക്ക്' }
+];
 
 const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
   // 4 Tongue Anatomy Parts based on Tajweed rules
@@ -1241,19 +1268,20 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'hams',
     oppositeNameEn: 'Hams (هَمْس)',
     oppositeNameAr: 'الهمس',
-    oppositeNameMl: 'ഹംസ്',
+    oppositeNameMl: 'ഹംസ് (هَمْسْ)',
     pairGroupEn: 'Breath (النفس)',
     pairGroupAr: 'جريان النفس وانحباسه',
-    pairGroupMl: 'ശ്വാസത്തിന്റെ ഒഴുക്ക്',
+    pairGroupMl: 'കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
     ar: 'جَهْر',
     en: 'Jahr',
-    ml: 'ജഹ്റ്',
+    ml: 'ജഹ്ർ (جَهْرْ)',
     literalAr: 'الوضوح والظهور',
     literalEn: 'Clarity / Loudness',
     literalMl: 'വെളിവാക്കൽ',
     technicalAr: 'انحباس جريان النفس عند النطق بالحرف لقوة الاعتماد على المخرج.',
     technicalEn: 'Stopping the flow of breath due to strong reliance on the articulation point (Makhraj).',
     technicalMl: 'മഖ്റജിൽ ശക്തിയായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കാതിരിക്കൽ',
+    mnemonic: 'عظم وزن قارئ ذى غضّ جدّ طلب',
     letters: ['ع', 'ظ', 'م', 'و', 'ز', 'ن', 'ق', 'ا', 'ر', 'ئ', 'ذ', 'ي', 'غ', 'ض', 'ج', 'د', 'ط', 'ل', 'ب', 'أ', 'ء'],
     chipClass: 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800',
     badgeHex: '#0284c7'
@@ -1265,20 +1293,20 @@ export const SIFAAT_DATA: SifahItem[] = [
     oppositeId: 'jahr',
     oppositeNameEn: 'Jahr (جَهْر)',
     oppositeNameAr: 'الجهر',
-    oppositeNameMl: 'ജഹ്റ്',
+    oppositeNameMl: 'ജഹ്ർ (جَهْرْ)',
     pairGroupEn: 'Breath (النفس)',
     pairGroupAr: 'جريان النفس وانحباسه',
-    pairGroupMl: 'ശ്വാസത്തിന്റെ ഒഴുക്ക്',
+    pairGroupMl: 'കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
     ar: 'هَمْس',
     en: 'Hams',
-    ml: 'ഹംസ്',
+    ml: 'ഹംസ് (هَمْسْ)',
     literalAr: 'الخفاء والصوت الخفي',
     literalEn: 'Whispering / Concealment',
     literalMl: 'മറക്കൽ',
     technicalAr: 'جريان النفس عند النطق بالحرف لضعف الاعتماد على المخرج.',
     technicalEn: 'Continuation of the breath due to weak reliance on the articulation point.',
     technicalMl: 'മഖ്റജിൽ ബലഹീനമായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കൽ',
-    mnemonic: 'فَحَثَّهُ شَخْصٌ سَكَتَ',
+    mnemonic: 'فَحَثَّهُ شَخْصٌ سَكَتَ',
     letters: ['ف', 'ح', 'ث', 'ه', 'ش', 'خ', 'ص', 'س', 'ك', 'ت'],
     chipClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
     badgeHex: '#0891b2'
@@ -1296,14 +1324,14 @@ export const SIFAAT_DATA: SifahItem[] = [
     pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'شِدَّة',
     en: 'Shiddah',
-    ml: 'ശിദ്ദത്ത്',
+    ml: 'ശിദ്ദത്ത് (شِدَّةْ)',
     literalAr: 'القوة والصلابة',
     literalEn: 'Strength',
     literalMl: 'ശക്തി',
     technicalAr: 'انحباس جريان الصوت لقوة الاعتماد على المخرج.',
     technicalEn: 'Stopping the flow of sound due to strong, firm reliance on the articulation point.',
     technicalMl: 'മഖ്റജിൽ ശക്തിയായി അമർത്തി ഉച്ചരിക്കുന്നതിനാൽ ശബ്ദം നടക്കാതിരിക്കൽ',
-    mnemonic: 'أَجِدُ قَطٍ بَكَتْ',
+    mnemonic: 'أَجِدْ قَطٍ بَكَتَ',
     letters: ['أ', 'ج', 'د', 'ق', 'ط', 'ب', 'ك', 'ت'],
     chipClass: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
     badgeHex: '#e11d48'
@@ -1321,13 +1349,14 @@ export const SIFAAT_DATA: SifahItem[] = [
     pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'رِخْو',
     en: 'Rikhwah',
-    ml: 'രിഖ്‌വ്',
+    ml: 'രിഖ്വ് (رِخْوْ)',
     literalAr: 'اللين والرخاوة',
     literalEn: 'Softness / Looseness',
     literalMl: 'പതം',
     technicalAr: 'جريان تام للصوت مع الحرف لضعف الاعتماد على المخرج.',
     technicalEn: 'Easy flow of sound due to weak reliance on the articulation point.',
     technicalMl: 'മഖ്റജിൽ ബലഹീനമായി സ്ഥിതി ചെയ്യുന്നതിനാൽ ശബ്ദം നടക്കൽ മൃദുവാകൽ',
+    mnemonic: 'خذ غث حصّ فظّ شوص زيّ ساهٍ',
     letters: ['خ', 'ذ', 'غ', 'ث', 'ح', 'ض', 'ف', 'ظ', 'ش', 'و', 'ص', 'ز', 'ي', 'س', 'ا', 'ه'],
     chipClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
     badgeHex: '#059669'
@@ -1345,14 +1374,14 @@ export const SIFAAT_DATA: SifahItem[] = [
     pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
     ar: 'تَوَسُّط',
     en: 'Tawassut',
-    ml: 'തവസ്സുത്വ്',
+    ml: 'തവസ്സുത്വ് (تَوَسُّطْ)',
     literalAr: 'الاعتدال والتوسط',
     literalEn: 'Moderation',
-    literalMl: 'മധ്യമം',
+    literalMl: 'മധ്യം',
     technicalAr: 'اعتدال الصوت بين كمال الانحباس وكمال الجريان.',
     technicalEn: 'Moderate flow of sound between softness and strength.',
     technicalMl: 'മൃദു കഠോരത്തിനിടയിൽ ശബ്ദം നടക്കൽ',
-    mnemonic: 'لِنْ عُمَرْ',
+    mnemonic: 'لن عمر',
     letters: ['ل', 'ن', 'ع', 'م', 'ر'],
     chipClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800',
     badgeHex: '#d97706'
@@ -1573,7 +1602,7 @@ export const SIFAAT_DATA: SifahItem[] = [
     tonguePartMl: 'നാവിന്റെ മധ്യമം',
     ar: 'تَفَشِّي',
     en: 'Tafashshi',
-    ml: 'തഫശ്ശീ',
+    ml: 'തഫശ്ശീ (تَفَشِّى)',
     literalAr: 'الاتساع والانتشار',
     literalEn: 'Spreading',
     literalMl: 'പരക്കൽ',
@@ -1593,7 +1622,7 @@ export const SIFAAT_DATA: SifahItem[] = [
     tonguePartMl: 'നാവിന്റെ അരിക്',
     ar: 'اِسْتِطَالَة',
     en: 'Istitalah',
-    ml: 'ഇസ്തിത്വാലത്ത്',
+    ml: 'ഇസ്തിത്വാലത്ത് (اِسْتِطَالَةٌ)',
     literalAr: 'الامتداد والطول',
     literalEn: 'Elongation',
     literalMl: 'നീളൽ',
@@ -4624,6 +4653,56 @@ export default function TajweedStudioPage() {
             </button>
           </div>
         </div>
+
+                {/* Malayalam Curriculum Lesson 5: Makharijul Huroof Introduction & General Makharij */}
+        {activeMainTab === 'makharij' && lang === 'ml' && (
+          <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3 animate-in fade-in duration-150">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                മഖാരിജുൽ ഹുറൂഫ്
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+              ഹിജാഇയ്യായ അറബി അക്ഷരങ്ങൾ 29 ആകുന്നു. അവ ഓരോന്നിനും സ്വന്തമായി ഓരോ പേരുമുണ്ട്. ആ പേരുകൾ എണ്ണപ്പെടുന്നത് കൊണ്ടാണ് അതിന് ഹിജാഇയ്യത്ത് എന്ന് പറയപ്പെടുന്നത്. അവക്ക് പതിനേഴ് മഖ്റജുകളാണുള്ളത്. ഒരു മഖ്റജിൽ നിന്ന് ഒന്നിലധികം അക്ഷരങ്ങൾ പുറപ്പെടുന്നത് കൊണ്ടാണ് ഹർഫുകളുടെ എണ്ണമനുസരിച്ച് മഖ്റജുകളുടെ എണ്ണം ഇല്ലാതിരിക്കുന്നത്. അതുപോലെ ചില അക്ഷരങ്ങൾക്ക് ഒന്നിലധികം മഖ്റജുകളുമുണ്ട്. അപ്പോൾ ഈ അടിസ്ഥാനത്തിൽ അക്ഷരങ്ങളുടെ എണ്ണം 33 വരെ വർദ്ധിച്ചു എന്നും വരുന്നതാണ്.
+            </p>
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+              و , ي ഇവ രണ്ടും മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ വാവ് ചുണ്ടിൽ നിന്നും യാഅ് നാവിൽ നിന്നും പുറപ്പെടുന്നു. م , ن എന്നീ ഹർഫുകൾ ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ മീം ചുണ്ടിൽ നിന്നും നൂൻ നാവിൽ നിന്നും പുറപ്പെടുന്നു. و , ب , മ ഇവ മൂന്നും ചുണ്ടിൽ നിന്നാണെങ്കിലും വാവിൽ ചുണ്ട് തുറന്നിരിക്കേണ്ടതും ബാഇൽ മീമിനേക്കാൾ ശക്തിപൂർവ്വം രണ്ടു ചുണ്ടും തമ്മിൽ ചേർന്നിരിക്കേണ്ടതുമാണ്.
+            </p>
+            <div className="pt-2 border-t border-slate-200/80 dark:border-gray-800 flex flex-col gap-1.5">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                അക്ഷരങ്ങളുടെ പൊതുവുള്ള മഖ്റജ് അഞ്ചാകുന്നു:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 text-xs text-slate-700 dark:text-gray-300">
+                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">1. ഹൽഖ്</span>
+                  <span>തൊണ്ടയിൽ നിന്ന് 6 അക്ഷരങ്ങൾ:</span>
+                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ء ه ع ح غ خ</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">2. ശഫതാനി</span>
+                  <span>രണ്ട് ചുണ്ടുകളിൽ നിന്ന് 4 ഹർഫുകൾ:</span>
+                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ف ب و م</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">3. ഖൈശൂം</span>
+                  <span>തരിമൂക്കിൽ നിന്ന് 2 ഹർഫുകൾ:</span>
+                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">م ن</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">4. ഹവാഅ് / ജൗഫ്</span>
+                  <span>അന്തരീക്ഷത്തിൽ നിന്ന് 3 ഹർഫുകൾ:</span>
+                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ا و ي</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 sm:col-span-2 flex flex-col gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">5. ലിസാൻ</span>
+                  <span>നാവിൽ നിന്ന് 18 അക്ഷരങ്ങൾ:</span>
+                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ق ك ج ش ي ض ل ن ر ط د ت ص ز س ظ ث ذ</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
         <div className={activeMainTab === 'makharij' ? "grid grid-cols-1 lg:grid-cols-12 gap-3 items-start" : sifaat3DOpen ? "contents" : "hidden"}>
