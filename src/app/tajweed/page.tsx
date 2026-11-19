@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import Navbar from "@/components/Navbar";
-import DevToolsShield from "@/components/tajweed/DevToolsShield";
 import { useTheme } from "@/context/ThemeContext";
 import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlaying, isAudioFetchPending } from "@/components/tajweed/CleanLetterAudio";
 import * as THREE from "three";
@@ -4501,8 +4500,7 @@ export default function TajweedStudioPage() {
     });
 
   return (
-    <div className={`tajweed-protected-page min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col relative select-none ${lang === 'ar' ? 'font-serif lang-ar' : lang === 'ml' ? 'lang-ml' : 'lang-en'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <DevToolsShield />
+    <div className={`min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col relative selection:bg-emerald-500 selection:text-white ${lang === 'ar' ? 'font-serif lang-ar' : lang === 'ml' ? 'lang-ml' : 'lang-en'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <Navbar />
 
       {/* Ambient background glow */}
