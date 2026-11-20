@@ -485,8 +485,8 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും.',
       sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
-    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 70, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.448, z: 0.48, rx: -0.22 }
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -30, backIstila: 18, middleArch: 98, lateralSpread: 45, greenPointPos: 81, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.405, z: 0.58, rx: -0.36 }
   },
   // 4. Sheen (ش)
   {
@@ -3485,7 +3485,7 @@ export default function TajweedStudioPage() {
           let sW = 0.0;
 
           if (lid === 'jeem') {
-            const d = Math.hypot(wx / 0.28, (wz - 0.48) / 0.16);
+            const d = Math.hypot(wx / 0.26, (wz - 0.58) / 0.14);
             if (d < 1.0) {
               const w = Math.cos(d * Math.PI * 0.5);
               const press = 0.40 + 0.60 * w;
@@ -3693,7 +3693,15 @@ export default function TajweedStudioPage() {
           } else if (dorsalMode === 'kaaf_velar') {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
           } else if (dorsalMode === 'jeem_touch') {
-            dorsalArch = Math.max(0, midArchFactor) * 0.56 * Math.exp(-Math.pow((s - 0.70) / 0.20, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
+            const sContact = 0.81;
+            let archSlope = 0;
+            if (s <= sContact) {
+              archSlope = Math.pow(Math.sin((s / sContact) * Math.PI * 0.5), 1.25);
+            } else {
+              const tDrop = Math.pow((s - sContact) / (1.0 - sContact), 1.2);
+              archSlope = Math.max(0.0, 1.0 - tDrop * 1.15);
+            }
+            dorsalArch = Math.max(0, midArchFactor) * 0.58 * archSlope + istilaFactor * 0.08 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'middle_dome') {
             dorsalArch = Math.max(0, midArchFactor) * 0.52 * Math.exp(-Math.pow((s - 0.56) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'neutral') {
@@ -3914,7 +3922,7 @@ export default function TajweedStudioPage() {
             ? 0.001
             : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
           const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
-          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.48 && s < 0.84) ? 0.012 : 0.024;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.60 && s < 0.88) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           posArr[ptr++] = x;
@@ -3982,10 +3990,10 @@ export default function TajweedStudioPage() {
               pW = rootFric * 0.35;
               sW = rootFric * 0.85 * (1.0 - pW);
             } else if (lid === 'jeem') {
-              const zEnv = Math.exp(-Math.pow((s - 0.70) / 0.10, 2));
-              const xCenter = Math.exp(-Math.pow(absCos / 0.64, 2));
-              pW = zEnv * xCenter * topMask * 0.92;
-              sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.58;
+              const zEnv = Math.exp(-Math.pow((s - 0.81) / 0.075, 2));
+              const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
+              pW = zEnv * xCenter * topMask * 0.95;
+              sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.55;
             } else if (lid === 'sheen') {
               const zEnv = Math.exp(-Math.pow((s - 0.56) / 0.14, 2));
               const latShoulders = Math.exp(-Math.pow((absCos - 0.62) / 0.22, 2));
@@ -4411,8 +4419,8 @@ export default function TajweedStudioPage() {
     if (lang === 'ml') {
       return {
         studioTitle: '3D തജ്‌വീദ് സ്റ്റുഡിയോ',
-        anatomy: 'നാവിന്റെ ഭാഗങ്ങൾ',
-        anatomyPartCol: 'ഭാഗം',
+        anatomy: 'അൽമഖാരിജ് (17)',
+        anatomyPartCol: 'ക്രമം / പേര്',
         anatomyLettersCol: 'ഹർഫുകൾ',
         selectLetter: 'ഹർഫ് (الحرف):',
         simulate: 'പ്ലേ',
@@ -4422,14 +4430,14 @@ export default function TajweedStudioPage() {
         palate: 'അണ്ണാക്ക്',
         upperTeeth: 'മേൽപല്ലുകൾ',
         lowerTeeth: 'കീഴ്‌പല്ലുകൾ',
-        dhaadVariants: 'ളാദ് (ض) ഉച്ചാരണത്തിന്റെ 3 രീതികൾ:',
+        dhaadVariants: 'ളാദ് (ض) — ളർസിയ്യത്ത്:',
         dhaadRight: '1. വലതുഭാഗത്തെ അണപ്പല്ലുകൾ',
         dhaadLeft: '2. ഇടതുഭാഗത്തെ അണപ്പല്ലുകൾ',
         dhaadBoth: '3. ഇരുഭാഗത്തെയും അണപ്പല്ലുകൾ',
-        shajariyyahNotice: 'നടുനാവിന്റെ അക്ഷരങ്ങൾ:',
-        jeemLabel: '1. ജീം (ജ)',
-        sheenLabel: '2. ശീൻ (ശ)',
-        yaaLabel: '3. യാഅ് (യ)',
+        shajariyyahNotice: 'ശജരിയ്യത്ത് അക്ഷരങ്ങൾ:',
+        jeemLabel: '1. ജീം (ج)',
+        sheenLabel: '2. ശീൻ (ش)',
+        yaaLabel: '3. യാഅ് (ي)',
         controls: 'ഉച്ചാരണ നിയന്ത്രണം',
         reset: 'യഥാർത്ഥ അവസ്ഥ',
         firmPress: 'ശക്തിയായി അമർത്തൽ',
@@ -4438,24 +4446,24 @@ export default function TajweedStudioPage() {
         tongueBadge: 'നാവ്',
         toggleLanguage: 'English',
         makharijTab: 'മഖാരിജ്',
-        sifaatTab: 'സ്വിഫാത്ത്',
-        sifaatSectionTitle: 'സ്വിഫത്തുകൾ (അക്ഷരങ്ങളുടെ വിശേഷണങ്ങൾ)',
-        sifaatSectionDesc: 'ഒരു മഖ്റജിൽ നിന്ന് പുറപ്പെടുന്ന അക്ഷരങ്ങളെ വേർതിരിക്കുന്ന സ്വഭാവഗുണങ്ങൾ.',
-        withOppositesTitle: '1. വിപരീതമുള്ള ഗുണങ്ങൾ (4 ജോടികൾ)',
-        withoutOppositesTitle: '2. വിപരീതമില്ലാത്ത ഗുണങ്ങൾ (7 എണ്ണം)',
-        characteristicCol: 'സ്വിഫത്ത്',
-        literalCol: 'അർത്ഥം',
-        technicalCol: 'സാങ്കേതിക അർത്ഥം',
+        sifaatTab: 'സിഫാത്ത്',
+        sifaatSectionTitle: 'സിഫാതുൽ ഹുറൂഫ്',
+        sifaatSectionDesc: 'തജ്വീദിന്റെ ഫന്നിൽ മഖ്റജ് പോലെത്തന്നെ സിഫാതിനെ കുറിച്ചും അറിയൽ വളരെ പ്രധാനപ്പെട്ടതാകുന്നു.',
+        withOppositesTitle: 'അസ്സിഫാതുൽ മുതളാദ്ദത്ത്',
+        withoutOppositesTitle: 'വിപരീതമില്ലാത്ത സിഫതുകൾ (ളിദ്ദല്ലാത്തവ)',
+        characteristicCol: 'സിഫത്ത്',
+        literalCol: 'മഅ്ന',
+        technicalCol: 'സാങ്കേതിക അർത്ഥവും ഹർഫുകളും',
         lettersCol: 'ഹർഫുകൾ',
         mnemonicCol: 'സൂചന വാക്യം',
-        modalLettersTitle: 'ഈ സ്വിഫത്തുള്ള ഹർഫുകൾ:',
+        modalLettersTitle: 'ഈ സിഫത്തുള്ള ഹർഫുകൾ:',
         openIn3D: 'മഖ്റജിൽ കാണുക',
         close: 'അടയ്ക്കുക',
-        letterSifaatTitle: 'സ്വിഫാത്തുകൾ (صفات الحرف):',
+        letterSifaatTitle: 'സിഫാത്തുകൾ (صفات الحرف):',
         clickToExplain: 'വിശദീകരണത്തിന് ക്ലിക്ക് ചെയ്യുക',
-        filterAll: 'എല്ലാം (16)',
-        filterOpposite: 'വിപരീതമുള്ളവ (4 ജോടികൾ)',
-        filterNonOpposite: 'വിപരീതമില്ലാത്തവ (7)'
+        filterAll: 'എല്ലാം',
+        filterOpposite: 'മുതളാദ്ദത്ത്',
+        filterNonOpposite: 'ളിദ്ദല്ലാത്തവ'
       };
     }
     return {
@@ -5247,7 +5255,7 @@ export default function TajweedStudioPage() {
 
 
               {/* Throat Letter Student Learning Aids: Twin Comparison + Feel It on Neck */}
-              {currentLetter.isThroat && (
+              {lang !== 'ml' && currentLetter.isThroat && (
                 <div className="flex flex-col gap-2.5">
                   {/* Same Spot, Different Sound! (Twin Comparison Box) */}
                   {currentLetter.throatTwinId && (() => {
@@ -5258,14 +5266,14 @@ export default function TajweedStudioPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                            <span>{lang === 'ar' ? 'الفرق بين التوأمين (نفس المخرج)' : lang === 'ml' ? 'ഒരേ മഖ്റജിലെ രണ്ട് അക്ഷരങ്ങൾ' : 'Same Spot, Different Sound!'}</span>
+                            <span>{lang === 'ar' ? 'الفرق بين التوأمين (نفس المخرج)' : 'Same Spot, Different Sound!'}</span>
                           </span>
                           <button
                             type="button"
                             onClick={() => selectLetter(twin)}
                             className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
                           >
-                            {lang === 'ar' ? `مقارنة ${twin.letter} ←` : lang === 'ml' ? `${twin.letter} താരതമ്യം ←` : `Compare ${twin.letter} →`}
+                            {lang === 'ar' ? `مقارنة ${twin.letter} ←` : `Compare ${twin.letter} →`}
                           </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -5278,7 +5286,7 @@ export default function TajweedStudioPage() {
                               </span>
                             </div>
                             <span className="text-[10px] font-medium text-slate-700 dark:text-gray-200 leading-tight">
-                              {lang === 'ar' ? currentLetter.twinSummary?.ar : lang === 'ml' ? currentLetter.twinSummary?.ml : currentLetter.twinSummary?.en}
+                              {lang === 'ar' ? currentLetter.twinSummary?.ar : currentLetter.twinSummary?.en}
                             </span>
                           </div>
                           {/* Twin Letter Box */}
@@ -5293,7 +5301,7 @@ export default function TajweedStudioPage() {
                               </span>
                             </div>
                             <span className="text-[10px] font-medium text-slate-600 dark:text-gray-400 leading-tight">
-                              {lang === 'ar' ? twin.twinSummary?.ar : lang === 'ml' ? twin.twinSummary?.ml : twin.twinSummary?.en}
+                              {lang === 'ar' ? twin.twinSummary?.ar : twin.twinSummary?.en}
                             </span>
                           </div>
                         </div>
@@ -5306,10 +5314,10 @@ export default function TajweedStudioPage() {
                     <span className="text-xl select-none shrink-0 mt-0.5">✌️</span>
                     <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
-                        {lang === 'ar' ? 'جرّب بيدك الآن (اللمس الحسي)' : lang === 'ml' ? 'വിരലുകൾ വെച്ച് തൊട്ട് നോക്കൂ!' : 'Try It With 2 Fingers! (Feel It On Neck)'}
+                        {lang === 'ar' ? 'جرّب بيدك الآن (اللمس الحسي)' : 'Try It With 2 Fingers! (Feel It On Neck)'}
                       </span>
                       <p className="text-[11px] text-slate-700 dark:text-gray-300 leading-relaxed font-medium">
-                        {lang === 'ar' ? currentLetter.fingerGuide?.ar : lang === 'ml' ? currentLetter.fingerGuide?.ml : currentLetter.fingerGuide?.en}
+                        {lang === 'ar' ? currentLetter.fingerGuide?.ar : currentLetter.fingerGuide?.en}
                       </p>
                     </div>
                   </div>
@@ -5317,7 +5325,7 @@ export default function TajweedStudioPage() {
               )}
 
               {/* Zad (ض) 3 Variants Pill Switcher */}
-              {currentLetter.id === 'dhaad' && (
+              {lang !== 'ml' && currentLetter.id === 'dhaad' && (
                 <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
                   <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
                     <Sparkles className="w-3.5 h-3.5" />
@@ -5445,6 +5453,24 @@ export default function TajweedStudioPage() {
         {/* Tab 2: Sifaat View (Phonetic Rules) */}
         {activeMainTab === 'sifaat' && (
           <div className="flex flex-col gap-4 animate-in fade-in duration-150">
+            {/* Malayalam Curriculum Lesson 6: Sifaatul Huroof Introduction */}
+            {lang === 'ml' && (
+              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    സിഫാതുൽ ഹുറൂഫ്
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+                  തജ്വീദിന്റെ ഫന്നിൽ മഖ്റജ് പോലെത്തന്നെ സിഫാതിനെ കുറിച്ചും അറിയൽ വളരെ പ്രധാനപ്പെട്ടതാകുന്നു. മഖ്റജ് ഒത്തിരിക്കുന്ന വിവിധ അക്ഷരങ്ങൾ വ്യത്യസ്ത രൂപം പ്രാപിക്കുന്നത് സിഫത്ത് കൊണ്ടാകുന്നു. അപ്രകാരം സിഫതുകളിൽ യോജിപ്പുള്ള ഹർഫുകൾ വേർതിരിയുന്നത് മഖ്റജ് കൊണ്ടുമാകുന്നു.
+                </p>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+                  ഹർഫുകൾ ഉച്ചരിക്കുമ്പോൾ മഖ്റജിൽ നിന്നുണ്ടാകുന്ന വിവിധങ്ങളായ ശബ്ദ രൂപങ്ങൾക്കാണ് ഇവിടെ സിഫത്ത് എന്ന് പറയപ്പെടുന്നത്. സിഫതുകളുടെ എണ്ണത്തിൽ അഭിപ്രായ വ്യത്യാസമുണ്ട്. പതിനാലാണെന്നും പതിനേഴാണെന്നും നാൽപ്പത്തി നാലാണെന്നും മൂന്ന് അഭിപ്രായമുള്ളതിൽ ഇമാമു ഇബ്നുൽ ജസരി റഹിമഹുള്ളാഹു മുഅ്തമദാക്കിയത് പതിനേഴാണാകുന്നു. പക്ഷെ ശിദ്ദതിന്റെ മാറം രിഖ്വ്, തവസ്സുത്വ് എന്നിങ്ങനെ രണ്ടിനം വരുന്നത് കൊണ്ട് ആകെ സിഫതുകൾ പതിനെട്ടാകുന്നതാണ്. സിഫതുകൾ പരസ്പരം വൈരുധ്യമുള്ളതും ഇല്ലാത്തതും എന്നിങ്ങനെ രണ്ടു വിധമുണ്ട്. വൈരുധ്യമുള്ളവ തവസ്സുത്വ് അടക്കം പതിനൊന്നും ളിദ്ദല്ലാത്തവ ഏഴുമാകുന്നു. ളിദ്ദുള്ള സിഫതുകളിൽ നിന്ന് അഞ്ചെണ്ണം ഒരേ അവസരത്തിൽ എല്ലാ ഹർഫുകൾക്കും ഉണ്ടായിരിക്കുന്നതാണ്.
+                </p>
+              </section>
+            )}
+
             {/* 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs) */}
             <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
