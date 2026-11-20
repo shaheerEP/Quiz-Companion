@@ -132,16 +132,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Hamzah (ء / أ)',
-      category: 'Bottom Throat (أقصى الحلق)',
-      zoneLabel: 'Vocal Cords Gate (الأوتار الصوتية)',
-      desc: 'Deepest throat right above the chest. For Sukoon (أَءْ), both vocal cords snap 100% shut, stopping all air and sound completely!',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Bottom of Throat',
+      desc: 'Halqiyyah — Bottom of the throat (deepest part).',
       sifah: 'Light • Complete Stop (شدة وجهر)'
     },
     ar: {
       title: 'مخرج حرف الهمزة (ء / أ)',
-      category: 'أقصى الحلق (عند الأوتار الصوتية)',
-      zoneLabel: 'الأوتار الصوتية (الحنجرة)',
-      desc: 'يخرج من أقصى الحلق عند الأوتار الصوتية بانطباقهما انطباقاً تاماً في الساكنة فيقفل المجرى وينحبس الصوت والنفس.',
+      category: 'حلقية',
+      zoneLabel: 'أقصى الحلق (أسفله)',
+      desc: 'حلقية — أقصى الحلق (أسفله).',
       sifah: 'مرقق (شدة وجهر)'
     },
     ml: {
@@ -178,16 +178,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Haa (هـ)',
-      category: 'Bottom Throat (أقصى الحلق)',
-      zoneLabel: 'Vocal Cords Gate (الأوتار الصوتية)',
-      desc: 'Same bottom vocal cords as Hamzah, but the gate stays slightly open so warm breath (أَهْ) glides through smoothly with pure whisper (Hams).',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Bottom of Throat',
+      desc: 'Halqiyyah — Bottom of the throat (deepest part).',
       sifah: 'Light • Pure Breath Flow (همس ورخاوة)'
     },
     ar: {
       title: 'مخرج حرف الهاء (هـ)',
-      category: 'أقصى الحلق (عند الأوتار الصوتية)',
-      zoneLabel: 'الأوتار الصوتية (الحنجرة)',
-      desc: 'يخرج من نفس مخرج الهمزة لكن بانفتاح جزئي للأوتار ليجري النفس الدافئ بلطف وخفاء دون انحباس.',
+      category: 'حلقية',
+      zoneLabel: 'أقصى الحلق (أسفله)',
+      desc: 'حلقية — أقصى الحلق (أسفله).',
       sifah: 'مرقق (همس ورخاوة وخفاء)'
     },
     ml: {
@@ -224,16 +224,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Ayn (ع)',
-      category: 'Middle Throat (وسط الحلق)',
-      zoneLabel: 'Epiglottis Valve (لسان المزمار)',
-      desc: 'At the Adam’s apple, the leaf-shaped epiglottis valve tilts backward toward the back throat wall while your voice vibrates with rich resonance (أَعْ).',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Middle of Throat',
+      desc: 'Halqiyyah — Middle of the throat.',
       sifah: 'Light • Voiced Squeeze (جهر وتوسط)'
     },
     ar: {
       title: 'مخرج حرف العين (ع)',
-      category: 'وسط الحلق (عند لسان المزمار)',
-      zoneLabel: 'لسان المزمار مع الجدار الخلفي',
-      desc: 'يخرج من وسط الحلق برجوع لسان المزمار بقوة نحو الجدار الخلفي للحلق مع جريان بيني معتدل للصوت واهتزاز الأوتار.',
+      category: 'حلقية',
+      zoneLabel: 'وسط الحلق',
+      desc: 'حلقية — وسط الحلق.',
       sifah: 'مرقق (جهر وتوسط)'
     },
     ml: {
@@ -270,16 +270,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Haa (ح)',
-      category: 'Middle Throat (وسط الحلق)',
-      zoneLabel: 'Epiglottis Valve (لسان المزمار)',
-      desc: "Same middle throat valve as 'Ayn, but vocal cords stay open: no buzz, just a clean, polished, soothing whisper (أَحْ).",
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Middle of Throat',
+      desc: 'Halqiyyah — Middle of the throat.',
       sifah: 'Light • Smooth Whisper (همس ورخاوة)'
     },
     ar: {
       title: 'مخرج حرف الحاء (ح)',
-      category: 'وسط الحلق (عند لسان المزمار)',
-      zoneLabel: 'لسان المزمار مع جريان النفس',
-      desc: 'يخرج من نفس مخرج العين بانقباض عضلات وسط الحلق، مع انفتاح الأوتار ليجري النفس النقي باحتكاك لطيف دون اهتزاز.',
+      category: 'حلقية',
+      zoneLabel: 'وسط الحلق',
+      desc: 'حلقية — وسط الحلق.',
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
@@ -316,16 +316,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Ghayn (غ)',
-      category: 'Top Throat (أدنى الحلق)',
-      zoneLabel: 'Tongue Root & Uvula (جذر اللسان واللهاة)',
-      desc: 'At the top of the throat closest to the mouth, the back root of the tongue elevates toward the soft palate and uvula with deep voiced resonance (أَغْ).',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Top of Throat',
+      desc: 'Halqiyyah — Top of the throat (closest to mouth).',
       sifah: 'Heavy • Voiced Resonance (استعلاء وجهر ورخاوة)'
     },
     ar: {
       title: 'مخرج حرف الغين (غ)',
-      category: 'أدنى الحلق (مما يلي الفم)',
-      zoneLabel: 'جذر اللسان مع الحنك اللحمي واللهاة',
-      desc: 'يخرج من أدنى الحلق قرب اللهاة بارتفاع أقصى وجذر اللسان نحو الحنك الرخو مع جريان الصوت الرخيم واهتزازه (مفخم).',
+      category: 'حلقية',
+      zoneLabel: 'أدنى الحلق (أعلاه)',
+      desc: 'حلقية — أدنى الحلق (أعلاه).',
       sifah: 'مفخم (استعلاء ورخاوة وجهر)'
     },
     ml: {
@@ -362,16 +362,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     },
     en: {
       title: 'Makhraj of Khaa (خ)',
-      category: 'Top Throat (أدنى الحلق)',
-      zoneLabel: 'Tongue Root & Uvula (جذر اللسان واللهاة)',
-      desc: 'Same top throat spot as Ghayn, but with NO vocal cord vibration—producing a strong, heavy, raspy friction scrape of breath (أَخْ).',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Top of Throat',
+      desc: 'Halqiyyah — Top of the throat (closest to mouth).',
       sifah: 'Heavy • Raspy Breath Scrape (استعلاء وهمس ورخاوة)'
     },
     ar: {
       title: 'مخرج حرف الخاء (خ)',
-      category: 'أدنى الحلق (مما يلي الفم)',
-      zoneLabel: 'جذر اللسان مع الحنك اللحمي',
-      desc: 'يخرج من أدنى الحلق بارتفاع جذر اللسان مع احتكاك خشن وجريان واضح ومستمر للنفس والصوت دون اهتزاز الأوتار (مفخم).',
+      category: 'حلقية',
+      zoneLabel: 'أدنى الحلق (أعلاه)',
+      desc: 'حلقية — أدنى الحلق (أعلاه).',
       sifah: 'مفخم (استعلاء وهمس ورخاوة)'
     },
     ml: {
@@ -400,16 +400,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَقْ',
     en: {
       title: 'Makhraj of Qaaf (ق)',
-      category: 'Deep Tongue Root (أقصى اللسان)',
-      zoneLabel: 'Soft Palate (الحنك اللحمي)',
-      desc: 'Deepest root of the tongue rises firmly against the soft fleshy palate, with the tip resting calmly behind lower teeth.',
+      category: 'Lahwiyyah (Uvular)',
+      zoneLabel: 'Deep Tongue Root & Upper Palate',
+      desc: 'Lahwiyyah — Deep root of the tongue and upper soft palate.',
       sifah: 'Heavy (Echoing)'
     },
     ar: {
       title: 'مخرج حرف القاف (ق)',
-      category: 'أقصى اللسان مع الحنك اللحمي',
-      zoneLabel: 'الحنك اللحمي الرخو',
-      desc: 'يرتفع أقصى اللسان ليصطدم بقوة بالحنك اللحمي، بينما يستقر طرف اللسان خلف الثنايا السفلى.',
+      category: 'لهوية',
+      zoneLabel: 'أصل اللسان والحنك الأعلى',
+      desc: 'لهوية — أصل اللسان مع الحنك الأعلى.',
       sifah: 'مفخم (استعلاء وقلقلة)'
     },
     ml: {
@@ -433,16 +433,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَكْ',
     en: {
       title: 'Makhraj of Kaaf (ك)',
-      category: 'Deep Tongue Root (أقصى اللسان)',
-      zoneLabel: 'Hard & Soft Palate Junction (بين الحنكين)',
-      desc: 'Tongue root rises against the junction of hard and soft palates, forward of Qaaf, followed by subtle breath flow (Hams).',
+      category: 'Lahwiyyah (Uvular)',
+      zoneLabel: 'Below Qaaf Towards Mouth',
+      desc: 'Lahwiyyah — Just below the position of Qaaf, closer to the mouth.',
       sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الكاف (ك)',
-      category: 'أقصى اللسان مع الحنك العظمي واللحمي',
-      zoneLabel: 'منطقة التقاء الحنك العظمي واللحمي',
-      desc: 'يرتفع أقصى اللسان تحت مخرج القاف قليلاً ليلتقي بين الحنكين العظمي واللحمي مع جريان النفس (همس).',
+      category: 'لهوية',
+      zoneLabel: 'أسفل من القاف قليلاً',
+      desc: 'لهوية — أسفل مخرج القاف قليلاً باتجاه الفم.',
       sifah: 'مرقق (استفال وهمس)'
     },
     ml: {
@@ -466,16 +466,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَجْ',
     en: {
       title: 'Makhraj of Jeem (ج)',
-      category: 'Middle Tongue (وسط اللسان)',
-      zoneLabel: 'Hard Palate Occlusion (قفل الحنك 0.0 mm)',
-      desc: 'Middle of the tongue rises as a dome and seals completely against hard palate (0.0 mm gap) before bursting open (Qalqalah).',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
       sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الجيم (ج)',
-      category: 'وسط اللسان مع وسط الحنك الأعلى',
-      zoneLabel: 'انغلاق تام للمخرج (جهر وشدة وقلقلة)',
-      desc: 'يرتفع وسط اللسان ويلتصق تماماً بسقف الحنك العظمي مغلقاً المخرج (فجوة 0 مم) ثم ينفك باضطراب (قلقلة).',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
       sifah: 'مرقق (شدة وقلقلة)'
     },
     ml: {
@@ -499,16 +499,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَشْ',
     en: {
       title: 'Makhraj of Sheen (ش)',
-      category: 'Middle Tongue (وسط اللسان)',
-      zoneLabel: 'Airflow Trough (فرجة التفشي ~3.2 mm)',
-      desc: 'Sides of middle tongue brace against palate while wide central groove diffuses turbulent air forward (Tafasshi).',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
       sifah: 'Light (Diffusion)'
     },
     ar: {
       title: 'مخرج حرف الشين (ش)',
-      category: 'وسط اللسان مع التفشي والهمس',
-      zoneLabel: 'فرجة وسطية واسعة لانتشار الهواء',
-      desc: 'يرتفع وسط اللسان مع تلامس حافتيه بالحنك وتكون قناة وسطية متسعة يتدفق عبرها الهواء منتشراً نحو الأسنان (تفشٍّ).',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
       sifah: 'مرقق (تفشٍّ ورخاوة)'
     },
     ml: {
@@ -532,16 +532,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَيْ',
     en: {
       title: 'Makhraj of Non-Madd Yaa (ي)',
-      category: 'Middle Tongue (وسط اللسان)',
-      zoneLabel: 'Narrow Voiced Arch (تضيق المخرج ~1.6 mm)',
-      desc: 'Middle of tongue forms a smooth convex arch narrowing the vocal passage without sealing, letting voiced sound flow smoothly.',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
       sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الياء غير المدية (ي)',
-      category: 'وسط اللسان مع الجهر والرخاوة',
-      zoneLabel: 'تضيق صوتي سلس بلا انغلاق',
-      desc: 'يرتفع وسط اللسان مقترباً من الحنك العظمي دون إغلاقه، فيمر الصوت مجهوراً رخواً بسلاسة ولين.',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
       sifah: 'مرقق (رخاوة ولين)'
     },
     ml: {
@@ -565,16 +565,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَضْ',
     en: {
       title: 'Makhraj of Zad / Dhaad (ض)',
-      category: 'Tongue & Upper Molars (حافة اللسان مع الأضراس)',
-      zoneLabel: 'Lateral Molars & Front Teeth Touch',
-      desc: 'One or both edges of the tongue press firmly against upper molars, while the rounded tip gently touches front teeth without pressing.',
+      category: 'Dhirsiyyah (Molar)',
+      zoneLabel: 'Tongue Edge & Upper Molars',
+      desc: 'Dhirsiyyah — Side edge of the tongue and upper molars.',
       sifah: 'Heavy (Elongation)'
     },
     ar: {
       title: 'مخرج حرف الضاد (ض)',
-      category: 'حافة اللسان مع الأضراس العليا',
-      zoneLabel: 'ضغط حافة اللسان مع تلامس لطيف لطرفه بالأسنان',
-      desc: 'تضغط إحدى حافتي اللسان أو كلاهما بقوة على الأضراس العليا، بينما يلامس طرف اللسان المستدير الثنايا العليا بلطف دون ضغط.',
+      category: 'ضرسية',
+      zoneLabel: 'حافة اللسان والأضراس العليا',
+      desc: 'ضرسية — حافة اللسان مع الأضراس العليا.',
       sifah: 'مفخم (استعلاء واستطالة)'
     },
     ml: {
@@ -598,16 +598,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَلْ',
     en: {
       title: 'Makhraj of Laam (ل)',
-      category: 'Tongue Tip & Sides (حافتا اللسان وطرفه)',
-      zoneLabel: 'Flat Gum Shelf (اللثة ومقدم الحنك)',
-      desc: 'Front sides and tip of tongue curl up to touch the flat alveolar gum shelf right up to the front teeth.',
+      category: 'Dhalqiyyah (Tongue Edge)',
+      zoneLabel: 'Tongue Tip Edge & Upper Front Gums',
+      desc: 'Dhalqiyyah — Side edge of tongue tip and upper front gums.',
       sifah: 'Light (Drift)'
     },
     ar: {
       title: 'مخرج حرف اللام (ل)',
-      category: 'أدنى حافتي اللسان إلى منتهى طرفه',
-      zoneLabel: 'اللثة ومقدم الحنك المسطح',
-      desc: 'ينحني أدنى حافتي اللسان مع طرفه ليلتصق بلثة الأسنان العليا ومقدم الحنك المسطح، مع انحراف الصوت جانبياً.',
+      category: 'ذلقية',
+      zoneLabel: 'حافة طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — حافة طرف اللسان مع لثة الثنايا العليا.',
       sifah: 'مرقق (انحراف وتوسط)'
     },
     ml: {
@@ -631,16 +631,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَنْ',
     en: {
       title: 'Makhraj of Noon (ن)',
-      category: 'Tongue Tip & Nose (طرف اللسان والخيشوم)',
-      zoneLabel: 'Upper Gum Ridge (لثة الثنايا العليا)',
-      desc: 'Tip seals against upper gum ridge while voice resonates nasally through the nasal cavity (Ghunnah).',
+      category: 'Dhalqiyyah (Tongue Tip)',
+      zoneLabel: 'Tongue Tip & Upper Front Gums',
+      desc: 'Dhalqiyyah — Tip of the tongue and upper front gums.',
       sifah: 'Light (Nasal)'
     },
     ar: {
       title: 'مخرج حرف النون (ن)',
-      category: 'طرف اللسان مع لثة الثنايا والغنة',
-      zoneLabel: 'لثة الثنايا العليا مع الخيشوم',
-      desc: 'ينقفل طرف اللسان على لثة الثنايا العليا بينما يخرج الصوت من التجويف الأنفي بغنة رنانة.',
+      category: 'ذلقية',
+      zoneLabel: 'طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — طرف اللسان مع لثة الأسنان العليا.',
       sifah: 'مرقق (غنة وتوسط)'
     },
     ml: {
@@ -664,16 +664,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَرْ',
     en: {
       title: 'Makhraj of Raa (ر)',
-      category: 'Tongue Tip & Blade (طرف اللسان وظهره)',
-      zoneLabel: 'Upper Gum with Central Gap (لثة الثنايا)',
-      desc: 'Tip and upper blade meet upper gums with a narrow central slit preventing excessive trill.',
+      category: 'Dhalqiyyah (Tongue Back Tip)',
+      zoneLabel: 'Back of Tongue Tip & Upper Front Gums',
+      desc: 'Dhalqiyyah — Back of the tongue tip and upper front gums.',
       sifah: 'Heavy / Light'
     },
     ar: {
       title: 'مخرج حرف الراء (ر)',
-      category: 'طرف اللسان وظهره مع لثة الثنايا',
-      zoneLabel: 'لثة الثنايا العليا مع فرجة التكرير',
-      desc: 'يقرع طرف اللسان وظهره لثة الثنايا مع بقاء فرجة دقيقة جداً بالوسط لمنع تكرار الراء الزائد.',
+      category: 'ذلقية',
+      zoneLabel: 'ظهر طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — ظهر طرف اللسان مع لثة الثنايا العليا.',
       sifah: 'مفخم (انحراف وتكرير)'
     },
     ml: {
@@ -697,16 +697,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَطْ',
     en: {
       title: 'Makhraj of Taa (ط)',
-      category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
-      zoneLabel: 'Upper Incisor Roots & Gums (أصول الثنايا)',
-      desc: 'Rounded tongue tip presses firmly at the cervical roots of upper front teeth and gum shelf, with elevated back (Itbaaq).',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
       sifah: 'Heavy'
     },
     ar: {
       title: 'مخرج حرف الطاء (ط)',
-      category: 'الحروف النطعية - أصول الثنايا العليا',
-      zoneLabel: 'أصول الثنايا العليا مع الإطباق',
-      desc: 'ينضغط طرف اللسان العريض المستدير عند منابت الثنايا العليا ولثتها مع إطباق واستعلاء أقصى اللسان وقلقلة.',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
       sifah: 'مفخم (إطباق وقلقلة)'
     },
     ml: {
@@ -730,16 +730,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَدْ',
     en: {
       title: 'Makhraj of Daal (د)',
-      category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
-      zoneLabel: 'Upper Incisor Roots (أصول الثنايا)',
-      desc: 'Rounded tongue tip touches the root base of upper central incisors, released with clear voice and Qalqalah.',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
       sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الدال (د)',
-      category: 'الحروف النطعية - أصول الثنايا العليا',
-      zoneLabel: 'أصول الثنايا العليا',
-      desc: 'يلامس طرف اللسان المستدير منابت الثنايا العليا مع انحباس الصوت والنفس ثم انطلاقه بقلقلة مجهورة.',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
       sifah: 'مرقق (جهر وقلقلة)'
     },
     ml: {
@@ -763,16 +763,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَتْ',
     en: {
       title: 'Makhraj of Taa (ت)',
-      category: 'Tongue Tip & Incisor Roots (أصول الثنايا العليا)',
-      zoneLabel: 'Upper Incisor Roots (أصول الثنايا)',
-      desc: 'Tongue tip touches the root base of upper incisors, followed by gentle unvoiced breath release (Hams).',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
       sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف التاء (ت)',
-      category: 'الحروف النطعية - أصول الثنايا العليا',
-      zoneLabel: 'أصول الثنايا العليا مع الهمس',
-      desc: 'يقرع طرف اللسان أصول الثنايا العليا مع انحباس الصوت أولاً ثم انفتاحه بجريان لطيف للنفس (همس).',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
       sifah: 'مرقق (شدة وهمس)'
     },
     ml: {
@@ -796,16 +796,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَصْ',
     en: {
       title: 'Makhraj of Saad (ص)',
-      category: 'Tongue Apex (أسلة اللسان)',
-      zoneLabel: 'Lower Incisors Contact (الثنايا السفلى)',
-      desc: 'Tongue tip points downward behind lower incisors with central whistle groove (Safir) and elevated back root.',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
       sifah: 'Heavy (Whistle)'
     },
     ar: {
       title: 'مخرج حرف الصاد (ص)',
-      category: 'الحروف الأسلية - أسلة اللسان مع الثنايا',
-      zoneLabel: 'الصفير مع الإطباق والاستعلاء',
-      desc: 'تستقر أسلة اللسان خلف الثنايا السفلى مع تجويف طولي يمر منه صوت الصفير الحاد المصحوب باستعلاء وإطباق.',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
       sifah: 'مفخم (صفير وإطباق)'
     },
     ml: {
@@ -829,16 +829,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَسْ',
     en: {
       title: 'Makhraj of Seen (س)',
-      category: 'Tongue Apex (أسلة اللسان)',
-      zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
-      desc: 'Tip rests behind lower incisors with central groove directing sharp unvoiced whistle (Safir & Hams).',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
       sifah: 'Light (Whistle)'
     },
     ar: {
       title: 'مخرج حرف السين (س)',
-      category: 'الحروف الأسلية - مجرى الصفير',
-      zoneLabel: 'خلف الثنايا السفلى مع الهمس والصفير',
-      desc: 'تتوضع أسلة اللسان خلف الثنايا السفلى مفسحة مجرى ضيقاً لصفير رخو مهموس غير مصحوب باستعلاء.',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
       sifah: 'مرقق (همس وصفير)'
     },
     ml: {
@@ -862,16 +862,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَزْ',
     en: {
       title: 'Makhraj of Zay (ز)',
-      category: 'Tongue Apex (أسلة اللسان)',
-      zoneLabel: 'Behind Lower Incisors (أسلة اللسان)',
-      desc: 'Tip rests behind lower front incisors, allowing voiced air to buzz through the interdental slit.',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
       sifah: 'Light (Whistle)'
     },
     ar: {
       title: 'مخرج حرف الزاي (ز)',
-      category: 'الحروف الأسلية - أسلة اللسان',
-      zoneLabel: 'خلف الثنايا السفلى مع الجهر والصفير',
-      desc: 'تقترب أسلة اللسان من الثنايا السفلى ليمر الهواء بصفير مجهور صافٍ مع ارتجاف الأوتار الصوتية.',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
       sifah: 'مرقق (جهر وصفير)'
     },
     ml: {
@@ -895,16 +895,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَظْ',
     en: {
       title: 'Makhraj of Zhaa (ظ)',
-      category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
-      zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
-      desc: 'Top of tongue tip extends gently to touch biting edges of upper central incisors with back elevation (Itbaaq).',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
       sifah: 'Heavy'
     },
     ar: {
       title: 'مخرج حرف الظاء (ظ)',
-      category: 'الحروف اللثوية - أطراف الثنايا العليا',
-      zoneLabel: 'أطراف الثنايا العليا مع الإطباق',
-      desc: 'يخرج ظهر طرف اللسان قليلاً ليلتقي برفق بأطراف الثنايا العليا قاطباً، مع استعلاء أقصى اللسان وإطباقه.',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
       sifah: 'مفخم (إطباق ورخاوة)'
     },
     ml: {
@@ -928,16 +928,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَذْ',
     en: {
       title: 'Makhraj of Dhaal (ذ)',
-      category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
-      zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
-      desc: 'Top of rounded tongue tip touches bottom biting edges of upper central incisors with flat relaxed back.',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
       sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الذال (ذ)',
-      category: 'الحروف اللثوية - أطراف الثنايا العليا',
-      zoneLabel: 'أطراف الثنايا العليا مع الجهر',
-      desc: 'يلامس ظهر طرف اللسان حواف الثنايا العليا مع استرخاء أقصى اللسان وجريان صوت مجهور رخو.',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
       sifah: 'مرقق (جهر ورخاوة)'
     },
     ml: {
@@ -961,16 +961,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَثْ',
     en: {
       title: 'Makhraj of Thaa (ث)',
-      category: 'Tongue Tip & Incisor Edges (أطراف الثنايا العليا)',
-      zoneLabel: 'Biting Edge of Upper Incisors (أطراف الثنايا)',
-      desc: 'Tongue tip meets biting edges of upper incisors, allowing soft friction and unvoiced breath flow (Hams).',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
       sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الثاء (ث)',
-      category: 'الحروف اللثوية - أطراف الثنايا العليا',
-      zoneLabel: 'أطراف الثنايا العليا مع الهمس',
-      desc: 'يلامس طرف اللسان حافتي الثنيتين العلييين بلطف مع تدفق الهواء الرخو المهموس دون ممانعة.',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
@@ -996,16 +996,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَفْ',
     en: {
       title: 'Makhraj of Faa (ف)',
-      category: 'Lower Lip & Upper Teeth (بطن الشفة السفلى)',
-      zoneLabel: 'Incisors on Inner Wet Lower Lip',
-      desc: 'Bottom edges of the two upper central incisors press against inner wet belly of the lower lip.',
+      category: 'Shafawiyyah (Lip)',
+      zoneLabel: 'Inside Lower Lip & Upper Teeth',
+      desc: 'Shafawiyyah — Inside of lower lip and edges of upper front teeth.',
       sifah: 'Light (Whisper)'
     },
     ar: {
       title: 'مخرج حرف الفاء (ف)',
-      category: 'بطن الشفة السفلى مع أطراف الثنايا',
-      zoneLabel: 'أطراف الثنايا العليا على باطن الشفة',
-      desc: 'تنزل أطراف الثنيتين العلييين لتستقر على بطن الشفة السفلى الرطب مترافقة مع جريان النفس الرخو.',
+      category: 'شفوية',
+      zoneLabel: 'باطن الشفة السفلى وأطراف الثنايا',
+      desc: 'شفوية — باطن الشفة السفلى مع أطراف الثنايا العليا.',
       sifah: 'مرقق (همس ورخاوة)'
     },
     ml: {
@@ -1031,16 +1031,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَبْ',
     en: {
       title: 'Makhraj of Baa (ب)',
-      category: 'Both Lips (انطباق الشفتين)',
-      zoneLabel: 'Both Lips Closing Firmly (الشفتان)',
-      desc: 'Both lips close firmly together, creating instantaneous occlusion released with echoing bounce (Qalqalah).',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Firm Closure)',
+      desc: 'Shafawiyyah — Between both lips (pressing firmly together).',
       sifah: 'Light (Echoing)'
     },
     ar: {
       title: 'مخرج حرف الباء (ب)',
-      category: 'انطباق الشفتين مع القلقلة',
-      zoneLabel: 'انطباق تام للشفتين',
-      desc: 'تنطبق الشفتان بقوة وإحكام على الجزء الرطب منهما فينحبس الصوت والنفس ثم ينفجران بقلقلة مدوية.',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين بانطباق قوي',
+      desc: 'شفوية — بين الشفتين بانطباق أقوى من الميم.',
       sifah: 'مرقق (شدة وقلقلة)'
     },
     ml: {
@@ -1066,16 +1066,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَمْ',
     en: {
       title: 'Makhraj of Meem (م)',
-      category: 'Both Lips & Nose (الشفتان والغنة)',
-      zoneLabel: 'Both Lips Gentle Closure + Ghunnah',
-      desc: 'Lips meet gently while sound reverberates continuously up through the nasal cavity.',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Gentle Closure)',
+      desc: 'Shafawiyyah — Between both lips (closing together gently).',
       sifah: 'Light (Nasal)'
     },
     ar: {
       title: 'مخرج حرف الميم (م)',
-      category: 'انطباق الشفتين مع غنة الخيشوم',
-      zoneLabel: 'تلامس لطيف للشفتين مع الغنة',
-      desc: 'تنطبق الشفتان برفق وسكون بينما يمر الجزء الأكبر من الصوت رخيماً رناناً عبر التجويف الأنفي.',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين بانطباق',
+      desc: 'شفوية — بين الشفتين بانطباقهما مع الغنة.',
       sifah: 'مرقق (غنة وتوسط)'
     },
     ml: {
@@ -1101,16 +1101,16 @@ const LETTER_PRESETS: LetterPreset[] = [
     phoneticSound: 'أَوْ',
     en: {
       title: 'Makhraj of Non-Madd Waw (و)',
-      category: 'Both Lips (انضمام الشفتين)',
-      zoneLabel: 'Circular Lip Rounding (انضمام الشفتين)',
-      desc: 'Both lips purse and round forward leaving a circular opening, with the tongue relaxed and resting low.',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Open/Rounded)',
+      desc: 'Shafawiyyah — Between both lips (rounded with an opening).',
       sifah: 'Light (Soft)'
     },
     ar: {
       title: 'مخرج حرف الواو غير المدية (و)',
-      category: 'انضمام الشفتين للأمام',
-      zoneLabel: 'استدارة الشفتين مع فرجة دائرية',
-      desc: 'تنضم الشفتان وتستديران للأمام تاركتين فتحة دائرية في وسطهما مع استرخاء اللسان في قاع الفم.',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين مع الانضمام',
+      desc: 'شفوية — بين الشفتين بانضمامهما مع بقاء فرجة.',
       sifah: 'مرقق (رخاوة ولين)'
     },
     ml: {
@@ -1159,28 +1159,32 @@ interface AnatomyLabelItem {
 interface MakhrajItem17 {
   num: number;
   letters: string;
-  name: string;
-  makhraj: string;
+  nameEn: string;
+  nameAr: string;
+  nameMl: string;
+  makhrajEn: string;
+  makhrajAr: string;
+  makhrajMl: string;
 }
 
 const MAKHARIJ_17_DATA: MakhrajItem17[] = [
-  { num: 1, letters: 'ا و ي', name: 'ജൗഫിയ്യത്ത് (جوفية)', makhraj: 'വായയുടെ അന്തരീക്ഷം' },
-  { num: 2, letters: 'ء ه', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ താഴെ അറ്റം' },
-  { num: 3, letters: 'ع ح', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ മധ്യം' },
-  { num: 4, letters: 'غ خ', name: 'ഹൽഖിയ്യത്ത് (حلقية)', makhraj: 'ഹൽഖിന്റെ മേലെ അറ്റം' },
-  { num: 5, letters: 'ق', name: 'ലഹവിയ്യത്ത് (لهوية)', makhraj: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും' },
-  { num: 6, letters: 'ك', name: 'ലഹവിയ്യത്ത് (لهوية)', makhraj: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ' },
-  { num: 7, letters: 'ج ش ي', name: 'ശജരിയ്യത്ത് (شجرية)', makhraj: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും' },
-  { num: 8, letters: 'ض', name: 'ളർസിയ്യത്ത് (ضرسية)', makhraj: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും' },
-  { num: 9, letters: 'ل', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
-  { num: 10, letters: 'ن', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും' },
-  { num: 11, letters: 'ر', name: 'ദലഖിയ്യത്ത് (ذلقية)', makhraj: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
-  { num: 12, letters: 'ط د ت', name: 'നിത്ഇയ്യത്ത് (نطعية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും' },
-  { num: 13, letters: 'ص ز س', name: 'അസലിയ്യത്ത് (اسلية)', makhraj: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും' },
-  { num: 14, letters: 'ظ ذ ث', name: 'ലിസവിയ്യത്ത് (لثوية)', makhraj: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും' },
-  { num: 15, letters: 'ف', name: 'ശഫവിയ്യത്ത് (شفوية)', makhraj: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും' },
-  { num: 16, letters: 'و ب م', name: 'ശഫവിയ്യത്ത് (شفوية)', makhraj: 'രണ്ട് ചുണ്ടുകളുടെ ഇട' },
-  { num: 17, letters: '(م ن)', name: 'ഗുന്നത്ത് (غُنَّةٌ)', makhraj: 'തരിമൂക്ക്' }
+  { num: 1, letters: 'ا و ي', nameEn: 'Jawfiyyah (Empty Space)', nameAr: 'جوفية', nameMl: 'ജൗഫിയ്യത്ത് (جوفية)', makhrajEn: 'Open space in mouth and throat', makhrajAr: 'الجوف (تجويف الحلق والفم)', makhrajMl: 'വായയുടെ അന്തരീക്ഷം' },
+  { num: 2, letters: 'ء ه', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Bottom of the throat (deepest part)', makhrajAr: 'أقصى الحلق (أسفله)', makhrajMl: 'ഹൽഖിന്റെ താഴെ അറ്റം' },
+  { num: 3, letters: 'ع ح', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Middle of the throat', makhrajAr: 'وسط الحلق', makhrajMl: 'ഹൽഖിന്റെ മധ്യം' },
+  { num: 4, letters: 'غ خ', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Top of the throat (nearest mouth)', makhrajAr: 'أدنى الحلق (أعلاه)', makhrajMl: 'ഹൽഖിന്റെ മേലെ അറ്റം' },
+  { num: 5, letters: 'ق', nameEn: 'Lahwiyyah (Uvular)', nameAr: 'لهوية', nameMl: 'ലഹവിയ്യത്ത് (لهوية)', makhrajEn: 'Deep tongue root & upper soft palate', makhrajAr: 'أصل اللسان مع الحنك الأعلى', makhrajMl: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും' },
+  { num: 6, letters: 'ك', nameEn: 'Lahwiyyah (Uvular)', nameAr: 'لهوية', nameMl: 'ലഹവിയ്യത്ത് (لهوية)', makhrajEn: 'Just below Qaaf towards mouth', makhrajAr: 'أسفل من القاف قليلاً باتجاه الفم', makhrajMl: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ' },
+  { num: 7, letters: 'ج ش ي', nameEn: 'Shajariyyah (Middle Tongue)', nameAr: 'شجرية', nameMl: 'ശജരിയ്യത്ത് (شجرية)', makhrajEn: 'Middle of tongue & hard palate', makhrajAr: 'وسط اللسان مع الحنك الأعلى', makhrajMl: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും' },
+  { num: 8, letters: 'ض', nameEn: 'Dhirsiyyah (Molar)', nameAr: 'ضرسية', nameMl: 'ളർസിയ്യത്ത് (ضرسية)', makhrajEn: 'Side edge of tongue & upper molars', makhrajAr: 'حافة اللسان مع الأضراس العليا', makhrajMl: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും' },
+  { num: 9, letters: 'ل', nameEn: 'Dhalqiyyah (Tongue Edge)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Side of tongue tip & upper front gums', makhrajAr: 'حافة طرف اللسان مع لثة الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 10, letters: 'ن', nameEn: 'Dhalqiyyah (Tongue Tip)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Tip of tongue & upper front gums', makhrajAr: 'طرف اللسان مع لثة الأسنان العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും' },
+  { num: 11, letters: 'ر', nameEn: 'Dhalqiyyah (Tongue Back Tip)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Back of tongue tip & upper front gums', makhrajAr: 'ظهر طرف اللسان مع لثة الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 12, letters: 'ط د ت', nameEn: "Nit\'iyyah", nameAr: 'نطعية', nameMl: 'നിത്ഇയ്യത്ത് (نطعية)', makhrajEn: 'Tip of tongue & roots of upper teeth', makhrajAr: 'طرف اللسان مع أصول الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും' },
+  { num: 13, letters: 'ص ز س', nameEn: 'Asaliyyah (Whistling)', nameAr: 'أسلية', nameMl: 'അസലിയ്യത്ത് (اسلية)', makhrajEn: 'Tip of tongue between front teeth', makhrajAr: 'رأس اللسان بين الثنايا العليا والسفلى', makhrajMl: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും' },
+  { num: 14, letters: 'ظ ذ ث', nameEn: 'Lithawiyyah', nameAr: 'لثوية', nameMl: 'ലിസവിയ്യത്ത് (لثوية)', makhrajEn: 'Tip of tongue & edges of upper teeth', makhrajAr: 'طرف اللسان مع أطراف الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 15, letters: 'ف', nameEn: 'Shafawiyyah (Lip)', nameAr: 'شفوية', nameMl: 'ശഫവിയ്യത്ത് (شفوية)', makhrajEn: 'Inside lower lip & upper teeth edges', makhrajAr: 'باطن الشفة السفلى مع أطراف الثنايا العليا', makhrajMl: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 16, letters: 'و ب م', nameEn: 'Shafawiyyah (Both Lips)', nameAr: 'شفوية', nameMl: 'ശഫവിയ്യത്ത് (شفوية)', makhrajEn: 'Between both lips', makhrajAr: 'بين الشفتين', makhrajMl: 'രണ്ട് ചുണ്ടുകളുടെ ഇട' },
+  { num: 17, letters: '(م ن)', nameEn: 'Ghunnah (Nasal Cavity)', nameAr: 'غنة', nameMl: 'ഗുന്നത്ത് (غُنَّةٌ)', makhrajEn: 'Nasal cavity (Khayshoom)', makhrajAr: 'الخيشوم (التجويف الأنفي)', makhrajMl: 'തരിമൂക്ക്' }
 ];
 
 const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
@@ -4662,57 +4666,7 @@ export default function TajweedStudioPage() {
           </div>
         </div>
 
-                {/* Malayalam Curriculum Lesson 5: Makharijul Huroof Introduction & General Makharij */}
-        {activeMainTab === 'makharij' && lang === 'ml' && (
-          <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3 animate-in fade-in duration-150">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                മഖാരിജുൽ ഹുറൂഫ്
-              </h2>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
-              ഹിജാഇയ്യായ അറബി അക്ഷരങ്ങൾ 29 ആകുന്നു. അവ ഓരോന്നിനും സ്വന്തമായി ഓരോ പേരുമുണ്ട്. ആ പേരുകൾ എണ്ണപ്പെടുന്നത് കൊണ്ടാണ് അതിന് ഹിജാഇയ്യത്ത് എന്ന് പറയപ്പെടുന്നത്. അവക്ക് പതിനേഴ് മഖ്റജുകളാണുള്ളത്. ഒരു മഖ്റജിൽ നിന്ന് ഒന്നിലധികം അക്ഷരങ്ങൾ പുറപ്പെടുന്നത് കൊണ്ടാണ് ഹർഫുകളുടെ എണ്ണമനുസരിച്ച് മഖ്റജുകളുടെ എണ്ണം ഇല്ലാതിരിക്കുന്നത്. അതുപോലെ ചില അക്ഷരങ്ങൾക്ക് ഒന്നിലധികം മഖ്റജുകളുമുണ്ട്. അപ്പോൾ ഈ അടിസ്ഥാനത്തിൽ അക്ഷരങ്ങളുടെ എണ്ണം 33 വരെ വർദ്ധിച്ചു എന്നും വരുന്നതാണ്.
-            </p>
-            <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
-              و , ي ഇവ രണ്ടും മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ വാവ് ചുണ്ടിൽ നിന്നും യാഅ് നാവിൽ നിന്നും പുറപ്പെടുന്നു. م , ن എന്നീ ഹർഫുകൾ ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ മീം ചുണ്ടിൽ നിന്നും നൂൻ നാവിൽ നിന്നും പുറപ്പെടുന്നു. و , ب , മ ഇവ മൂന്നും ചുണ്ടിൽ നിന്നാണെങ്കിലും വാവിൽ ചുണ്ട് തുറന്നിരിക്കേണ്ടതും ബാഇൽ മീമിനേക്കാൾ ശക്തിപൂർവ്വം രണ്ടു ചുണ്ടും തമ്മിൽ ചേർന്നിരിക്കേണ്ടതുമാണ്.
-            </p>
-            <div className="pt-2 border-t border-slate-200/80 dark:border-gray-800 flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                അക്ഷരങ്ങളുടെ പൊതുവുള്ള മഖ്റജ് അഞ്ചാകുന്നു:
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1 text-xs text-slate-700 dark:text-gray-300">
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">1. ഹൽഖ്</span>
-                  <span>തൊണ്ടയിൽ നിന്ന് 6 അക്ഷരങ്ങൾ:</span>
-                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ء ه ع ح غ خ</span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">2. ശഫതാനി</span>
-                  <span>രണ്ട് ചുണ്ടുകളിൽ നിന്ന് 4 ഹർഫുകൾ:</span>
-                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ف ب و م</span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">3. ഖൈശൂം</span>
-                  <span>തരിമൂക്കിൽ നിന്ന് 2 ഹർഫുകൾ:</span>
-                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">م ن</span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">4. ഹവാഅ് / ജൗഫ്</span>
-                  <span>അന്തരീക്ഷത്തിൽ നിന്ന് 3 ഹർഫുകൾ:</span>
-                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ا و ي</span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200/70 dark:border-gray-700/70 sm:col-span-2 flex flex-col gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">5. ലിസാൻ</span>
-                  <span>നാവിൽ നിന്ന് 18 അക്ഷരങ്ങൾ:</span>
-                  <span className="arabic-font text-xl font-bold text-slate-900 dark:text-white">ق ك ج ش ي ض ل ن ر ط د ت ص ز س ظ ث ذ</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
+                {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
         <div className={activeMainTab === 'makharij' ? "grid grid-cols-1 lg:grid-cols-12 gap-3 items-start" : sifaat3DOpen ? "contents" : "hidden"}>
 
           {/* Left Column (Desktop): Letter Selection + 3D Viewport + 2 Divs under 3D */}
@@ -5155,20 +5109,40 @@ export default function TajweedStudioPage() {
                     </button>
                   </div>
 
-                  {/* Div 2 under 3D Section: Color-Matched Anatomy Table OR Minimal Color Guide */}
+                  {/* Div 2 under 3D Section: 17 Makharij Reference Table */}
                   {showAnatomy ? (
                     <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-                      <table className="w-full text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800">
-                            <th className="py-2 px-3 text-start">{t.anatomyPartCol}</th>
-                            <th className="py-2 px-3 text-start">{t.anatomyLettersCol}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-                          {renderAnatomyRows(ANATOMY_LABELS_DATA)}
-                        </tbody>
-                      </table>
+                      <div className="p-3 border-b border-slate-200/80 dark:border-gray-800 flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800 dark:text-white">
+                          {lang === 'ar' ? 'جدول المخارج الـ ١٧' : lang === 'ml' ? 'അൽമഖാരിജ് (17)' : 'The 17 Makharij'}
+                        </span>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800 sticky top-0">
+                              <th className="py-1.5 px-2.5 text-start w-10">{lang === 'ar' ? 'رقم' : lang === 'ml' ? 'ക്രമം' : 'No.'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'الحروف' : lang === 'ml' ? 'അക്ഷരങ്ങൾ' : 'Letters'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'الاسم' : lang === 'ml' ? 'പേര്' : 'Name'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'المخرج' : lang === 'ml' ? 'മഖ്റജ്' : 'Exit Spot'}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                            {MAKHARIJ_17_DATA.map(row => (
+                              <tr key={row.num} className="hover:bg-slate-50/70 dark:hover:bg-gray-800/40 transition-colors">
+                                <td className="py-1.5 px-2.5 font-bold text-slate-400">{row.num}</td>
+                                <td className="py-1.5 px-2 font-bold arabic-font text-sm text-emerald-600 dark:text-emerald-400">{row.letters}</td>
+                                <td className="py-1.5 px-2 text-slate-700 dark:text-gray-300 font-medium">
+                                  {lang === 'ar' ? row.nameAr : lang === 'ml' ? row.nameMl : row.nameEn}
+                                </td>
+                                <td className="py-1.5 px-2 text-slate-600 dark:text-gray-400">
+                                  {lang === 'ar' ? row.makhrajAr : lang === 'ml' ? row.makhrajMl : row.makhrajEn}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
