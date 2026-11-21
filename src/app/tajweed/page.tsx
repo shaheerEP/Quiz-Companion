@@ -2775,6 +2775,36 @@ export default function TajweedStudioPage() {
     const tongueMesh = new THREE.Mesh(tongueGeom, tongueMaterial);
     mouthRoot.add(tongueMesh);
 
+    const tongueSmoothTmp = new Float32Array(tonguePositions.length);
+    const smoothTongueGrid = (arr: Float32Array, passes: number, lambda: number) => {
+      const W = TONGUE_SEGS_U + 1;
+      const mid = Math.floor(TONGUE_SEGS_Z / 2) * W * 3;
+      // is the cross-section ring closed? (first and last column coincide)
+      const closed = Math.hypot(
+        arr[mid] - arr[mid + TONGUE_SEGS_U * 3],
+        arr[mid + 1] - arr[mid + TONGUE_SEGS_U * 3 + 1],
+        arr[mid + 2] - arr[mid + TONGUE_SEGS_U * 3 + 2]
+      ) < 1e-4;
+      for (let p = 0; p < passes; p++) {
+        for (let iz = 0; iz <= TONGUE_SEGS_Z; iz++) {
+          for (let iu = 0; iu <= TONGUE_SEGS_U; iu++) {
+            const i = (iz * W + iu) * 3;
+            let sx = 0, sy = 0, sz = 0, n = 0;
+            const ju0 = iu > 0 ? iu - 1 : (closed ? TONGUE_SEGS_U - 1 : -1);
+            const ju1 = iu < TONGUE_SEGS_U ? iu + 1 : (closed ? 1 : -1);
+            if (ju0 >= 0) { const j = (iz * W + ju0) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (ju1 >= 0) { const j = (iz * W + ju1) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (iz > 0) { const j = ((iz - 1) * W + iu) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (iz < TONGUE_SEGS_Z) { const j = ((iz + 1) * W + iu) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            tongueSmoothTmp[i]     = arr[i]     + lambda * (sx / n - arr[i]);
+            tongueSmoothTmp[i + 1] = arr[i + 1] + lambda * (sy / n - arr[i + 1]);
+            tongueSmoothTmp[i + 2] = arr[i + 2] + lambda * (sz / n - arr[i + 2]);
+          }
+        }
+        arr.set(tongueSmoothTmp);
+      }
+    };
+
     // Lips group
     const lipsGroup = new THREE.Group();
     lipsGroup.visible = false;
@@ -3934,7 +3964,7 @@ export default function TajweedStudioPage() {
             ? 0.001
             : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
           const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
-          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.78 && s < 0.96) ? 0.012 : 0.024;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.78 && s < 0.96) ? 0.035 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           // --- jeem tip shaping (post-clamp, jeem only) ---
@@ -4062,6 +4092,10 @@ export default function TajweedStudioPage() {
           colArr[cPtr++] = bT;
         }
       }
+
+        if (activeLetter.dorsalMode === 'jeem_touch') {
+          smoothTongueGrid(posArr, 3, 0.5);   // passes, strength
+        }
 
         tongueGeom.attributes.position.needsUpdate = true;
         tongueGeom.attributes.color.needsUpdate = true;
