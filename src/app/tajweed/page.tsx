@@ -485,8 +485,8 @@ const LETTER_PRESETS: LetterPreset[] = [
       desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും.',
       sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
     },
-    gears: { jawOpen: 24, tipElevation: -24, tipForward: -35, backIstila: 10, middleArch: 98, lateralSpread: 45, greenPointPos: 93, upperOpacity: 56 },
-    greenCoords: { x: 0.0, y: 0.40, z: 0.60, rx: -0.40 }
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -32, backIstila: 10, middleArch: 98, lateralSpread: 45, greenPointPos: 91, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.405, z: 0.58, rx: -0.36 }
   },
   // 4. Sheen (ش)
   {
@@ -3489,7 +3489,7 @@ export default function TajweedStudioPage() {
           let sW = 0.0;
 
           if (lid === 'jeem') {
-            const d = Math.hypot(wx / 0.22, (wz - 0.60) / 0.09);
+            const d = Math.hypot(wx / 0.22, (wz - 0.58) / 0.10);
             if (d < 1.0) {
               const w = Math.cos(d * Math.PI * 0.5);
               const press = 0.40 + 0.60 * w;
@@ -3689,7 +3689,8 @@ export default function TajweedStudioPage() {
           const wTip = uTipRaw * uTipRaw * (3.0 - 2.0 * uTipRaw);
           const tipApexRoundDrop = isAlveolarOrNatiyyah ? (0.026 * Math.pow(Math.max(0.0, (s - 0.86) / 0.14), 1.85)) : 0.0;
           const natiyyahCushionLift = isNatiyyah ? (0.022 * Math.exp(-Math.pow((s - 0.83) / 0.10, 2))) : 0.0;
-          const yBaseLine = 0.04 * (1.0 - wTip) + (yTipTopTarget + natiyyahCushionLift - tipApexRoundDrop) * wTip;
+          const effectiveYTipTarget = (dorsalMode === 'jeem_touch') ? 0.00 : yTipTopTarget;
+          const yBaseLine = 0.04 * (1.0 - wTip) + (effectiveYTipTarget + natiyyahCushionLift - tipApexRoundDrop) * wTip;
 
           let dorsalArch = 0;
           if (dorsalMode === 'qaaf_posterior') {
@@ -3697,13 +3698,15 @@ export default function TajweedStudioPage() {
           } else if (dorsalMode === 'kaaf_velar') {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
           } else if (dorsalMode === 'jeem_touch') {
-            const sContact = 0.93;               // contact at z ≈ 0.60, tip tail past it is short
+            const sContact = 0.91;
+            const TIP_KEEP = 0.45;   // fraction of arch height still kept at the very tip (higher = gentler tip)
             let archSlope = 0;
             if (s <= sContact) {
-              archSlope = Math.pow(s / sContact, 1.5);   // steep straight ramp from the back
+              archSlope = Math.pow(s / sContact, 2.0);   // low through the middle, rises near the front
             } else {
               const tDrop = (s - sContact) / (1.0 - sContact);
-              archSlope = Math.max(0.0, 1.0 - tDrop);    // tip folds down steeply
+              const ease = 0.5 * (1.0 + Math.cos(Math.PI * tDrop));  // 1 -> 0, smooth
+              archSlope = TIP_KEEP + (1.0 - TIP_KEEP) * ease;         // never drops below TIP_KEEP
             }
             dorsalArch = Math.max(0, midArchFactor) * 0.58 * archSlope + istilaFactor * 0.08 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'middle_dome') {
@@ -3717,6 +3720,11 @@ export default function TajweedStudioPage() {
           const backRootDrop = -0.24 * Math.pow(Math.max(0.0, (0.40 - s) / 0.40), 1.4);
           const sublingualRecess = 0.075 * Math.exp(-Math.pow((s - 0.70) / 0.15, 2));
           yBotTarget = (-0.17 + backRootDrop + sublingualRecess + 0.10 * yTopTarget) * (1.0 - wTip) + (yTipTopTarget - 0.118) * wTip - jawOpenFactor * 0.03;
+          if (dorsalMode === 'jeem_touch' && s > 0.65) {
+            const uFront = Math.pow((s - 0.65) / 0.35, 1.2);
+            const jeemTipBottom = yTopTarget - 0.115;
+            yBotTarget = yBotTarget * (1.0 - uFront) + jeemTipBottom * uFront;
+          }
         }
 
         const capBack = (iz === 0) ? 0.0 : ((s < 0.07) ? Math.sqrt(Math.max(0.0, 1.0 - Math.pow((0.07 - s) / 0.07, 2))) : 1.0);
@@ -3926,7 +3934,7 @@ export default function TajweedStudioPage() {
             ? 0.001
             : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
           const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
-          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.80 && s < 0.97) ? 0.012 : 0.024;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.78 && s < 0.96) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           posArr[ptr++] = x;
@@ -3994,7 +4002,7 @@ export default function TajweedStudioPage() {
               pW = rootFric * 0.35;
               sW = rootFric * 0.85 * (1.0 - pW);
             } else if (lid === 'jeem') {
-              const zEnv = Math.exp(-Math.pow((s - 0.93) / 0.045, 2));
+              const zEnv = Math.exp(-Math.pow((s - 0.91) / 0.05, 2));
               const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
               pW = zEnv * xCenter * topMask * 0.95;
               sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.55;
