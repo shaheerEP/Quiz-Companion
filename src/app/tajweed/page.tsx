@@ -3937,9 +3937,21 @@ export default function TajweedStudioPage() {
           const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.78 && s < 0.96) ? 0.012 : 0.024;
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
-          posArr[ptr++] = x;
-          posArr[ptr++] = wy;
-          posArr[ptr++] = wz;
+          // --- jeem tip shaping (post-clamp, jeem only) ---
+          let tipHook = 0, tipUndercut = 0, tipTaper = 1;
+          if (dorsalMode === 'jeem_touch') {
+            const tipT = Math.max(0, Math.min(1, (s - 0.88) / 0.12));
+            const tipE = tipT * tipT * (3 - 2 * tipT);          // smoothstep 0 -> 1 over the last 12%
+            const topM = Math.max(0.0, Math.min(1.0, (sinT + 0.18) / 0.55));
+            const under = 1.0 - topM;                          // 1 on the underside, 0 on the top surface
+            tipHook = 0.06 * tipE * tipE;                         // front of the tip curls down a little
+            tipUndercut = 0.16 * tipE * under;                    // underside slopes back (diagonal)
+            tipTaper = 1.0 - 0.20 * tipE;                         // tip narrows -> rounded front
+          }
+
+          posArr[ptr++] = x * tipTaper;
+          posArr[ptr++] = wy - tipHook;
+          posArr[ptr++] = wz - tipUndercut;
 
           // Tongue Coloring
           const dorsalLight = (sinT >= 0.0) ? (0.84 + 0.18 * Math.pow(sinT, 0.75)) : Math.max(0.34, 0.84 + sinT * 0.48);
