@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = { variable: "--font-geist-sans" };
 const geistMono = { variable: "--font-geist-mono" };
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 transition-colors duration-200">
         <ThemeProvider>
           <AuthProvider>
+            <ServiceWorkerRegister />
             {children}
           </AuthProvider>
         </ThemeProvider>

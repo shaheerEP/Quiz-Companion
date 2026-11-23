@@ -787,7 +787,7 @@ export default function TeacherDashboard() {
                       href={`/revision?studentId=${activeStudent._id}`}
                       title="Revision"
                       aria-label="Revision"
-                      className="w-9 h-9 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-600 border border-violet-200 flex items-center justify-center transition-all active:scale-95"
+                      className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 dark:hover:bg-violet-900/50 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-900/40 flex items-center justify-center transition-all active:scale-95"
                     >
                       <BookOpen className="w-4 h-4" />
                     </Link>
@@ -796,9 +796,9 @@ export default function TeacherDashboard() {
 
                 {/* Manners */}
                 {activeStudent.mannersEnabled && (
-                  <div className="flex items-center justify-between p-2 px-3 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex items-center justify-between p-2 px-3 bg-slate-50 dark:bg-gray-800/60 rounded-2xl border border-slate-100 dark:border-gray-700">
                     <div className="relative inline-block text-lg">
-                      <div className="flex text-slate-300">★★★★★</div>
+                      <div className="flex text-slate-300 dark:text-gray-700">★★★★★</div>
                       {(() => {
                         const todayLog = mannersLogs.find(l => new Date(l.date).toDateString() === new Date().toDateString());
                         const pct = todayLog ? todayLog.percentage : 0;
@@ -829,7 +829,7 @@ export default function TeacherDashboard() {
                     </span>
                   </div>
                   {historyStats && historyStats.bestWeekPoints > 0 && (
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-fuchsia-500 to-amber-400 h-full rounded-full transition-all duration-500"
                         style={{
