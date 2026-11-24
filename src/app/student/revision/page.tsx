@@ -309,53 +309,47 @@ export default function StudentRevisionPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
       <Navbar />
 
-      <div className="max-w-xl mx-auto px-4 py-8">
+      <div className="max-w-xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Offline & Sync Notification Banner */}
         {!isOnline && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 text-amber-700 dark:text-amber-300">
-            <div className="flex items-center gap-3">
-              <WifiOff className="w-5 h-5 shrink-0 text-amber-500" />
-              <div>
-                <p className="font-bold text-sm">Offline Mode</p>
-                <p className="text-xs opacity-80">
-                  Your revision progress is saved locally on this device and will sync when you reconnect.
-                </p>
-              </div>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-700 dark:text-amber-300">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <WifiOff className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-amber-500" />
+              <p className="text-xs sm:text-sm font-semibold truncate">Offline Mode</p>
             </div>
             {pendingSyncCount > 0 && (
-              <span className="shrink-0 px-3 py-1 rounded-full bg-amber-500/20 text-xs font-bold border border-amber-500/40">
-                {pendingSyncCount} saved offline
+              <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-xs font-bold border border-amber-500/40">
+                {pendingSyncCount} queued
               </span>
             )}
           </div>
         )}
 
         {isOnline && pendingSyncCount > 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-between gap-4 text-violet-700 dark:text-violet-300">
-            <div className="flex items-center gap-3">
-              <Cloud className="w-5 h-5 shrink-0 text-violet-500" />
-              <div>
-                <p className="font-bold text-sm">Offline reviews ready to sync</p>
-                <p className="text-xs opacity-80">
-                  {syncing ? "Uploading offline reviews to server..." : `${pendingSyncCount} review(s) saved on this device.`}
-                </p>
-              </div>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-between gap-3 text-violet-700 dark:text-violet-300">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Cloud className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-violet-500" />
+              <p className="text-xs sm:text-sm font-semibold truncate">
+                {syncing ? "Syncing..." : `${pendingSyncCount} review(s) ready to sync`}
+              </p>
             </div>
             <button
               onClick={triggerSync}
               disabled={syncing}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-50"
+              title="Sync now"
+              aria-label="Sync now"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0 flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing..." : "Sync Now"}
+              <span className="hidden sm:inline">Sync</span>
             </button>
           </div>
         )}
 
         {syncNotification && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-700 dark:text-emerald-300 animate-in fade-in">
-            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
-            <p className="font-bold text-sm">{syncNotification}</p>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2.5 text-emerald-700 dark:text-emerald-300 animate-in fade-in">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-emerald-500" />
+            <p className="font-bold text-xs sm:text-sm truncate">{syncNotification}</p>
           </div>
         )}
 

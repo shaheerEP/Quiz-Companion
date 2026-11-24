@@ -21,7 +21,8 @@ import {
   RefreshCw,
   Cloud,
   Check,
-  Users
+  Users,
+  RotateCw
 } from "lucide-react";
 import {
   RevisionNote,
@@ -78,16 +79,28 @@ function renderTextWithLinks(text?: string, isDarkSurface = false) {
 }
 
 function statusBadge(review: ReviewState | null) {
-  if (!review) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 border border-slate-200 dark:border-gray-700 font-bold">Not started</span>;
-  if (review.status === "done") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Complete</span>;
-  if (review.status === "due") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" />Due now</span>;
+  if (!review) return null;
+  if (review.status === "done")
+    return (
+      <span title="Completed" className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold flex items-center gap-1">
+        <CheckCircle2 className="w-3 h-3" />
+        <span>Done</span>
+      </span>
+    );
+  if (review.status === "due")
+    return (
+      <span title="Due now" className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 font-bold flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" />
+        <span>Due</span>
+      </span>
+    );
   const daysUntil = review.nextDueDate
     ? Math.ceil((new Date(review.nextDueDate).getTime() - Date.now()) / 86400000)
     : null;
   return (
-    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 font-bold flex items-center gap-1">
+    <span title={daysUntil != null ? `Due in ${daysUntil}d` : `Day ${INTERVALS[review.intervalIndex]}`} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 font-bold flex items-center gap-1">
       <Clock className="w-3 h-3" />
-      {daysUntil != null ? `In ${daysUntil}d` : `Day ${INTERVALS[review.intervalIndex]}`}
+      <span>{daysUntil != null ? `${daysUntil}d` : `D${INTERVALS[review.intervalIndex]}`}</span>
     </span>
   );
 }
@@ -683,233 +696,233 @@ function RevisionPageInner() {
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
       <Navbar />
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
         {/* Offline & Sync Status Banner */}
         {!isOnline && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-between gap-4 text-amber-800 dark:text-amber-300 shadow-sm animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <WifiOff className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div>
-                <p className="font-bold text-sm">Offline Mode Active</p>
-                <p className="text-xs text-amber-700/90 dark:text-amber-300/80">
-                  You are reading cached revision cards. You can add new cards and study freely — all cards are saved locally and will sync when reconnected.
-                </p>
-              </div>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-between gap-3 text-amber-800 dark:text-amber-300 shadow-sm animate-in fade-in">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <WifiOff className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <p className="text-xs sm:text-sm font-semibold truncate">Offline mode</p>
             </div>
             {pendingSyncCount > 0 && (
-              <span className="shrink-0 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300">
-                {pendingSyncCount} unsynced {pendingSyncCount === 1 ? "card" : "cards"}
+              <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300">
+                {pendingSyncCount} queued
               </span>
             )}
           </div>
         )}
 
         {isOnline && pendingSyncCount > 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 flex items-center justify-between gap-4 text-violet-800 dark:text-violet-300 shadow-sm animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <Cloud className="w-5 h-5 shrink-0 text-violet-600 dark:text-violet-400" />
-              <div>
-                <p className="font-bold text-sm">Offline changes ready to sync</p>
-                <p className="text-xs text-violet-700/90 dark:text-violet-300/80">
-                  {syncing
-                    ? "Syncing offline revision cards with server..."
-                    : `You have ${pendingSyncCount} offline card${pendingSyncCount > 1 ? "s" : ""} saved locally.`}
-                </p>
-              </div>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 flex items-center justify-between gap-3 text-violet-800 dark:text-violet-300 shadow-sm animate-in fade-in">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Cloud className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-violet-600 dark:text-violet-400" />
+              <p className="text-xs sm:text-sm font-semibold truncate">
+                {syncing
+                  ? "Syncing..."
+                  : `${pendingSyncCount} offline ${pendingSyncCount === 1 ? "card" : "cards"} ready`}
+              </p>
             </div>
             <button
               onClick={triggerSync}
               disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-50"
+              title="Sync now"
+              aria-label="Sync now"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0 flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing..." : "Sync Now"}
+              <span className="hidden sm:inline">Sync</span>
             </button>
           </div>
         )}
 
         {syncNotification && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-3 text-emerald-800 dark:text-emerald-300 shadow-sm animate-in fade-in">
-            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <p className="font-bold text-sm">{syncNotification}</p>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-2.5 text-emerald-800 dark:text-emerald-300 shadow-sm animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <p className="font-bold text-xs sm:text-sm truncate">{syncNotification}</p>
           </div>
         )}
 
         {/* Back + Header */}
-        <div className="flex items-start justify-between mb-8 gap-4">
-          <div className="flex items-start gap-3">
+        <div className="flex items-center justify-between mb-5 sm:mb-6 gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => router.back()}
-              className="mt-1 p-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-gray-800 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white border border-slate-200 dark:border-gray-800 transition-all shadow-sm"
+              className="p-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-gray-800 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white border border-slate-200 dark:border-gray-800 transition-all shadow-sm shrink-0"
               title="Go back"
+              aria-label="Go back"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <div className="bg-violet-600 p-2 rounded-xl shadow-lg shadow-violet-500/20 text-white">
-                  <BookOpen className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-2 rounded-xl bg-violet-600 text-white shrink-0 shadow-md shadow-violet-500/20">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    Revision
+                  </h1>
+                  {!isOnline && (
+                    <span title="Offline">
+                      <WifiOff className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    </span>
+                  )}
                 </div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Revision Cards</h1>
-                {!isOnline && (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30 flex items-center gap-1">
-                    <WifiOff className="w-3 h-3" /> Offline
-                  </span>
+                {studentName && (
+                  <p className="text-xs text-slate-500 dark:text-gray-400 truncate capitalize font-medium">
+                    {studentName}
+                  </p>
                 )}
               </div>
-              {studentName && (
-                <p className="text-slate-500 dark:text-gray-400 text-sm ml-11">
-                  for <span className="text-violet-600 dark:text-violet-400 font-semibold capitalize">{studentName}</span>
-                </p>
-              )}
             </div>
           </div>
 
-          <div className="flex gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {dueCount > 0 && (
               <button
                 onClick={() => startRevisionDeck()}
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 text-sm"
+                title={`Start Revision (${dueCount} due)`}
+                aria-label={`Start Revision (${dueCount} due)`}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 text-xs sm:text-sm"
               >
-                <Play className="w-4 h-4 fill-white" />
-                Start Revision ({dueCount})
+                <Play className="w-4 h-4 fill-white shrink-0" />
+                <span className="font-extrabold">{dueCount}</span>
               </button>
             )}
             <button
               onClick={() => setShowForm((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-500/20 active:scale-95 text-sm"
+              title={showForm ? "Close" : "Add Card"}
+              aria-label={showForm ? "Close" : "Add Card"}
+              className="p-2 sm:p-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-md active:scale-95 flex items-center justify-center shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Add Card {!isOnline && "(Offline)"}
+              <Plus className={`w-5 h-5 transition-transform duration-200 ${showForm ? "rotate-45" : ""}`} />
             </button>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="flex gap-3 mb-6 flex-wrap">
-          <div className="px-4 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-gray-300 shadow-sm">
-            {notes.length} card{notes.length !== 1 ? "s" : ""} total
+        {/* Stats chips - icon focused & concise */}
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar flex-wrap">
+          <div
+            title="Total cards"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-gray-300 shadow-sm shrink-0"
+          >
+            <Layers className="w-3.5 h-3.5 text-slate-400" />
+            <span>{notes.length}</span>
           </div>
           {dueCount > 0 && (
-            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-sm font-semibold text-amber-800 dark:text-amber-300 shadow-sm">
-              {dueCount} due now
+            <div
+              title="Due for revision"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800/50 rounded-xl text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300 shadow-sm shrink-0"
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{dueCount}</span>
+              <span className="text-[11px] font-medium opacity-80">due</span>
             </div>
           )}
           {doneCount > 0 && (
-            <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-sm font-semibold text-emerald-800 dark:text-emerald-300 shadow-sm">
-              {doneCount} complete
+            <div
+              title="Completed cards"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-800/50 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 shadow-sm shrink-0"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>{doneCount}</span>
             </div>
           )}
           {pendingSyncCount > 0 && (
-            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 shadow-sm">
-              <Cloud className="w-4 h-4" />
-              {pendingSyncCount} saved offline
+            <div
+              title="Saved offline pending sync"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-xl text-xs sm:text-sm font-semibold text-amber-800 dark:text-amber-300 shadow-sm shrink-0"
+            >
+              <Cloud className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{pendingSyncCount}</span>
             </div>
           )}
         </div>
 
         {/* Add Card Form */}
         {showForm && (
-          <div className="mb-8 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl" style={{ animation: "slideDown 0.2s ease" }}>
+          <div className="mb-6 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 sm:p-6 shadow-xl animate-in fade-in duration-150">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                New Revision Card
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600 dark:text-violet-400" />
+                New Card
               </h2>
               {!isOnline && (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30 flex items-center gap-1">
-                  <WifiOff className="w-3 h-3" /> Offline Mode (Will sync later)
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30 flex items-center gap-1">
+                  <WifiOff className="w-3 h-3" /> Offline
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Front (Question / Term)
+                  Question
                 </label>
                 <textarea
                   value={front}
                   onChange={(e) => setFront(e.target.value)}
-                  rows={4}
-                  placeholder="What is photosynthesis?"
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
+                  rows={3}
+                  placeholder="Question or prompt..."
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Back (Answer / Code Key)
+                  Answer
                 </label>
                 <textarea
                   value={back}
                   onChange={(e) => setBack(e.target.value)}
-                  rows={4}
-                  placeholder="The process by which plants convert sunlight..."
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
+                  rows={3}
+                  placeholder="Answer or key takeaways..."
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
             </div>
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                <span>Explanation (Optional detailed code / solution breakdown)</span>
-                <span className="text-[11px] text-violet-600 dark:text-violet-400 font-normal">Clicking answer opens explanation dialog</span>
+            <div className="mb-3 sm:mb-4">
+              <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                Explanation (Optional)
               </label>
               <textarea
                 value={explanation}
                 onChange={(e) => setExplanation(e.target.value)}
-                rows={3}
-                placeholder="e.g. Detailed step-by-step explanation or complete code example..."
-                className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
+                rows={2}
+                placeholder="Optional hints or breakdown..."
+                className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
               />
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1">
-                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Subject / Topic (optional)
-                </label>
                 <input
                   list="existing-subjects-add"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Select existing subject or type a new one..."
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
+                  placeholder="Subject (optional)..."
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
                 />
                 <datalist id="existing-subjects-add">
                   {existingSubjects.map((s) => (
                     <option key={s} value={s} />
                   ))}
                 </datalist>
-                {existingSubjects.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {existingSubjects.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSubject(s)}
-                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                          subject === s
-                            ? "bg-violet-600 border-violet-500 text-white font-bold"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:text-gray-300 dark:border-gray-700"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
-              <div className="flex gap-2 sm:pt-6">
+              <div className="flex items-center justify-end gap-2 shrink-0">
                 <button
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-all border border-slate-200 dark:border-transparent text-sm"
+                  className="p-2 sm:px-3 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-all border border-slate-200 dark:border-transparent text-xs sm:text-sm flex items-center gap-1.5"
+                  title="Cancel"
                 >
-                  Cancel
+                  <X className="w-4 h-4" />
+                  <span className="hidden sm:inline">Cancel</span>
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={saving || !front.trim() || !back.trim()}
-                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all active:scale-95 text-sm"
+                  className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-1.5"
+                  title="Save Card"
                 >
-                  {saving ? "Saving…" : isOnline ? "Save Card" : "Save Card (Offline)"}
+                  <Check className="w-4 h-4" />
+                  <span>{saving ? "Saving…" : "Save"}</span>
                 </button>
               </div>
             </div>
@@ -917,13 +930,13 @@ function RevisionPageInner() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar flex-wrap">
           {/* Status filter */}
           {(["all", "due", "upcoming", "done"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all capitalize ${
+              className={`px-3 py-1 sm:py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all capitalize shrink-0 ${
                 filterStatus === s
                   ? s === "due"
                     ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -933,7 +946,7 @@ function RevisionPageInner() {
                   : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 shadow-sm"
               }`}
             >
-              {s === "all" ? "All" : s === "due" ? `Due (${dueCount})` : s === "done" ? `Complete (${doneCount})` : "Upcoming"}
+              {s === "all" ? "All" : s === "due" ? `Due (${dueCount})` : s === "done" ? `Done (${doneCount})` : "Upcoming"}
             </button>
           ))}
 
@@ -945,7 +958,7 @@ function RevisionPageInner() {
                 <button
                   key={s}
                   onClick={() => setFilterSubject(s)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                  className={`px-3 py-1 sm:py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 ${
                     filterSubject === s
                       ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
                       : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 shadow-sm"
@@ -1150,20 +1163,21 @@ function RevisionPageInner() {
             >
               {/* Modal Top Bar */}
               <div className="w-full flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-3 mb-4 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl border border-emerald-500/20">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2 sm:p-2.5 rounded-xl border border-emerald-500/20 shrink-0">
                     <Play className="w-4 h-4 fill-emerald-600 dark:fill-emerald-400" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Interactive Revision Session</h3>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">Revision</h3>
                     <p className="text-xs text-slate-500 dark:text-gray-400">
-                      Card {deckIndex + 1} of {deckCards.length}
+                      {deckIndex + 1} / {deckCards.length}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowDeckModal(false)}
-                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  title="Close"
+                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1240,17 +1254,19 @@ function RevisionPageInner() {
                 {!deckFlipped ? (
                   <button
                     onClick={() => setDeckFlipped(true)}
-                    className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-violet-500/20 active:scale-95 text-sm"
+                    className="w-full py-2.5 sm:py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold transition-all shadow-md active:scale-95 text-xs sm:text-sm flex items-center justify-center gap-2"
                   >
-                    Flip Card / Reveal Answer
+                    <RotateCw className="w-4 h-4" />
+                    <span>Reveal Answer</span>
                   </button>
                 ) : (
                   <div className="w-full">
-                    <div className="grid grid-cols-4 gap-2 w-full">
+                    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full">
                       <button
                         onClick={() => handleRateCard("bad")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-rose-50 hover:bg-rose-600 border border-rose-200 dark:bg-rose-600/10 dark:hover:bg-rose-600 dark:border-rose-500/40 text-rose-700 hover:text-white dark:text-rose-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        title={`Again (${badDays})`}
+                        className="flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 sm:px-2 bg-rose-50 hover:bg-rose-600 border border-rose-200 dark:bg-rose-600/10 dark:hover:bg-rose-600 dark:border-rose-500/40 text-rose-700 hover:text-white dark:text-rose-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🔴</span>
                         <span className="text-xs font-extrabold mt-0.5">Bad</span>
@@ -1259,7 +1275,8 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("good")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-50 hover:bg-amber-600 border border-amber-200 dark:bg-amber-600/10 dark:hover:bg-amber-600 dark:border-amber-500/40 text-amber-700 hover:text-white dark:text-amber-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        title={`Good (${goodDays})`}
+                        className="flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 sm:px-2 bg-amber-50 hover:bg-amber-600 border border-amber-200 dark:bg-amber-600/10 dark:hover:bg-amber-600 dark:border-amber-500/40 text-amber-700 hover:text-white dark:text-amber-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🟡</span>
                         <span className="text-xs font-extrabold mt-0.5">Good</span>
@@ -1268,19 +1285,21 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("awesome")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 dark:bg-indigo-600/10 dark:hover:bg-indigo-600 dark:border-indigo-500/40 text-indigo-700 hover:text-white dark:text-indigo-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        title={`Great (${awesomeDays})`}
+                        className="flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 sm:px-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 dark:bg-indigo-600/10 dark:hover:bg-indigo-600 dark:border-indigo-500/40 text-indigo-700 hover:text-white dark:text-indigo-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">⚡</span>
-                        <span className="text-xs font-extrabold mt-0.5">Awesome</span>
+                        <span className="text-xs font-extrabold mt-0.5">Great</span>
                         <span className="text-[10px] opacity-75 font-mono">{awesomeDays}</span>
                       </button>
                       <button
                         onClick={() => handleRateCard("excellent")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 dark:bg-emerald-600/10 dark:hover:bg-emerald-600 dark:border-emerald-500/40 text-emerald-700 hover:text-white dark:text-emerald-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        title={`Easy (${excellentDays})`}
+                        className="flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 sm:px-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 dark:bg-emerald-600/10 dark:hover:bg-emerald-600 dark:border-emerald-500/40 text-emerald-700 hover:text-white dark:text-emerald-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🌟</span>
-                        <span className="text-xs font-extrabold mt-0.5">Excellent</span>
+                        <span className="text-xs font-extrabold mt-0.5">Easy</span>
                         <span className="text-[10px] opacity-75 font-mono">{excellentDays}</span>
                       </button>
                     </div>
@@ -1295,26 +1314,27 @@ function RevisionPageInner() {
       {/* Explanation Dialog Box Modal */}
       {activeModalNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setActiveModalNote(null)}
         >
           <div
-            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
+            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-4 mb-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="bg-violet-100 dark:bg-violet-600/20 text-violet-700 dark:text-violet-400 p-2.5 rounded-xl border border-violet-200 dark:border-violet-500/30">
-                  <HelpCircle className="w-5 h-5" />
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="bg-violet-100 dark:bg-violet-600/20 text-violet-700 dark:text-violet-400 p-2 rounded-xl border border-violet-200 dark:border-violet-500/30 shrink-0">
+                  <HelpCircle className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-1">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                   {renderTextWithLinks(activeModalNote.front, false)}
                 </h3>
               </div>
               <button
                 onClick={() => setActiveModalNote(null)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                title="Close"
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1323,13 +1343,13 @@ function RevisionPageInner() {
             {/* Modal Body */}
             <div className="overflow-y-auto pr-1 space-y-3 flex-1">
               {/* Short Answer / Code */}
-              <div className="bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/40 rounded-xl p-4 text-violet-900 dark:text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
+              <div className="bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/40 rounded-xl p-3.5 sm:p-4 text-violet-900 dark:text-violet-100 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap select-text">
                 {renderTextWithLinks(activeModalNote.back, false)}
               </div>
 
               {/* Detailed Explanation */}
               {activeModalNote.explanation && (
-                <div className="bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl p-5 text-slate-800 dark:text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
+                <div className="bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 text-slate-800 dark:text-gray-200 leading-relaxed font-mono text-xs sm:text-sm whitespace-pre-wrap select-text">
                   {renderTextWithLinks(activeModalNote.explanation, false)}
                 </div>
               )}
@@ -1341,73 +1361,74 @@ function RevisionPageInner() {
       {/* Edit Card Modal */}
       {editingNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setEditingNote(null)}
         >
           <div
-            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
+            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-slate-200 dark:border-gray-800 pb-4 mb-4 shrink-0">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                Edit Revision Card
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-3 mb-4 shrink-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                Edit Card
               </h3>
               <button
                 onClick={() => setEditingNote(null)}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                title="Close"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 overflow-y-auto pr-1 flex-1">
+            <div className="space-y-3 sm:space-y-4 overflow-y-auto pr-1 flex-1">
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Front (Question / Term)
+                  Question
                 </label>
                 <textarea
                   value={editFront}
                   onChange={(e) => setEditFront(e.target.value)}
                   rows={3}
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Back (Answer / Code Key)
+                  Answer
                 </label>
                 <textarea
                   value={editBack}
                   onChange={(e) => setEditBack(e.target.value)}
                   rows={3}
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Explanation (Optional detailed code / solution breakdown)
+                  Explanation (Optional)
                 </label>
                 <textarea
                   value={editExplanation}
                   onChange={(e) => setEditExplanation(e.target.value)}
-                  rows={3}
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
+                  rows={2}
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                  Subject / Topic
+                  Subject
                 </label>
                 <input
                   list="existing-subjects-edit"
                   value={editSubject}
                   onChange={(e) => setEditSubject(e.target.value)}
-                  placeholder="Select existing subject or type a new one..."
-                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
+                  placeholder="Select or enter subject..."
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-3.5 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
                 />
                 <datalist id="existing-subjects-edit">
                   {existingSubjects.map((s) => (
@@ -1435,19 +1456,23 @@ function RevisionPageInner() {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-gray-800 pt-4 mt-4 flex justify-end gap-2 shrink-0">
+            <div className="border-t border-slate-200 dark:border-gray-800 pt-3 mt-4 flex justify-end gap-2 shrink-0">
               <button
                 onClick={() => setEditingNote(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 rounded-xl font-semibold transition-all text-sm border border-slate-200 dark:border-transparent"
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 rounded-xl font-semibold transition-all text-xs sm:text-sm border border-slate-200 dark:border-transparent flex items-center gap-1.5"
+                title="Cancel"
               >
-                Cancel
+                <X className="w-4 h-4" />
+                <span>Cancel</span>
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={savingEdit || !editFront.trim() || !editBack.trim()}
-                className="px-5 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all text-sm active:scale-95"
+                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all text-xs sm:text-sm active:scale-95 flex items-center gap-1.5"
+                title="Save Changes"
               >
-                {savingEdit ? "Saving…" : "Save Changes"}
+                <Check className="w-4 h-4" />
+                <span>{savingEdit ? "Saving…" : "Save"}</span>
               </button>
             </div>
           </div>
