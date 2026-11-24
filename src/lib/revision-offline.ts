@@ -50,19 +50,76 @@ export interface CachedStudentSummary {
 }
 
 const DB_NAME = "QuizCompanionRevisionDB";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NOTES = "revision_notes";
 const STORE_META = "student_meta";
 const STORE_QUEUE = "sync_queue";
 const STORE_ALL_STUDENTS = "all_students";
+const STORE_DUE = "due_cards";
 
 const LS_NOTES_PREFIX = "qc_notes_";
 const LS_META_PREFIX = "qc_meta_";
 const LS_QUEUE_KEY = "qc_sync_queue";
 const LS_STUDENTS_KEY = "qc_all_students";
+const LS_DUE_PREFIX = "qc_due_cards_";
 
 let dbInstance: IDBDatabase | null = null;
 let dbPromise: Promise<IDBDatabase | null> | null = null;
+
+export function computeNextReviewState(
+  currentReview: ReviewState | null,
+  rating: "bad" | "good" | "awesome" | "excellent" | "mark",
+  intervalsList?: number[]
+): ReviewState {
+  const intervals = intervalsList && intervalsList.length > 0 ? intervalsList : [1, 2, 7, 14, 30, 90];
+  const curIdx = currentReview?.intervalIndex ?? 0;
+  const now = new Date();
+
+  let stepAdvance = 1;
+  if (rating === "bad") {
+    stepAdvance = 0;
+  } else if (rating === "good" || rating === "mark") {
+    stepAdvance = 1;
+  } else if (rating === "awesome") {
+    stepAdvance = 2;
+  } else if (rating === "excellent") {
+    stepAdvance = 3;
+  }
+
+  if (rating === "bad") {
+    const nextDueDate = new Date(now.getTime() + (intervals[0] || 1) * 86400000).toISOString();
+    return {
+      _id: currentReview?._id,
+      status: "upcoming",
+      intervalIndex: 0,
+      currentInterval: intervals[0] || 1,
+      nextDueDate,
+      completed: false,
+    };
+  }
+
+  const nextIndex = Math.min(curIdx + stepAdvance, intervals.length - 1);
+  if (curIdx + stepAdvance >= intervals.length) {
+    return {
+      _id: currentReview?._id,
+      status: "done",
+      intervalIndex: nextIndex,
+      currentInterval: intervals[nextIndex],
+      nextDueDate: null,
+      completed: true,
+    };
+  }
+
+  const nextDueDate = new Date(now.getTime() + intervals[nextIndex] * 86400000).toISOString();
+  return {
+    _id: currentReview?._id,
+    status: "upcoming",
+    intervalIndex: nextIndex,
+    currentInterval: intervals[nextIndex],
+    nextDueDate,
+    completed: false,
+  };
+}
 
 function getDB(): Promise<IDBDatabase | null> {
   if (typeof window === "undefined" || !("indexedDB" in window)) {
@@ -89,6 +146,9 @@ function getDB(): Promise<IDBDatabase | null> {
         }
         if (!db.objectStoreNames.contains(STORE_ALL_STUDENTS)) {
           db.createObjectStore(STORE_ALL_STUDENTS, { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains(STORE_DUE)) {
+          db.createObjectStore(STORE_DUE, { keyPath: "studentId" });
         }
       };
 
@@ -291,6 +351,62 @@ export async function saveCachedStudentsList(students: any[]): Promise<void> {
       store.put({
         id: "all",
         students,
+        updatedAt: Date.now(),
+      });
+      await new Promise<void>((resolve) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+  } catch {}
+}
+
+/* =========================================================================
+ * 3b. Student Due Cards Cache
+ * ========================================================================= */
+
+export async function getCachedDueCards(studentId: string): Promise<any[]> {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const db = await getDB();
+    if (db && db.objectStoreNames.contains(STORE_DUE)) {
+      const tx = db.transaction(STORE_DUE, "readonly");
+      const store = tx.objectStore(STORE_DUE);
+      const req = store.get(studentId);
+      const result = await new Promise<any>((resolve) => {
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (result && Array.isArray(result.cards)) {
+        return result.cards;
+      }
+    }
+  } catch {}
+
+  try {
+    const raw = localStorage.getItem(`${LS_DUE_PREFIX}${studentId}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return [];
+}
+
+export async function saveCachedDueCards(studentId: string, cards: any[]): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(`${LS_DUE_PREFIX}${studentId}`, JSON.stringify(cards));
+  } catch {}
+
+  try {
+    const db = await getDB();
+    if (db && db.objectStoreNames.contains(STORE_DUE)) {
+      const tx = db.transaction(STORE_DUE, "readwrite");
+      const store = tx.objectStore(STORE_DUE);
+      store.put({
+        studentId,
+        cards,
         updatedAt: Date.now(),
       });
       await new Promise<void>((resolve) => {

@@ -37,7 +37,8 @@ import {
   removeOfflineQueueItem,
   updateOfflineQueueItemPayload,
   getPendingQueueCount,
-  syncOfflineQueue
+  syncOfflineQueue,
+  computeNextReviewState
 } from "@/lib/revision-offline";
 
 interface FlipCard {
@@ -542,13 +543,28 @@ function RevisionPageInner() {
     setShowDeckModal(true);
   };
 
-  // Rate card in deck session
+  // Rate card in deck session (saves locally immediately, queues offline, syncs when online)
   const handleRateCard = async (rating: "bad" | "good" | "awesome" | "excellent") => {
     const currentNote = deckCards[deckIndex];
-    if (!currentNote || !currentNote.review?._id || submittingRating) return;
+    if (!currentNote || submittingRating) return;
 
     setSubmittingRating(true);
 
+    const reviewId = currentNote.review?._id || currentNote._id;
+    const ratingIntervals = studentRewindDays?.length ? studentRewindDays : INTERVALS;
+    const updatedReview = computeNextReviewState(currentNote.review, rating, ratingIntervals);
+
+    // 1. Immediately update note state and local cache
+    const updatedNotes = notes.map((n) =>
+      n._id === currentNote._id ? { ...n, review: updatedReview } : n
+    );
+    setNotes(updatedNotes);
+    setCards(updatedNotes.map((n) => ({ note: n, flipped: false })));
+    if (studentId) {
+      await saveCachedNotes(studentId, updatedNotes);
+    }
+
+    // 2. Persist to server if online, otherwise queue in offline storage
     let ratedOnServer = false;
     if (navigator.onLine) {
       try {
@@ -556,7 +572,7 @@ function RevisionPageInner() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            reviewId: currentNote.review._id,
+            reviewId,
             rating,
           }),
         });
@@ -569,11 +585,14 @@ function RevisionPageInner() {
         action: "RATE",
         studentId: studentId!,
         payload: {
-          reviewId: currentNote.review._id,
+          reviewId,
+          noteId: currentNote._id,
           rating,
         },
       });
       setPendingSyncCount((prev) => prev + 1);
+      setSyncNotification("Review saved locally! Will sync when connected to internet.");
+      setTimeout(() => setSyncNotification(null), 4000);
     }
 
     setSubmittingRating(false);

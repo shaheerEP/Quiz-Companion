@@ -1,10 +1,11 @@
-const CACHE_NAME = 'quiz-revision-offline-v2';
+const CACHE_NAME = 'quiz-revision-offline-v3';
 
 // Essential initial URLs to cache
 const PRECACHE_URLS = [
   '/',
   '/revision',
   '/self-revision',
+  '/student/revision',
   '/favicon.ico',
 ];
 
@@ -59,6 +60,9 @@ self.addEventListener('fetch', (event) => {
               if (url.pathname.startsWith('/self-revision')) {
                 cache.put('/self-revision', response.clone());
               }
+              if (url.pathname.startsWith('/student/revision')) {
+                cache.put('/student/revision', response.clone());
+              }
             });
           }
           return response;
@@ -72,6 +76,12 @@ self.addEventListener('fetch', (event) => {
           // Try pathname without search parameters
           const pathMatch = await caches.match(url.pathname, { ignoreSearch: true });
           if (pathMatch) return pathMatch;
+
+          // If navigation is for /student/revision*, return cached /student/revision shell
+          if (url.pathname.startsWith('/student/revision')) {
+            const studentRevMatch = await caches.match('/student/revision', { ignoreSearch: true });
+            if (studentRevMatch) return studentRevMatch;
+          }
 
           // If navigation is for /revision*, return cached /revision shell
           if (url.pathname.startsWith('/revision')) {

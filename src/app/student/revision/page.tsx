@@ -3,7 +3,26 @@
 import { useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
-import { CheckCircle, XCircle, BookOpen, Flame, ChevronRight, HelpCircle, X, Copy, Check } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  BookOpen,
+  Flame,
+  ChevronRight,
+  HelpCircle,
+  X,
+  WifiOff,
+  RefreshCw,
+  Cloud
+} from "lucide-react";
+import {
+  getCachedDueCards,
+  saveCachedDueCards,
+  addOfflineQueueItem,
+  getPendingQueueCount,
+  syncOfflineQueue,
+  getOfflineQueue
+} from "@/lib/revision-offline";
 
 interface DueCard {
   reviewId: string;
@@ -58,23 +77,115 @@ export default function StudentRevisionPage() {
   const [loading, setLoading] = useState(true);
   const [finished, setFinished] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
+
+  // Offline & sync states
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+  const [syncing, setSyncing] = useState<boolean>(false);
+  const [syncNotification, setSyncNotification] = useState<string | null>(null);
 
   const studentId = user?.student?._id || user?.id;
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsOnline(navigator.onLine);
+    }
+  }, []);
+
   const fetchDue = useCallback(async () => {
     if (!studentId) return;
-    setLoading(true);
-    const res = await fetch(`/api/revision/due?studentId=${studentId}`);
-    const data = await res.json();
-    setCards(data);
-    setCurrent(0);
-    setFlipped(false);
-    setFinished(data.length === 0);
+
+    // 1. Instantly load from local offline cache
+    const cached = await getCachedDueCards(studentId);
+    const queue = await getOfflineQueue();
+    const queuedReviewIds = new Set(
+      queue
+        .filter((q) => q.studentId === studentId && q.action === "RATE")
+        .map((q) => q.payload?.reviewId || q.payload?.noteId)
+    );
+
+    // Filter out cards already reviewed/queued offline
+    const activeCached = cached.filter((c) => !queuedReviewIds.has(c.reviewId));
+
+    if (activeCached.length > 0) {
+      setCards(activeCached);
+      setCurrent(0);
+      setFlipped(false);
+      setFinished(false);
+      setLoading(false);
+    }
+
+    const pCount = await getPendingQueueCount(studentId);
+    setPendingSyncCount(pCount);
+
+    // 2. Fetch fresh from server if online
+    if (navigator.onLine) {
+      try {
+        const res = await fetch(`/api/revision/due?studentId=${studentId}`);
+        if (res.ok) {
+          const data: DueCard[] = await res.json();
+          // Filter out cards that are pending sync from offline reviews
+          const unqueued = data.filter((c) => !queuedReviewIds.has(c.reviewId));
+          setCards(unqueued);
+          await saveCachedDueCards(studentId, unqueued);
+          setCurrent(0);
+          setFlipped(false);
+          setFinished(unqueued.length === 0);
+        }
+      } catch (err) {
+        console.warn("[StudentRevision] Network error, using offline cache:", err);
+      }
+    } else if (activeCached.length === 0) {
+      setFinished(true);
+    }
+
     setLoading(false);
   }, [studentId]);
 
-  useEffect(() => { fetchDue(); }, [fetchDue]);
+  // Sync offline reviews when online
+  const triggerSync = useCallback(async () => {
+    if (!navigator.onLine || syncing || !studentId) return;
+    setSyncing(true);
+
+    try {
+      const res = await syncOfflineQueue(studentId);
+      if (res.syncedCount > 0) {
+        setSyncNotification(`✓ Synced ${res.syncedCount} card review${res.syncedCount > 1 ? "s" : ""} with server!`);
+        setTimeout(() => setSyncNotification(null), 4000);
+      }
+      const count = await getPendingQueueCount(studentId);
+      setPendingSyncCount(count);
+      await fetchDue();
+    } catch (err) {
+      console.error("[StudentRevision] Sync error:", err);
+    } finally {
+      setSyncing(false);
+    }
+  }, [studentId, syncing, fetchDue]);
+
+  // Online / offline listeners
+  useEffect(() => {
+    const handleOnline = async () => {
+      setIsOnline(true);
+      await triggerSync();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [triggerSync]);
+
+  useEffect(() => {
+    fetchDue();
+  }, [fetchDue]);
 
   const handleFlip = () => {
     if (flipping) return;
@@ -86,11 +197,38 @@ export default function StudentRevisionPage() {
   };
 
   const handleMark = async (reviewId: string) => {
-    await fetch("/api/revision/due", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reviewId }),
-    });
+    let markedOnServer = false;
+
+    // 1. If online, try server POST
+    if (navigator.onLine) {
+      try {
+        const res = await fetch("/api/revision/due", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviewId }),
+        });
+        if (res.ok) markedOnServer = true;
+      } catch {}
+    }
+
+    // 2. If offline or network failed, queue in offline storage
+    if (!markedOnServer && studentId) {
+      await addOfflineQueueItem({
+        action: "RATE",
+        studentId,
+        payload: { reviewId },
+      });
+      setPendingSyncCount((prev) => prev + 1);
+      setSyncNotification("Review saved locally! Will sync when reconnected.");
+      setTimeout(() => setSyncNotification(null), 4000);
+    }
+
+    // 3. Remove from local cached due cards immediately
+    if (studentId) {
+      const remaining = cards.filter((c) => c.reviewId !== reviewId);
+      await saveCachedDueCards(studentId, remaining);
+    }
+
     setDone((d) => d + 1);
     advanceCard();
   };
@@ -137,6 +275,13 @@ export default function StudentRevisionPage() {
               : `You reviewed ${done} card${done !== 1 ? "s" : ""} today. Great work!`}
           </p>
 
+          {!isOnline && pendingSyncCount > 0 && (
+            <div className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold flex items-center gap-2">
+              <Cloud className="w-4 h-4" />
+              <span>{pendingSyncCount} card review{pendingSyncCount > 1 ? "s" : ""} saved offline, pending sync.</span>
+            </div>
+          )}
+
           {/* Interval reminder */}
           <div className="mt-8 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 max-w-sm w-full shadow-sm">
             <p className="text-xs font-bold text-slate-500 dark:text-gray-500 uppercase tracking-wider mb-3">
@@ -165,11 +310,65 @@ export default function StudentRevisionPage() {
       <Navbar />
 
       <div className="max-w-xl mx-auto px-4 py-8">
+        {/* Offline & Sync Notification Banner */}
+        {!isOnline && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 text-amber-700 dark:text-amber-300">
+            <div className="flex items-center gap-3">
+              <WifiOff className="w-5 h-5 shrink-0 text-amber-500" />
+              <div>
+                <p className="font-bold text-sm">Offline Mode</p>
+                <p className="text-xs opacity-80">
+                  Your revision progress is saved locally on this device and will sync when you reconnect.
+                </p>
+              </div>
+            </div>
+            {pendingSyncCount > 0 && (
+              <span className="shrink-0 px-3 py-1 rounded-full bg-amber-500/20 text-xs font-bold border border-amber-500/40">
+                {pendingSyncCount} saved offline
+              </span>
+            )}
+          </div>
+        )}
+
+        {isOnline && pendingSyncCount > 0 && (
+          <div className="mb-6 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-between gap-4 text-violet-700 dark:text-violet-300">
+            <div className="flex items-center gap-3">
+              <Cloud className="w-5 h-5 shrink-0 text-violet-500" />
+              <div>
+                <p className="font-bold text-sm">Offline reviews ready to sync</p>
+                <p className="text-xs opacity-80">
+                  {syncing ? "Uploading offline reviews to server..." : `${pendingSyncCount} review(s) saved on this device.`}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={triggerSync}
+              disabled={syncing}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync Now"}
+            </button>
+          </div>
+        )}
+
+        {syncNotification && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-700 dark:text-emerald-300 animate-in fade-in">
+            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-500" />
+            <p className="font-bold text-sm">{syncNotification}</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             <span className="font-bold text-slate-900 dark:text-white">Revision</span>
+            {!isOnline && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
+                <WifiOff className="w-2.5 h-2.5" /> Offline
+              </span>
+            )}
           </div>
           <span className="text-sm font-medium text-slate-500 dark:text-gray-400">
             {current + 1} / {cards.length}

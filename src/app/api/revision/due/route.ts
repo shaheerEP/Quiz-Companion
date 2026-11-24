@@ -59,7 +59,14 @@ export async function POST(req: NextRequest) {
 
   await connectToDatabase();
 
-  const review = await RevisionReview.findById(reviewId);
+  const mongoose = (await import("mongoose")).default;
+  let review = null;
+  if (mongoose.Types.ObjectId.isValid(reviewId)) {
+    review = await RevisionReview.findById(reviewId);
+    if (!review) {
+      review = await RevisionReview.findOne({ noteId: reviewId });
+    }
+  }
   if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 });
 
   const student = await Student.findById(review.studentId).lean();
