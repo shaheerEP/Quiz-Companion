@@ -47,7 +47,7 @@ interface FlipCard {
 
 const INTERVALS = [1, 2, 7, 14, 30, 90];
 
-function renderTextWithLinks(text?: string) {
+function renderTextWithLinks(text?: string, isDarkSurface = false) {
   if (!text) return null;
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
   const parts = text.split(urlRegex);
@@ -62,7 +62,11 @@ function renderTextWithLinks(text?: string) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-violet-400 hover:text-violet-300 underline underline-offset-2 break-all font-semibold"
+          className={`${
+            isDarkSurface
+              ? "text-violet-300 hover:text-violet-200"
+              : "text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+          } underline underline-offset-2 break-all font-semibold`}
         >
           {part}
         </a>
@@ -73,14 +77,14 @@ function renderTextWithLinks(text?: string) {
 }
 
 function statusBadge(review: ReviewState | null) {
-  if (!review) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-500 font-bold">Not started</span>;
-  if (review.status === "done") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Complete</span>;
-  if (review.status === "due") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-400 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" />Due now</span>;
+  if (!review) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 border border-slate-200 dark:border-gray-700 font-bold">Not started</span>;
+  if (review.status === "done") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Complete</span>;
+  if (review.status === "due") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" />Due now</span>;
   const daysUntil = review.nextDueDate
     ? Math.ceil((new Date(review.nextDueDate).getTime() - Date.now()) / 86400000)
     : null;
   return (
-    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/50 text-indigo-400 font-bold flex items-center gap-1">
+    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 font-bold flex items-center gap-1">
       <Clock className="w-3 h-3" />
       {daysUntil != null ? `In ${daysUntil}d` : `Day ${INTERVALS[review.intervalIndex]}`}
     </span>
@@ -592,18 +596,18 @@ function RevisionPageInner() {
       <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-white transition-colors duration-200">
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-16 flex flex-col items-center text-center">
-          <div className="bg-violet-600/10 text-violet-400 p-4 rounded-2xl mb-4 border border-violet-500/20">
+          <div className="bg-violet-100 dark:bg-violet-600/10 text-violet-600 dark:text-violet-400 p-4 rounded-2xl mb-4 border border-violet-200 dark:border-violet-500/20 shadow-sm">
             <BookOpen className="w-12 h-12" />
           </div>
-          <h1 className="text-2xl font-black text-white mb-2">Revision Cards</h1>
-          <p className="text-gray-400 text-sm max-w-md mb-8">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Revision Cards</h1>
+          <p className="text-slate-500 dark:text-gray-400 text-sm max-w-md mb-8">
             Select a student to read their revision cards, add new revision items, or review due cards offline.
           </p>
 
           {cachedStudents.length > 0 ? (
-            <div className="w-full bg-gray-900 border border-gray-800 rounded-2xl p-6 text-left mb-6">
-              <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4 text-violet-400" />
+            <div className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 text-left mb-6 shadow-sm">
+              <h2 className="text-sm font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Users className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                 Available Students
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -611,12 +615,12 @@ function RevisionPageInner() {
                   <button
                     key={s._id}
                     onClick={() => router.push(`/revision?studentId=${s._id}`)}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-gray-800/80 hover:bg-violet-600/20 border border-gray-700 hover:border-violet-500/50 text-white transition-all text-left group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-violet-50 dark:bg-gray-800/80 dark:hover:bg-violet-600/20 border border-slate-200 dark:border-gray-700 hover:border-violet-400 dark:hover:border-violet-500/50 text-slate-800 dark:text-white transition-all text-left group shadow-sm"
                   >
-                    <span className="font-semibold text-sm capitalize group-hover:text-violet-300">
+                    <span className="font-semibold text-sm capitalize group-hover:text-violet-600 dark:group-hover:text-violet-300">
                       {s.name}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700/80 text-gray-300">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-gray-700/80 text-slate-700 dark:text-gray-300 font-medium">
                       Open &rarr;
                     </span>
                   </button>
@@ -624,14 +628,14 @@ function RevisionPageInner() {
               </div>
             </div>
           ) : (
-            <div className="p-6 bg-gray-900/60 border border-gray-800 rounded-2xl text-gray-400 text-sm mb-6">
+            <div className="p-6 bg-white dark:bg-gray-900/60 border border-slate-200 dark:border-gray-800 rounded-2xl text-slate-600 dark:text-gray-400 text-sm mb-6 shadow-sm">
               No students cached yet. Connect to the internet and open a student from the teacher dashboard once to cache their cards.
             </div>
           )}
 
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="flex items-center gap-2 text-sm text-violet-600 dark:text-indigo-400 hover:text-violet-700 dark:hover:text-indigo-300 font-semibold transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Go back
           </button>
@@ -663,18 +667,18 @@ function RevisionPageInner() {
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Offline & Sync Status Banner */}
         {!isOnline && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 text-amber-300 animate-in fade-in">
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-between gap-4 text-amber-800 dark:text-amber-300 shadow-sm animate-in fade-in">
             <div className="flex items-center gap-3">
-              <WifiOff className="w-5 h-5 shrink-0 text-amber-400" />
+              <WifiOff className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
               <div>
                 <p className="font-bold text-sm">Offline Mode Active</p>
-                <p className="text-xs text-amber-300/80">
+                <p className="text-xs text-amber-700/90 dark:text-amber-300/80">
                   You are reading cached revision cards. You can add new cards and study freely — all cards are saved locally and will sync when reconnected.
                 </p>
               </div>
             </div>
             {pendingSyncCount > 0 && (
-              <span className="shrink-0 px-3 py-1 rounded-full bg-amber-500/20 text-xs font-bold border border-amber-500/40">
+              <span className="shrink-0 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300">
                 {pendingSyncCount} unsynced {pendingSyncCount === 1 ? "card" : "cards"}
               </span>
             )}
@@ -682,12 +686,12 @@ function RevisionPageInner() {
         )}
 
         {isOnline && pendingSyncCount > 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-between gap-4 text-violet-300 animate-in fade-in">
+          <div className="mb-6 p-4 rounded-2xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 flex items-center justify-between gap-4 text-violet-800 dark:text-violet-300 shadow-sm animate-in fade-in">
             <div className="flex items-center gap-3">
-              <Cloud className="w-5 h-5 shrink-0 text-violet-400" />
+              <Cloud className="w-5 h-5 shrink-0 text-violet-600 dark:text-violet-400" />
               <div>
                 <p className="font-bold text-sm">Offline changes ready to sync</p>
-                <p className="text-xs text-violet-300/80">
+                <p className="text-xs text-violet-700/90 dark:text-violet-300/80">
                   {syncing
                     ? "Syncing offline revision cards with server..."
                     : `You have ${pendingSyncCount} offline card${pendingSyncCount > 1 ? "s" : ""} saved locally.`}
@@ -706,8 +710,8 @@ function RevisionPageInner() {
         )}
 
         {syncNotification && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 animate-in fade-in">
-            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-3 text-emerald-800 dark:text-emerald-300 shadow-sm animate-in fade-in">
+            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <p className="font-bold text-sm">{syncNotification}</p>
           </div>
         )}
@@ -717,26 +721,26 @@ function RevisionPageInner() {
           <div className="flex items-start gap-3">
             <button
               onClick={() => router.back()}
-              className="mt-1 p-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+              className="mt-1 p-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-gray-800 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white border border-slate-200 dark:border-gray-800 transition-all shadow-sm"
               title="Go back"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <div className="bg-violet-600 p-2 rounded-lg shadow-lg shadow-violet-500/20">
-                  <BookOpen className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="bg-violet-600 p-2 rounded-xl shadow-lg shadow-violet-500/20 text-white">
+                  <BookOpen className="w-5 h-5" />
                 </div>
-                <h1 className="text-2xl font-black text-white">Revision Cards</h1>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Revision Cards</h1>
                 {!isOnline && (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30 flex items-center gap-1">
                     <WifiOff className="w-3 h-3" /> Offline
                   </span>
                 )}
               </div>
               {studentName && (
-                <p className="text-gray-400 text-sm ml-11">
-                  for <span className="text-violet-400 font-semibold capitalize">{studentName}</span>
+                <p className="text-slate-500 dark:text-gray-400 text-sm ml-11">
+                  for <span className="text-violet-600 dark:text-violet-400 font-semibold capitalize">{studentName}</span>
                 </p>
               )}
             </div>
@@ -764,21 +768,21 @@ function RevisionPageInner() {
 
         {/* Stats row */}
         <div className="flex gap-3 mb-6 flex-wrap">
-          <div className="px-4 py-2 bg-gray-900 border border-gray-800 rounded-xl text-sm font-semibold text-gray-400">
+          <div className="px-4 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-gray-300 shadow-sm">
             {notes.length} card{notes.length !== 1 ? "s" : ""} total
           </div>
           {dueCount > 0 && (
-            <div className="px-4 py-2 bg-amber-900/30 border border-amber-800/50 rounded-xl text-sm font-semibold text-amber-400">
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-sm font-semibold text-amber-800 dark:text-amber-300 shadow-sm">
               {dueCount} due now
             </div>
           )}
           {doneCount > 0 && (
-            <div className="px-4 py-2 bg-emerald-900/30 border border-emerald-800/50 rounded-xl text-sm font-semibold text-emerald-400">
+            <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-sm font-semibold text-emerald-800 dark:text-emerald-300 shadow-sm">
               {doneCount} complete
             </div>
           )}
           {pendingSyncCount > 0 && (
-            <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm font-semibold text-amber-300 flex items-center gap-1.5">
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 shadow-sm">
               <Cloud className="w-4 h-4" />
               {pendingSyncCount} saved offline
             </div>
@@ -787,21 +791,21 @@ function RevisionPageInner() {
 
         {/* Add Card Form */}
         {showForm && (
-          <div className="mb-8 bg-gray-900 border border-gray-800 rounded-2xl p-6" style={{ animation: "slideDown 0.2s ease" }}>
+          <div className="mb-8 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl" style={{ animation: "slideDown 0.2s ease" }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-violet-400" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Layers className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                 New Revision Card
               </h2>
               {!isOnline && (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30 flex items-center gap-1">
                   <WifiOff className="w-3 h-3" /> Offline Mode (Will sync later)
                 </span>
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Front (Question / Term)
                 </label>
                 <textarea
@@ -809,11 +813,11 @@ function RevisionPageInner() {
                   onChange={(e) => setFront(e.target.value)}
                   rows={4}
                   placeholder="What is photosynthesis?"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Back (Answer / Code Key)
                 </label>
                 <textarea
@@ -821,26 +825,26 @@ function RevisionPageInner() {
                   onChange={(e) => setBack(e.target.value)}
                   rows={4}
                   placeholder="The process by which plants convert sunlight..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
             </div>
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                 <span>Explanation (Optional detailed code / solution breakdown)</span>
-                <span className="text-[11px] text-violet-400 font-normal">Clicking answer opens explanation dialog</span>
+                <span className="text-[11px] text-violet-600 dark:text-violet-400 font-normal">Clicking answer opens explanation dialog</span>
               </label>
               <textarea
                 value={explanation}
                 onChange={(e) => setExplanation(e.target.value)}
                 rows={3}
                 placeholder="e.g. Detailed step-by-step explanation or complete code example..."
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
               />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1">
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Subject / Topic (optional)
                 </label>
                 <input
@@ -848,7 +852,7 @@ function RevisionPageInner() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Select existing subject or type a new one..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
                 />
                 <datalist id="existing-subjects-add">
                   {existingSubjects.map((s) => (
@@ -865,7 +869,7 @@ function RevisionPageInner() {
                         className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                           subject === s
                             ? "bg-violet-600 border-violet-500 text-white font-bold"
-                            : "bg-gray-800/80 hover:bg-gray-700 text-gray-300 border-gray-700"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:text-gray-300 dark:border-gray-700"
                         }`}
                       >
                         {s}
@@ -874,17 +878,17 @@ function RevisionPageInner() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 pt-6">
+              <div className="flex gap-2 sm:pt-6">
                 <button
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-semibold transition-all"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-all border border-slate-200 dark:border-transparent text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={saving || !front.trim() || !back.trim()}
-                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all active:scale-95"
+                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl font-semibold transition-all active:scale-95 text-sm"
                 >
                   {saving ? "Saving…" : isOnline ? "Save Card" : "Save Card (Offline)"}
                 </button>
@@ -903,11 +907,11 @@ function RevisionPageInner() {
               className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all capitalize ${
                 filterStatus === s
                   ? s === "due"
-                    ? "bg-amber-600 text-white"
+                    ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
                     : s === "done"
-                    ? "bg-emerald-600 text-white"
-                    : "bg-violet-600 text-white shadow-lg shadow-violet-500/20"
-                  : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+                    : "bg-violet-600 text-white shadow-md shadow-violet-500/20"
+                  : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 shadow-sm"
               }`}
             >
               {s === "all" ? "All" : s === "due" ? `Due (${dueCount})` : s === "done" ? `Complete (${doneCount})` : "Upcoming"}
@@ -917,15 +921,15 @@ function RevisionPageInner() {
           {/* Subject filter */}
           {subjects.length > 1 && (
             <>
-              <span className="text-gray-700 self-center">|</span>
+              <span className="text-slate-300 dark:text-gray-700 self-center">|</span>
               {subjects.map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterSubject(s)}
                   className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
                     filterSubject === s
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                      : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 shadow-sm"
                   }`}
                 >
                   {s}
@@ -939,13 +943,13 @@ function RevisionPageInner() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-52 bg-gray-900 rounded-2xl animate-pulse" />
+              <div key={i} className="h-52 bg-slate-200/60 dark:bg-gray-900 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : filteredCards.length === 0 ? (
-          <div className="text-center py-20 text-gray-600">
+          <div className="text-center py-20 text-slate-500 dark:text-gray-600">
             <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p className="text-lg font-semibold">No cards here</p>
+            <p className="text-lg font-semibold text-slate-700 dark:text-gray-400">No cards here</p>
             <p className="text-sm">
               {notes.length === 0 ? 'Click "Add Card" to create the first revision card.' : "Try a different filter."}
             </p>
@@ -973,7 +977,7 @@ function RevisionPageInner() {
                           e.stopPropagation();
                           setActiveMenuNoteId((prev) => (prev === card.note._id ? null : card.note._id));
                         }}
-                        className="p-1.5 rounded-full bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-700 transition-all shadow-lg hover:scale-110 active:scale-95"
+                        className="p-1.5 rounded-full bg-white dark:bg-gray-900 hover:bg-slate-100 dark:hover:bg-gray-800 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-gray-700 transition-all shadow-md hover:scale-110 active:scale-95"
                         title="Card options"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
@@ -981,7 +985,7 @@ function RevisionPageInner() {
 
                       {activeMenuNoteId === card.note._id && (
                         <div
-                          className="absolute right-0 mt-1.5 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
+                          className="absolute right-0 mt-1.5 w-32 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl shadow-2xl py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -993,7 +997,7 @@ function RevisionPageInner() {
                               setEditExplanation(card.note.explanation || "");
                               setEditSubject(card.note.subject || "");
                             }}
-                            className="w-full px-3 py-2 text-left text-xs font-semibold text-gray-200 hover:bg-violet-600/20 hover:text-violet-300 flex items-center gap-2 transition-colors"
+                            className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-violet-50 dark:hover:bg-violet-600/20 hover:text-violet-700 dark:hover:text-violet-300 flex items-center gap-2 transition-colors"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             Edit Card
@@ -1003,7 +1007,7 @@ function RevisionPageInner() {
                               setActiveMenuNoteId(null);
                               handleDelete(card.note._id);
                             }}
-                            className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 flex items-center gap-2 transition-colors"
+                            className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-600/20 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-2 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             Delete Card
@@ -1028,12 +1032,12 @@ function RevisionPageInner() {
                   >
                     {/* Front face */}
                     <div
-                      className={`absolute inset-0 rounded-2xl p-5 flex flex-col justify-between overflow-hidden border ${
+                      className={`absolute inset-0 rounded-2xl p-5 flex flex-col justify-between overflow-hidden border shadow-sm transition-colors ${
                         isDue
-                          ? "bg-amber-950/30 border-amber-800/40"
+                          ? "bg-amber-50/90 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/50"
                           : isDone
-                          ? "bg-emerald-950/20 border-emerald-900/40"
-                          : "bg-gray-900 border-gray-800"
+                          ? "bg-emerald-50/90 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-900/40"
+                          : "bg-white dark:bg-gray-900 border-slate-200/80 dark:border-gray-800"
                       }`}
                       style={{ backfaceVisibility: "hidden" }}
                     >
@@ -1041,12 +1045,12 @@ function RevisionPageInner() {
                         <div className="flex items-start justify-between mb-2 gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {card.note.subject?.trim() ? (
-                              <span className="inline-block px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-bold rounded-full">
+                              <span className="inline-block px-2 py-0.5 bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 text-xs font-bold rounded-full border border-violet-200/60 dark:border-transparent">
                                 {card.note.subject}
                               </span>
                             ) : null}
                             {isOfflineDraft && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold flex items-center gap-1 border border-amber-500/30">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-1 border border-amber-300 dark:border-amber-500/30">
                                 <WifiOff className="w-2.5 h-2.5" />
                                 Offline draft
                               </span>
@@ -1054,15 +1058,15 @@ function RevisionPageInner() {
                           </div>
                           {filterStatus !== "due" && statusBadge(review)}
                         </div>
-                        <p className="text-white font-semibold text-base leading-snug line-clamp-5 mt-2 whitespace-pre-wrap">
-                          {renderTextWithLinks(card.note.front)}
+                        <p className="text-slate-900 dark:text-white font-bold text-base leading-snug line-clamp-5 mt-2 whitespace-pre-wrap">
+                          {renderTextWithLinks(card.note.front, false)}
                         </p>
                       </div>
                     </div>
 
                     {/* Back face */}
                     <div
-                      className="absolute inset-0 bg-violet-950/70 border border-violet-800/60 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
+                      className="absolute inset-0 bg-gradient-to-br from-violet-900 to-indigo-950 border border-violet-700/60 rounded-2xl p-5 flex flex-col justify-between overflow-hidden shadow-md text-white"
                       style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                     >
                       <div className="flex-1 flex flex-col">
@@ -1074,15 +1078,15 @@ function RevisionPageInner() {
                                 setActiveModalNote(card.note);
                               }}
                               title="Detailed Explanation"
-                              className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm active:scale-95"
+                              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-violet-200 hover:text-white border border-white/20 transition-all shadow-sm active:scale-95"
                             >
                               <HelpCircle className="w-4 h-4" />
                             </button>
                           </div>
                         )}
                         <div className="flex-1 flex items-center">
-                          <p className="text-violet-100 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full whitespace-pre-wrap">
-                            {renderTextWithLinks(card.note.back)}
+                          <p className="text-violet-50 font-medium text-base leading-relaxed line-clamp-5 font-mono w-full whitespace-pre-wrap">
+                            {renderTextWithLinks(card.note.back, true)}
                           </p>
                         </div>
                       </div>
@@ -1091,7 +1095,7 @@ function RevisionPageInner() {
 
                   {/* Due indicator glow */}
                   {isDue && (
-                    <div className="absolute -inset-px rounded-2xl border border-amber-500/40 pointer-events-none" />
+                    <div className="absolute -inset-px rounded-2xl border-2 border-amber-400 dark:border-amber-500/40 pointer-events-none" />
                   )}
                 </div>
               );
@@ -1118,36 +1122,36 @@ function RevisionPageInner() {
 
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
             onClick={() => setShowDeckModal(false)}
           >
             <div
-              className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative flex flex-col items-center overflow-hidden text-white"
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative flex flex-col items-center overflow-hidden text-slate-900 dark:text-white"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Top Bar */}
-              <div className="w-full flex items-center justify-between border-b border-gray-800 pb-3 mb-4 shrink-0">
+              <div className="w-full flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-3 mb-4 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="bg-emerald-600/20 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/30">
-                    <Play className="w-4 h-4 fill-emerald-400" />
+                  <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl border border-emerald-500/20">
+                    <Play className="w-4 h-4 fill-emerald-600 dark:fill-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Interactive Revision Session</h3>
-                    <p className="text-xs text-gray-400">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Interactive Revision Session</h3>
+                    <p className="text-xs text-slate-500 dark:text-gray-400">
                       Card {deckIndex + 1} of {deckCards.length}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowDeckModal(false)}
-                  className="p-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mb-5">
+              <div className="w-full bg-slate-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mb-5">
                 <div
                   className="bg-emerald-500 h-full transition-all duration-300"
                   style={{ width: `${((deckIndex + 1) / deckCards.length) * 100}%` }}
@@ -1170,22 +1174,22 @@ function RevisionPageInner() {
                 >
                   {/* Card Front */}
                   <div
-                    className="absolute inset-0 bg-gray-950 border border-gray-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
+                    className="absolute inset-0 bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
                     style={{ backfaceVisibility: "hidden" }}
                   >
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span className="px-2.5 py-1 bg-violet-500/10 text-violet-400 font-bold rounded-full">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-gray-400">
+                      <span className="px-2.5 py-1 bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 font-bold rounded-full border border-violet-200/50 dark:border-transparent">
                         {deckCards[deckIndex].subject || "Question"}
                       </span>
                     </div>
-                    <p className="text-white text-lg font-bold text-center leading-relaxed whitespace-pre-wrap my-auto">
-                      {renderTextWithLinks(deckCards[deckIndex].front)}
+                    <p className="text-slate-900 dark:text-white text-lg font-bold text-center leading-relaxed whitespace-pre-wrap my-auto">
+                      {renderTextWithLinks(deckCards[deckIndex].front, false)}
                     </p>
                   </div>
 
                   {/* Card Back */}
                   <div
-                    className="absolute inset-0 bg-gradient-to-br from-violet-950/90 to-indigo-950/90 border border-violet-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-xl"
+                    className="absolute inset-0 bg-gradient-to-br from-violet-900 to-indigo-950 border border-violet-700/60 rounded-2xl p-6 flex flex-col justify-between shadow-xl text-white"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
                     <div className="flex justify-end">
@@ -1197,15 +1201,15 @@ function RevisionPageInner() {
                             setActiveModalNote(deckCards[deckIndex]);
                           }}
                           title="Detailed Explanation"
-                          className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-300 hover:text-white border border-violet-400/30 transition-all shadow-sm"
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-violet-200 hover:text-white border border-white/20 transition-all shadow-sm"
                         >
                           <HelpCircle className="w-4 h-4" />
                         </button>
                       )}
                     </div>
                     <div className="flex-1 flex items-center justify-center">
-                      <p className="text-violet-100 text-base font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
-                        {renderTextWithLinks(deckCards[deckIndex].back)}
+                      <p className="text-violet-50 text-base font-medium text-center leading-relaxed font-mono line-clamp-6 w-full whitespace-pre-wrap">
+                        {renderTextWithLinks(deckCards[deckIndex].back, true)}
                       </p>
                     </div>
                   </div>
@@ -1227,7 +1231,7 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("bad")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-rose-600/10 hover:bg-rose-600 border border-rose-500/40 text-rose-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-rose-50 hover:bg-rose-600 border border-rose-200 dark:bg-rose-600/10 dark:hover:bg-rose-600 dark:border-rose-500/40 text-rose-700 hover:text-white dark:text-rose-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🔴</span>
                         <span className="text-xs font-extrabold mt-0.5">Bad</span>
@@ -1236,7 +1240,7 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("good")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-600/10 hover:bg-amber-600 border border-amber-500/40 text-amber-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-50 hover:bg-amber-600 border border-amber-200 dark:bg-amber-600/10 dark:hover:bg-amber-600 dark:border-amber-500/40 text-amber-700 hover:text-white dark:text-amber-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🟡</span>
                         <span className="text-xs font-extrabold mt-0.5">Good</span>
@@ -1245,7 +1249,7 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("awesome")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/40 text-indigo-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 dark:bg-indigo-600/10 dark:hover:bg-indigo-600 dark:border-indigo-500/40 text-indigo-700 hover:text-white dark:text-indigo-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">⚡</span>
                         <span className="text-xs font-extrabold mt-0.5">Awesome</span>
@@ -1254,7 +1258,7 @@ function RevisionPageInner() {
                       <button
                         onClick={() => handleRateCard("excellent")}
                         disabled={submittingRating}
-                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/40 text-emerald-400 hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+                        className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 dark:bg-emerald-600/10 dark:hover:bg-emerald-600 dark:border-emerald-500/40 text-emerald-700 hover:text-white dark:text-emerald-400 dark:hover:text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                       >
                         <span className="text-sm">🌟</span>
                         <span className="text-xs font-extrabold mt-0.5">Excellent</span>
@@ -1272,26 +1276,26 @@ function RevisionPageInner() {
       {/* Explanation Dialog Box Modal */}
       {activeModalNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setActiveModalNote(null)}
         >
           <div
-            className="bg-gray-900 border border-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-white"
+            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-4 mb-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="bg-violet-600/20 text-violet-400 p-2.5 rounded-xl border border-violet-500/30">
+                <div className="bg-violet-100 dark:bg-violet-600/20 text-violet-700 dark:text-violet-400 p-2.5 rounded-xl border border-violet-200 dark:border-violet-500/30">
                   <HelpCircle className="w-5 h-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white leading-snug line-clamp-1">
-                  {renderTextWithLinks(activeModalNote.front)}
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-1">
+                  {renderTextWithLinks(activeModalNote.front, false)}
                 </h3>
               </div>
               <button
                 onClick={() => setActiveModalNote(null)}
-                className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1300,14 +1304,14 @@ function RevisionPageInner() {
             {/* Modal Body */}
             <div className="overflow-y-auto pr-1 space-y-3 flex-1">
               {/* Short Answer / Code */}
-              <div className="bg-violet-950/40 border border-violet-800/40 rounded-xl p-4 text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
-                {renderTextWithLinks(activeModalNote.back)}
+              <div className="bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/40 rounded-xl p-4 text-violet-900 dark:text-violet-100 font-mono text-sm leading-relaxed whitespace-pre-wrap select-text">
+                {renderTextWithLinks(activeModalNote.back, false)}
               </div>
 
               {/* Detailed Explanation */}
               {activeModalNote.explanation && (
-                <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
-                  {renderTextWithLinks(activeModalNote.explanation)}
+                <div className="bg-slate-50 dark:bg-gray-950 border border-slate-200 dark:border-gray-800 rounded-xl p-5 text-slate-800 dark:text-gray-200 leading-relaxed font-mono text-sm whitespace-pre-wrap select-text">
+                  {renderTextWithLinks(activeModalNote.explanation, false)}
                 </div>
               )}
             </div>
@@ -1318,21 +1322,21 @@ function RevisionPageInner() {
       {/* Edit Card Modal */}
       {editingNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setEditingNote(null)}
         >
           <div
-            className="bg-gray-900 border border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-white"
+            className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden text-slate-900 dark:text-white"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-gray-800 pb-4 mb-4 shrink-0">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-violet-400" />
+            <div className="flex items-start justify-between border-b border-slate-200 dark:border-gray-800 pb-4 mb-4 shrink-0">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                 Edit Revision Card
               </h3>
               <button
                 onClick={() => setEditingNote(null)}
-                className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1340,43 +1344,43 @@ function RevisionPageInner() {
 
             <div className="space-y-4 overflow-y-auto pr-1 flex-1">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Front (Question / Term)
                 </label>
                 <textarea
                   value={editFront}
                   onChange={(e) => setEditFront(e.target.value)}
                   rows={3}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Back (Answer / Code Key)
                 </label>
                 <textarea
                   value={editBack}
                   onChange={(e) => setEditBack(e.target.value)}
                   rows={3}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Explanation (Optional detailed code / solution breakdown)
                 </label>
                 <textarea
                   value={editExplanation}
                   onChange={(e) => setEditExplanation(e.target.value)}
                   rows={3}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none transition-colors text-sm font-mono"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 resize-none transition-colors text-sm font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Subject / Topic
                 </label>
                 <input
@@ -1384,7 +1388,7 @@ function RevisionPageInner() {
                   value={editSubject}
                   onChange={(e) => setEditSubject(e.target.value)}
                   placeholder="Select existing subject or type a new one..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-gray-800/90 transition-colors text-sm"
                 />
                 <datalist id="existing-subjects-edit">
                   {existingSubjects.map((s) => (
@@ -1401,7 +1405,7 @@ function RevisionPageInner() {
                         className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                           editSubject === s
                             ? "bg-violet-600 border-violet-500 text-white font-bold"
-                            : "bg-gray-800/80 hover:bg-gray-700 text-gray-300 border-gray-700"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:text-gray-300 dark:border-gray-700"
                         }`}
                       >
                         {s}
@@ -1412,10 +1416,10 @@ function RevisionPageInner() {
               </div>
             </div>
 
-            <div className="border-t border-gray-800 pt-4 mt-4 flex justify-end gap-2 shrink-0">
+            <div className="border-t border-slate-200 dark:border-gray-800 pt-4 mt-4 flex justify-end gap-2 shrink-0">
               <button
                 onClick={() => setEditingNote(null)}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-semibold transition-all text-sm"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 rounded-xl font-semibold transition-all text-sm border border-slate-200 dark:border-transparent"
               >
                 Cancel
               </button>
