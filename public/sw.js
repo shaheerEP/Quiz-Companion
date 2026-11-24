@@ -1,9 +1,10 @@
-const CACHE_NAME = 'quiz-revision-offline-v1';
+const CACHE_NAME = 'quiz-revision-offline-v2';
 
 // Essential initial URLs to cache
 const PRECACHE_URLS = [
   '/',
   '/revision',
+  '/self-revision',
   '/favicon.ico',
 ];
 
@@ -55,6 +56,9 @@ self.addEventListener('fetch', (event) => {
               if (url.pathname.startsWith('/revision')) {
                 cache.put('/revision', response.clone());
               }
+              if (url.pathname.startsWith('/self-revision')) {
+                cache.put('/self-revision', response.clone());
+              }
             });
           }
           return response;
@@ -73,6 +77,12 @@ self.addEventListener('fetch', (event) => {
           if (url.pathname.startsWith('/revision')) {
             const revisionMatch = await caches.match('/revision', { ignoreSearch: true });
             if (revisionMatch) return revisionMatch;
+          }
+
+          // If navigation is for /self-revision*, return cached /self-revision shell
+          if (url.pathname.startsWith('/self-revision')) {
+            const selfRevisionMatch = await caches.match('/self-revision', { ignoreSearch: true });
+            if (selfRevisionMatch) return selfRevisionMatch;
           }
 
           // Fallback to cached home page
@@ -129,10 +139,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. API requests relevant to revision (Network-first with Cache fallback)
+  // 3. API requests relevant to revision and self-revision (Network-first with Cache fallback)
   if (
     url.pathname.startsWith('/api/revision/notes') ||
     url.pathname.startsWith('/api/revision/due') ||
+    url.pathname.startsWith('/api/self-revision/notes') ||
+    url.pathname.startsWith('/api/self-revision/due') ||
     url.pathname.startsWith('/api/students')
   ) {
     event.respondWith(

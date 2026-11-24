@@ -9,7 +9,7 @@ import MysteryGiftModal from "@/components/MysteryGiftModal";
 import BundleAnimation from "@/components/BundleAnimation";
 import WrongAnswerAnimation from "@/components/WrongAnswerAnimation";
 import ManualPointsAnimation from "@/components/ManualPointsAnimation";
-import { User, Activity, Zap, PlusCircle, MinusCircle, History, Trophy, Globe, Star, Timer, BookOpen, Award, Users, Search, X, Check, NotebookPen } from "lucide-react";
+import { User, Activity, Zap, PlusCircle, MinusCircle, History, Trophy, Globe, Star, Timer, BookOpen, Award, Users, Search, X, Check, NotebookPen, Layers } from "lucide-react";
 import Link from "next/link";
 import MannersHistoryModal from "@/components/MannersHistoryModal";
 import StudentEPosterModal from "@/components/StudentEPosterModal";
@@ -790,6 +790,16 @@ export default function TeacherDashboard() {
                       className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 dark:hover:bg-violet-900/50 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-900/40 flex items-center justify-center transition-all active:scale-95"
                     >
                       <BookOpen className="w-4 h-4" />
+                    </Link>
+                  )}
+                  {activeStudent.selfRevisionEnabled && (
+                    <Link
+                      href={`/self-revision?studentId=${activeStudent._id}`}
+                      title="Self Revision"
+                      aria-label="Self Revision"
+                      className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/40 flex items-center justify-center transition-all active:scale-95"
+                    >
+                      <Layers className="w-4 h-4" />
                     </Link>
                   )}
                 </div>

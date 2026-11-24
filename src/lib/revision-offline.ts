@@ -32,6 +32,7 @@ export interface OfflineQueueItem {
   studentId: string;
   payload: any;
   createdAt: number;
+  isSelfRevision?: boolean;
 }
 
 export interface StudentMeta {
@@ -111,15 +112,18 @@ function getDB(): Promise<IDBDatabase | null> {
  * 1. Revision Notes Cache
  * ========================================================================= */
 
-export async function getCachedNotes(studentId: string): Promise<RevisionNote[]> {
+export async function getCachedNotes(studentId: string, isSelfRevision: boolean = false): Promise<RevisionNote[]> {
   if (typeof window === "undefined") return [];
+
+  const key = isSelfRevision ? `self_${studentId}` : studentId;
+  const lsKey = isSelfRevision ? `qc_self_notes_${studentId}` : `${LS_NOTES_PREFIX}${studentId}`;
 
   try {
     const db = await getDB();
     if (db) {
       const tx = db.transaction(STORE_NOTES, "readonly");
       const store = tx.objectStore(STORE_NOTES);
-      const req = store.get(studentId);
+      const req = store.get(key);
       const result = await new Promise<any>((resolve) => {
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => resolve(null);
@@ -135,7 +139,7 @@ export async function getCachedNotes(studentId: string): Promise<RevisionNote[]>
 
   // Fallback to localStorage
   try {
-    const raw = localStorage.getItem(`${LS_NOTES_PREFIX}${studentId}`);
+    const raw = localStorage.getItem(lsKey);
     if (raw) {
       return JSON.parse(raw);
     }
@@ -144,12 +148,15 @@ export async function getCachedNotes(studentId: string): Promise<RevisionNote[]>
   return [];
 }
 
-export async function saveCachedNotes(studentId: string, notes: RevisionNote[]): Promise<void> {
+export async function saveCachedNotes(studentId: string, notes: RevisionNote[], isSelfRevision: boolean = false): Promise<void> {
   if (typeof window === "undefined") return;
+
+  const key = isSelfRevision ? `self_${studentId}` : studentId;
+  const lsKey = isSelfRevision ? `qc_self_notes_${studentId}` : `${LS_NOTES_PREFIX}${studentId}`;
 
   // Always mirror in localStorage for instant sync
   try {
-    localStorage.setItem(`${LS_NOTES_PREFIX}${studentId}`, JSON.stringify(notes));
+    localStorage.setItem(lsKey, JSON.stringify(notes));
   } catch {}
 
   try {
@@ -158,7 +165,7 @@ export async function saveCachedNotes(studentId: string, notes: RevisionNote[]):
       const tx = db.transaction(STORE_NOTES, "readwrite");
       const store = tx.objectStore(STORE_NOTES);
       store.put({
-        studentId,
+        studentId: key,
         notes,
         updatedAt: Date.now(),
       });
@@ -439,17 +446,20 @@ export async function clearOfflineQueue(): Promise<void> {
   } catch {}
 }
 
-export async function getPendingQueueCount(studentId?: string): Promise<number> {
+export async function getPendingQueueCount(studentId?: string, isSelfRevision?: boolean): Promise<number> {
   const queue = await getOfflineQueue();
-  if (!studentId) return queue.length;
-  return queue.filter((item) => item.studentId === studentId).length;
+  return queue.filter((item) => {
+    const studentMatch = !studentId || item.studentId === studentId;
+    const typeMatch = isSelfRevision === undefined || Boolean(item.isSelfRevision) === Boolean(isSelfRevision);
+    return studentMatch && typeMatch;
+  }).length;
 }
 
 /* =========================================================================
  * 5. Sync Offline Queue with Server
  * ========================================================================= */
 
-export async function syncOfflineQueue(studentId?: string): Promise<{
+export async function syncOfflineQueue(studentId?: string, isSelfRevision?: boolean): Promise<{
   success: boolean;
   syncedCount: number;
   errors: any[];
@@ -463,17 +473,20 @@ export async function syncOfflineQueue(studentId?: string): Promise<{
     return { success: true, syncedCount: 0, errors: [] };
   }
 
-  const itemsToProcess = studentId
-    ? queue.filter((item) => item.studentId === studentId)
-    : queue;
+  const itemsToProcess = queue.filter((item) => {
+    const studentMatch = !studentId || item.studentId === studentId;
+    const typeMatch = isSelfRevision === undefined || Boolean(item.isSelfRevision) === Boolean(isSelfRevision);
+    return studentMatch && typeMatch;
+  });
 
   let syncedCount = 0;
   const errors: any[] = [];
 
   for (const item of itemsToProcess) {
+    const baseApi = item.isSelfRevision ? "/api/self-revision" : "/api/revision";
     try {
       if (item.action === "CREATE") {
-        const res = await fetch("/api/revision/notes", {
+        const res = await fetch(`${baseApi}/notes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -492,7 +505,7 @@ export async function syncOfflineQueue(studentId?: string): Promise<{
         await removeOfflineQueueItem(item.id);
         syncedCount++;
       } else if (item.action === "UPDATE") {
-        const res = await fetch("/api/revision/notes", {
+        const res = await fetch(`${baseApi}/notes`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(item.payload),
@@ -505,7 +518,7 @@ export async function syncOfflineQueue(studentId?: string): Promise<{
           throw new Error(`Server returned ${res.status}`);
         }
       } else if (item.action === "DELETE") {
-        const res = await fetch("/api/revision/notes", {
+        const res = await fetch(`${baseApi}/notes`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(item.payload),
@@ -518,7 +531,7 @@ export async function syncOfflineQueue(studentId?: string): Promise<{
           throw new Error(`Server returned ${res.status}`);
         }
       } else if (item.action === "RATE") {
-        const res = await fetch("/api/revision/due", {
+        const res = await fetch(`${baseApi}/due`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(item.payload),

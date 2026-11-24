@@ -25,6 +25,7 @@ import {
   Compass,
   Zap,
   NotebookPen,
+  Layers,
 } from "lucide-react";
 
 // --- Image Compression Utility ---
@@ -362,6 +363,7 @@ export default function SettingsPage() {
         assignedGame: editingStudent.assignedGame,
         revisionEnabled: editingStudent.revisionEnabled,
         revisionRewindDays: editingStudent.revisionRewindDays,
+        selfRevisionEnabled: editingStudent.selfRevisionEnabled,
         rewardSystem: editingStudent.rewardSystem,
         mannersEnabled: editingStudent.mannersEnabled,
         mannersList: editingStudent.mannersList,
@@ -1981,6 +1983,27 @@ export default function SettingsPage() {
                       setEditingStudent({ ...editingStudent, notesEnabled: checked })
                     }
                     ariaLabel="Enable Student Notes"
+                  />
+                </AppleGroupedRow>
+              </AppleGroupedSection>
+
+              {/* Student Self Revision Feature */}
+              <AppleGroupedSection
+                title="Self Revision Feature"
+                description="Allows student to access /self-revision to create and practice their own personal flashcard revision deck."
+              >
+                <AppleGroupedRow
+                  icon={<Layers className="w-4 h-4 text-violet-400" />}
+                  iconBg="bg-violet-600/30"
+                  title="Enable Self Revision"
+                  subtitle="Show Self Revision icon in student navbar to create and study personal cards"
+                >
+                  <CupertinoSwitch
+                    checked={editingStudent.selfRevisionEnabled || false}
+                    onChange={(checked) =>
+                      setEditingStudent({ ...editingStudent, selfRevisionEnabled: checked })
+                    }
+                    ariaLabel="Enable Self Revision"
                   />
                 </AppleGroupedRow>
               </AppleGroupedSection>

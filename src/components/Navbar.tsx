@@ -17,7 +17,8 @@ import {
   Moon,
   Monitor,
   Check,
-  Volume2
+  Volume2,
+  Layers
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme, ThemeMode } from "@/context/ThemeContext";
@@ -214,6 +215,20 @@ export default function Navbar() {
                   <BookOpen className="w-5 h-5" />
                 </Link>
               )}
+              {(user.student as any)?.selfRevisionEnabled && (
+                <Link
+                  href="/self-revision"
+                  title="Self Revision"
+                  aria-label="Self Revision"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+                    pathname === '/self-revision' 
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25' 
+                      : 'bg-slate-100 dark:bg-gray-800/80 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white border border-slate-200/60 dark:border-gray-700'
+                  }`}
+                >
+                  <Layers className="w-5 h-5" />
+                </Link>
+              )}
             </>
           )}
 
@@ -391,6 +406,20 @@ export default function Navbar() {
                 >
                   <BookOpen className="w-5 h-5" />
                   <span>Revision</span>
+                </Link>
+              )}
+              {(user.student as any)?.selfRevisionEnabled && (
+                <Link
+                  href="/self-revision"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-colors ${
+                    pathname === '/self-revision' 
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white' 
+                    : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <Layers className="w-5 h-5" />
+                  <span>Self Revision</span>
                 </Link>
               )}
             </>
