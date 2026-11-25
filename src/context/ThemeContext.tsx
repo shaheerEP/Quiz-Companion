@@ -10,6 +10,8 @@ interface ThemeContextType {
   setTheme: (theme: ThemeMode) => void;
 }
 
+const THEME_STORAGE_KEY = "tajweed_theme";
+
 const ThemeContext = createContext<ThemeContextType>({
   theme: "system",
   resolvedTheme: "light",
@@ -19,7 +21,6 @@ const ThemeContext = createContext<ThemeContextType>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>("system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-  const [mounted, setMounted] = useState(false);
 
   const applyTheme = (targetTheme: ThemeMode) => {
     if (typeof window === "undefined") return;
@@ -47,14 +48,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    setMounted(true);
-    const savedTheme = (localStorage.getItem("quiz_companion_theme") as ThemeMode) || "system";
+    const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode) || "system";
     setThemeState(savedTheme);
     applyTheme(savedTheme);
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleSystemChange = () => {
-      const currentSaved = (localStorage.getItem("quiz_companion_theme") as ThemeMode) || "system";
+      const currentSaved = (localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode) || "system";
       if (currentSaved === "system") {
         applyTheme("system");
       }
@@ -66,7 +66,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
-    localStorage.setItem("quiz_companion_theme", newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
     applyTheme(newTheme);
   };
 

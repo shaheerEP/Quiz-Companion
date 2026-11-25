@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = { variable: "--font-geist-sans" };
 const geistMono = { variable: "--font-geist-mono" };
 
 export const metadata: Metadata = {
-  title: "Quiz Companion",
-  description: "Live Class Quiz Companion Dashboard",
+  title: "3D Tajweed Studio — مخارج الحروف وصفاتها",
+  description: "Interactive 3D Arabic Makharij al-Huroof & Sifaat al-Huroof Studio",
 };
 
 export default function RootLayout({
@@ -24,7 +22,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const t = localStorage.getItem('quiz_companion_theme') || 'system';
+                const t = localStorage.getItem('tajweed_theme') || 'system';
                 const isDark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (isDark) {
                   document.documentElement.classList.add('dark');
@@ -39,12 +37,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 transition-colors duration-200">
-        <ThemeProvider>
-          <AuthProvider>
-            <ServiceWorkerRegister />
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

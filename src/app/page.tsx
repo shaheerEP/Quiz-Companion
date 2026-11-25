@@ -1,54 +1,5803 @@
 "use client";
 
-import { useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState, useRef, useMemo } from "react";
+import Navbar from "@/components/Navbar";
+import { useTheme } from "@/context/ThemeContext";
+import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlaying, isAudioFetchPending } from "@/components/tajweed/CleanLetterAudio";
+import * as THREE from "three";
+import {
+  Play,
+  RotateCcw,
+  Eye,
+  Palette,
+  Layers,
+  Sparkles,
+  SlidersHorizontal,
+  Globe,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Compass,
+  ExternalLink
+} from "lucide-react";
 
-export default function Home() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+// ----------------------------------------------------------------------------
+// 0. BIOLOGICAL PALATE CONSTANTS
+// ----------------------------------------------------------------------------
+const BIO_HARD_PALATE_RATIO = 0.673;
+const BIO_ALVEOLAR_SHELF_U = 0.165; // 11.1% of Total Palate length
 
-  useEffect(() => {
-    if (!loading && user) {
-      if (user.role === "admin") {
-        router.push("/admin");
-      } else if (user.role === "teacher") {
-        router.push("/teacher");
-      } else {
-        router.push("/student");
-      }
-    }
-  }, [user, loading, router]);
+// ----------------------------------------------------------------------------
+// 1. GEAR CONTROLLER DEFINITIONS
+// ----------------------------------------------------------------------------
+interface GearDef {
+  key: string;
+  en: string;
+  ar: string;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  color: string;
+}
 
-  if (loading || user) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+const GEAR_DEFINITIONS: GearDef[] = [
+  { key: 'jawOpen', en: 'Lower Jaw Opening (الفك السفلي)', ar: 'فتح الفك السفلي', min: 0, max: 100, step: 5, unit: '%', color: '#10b981' },
+  { key: 'tipElevation', en: 'Tongue Tip Height (ارتفاع طرف اللسان)', ar: 'ارتفاع طرف اللسان', min: -45, max: 100, step: 5, unit: '%', color: '#3b82f6' },
+  { key: 'tipForward', en: 'Tongue Tip Advance (تقدم طرف اللسان)', ar: 'تقدم طرف اللسان', min: -60, max: 80, step: 5, unit: '%', color: '#06b6d4' },
+  { key: 'backIstila', en: 'Deep Tongue Root (أقصى اللسان)', ar: 'أقصى اللسان (استعلاء)', min: 0, max: 100, step: 5, unit: '%', color: '#f59e0b' },
+  { key: 'middleArch', en: 'Middle Blade Arch (وسط اللسان)', ar: 'وسط اللسان (ج/ش/ي)', min: -35, max: 100, step: 5, unit: '%', color: '#8b5cf6' },
+  { key: 'lateralSpread', en: 'Lateral Molar Contact (حافتا اللسان)', ar: 'تمدد حافتي اللسان', min: 0, max: 100, step: 5, unit: '%', color: '#ec4899' },
+  { key: 'greenPointPos', en: 'Makhraj Marker Pos (علامة المخرج)', ar: 'موقع علامة المخرج', min: 0, max: 100, step: 2, unit: '%', color: '#22c55e' },
+  { key: 'upperOpacity', en: 'Upper Teeth Opacity (شفافية الأسنان)', ar: 'شفافية الأسنان العليا', min: 0, max: 100, step: 5, unit: '%', color: '#f43f5e' }
+];
+
+// ----------------------------------------------------------------------------
+// 2. 22 ORAL LETTERS PRESETS IN MAKHRAJ ORDER: FROM QAAF (ق) TO WAW (و)
+// ----------------------------------------------------------------------------
+interface LetterPreset {
+  id: string;
+  tag: string;
+  letter: string;
+  sukoonText: string;
+  isHeavy: boolean;
+  dorsalMode: string;
+  showLips?: boolean;
+  lipMode?: string;
+  phoneticSound: string;
+  en: {
+    title: string;
+    category: string;
+    zoneLabel: string;
+    desc: string;
+    sifah: string;
+  };
+  ar: {
+    title: string;
+    category: string;
+    zoneLabel: string;
+    desc: string;
+    sifah: string;
+  };
+  ml?: {
+    title: string;
+    category: string;
+    zoneLabel: string;
+    desc: string;
+    sifah: string;
+  };
+  isThroat?: boolean;
+  throatFloor?: 'aqsa' | 'wasat' | 'adna';
+  throatTwinId?: string;
+  fingerGuide?: {
+    en: string;
+    ar: string;
+    ml: string;
+  };
+  twinSummary?: {
+    en: string;
+    ar: string;
+    ml: string;
+  };
+  gears: Record<string, number>;
+  greenCoords: { x: number; y: number; z: number; rx: number };
+}
+
+const LETTER_PRESETS: LetterPreset[] = [
+  // ==========================================================================
+  // AL-HALQ (الحلق - THE 6 THROAT LETTERS IN ANATOMICAL ORDER: BOTTOM -> TOP)
+  // ==========================================================================
+
+  // 1. Hamzah (ء) - Station 1: Bottom Throat (أقصى الحلق)
+  {
+    id: 'hamzah',
+    tag: 'Hamzah (ء)',
+    letter: 'ء',
+    sukoonText: 'ءْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَءْ',
+    isThroat: true,
+    throatFloor: 'aqsa',
+    throatTwinId: 'haa_light',
+    fingerGuide: {
+      en: 'Place 2 fingers in the soft hollow pit right above your collarbone. Say "أَءْ" — feel the sudden firm stop inside your voice box!',
+      ar: 'ضع إصبعين في نقرة الحنجرة فوق عظم الترقوة تماماً. انطق (أَءْ) وستشعر بالقفل الفوري للأوتار الصوتية وانحباس النفس والصوت!',
+      ml: 'കോളർ ബോണിന് മുകളിലുള്ള കുഴിയിൽ 2 വിരലുകൾ വെച്ച് "അഅ്" എന്ന് പറയുമ്പോൾ ശബ്ദവാതിൽ പെട്ടെന്ന് അടയുന്നത് അനുഭവപ്പെടും!'
+    },
+    twinSummary: {
+      en: 'Gate 100% Shut (قفل تام بلا نَفَس)',
+      ar: 'قفل تام للأوتار (انحباس الصوت والنفس)',
+      ml: 'ശബ്ദവാതിൽ പൂർണ്ണമായി അടയുന്നു'
+    },
+    en: {
+      title: 'Makhraj of Hamzah (ء / أ)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Bottom of Throat',
+      desc: 'Halqiyyah — Bottom of the throat (deepest part).',
+      sifah: 'Light • Complete Stop (شدة وجهر)'
+    },
+    ar: {
+      title: 'مخرج حرف الهمزة (ء / أ)',
+      category: 'حلقية',
+      zoneLabel: 'أقصى الحلق (أسفله)',
+      desc: 'حلقية — أقصى الحلق (أسفله).',
+      sifah: 'مرقق (شدة وجهر)'
+    },
+    ml: {
+      title: 'ഹംസ (ء / أ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ താഴെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ താഴെ അറ്റം.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 32, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 100, epiglottisTilt: 0, throatStation: 1 },
+    greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
+  },
+  // 2. Haa (هـ) - Station 1: Bottom Throat (أقصى الحلق)
+  {
+    id: 'haa_light',
+    tag: 'Haa (هـ)',
+    letter: 'ه',
+    sukoonText: 'هْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَهْ',
+    isThroat: true,
+    throatFloor: 'aqsa',
+    throatTwinId: 'hamzah',
+    fingerGuide: {
+      en: 'Keep 2 fingers above your collarbone and say "أَهْ". Unlike Hamzah, feel warm, continuous air gliding smoothly without a hard stop.',
+      ar: 'أبق إصبعين فوق الترقوة وانطق (أَهْ). بعكس الهمزة، ستشعر بجريان هواء دافئ مستمر دون أي انغلاق حاد.',
+      ml: 'കോളർ ബോണിന് മുകളിൽ വിരലുകൾ വെച്ച് "അഹ്" എന്ന് പറയുമ്പോൾ ശ്വാസം തടസ്സമില്ലാതെ ഒഴുകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Gate Slightly Open (جريان النفس الدافئ)',
+      ar: 'انفتاح جزئي للأوتار وجريان النفس',
+      ml: 'ശബ്ദവാതിൽ തുറന്ന് ശ്വാസം ഒഴുകുന്നു'
+    },
+    en: {
+      title: 'Makhraj of Haa (هـ)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Bottom of Throat',
+      desc: 'Halqiyyah — Bottom of the throat (deepest part).',
+      sifah: 'Light • Pure Breath Flow (همس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الهاء (هـ)',
+      category: 'حلقية',
+      zoneLabel: 'أقصى الحلق (أسفله)',
+      desc: 'حلقية — أقصى الحلق (أسفله).',
+      sifah: 'مرقق (همس ورخاوة وخفاء)'
+    },
+    ml: {
+      title: 'ഹാ (هـ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ താഴെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ താഴെ അറ്റം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 34, tipElevation: -22, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 40, epiglottisTilt: 0, throatStation: 1 },
+    greenCoords: { x: 0.0, y: -0.68, z: -0.60, rx: 0.0 }
+  },
+  // 3. 'Ayn (ع) - Station 2: Middle Throat (وسط الحلق)
+  {
+    id: 'ayn',
+    tag: 'Ayn (ع)',
+    letter: 'ع',
+    sukoonText: 'عْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَعْ',
+    isThroat: true,
+    throatFloor: 'wasat',
+    throatTwinId: 'haa_pharyngeal',
+    fingerGuide: {
+      en: 'Place 2 fingers right on the middle of your neck (Adam’s apple). Say "أَعْ" — feel the throat squeeze inward and buzz warmly!',
+      ar: 'ضع إصبعين على تفاحة آدم في وسط الرقبة. انطق (أَعْ) وستشعر بلسان المزمار يرجع للوراء واهتزاز صوتي واضح!',
+      ml: 'തൊണ്ടമുഴയിൽ വിരലുകൾ വെച്ച് "അഅ്" എന്ന് പറയുമ്പോൾ നടുഭാഗം ഉള്ളിലേക്ക് വലിഞ്ഞ് വൈബ്രേഷൻ ഉണ്ടാകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Firm Squeeze + Voice Buzz (جهر وتوسط)',
+      ar: 'رجوع لسان المزمار مع جهر الصوت',
+      ml: 'ശക്തമായ സങ്കോചവും ശബ്ദ വൈബ്രേഷനും'
+    },
+    en: {
+      title: 'Makhraj of Ayn (ع)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Middle of Throat',
+      desc: 'Halqiyyah — Middle of the throat.',
+      sifah: 'Light • Voiced Squeeze (جهر وتوسط)'
+    },
+    ar: {
+      title: 'مخرج حرف العين (ع)',
+      category: 'حلقية',
+      zoneLabel: 'وسط الحلق',
+      desc: 'حلقية — وسط الحلق.',
+      sifah: 'مرقق (جهر وتوسط)'
+    },
+    ml: {
+      title: 'ഐൻ (ع)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മധ്യം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മധ്യം.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 15, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 65, epiglottisTilt: 85, throatStation: 2 },
+    greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
+  },
+  // 4. Haa Pharyngeal (ح) - Station 2: Middle Throat (وسط الحلق)
+  {
+    id: 'haa_pharyngeal',
+    tag: 'Haa (ح)',
+    letter: 'ح',
+    sukoonText: 'حْ',
+    isHeavy: false,
+    dorsalMode: 'normal',
+    phoneticSound: 'أَحْ',
+    isThroat: true,
+    throatFloor: 'wasat',
+    throatTwinId: 'ayn',
+    fingerGuide: {
+      en: 'Touch the middle of your neck and compare "أَعْ" (buzzing) with "أَحْ" (smooth air!). Feel the throat narrow with zero vocal cord buzz.',
+      ar: 'المس وسط الرقبة وقارن بين (أَعْ) بالاهتزاز و(أَحْ) بالنفس الصافي. ستشعر بتضيق الحلق مع سكون تام للأوتار.',
+      ml: 'തൊണ്ടയുടെ മധ്യത്തിൽ തൊട്ട് നോക്കുക: ഐനിൽ (ع) വിറയൽ ഉണ്ടാകുമ്പോൾ, ഹാഇൽ (ح) യാതൊരു വിറയലുമില്ലാതെ വെറും കാറ്റ് മാത്രം ഒഴുകുന്നു!'
+    },
+    twinSummary: {
+      en: 'Smooth Squeeze + Whisper Air (همس صافٍ)',
+      ar: 'تضيق لطيف مع جريان النفس بلا اهتزاز',
+      ml: 'മൃദുവായ ചുരുങ്ങലും വെറും കാറ്റും'
+    },
+    en: {
+      title: 'Makhraj of Haa (ح)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Middle of Throat',
+      desc: 'Halqiyyah — Middle of the throat.',
+      sifah: 'Light • Smooth Whisper (همس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الحاء (ح)',
+      category: 'حلقية',
+      zoneLabel: 'وسط الحلق',
+      desc: 'حلقية — وسط الحلق.',
+      sifah: 'مرقق (همس ورخاوة)'
+    },
+    ml: {
+      title: 'ഹാഅ് (ح)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മധ്യം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മധ്യം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 28, tipElevation: -20, tipForward: -10, backIstila: 12, middleArch: 0, lateralSpread: 0, greenPointPos: 0, upperOpacity: 56, vocalCordsConstriction: 25, epiglottisTilt: 72, throatStation: 2 },
+    greenCoords: { x: 0.0, y: -0.38, z: -0.56, rx: 0.2 }
+  },
+  // 5. Ghayn (غ) - Station 3: Top Throat (أدنى الحلق)
+  {
+    id: 'ghayn',
+    tag: 'Ghayn (غ)',
+    letter: 'غ',
+    sukoonText: 'غْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَغْ',
+    isThroat: true,
+    throatFloor: 'adna',
+    throatTwinId: 'khaa',
+    fingerGuide: {
+      en: 'Tuck 2 fingers right under your chin where the jaw meets the top of your neck. Say "أَغْ" — feel the back tongue push up and vibrate!',
+      ar: 'ضع إصبعين أسفل الذقن مباشرة عند التقاء الفك بالرقبة. انطق (أَغْ) وستشعر بارتفاع جذر اللسان واهتزاز الصوت المفخّم!',
+      ml: 'താടിയെല്ലിന് തൊട്ടുതാഴെ വിരലുകൾ വെച്ച് "അഗ്" എന്ന് പറയുമ്പോൾ നാവിന്റെ മുരട് ഉയർന്നു വിറക്കുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Voiced Vibration + Heavy (جهر + تفخيم)',
+      ar: 'استعلاء اللسان مع اهتزاز مجهور وتفخيم',
+      ml: 'കനത്ത ശബ്ദവും നാവിന്റെ ഉയർച്ചയും'
+    },
+    en: {
+      title: 'Makhraj of Ghayn (غ)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Top of Throat',
+      desc: 'Halqiyyah — Top of the throat (closest to mouth).',
+      sifah: 'Heavy • Voiced Resonance (استعلاء وجهر ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الغين (غ)',
+      category: 'حلقية',
+      zoneLabel: 'أدنى الحلق (أعلاه)',
+      desc: 'حلقية — أدنى الحلق (أعلاه).',
+      sifah: 'مفخم (استعلاء ورخاوة وجهر)'
+    },
+    ml: {
+      title: 'ഗൈൻ (غ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മേലെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മേലെ അറ്റം.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 92, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 60, epiglottisTilt: 20, throatStation: 3 },
+    greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
+  },
+  // 6. Khaa (خ) - Station 3: Top Throat (أدنى الحلق)
+  {
+    id: 'khaa',
+    tag: 'Khaa (خ)',
+    letter: 'خ',
+    sukoonText: 'خْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَخْ',
+    isThroat: true,
+    throatFloor: 'adna',
+    throatTwinId: 'ghayn',
+    fingerGuide: {
+      en: 'Place 2 fingers under the corner of your chin and say "أَخْ". Feel the back tongue rise while unvoiced air scrapes across the top of the throat.',
+      ar: 'ضع إصبعين تحت زاوية الفك وانطق (أَخْ). ستشعر بارتفاع اللسان واحتكاك خشن للنفس دون اهتزاز الأوتار الصوتية.',
+      ml: 'താടിയുടെ താഴെ വിരലുകൾ വെച്ച് "അഖ്" എന്ന് പറയുമ്പോൾ നാവിന്റെ അടിഭാഗം ഉയർന്ന് വിറയലില്ലാതെ പരുക്കൻ ശ്വാസം ഉരസിപ്പോകുന്നത് അനുഭവപ്പെടും.'
+    },
+    twinSummary: {
+      en: 'Unvoiced Air Scrape + Heavy (همس + تفخيم)',
+      ar: 'احتكاك خشن للنفس مع استعلاء وتفخيم',
+      ml: 'പരുക്കൻ ശ്വാസ ഉരസലും കനവും'
+    },
+    en: {
+      title: 'Makhraj of Khaa (خ)',
+      category: 'Halqiyyah (Throat)',
+      zoneLabel: 'Top of Throat',
+      desc: 'Halqiyyah — Top of the throat (closest to mouth).',
+      sifah: 'Heavy • Raspy Breath Scrape (استعلاء وهمس ورخاوة)'
+    },
+    ar: {
+      title: 'مخرج حرف الخاء (خ)',
+      category: 'حلقية',
+      zoneLabel: 'أدنى الحلق (أعلاه)',
+      desc: 'حلقية — أدنى الحلق (أعلاه).',
+      sifah: 'مفخم (استعلاء وهمس ورخاوة)'
+    },
+    ml: {
+      title: 'ഖാഅ് (خ)',
+      category: 'ഹൽഖിയ്യത്ത് (حلقية)',
+      zoneLabel: 'ഹൽഖിന്റെ മേലെ അറ്റം',
+      desc: 'ഹൽഖിയ്യത്ത് (حلقية) — ഹൽഖിന്റെ മേലെ അറ്റം.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 25, tipElevation: -24, tipForward: -12, backIstila: 94, middleArch: 10, lateralSpread: 20, greenPointPos: 90, upperOpacity: 56, vocalCordsConstriction: 20, epiglottisTilt: 20, throatStation: 3 },
+    greenCoords: { x: 0.0, y: -0.16, z: -0.46, rx: 0.3 }
+  },
+
+  // ==========================================================================
+  // AL-LISAAN & ASH-SHAFATAAN (اللسان والشفتان - 22 ORAL & LIP LETTERS)
+  // ==========================================================================
+
+  // 1. Qaaf (ق) - Deep Tongue Root
+  {
+    id: 'qaaf',
+    tag: 'Qaaf (ق)',
+    letter: 'ق',
+    sukoonText: 'قْ',
+    isHeavy: true,
+    dorsalMode: 'qaaf_posterior',
+    phoneticSound: 'أَقْ',
+    en: {
+      title: 'Makhraj of Qaaf (ق)',
+      category: 'Lahwiyyah (Uvular)',
+      zoneLabel: 'Deep Tongue Root & Upper Palate',
+      desc: 'Lahwiyyah — Deep root of the tongue and upper soft palate.',
+      sifah: 'Heavy (Echoing)'
+    },
+    ar: {
+      title: 'مخرج حرف القاف (ق)',
+      category: 'لهوية',
+      zoneLabel: 'أصل اللسان والحنك الأعلى',
+      desc: 'لهوية — أصل اللسان مع الحنك الأعلى.',
+      sifah: 'مفخم (استعلاء وقلقلة)'
+    },
+    ml: {
+      title: 'ഖാഫ് (ق)',
+      category: 'ലഹവിയ്യത്ത് (لهوية)',
+      zoneLabel: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും',
+      desc: 'ലഹവിയ്യത്ത് (لهوية) — നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 26, tipElevation: -26, tipForward: -15, backIstila: 98, middleArch: 12, lateralSpread: 30, greenPointPos: 88, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.302, z: -0.44, rx: 0.36 }
+  },
+  // 2. Kaaf (ك)
+  {
+    id: 'kaaf',
+    tag: 'Kaaf (ك)',
+    letter: 'ك',
+    sukoonText: 'كْ',
+    isHeavy: false,
+    dorsalMode: 'kaaf_velar',
+    phoneticSound: 'أَكْ',
+    en: {
+      title: 'Makhraj of Kaaf (ك)',
+      category: 'Lahwiyyah (Uvular)',
+      zoneLabel: 'Below Qaaf Towards Mouth',
+      desc: 'Lahwiyyah — Just below the position of Qaaf, closer to the mouth.',
+      sifah: 'Light (Whisper)'
+    },
+    ar: {
+      title: 'مخرج حرف الكاف (ك)',
+      category: 'لهوية',
+      zoneLabel: 'أسفل من القاف قليلاً',
+      desc: 'لهوية — أسفل مخرج القاف قليلاً باتجاه الفم.',
+      sifah: 'مرقق (استفال وهمس)'
+    },
+    ml: {
+      title: 'കാഫ് (ك)',
+      category: 'ലഹവിയ്യത്ത് (لهوية)',
+      zoneLabel: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ',
+      desc: 'ലഹവിയ്യത്ത് (لهوية) — ഖാഫോടടുത്ത അൽപ്പം താഴെ.',
+      sifah: 'ശിദ്ദത്ത്, ഹംസ്'
+    },
+    gears: { jawOpen: 25, tipElevation: -25, tipForward: -10, backIstila: 90, middleArch: 48, lateralSpread: 25, greenPointPos: 72, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.364, z: -0.22, rx: 0.13 }
+  },
+  // 3. Jeem (ج)
+  {
+    id: 'jeem',
+    tag: 'Jeem (ج)',
+    letter: 'ج',
+    sukoonText: 'جْ',
+    isHeavy: false,
+    dorsalMode: 'jeem_touch',
+    phoneticSound: 'أَجْ',
+    en: {
+      title: 'Makhraj of Jeem (ج)',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
+      sifah: 'Light (Echoing)'
+    },
+    ar: {
+      title: 'مخرج حرف الجيم (ج)',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
+      sifah: 'مرقق (شدة وقلقلة)'
+    },
+    ml: {
+      title: 'ജീം (ج)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -32, backIstila: 10, middleArch: 98, lateralSpread: 45, greenPointPos: 91, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.405, z: 0.58, rx: -0.36 }
+  },
+  // 4. Sheen (ش)
+  {
+    id: 'sheen',
+    tag: 'Sheen (ش)',
+    letter: 'ش',
+    sukoonText: 'شْ',
+    isHeavy: false,
+    dorsalMode: 'middle_dome',
+    phoneticSound: 'أَشْ',
+    en: {
+      title: 'Makhraj of Sheen (ش)',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
+      sifah: 'Light (Diffusion)'
+    },
+    ar: {
+      title: 'مخرج حرف الشين (ش)',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
+      sifah: 'مرقق (تفشٍّ ورخاوة)'
+    },
+    ml: {
+      title: 'ശീൻ (ش)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും. (തഫശ്ശീ: ളാഇന്റെ മഖ്റജ് വരെ കാറ്റ് പരക്കൽ).',
+      sifah: 'തഫശ്ശീ, ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 24, tipElevation: -22, tipForward: -5, backIstila: 15, middleArch: 90, lateralSpread: 65, greenPointPos: 52, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.467, z: 0.15, rx: 0.11 }
+  },
+  // 5. Yaa (ي)
+  {
+    id: 'yaa_cons',
+    tag: 'Yaa (ي)',
+    letter: 'ي',
+    sukoonText: 'يْ',
+    isHeavy: false,
+    dorsalMode: 'middle_dome',
+    phoneticSound: 'أَيْ',
+    en: {
+      title: 'Makhraj of Non-Madd Yaa (ي)',
+      category: 'Shajariyyah (Middle Tongue)',
+      zoneLabel: 'Middle of Tongue & Palate',
+      desc: 'Shajariyyah — Middle of the tongue and roof of the mouth.',
+      sifah: 'Light (Soft)'
+    },
+    ar: {
+      title: 'مخرج حرف الياء غير المدية (ي)',
+      category: 'شجرية',
+      zoneLabel: 'وسط اللسان والحنك الأعلى',
+      desc: 'شجرية — وسط اللسان مع الحنك الأعلى.',
+      sifah: 'مرقق (رخاوة ولين)'
+    },
+    ml: {
+      title: 'യാഅ് (ي)',
+      category: 'ശജരിയ്യത്ത് (شجرية)',
+      zoneLabel: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും',
+      desc: 'ശജരിയ്യത്ത് (شجرية) — നാവിന്റെ മധ്യവും അണ്ണാക്കും. (മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ യാഅ് നാവിൽ നിന്നും പുറപ്പെടുന്നു).',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 24, tipElevation: -24, tipForward: -5, backIstila: 14, middleArch: 92, lateralSpread: 60, greenPointPos: 52, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.466, z: 0.14, rx: 0.13 }
+  },
+  // 6. Zad / Dhaad (ض)
+  {
+    id: 'dhaad',
+    tag: 'Zad / Dhaad (ض)',
+    letter: 'ض',
+    sukoonText: 'ضْ',
+    isHeavy: true,
+    dorsalMode: 'dhaad_lateral',
+    phoneticSound: 'أَضْ',
+    en: {
+      title: 'Makhraj of Zad / Dhaad (ض)',
+      category: 'Dhirsiyyah (Molar)',
+      zoneLabel: 'Tongue Edge & Upper Molars',
+      desc: 'Dhirsiyyah — Side edge of the tongue and upper molars.',
+      sifah: 'Heavy (Elongation)'
+    },
+    ar: {
+      title: 'مخرج حرف الضاد (ض)',
+      category: 'ضرسية',
+      zoneLabel: 'حافة اللسان والأضراس العليا',
+      desc: 'ضرسية — حافة اللسان مع الأضراس العليا.',
+      sifah: 'مفخم (استعلاء واستطالة)'
+    },
+    ml: {
+      title: 'ളാദ് (ض)',
+      category: 'ളർസിയ്യത്ത് (ضرسية)',
+      zoneLabel: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും',
+      desc: 'ളർസിയ്യത്ത് (ضرسية) — നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും. (ഇസ്തിത്വാലത്ത്: നാവിന്റെ അരിക് നീളത്തിൽ ശബ്ദം നീളൽ).',
+      sifah: 'ഇസ്തിത്വാലത്ത്, രിഖ്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 22, tipElevation: 48, tipForward: 44, backIstila: 80, middleArch: 20, lateralSpread: 96, greenPointPos: 48, upperOpacity: 56 },
+    greenCoords: { x: -0.56, y: 0.16, z: 0.10, rx: 0.0 }
+  },
+  // 7. Laam (ل)
+  {
+    id: 'laam',
+    tag: 'Laam (ل)',
+    letter: 'ل',
+    sukoonText: 'لْ',
+    isHeavy: false,
+    dorsalMode: 'laam_curl',
+    phoneticSound: 'أَلْ',
+    en: {
+      title: 'Makhraj of Laam (ل)',
+      category: 'Dhalqiyyah (Tongue Edge)',
+      zoneLabel: 'Tongue Tip Edge & Upper Front Gums',
+      desc: 'Dhalqiyyah — Side edge of tongue tip and upper front gums.',
+      sifah: 'Light (Drift)'
+    },
+    ar: {
+      title: 'مخرج حرف اللام (ل)',
+      category: 'ذلقية',
+      zoneLabel: 'حافة طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — حافة طرف اللسان مع لثة الثنايا العليا.',
+      sifah: 'مرقق (انحراف وتوسط)'
+    },
+    ml: {
+      title: 'ലാം (ل)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 28, tipElevation: 76, tipForward: 38, backIstila: 0, middleArch: -20, lateralSpread: 32, greenPointPos: 24, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.252, z: 0.84, rx: -0.49 }
+  },
+  // 8. Noon (ن)
+  {
+    id: 'noon',
+    tag: 'Noon (ن)',
+    letter: 'ن',
+    sukoonText: 'نْ',
+    isHeavy: false,
+    dorsalMode: 'laam_curl',
+    phoneticSound: 'أَنْ',
+    en: {
+      title: 'Makhraj of Noon (ن)',
+      category: 'Dhalqiyyah (Tongue Tip)',
+      zoneLabel: 'Tongue Tip & Upper Front Gums',
+      desc: 'Dhalqiyyah — Tip of the tongue and upper front gums.',
+      sifah: 'Light (Nasal)'
+    },
+    ar: {
+      title: 'مخرج حرف النون (ن)',
+      category: 'ذلقية',
+      zoneLabel: 'طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — طرف اللسان مع لثة الأسنان العليا.',
+      sifah: 'مرقق (غنة وتوسط)'
+    },
+    ml: {
+      title: 'നൂൻ (ن)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും. (ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ നൂൻ നാവിൽ നിന്നും പുറപ്പെടുന്നു).',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 26, tipElevation: 78, tipForward: 36, backIstila: 0, middleArch: -18, lateralSpread: 22, greenPointPos: 24, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.254, z: 0.84, rx: -0.48 }
+  },
+  // 9. Raa (ر)
+  {
+    id: 'raa',
+    tag: 'Raa (ر)',
+    letter: 'ر',
+    sukoonText: 'رْ',
+    isHeavy: true,
+    dorsalMode: 'istila_cup',
+    phoneticSound: 'أَرْ',
+    en: {
+      title: 'Makhraj of Raa (ر)',
+      category: 'Dhalqiyyah (Tongue Back Tip)',
+      zoneLabel: 'Back of Tongue Tip & Upper Front Gums',
+      desc: 'Dhalqiyyah — Back of the tongue tip and upper front gums.',
+      sifah: 'Heavy / Light'
+    },
+    ar: {
+      title: 'مخرج حرف الراء (ر)',
+      category: 'ذلقية',
+      zoneLabel: 'ظهر طرف اللسان ولثة الثنايا العليا',
+      desc: 'ذلقية — ظهر طرف اللسان مع لثة الثنايا العليا.',
+      sifah: 'مفخم (انحراف وتكرير)'
+    },
+    ml: {
+      title: 'റാഅ് (ر)',
+      category: 'ദലഖിയ്യത്ത് (ذلقية)',
+      zoneLabel: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും',
+      desc: 'ദലഖിയ്യത്ത് (ذلقية) — നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 26, tipElevation: 80, tipForward: 20, backIstila: 65, middleArch: -10, lateralSpread: 35, greenPointPos: 30, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.262, z: 0.78, rx: -0.46 }
+  },
+  // 10. Taa (ط)
+  {
+    id: 'taa_heavy',
+    tag: 'Taa / Tha (ط)',
+    letter: 'ط',
+    sukoonText: 'طْ',
+    isHeavy: true,
+    dorsalMode: 'istila_cup',
+    phoneticSound: 'أَطْ',
+    en: {
+      title: 'Makhraj of Taa (ط)',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
+      sifah: 'Heavy'
+    },
+    ar: {
+      title: 'مخرج حرف الطاء (ط)',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
+      sifah: 'مفخم (إطباق وقلقلة)'
+    },
+    ml: {
+      title: 'ത്വാഅ് (ط)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ, ഇത്വ്ബാഖ്'
+    },
+    gears: { jawOpen: 26, tipElevation: 76, tipForward: 62, backIstila: 88, middleArch: -8, lateralSpread: 42, greenPointPos: 18, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
+  },
+  // 11. Daal (د)
+  {
+    id: 'daal',
+    tag: 'Daal (د)',
+    letter: 'د',
+    sukoonText: 'دْ',
+    isHeavy: false,
+    dorsalMode: 'laam_curl',
+    phoneticSound: 'أَدْ',
+    en: {
+      title: 'Makhraj of Daal (د)',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
+      sifah: 'Light (Echoing)'
+    },
+    ar: {
+      title: 'مخرج حرف الدال (د)',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
+      sifah: 'مرقق (جهر وقلقلة)'
+    },
+    ml: {
+      title: 'ദാൽ (د)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
+  },
+  // 12. Taa (ت)
+  {
+    id: 'taa_light',
+    tag: 'Taa (ت)',
+    letter: 'ت',
+    sukoonText: 'تْ',
+    isHeavy: false,
+    dorsalMode: 'laam_curl',
+    phoneticSound: 'أَتْ',
+    en: {
+      title: 'Makhraj of Taa (ت)',
+      category: 'Nit\'iyyah',
+      zoneLabel: 'Tip of Tongue & Roots of Teeth',
+      desc: 'Nit\'iyyah — Tip of the tongue and roots of upper front teeth.',
+      sifah: 'Light (Whisper)'
+    },
+    ar: {
+      title: 'مخرج حرف التاء (ت)',
+      category: 'نطعية',
+      zoneLabel: 'طرف اللسان وأصول الثنايا',
+      desc: 'نطعية — طرف اللسان مع أصول الثنايا العليا.',
+      sifah: 'مرقق (شدة وهمس)'
+    },
+    ml: {
+      title: 'താഅ് (ت)',
+      category: 'നിത്ഇയ്യത്ത് (نطعية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും',
+      desc: 'നിത്ഇയ്യത്ത് (نطعية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും.',
+      sifah: 'ശിദ്ദത്ത്, ഹംസ്'
+    },
+    gears: { jawOpen: 25, tipElevation: 76, tipForward: 62, backIstila: 0, middleArch: -14, lateralSpread: 24, greenPointPos: 18, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.236, z: 0.90, rx: -0.50 }
+  },
+  // 13. Saad (ص)
+  {
+    id: 'saad',
+    tag: 'Saad (ص)',
+    letter: 'ص',
+    sukoonText: 'صْ',
+    isHeavy: true,
+    dorsalMode: 'safir_hook',
+    phoneticSound: 'أَصْ',
+    en: {
+      title: 'Makhraj of Saad (ص)',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
+      sifah: 'Heavy (Whistle)'
+    },
+    ar: {
+      title: 'مخرج حرف الصاد (ص)',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
+      sifah: 'مفخم (صفير وإطباق)'
+    },
+    ml: {
+      title: 'സ്വാദ് (ص)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 88, middleArch: 55, lateralSpread: 88, greenPointPos: 2, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
+  },
+  // 14. Seen (س)
+  {
+    id: 'seen',
+    tag: 'Seen (س)',
+    letter: 'س',
+    sukoonText: 'سْ',
+    isHeavy: false,
+    dorsalMode: 'safir_hook',
+    phoneticSound: 'أَسْ',
+    en: {
+      title: 'Makhraj of Seen (س)',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
+      sifah: 'Light (Whistle)'
+    },
+    ar: {
+      title: 'مخرج حرف السين (س)',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
+      sifah: 'مرقق (همس وصفير)'
+    },
+    ml: {
+      title: 'സീൻ (س)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 72, lateralSpread: 72, greenPointPos: 2, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
+  },
+  // 15. Zaay (ز)
+  {
+    id: 'zaay',
+    tag: 'Zay / Zaa (ز)',
+    letter: 'ز',
+    sukoonText: 'زْ',
+    isHeavy: false,
+    dorsalMode: 'safir_hook',
+    phoneticSound: 'أَزْ',
+    en: {
+      title: 'Makhraj of Zay (ز)',
+      category: 'Asaliyyah (Whistling)',
+      zoneLabel: 'Tip of Tongue Between Front Teeth',
+      desc: 'Asaliyyah — Tip of the tongue between the upper and lower front teeth.',
+      sifah: 'Light (Whistle)'
+    },
+    ar: {
+      title: 'مخرج حرف الزاي (ز)',
+      category: 'أسلية',
+      zoneLabel: 'رأس اللسان بين الثنايا',
+      desc: 'أسلية — رأس اللسان بين صفحتي الثنايا العليا والسفلى.',
+      sifah: 'مرقق (جهر وصفير)'
+    },
+    ml: {
+      title: 'സാഇ (ز)',
+      category: 'അസലിയ്യത്ത് (اسلية)',
+      zoneLabel: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും',
+      desc: 'അസലിയ്യത്ത് (اسلية) — നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും.',
+      sifah: 'സ്വഫീർ, ജഹ്ർ, രിഖ്വ്'
+    },
+    gears: { jawOpen: 16, tipElevation: -10, tipForward: 24, backIstila: 0, middleArch: 75, lateralSpread: 75, greenPointPos: 2, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: -0.045, z: 0.84, rx: 0.15 }
+  },
+  // 16. Zhaa (ظ)
+  {
+    id: 'thaa_heavy',
+    tag: 'Zhaa (ظ)',
+    letter: 'ظ',
+    sukoonText: 'ظْ',
+    isHeavy: true,
+    dorsalMode: 'istila_cup',
+    phoneticSound: 'أَظْ',
+    en: {
+      title: 'Makhraj of Zhaa (ظ)',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
+      sifah: 'Heavy'
+    },
+    ar: {
+      title: 'مخرج حرف الظاء (ظ)',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
+      sifah: 'مفخم (إطباق ورخاوة)'
+    },
+    ml: {
+      title: 'ളാഅ് (ظ)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ, ഇത്വ്ബാഖ്'
+    },
+    gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 90, middleArch: 10, lateralSpread: 40, greenPointPos: 8, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
+  },
+  // 17. Dhaal (ذ)
+  {
+    id: 'dhaal_zaa',
+    tag: 'Dhaal (ذ)',
+    letter: 'ذ',
+    sukoonText: 'ذْ',
+    isHeavy: false,
+    dorsalMode: 'istila_cup',
+    phoneticSound: 'أَذْ',
+    en: {
+      title: 'Makhraj of Dhaal (ذ)',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
+      sifah: 'Light (Soft)'
+    },
+    ar: {
+      title: 'مخرج حرف الذال (ذ)',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
+      sifah: 'مرقق (جهر ورخاوة)'
+    },
+    ml: {
+      title: 'ദാൽ (ذ)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 25, greenPointPos: 8, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
+  },
+  // 18. Thaa (ث)
+  {
+    id: 'thaa_light',
+    tag: 'Thaa (ث)',
+    letter: 'ث',
+    sukoonText: 'ثْ',
+    isHeavy: false,
+    dorsalMode: 'istila_cup',
+    phoneticSound: 'أَثْ',
+    en: {
+      title: 'Makhraj of Thaa (ث)',
+      category: 'Lithawiyyah',
+      zoneLabel: 'Tip of Tongue & Edges of Upper Teeth',
+      desc: 'Lithawiyyah — Tip of the tongue and edges of upper front teeth.',
+      sifah: 'Light (Whisper)'
+    },
+    ar: {
+      title: 'مخرج حرف الثاء (ث)',
+      category: 'لثوية',
+      zoneLabel: 'طرف اللسان وأطراف الثنايا العليا',
+      desc: 'لثوية — طرف اللسان مع أطراف الثنايا العليا.',
+      sifah: 'مرقق (همس ورخاوة)'
+    },
+    ml: {
+      title: 'ഥാഅ് (ث)',
+      category: 'ലിസവിയ്യത്ത് (لثوية)',
+      zoneLabel: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ലിസവിയ്യത്ത് (لثوية) — നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 22, tipElevation: 5, tipForward: 68, backIstila: 0, middleArch: 10, lateralSpread: 20, greenPointPos: 8, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.015, z: 0.91, rx: 0.18 }
+  },
+  // 19. Faa (ف)
+  {
+    id: 'faa',
+    tag: 'Faa (ف)',
+    letter: 'ف',
+    sukoonText: 'فْ',
+    isHeavy: false,
+    dorsalMode: 'neutral',
+    showLips: true,
+    lipMode: 'faa_labiodental',
+    phoneticSound: 'أَفْ',
+    en: {
+      title: 'Makhraj of Faa (ف)',
+      category: 'Shafawiyyah (Lip)',
+      zoneLabel: 'Inside Lower Lip & Upper Teeth',
+      desc: 'Shafawiyyah — Inside of lower lip and edges of upper front teeth.',
+      sifah: 'Light (Whisper)'
+    },
+    ar: {
+      title: 'مخرج حرف الفاء (ف)',
+      category: 'شفوية',
+      zoneLabel: 'باطن الشفة السفلى وأطراف الثنايا',
+      desc: 'شفوية — باطن الشفة السفلى مع أطراف الثنايا العليا.',
+      sifah: 'مرقق (همس ورخاوة)'
+    },
+    ml: {
+      title: 'ഫാഅ് (ف)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും.',
+      sifah: 'ഹംസ്, രിഖ്വ്'
+    },
+    gears: { jawOpen: 18, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 6, upperOpacity: 92 },
+    greenCoords: { x: 0.0, y: 0.005, z: 0.94, rx: 0.0 }
+  },
+  // 20. Baa (ب)
+  {
+    id: 'baa',
+    tag: 'Baa (ب)',
+    letter: 'ب',
+    sukoonText: 'بْ',
+    isHeavy: false,
+    dorsalMode: 'neutral',
+    showLips: true,
+    lipMode: 'bilabial_closed',
+    phoneticSound: 'أَبْ',
+    en: {
+      title: 'Makhraj of Baa (ب)',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Firm Closure)',
+      desc: 'Shafawiyyah — Between both lips (pressing firmly together).',
+      sifah: 'Light (Echoing)'
+    },
+    ar: {
+      title: 'مخرج حرف الباء (ب)',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين بانطباق قوي',
+      desc: 'شفوية — بين الشفتين بانطباق أقوى من الميم.',
+      sifah: 'مرقق (شدة وقلقلة)'
+    },
+    ml: {
+      title: 'ബാഅ് (ب)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. ബാഇൽ മീമിനേക്കാൾ ശക്തിപൂർവ്വം രണ്ടു ചുണ്ടും തമ്മിൽ ചേർന്നിരിക്കേണ്ടതുമാണ്.',
+      sifah: 'ശിദ്ദത്ത്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 10, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
+  },
+  // 21. Meem (م)
+  {
+    id: 'meem',
+    tag: 'Meem (م)',
+    letter: 'م',
+    sukoonText: 'مْ',
+    isHeavy: false,
+    dorsalMode: 'neutral',
+    showLips: true,
+    lipMode: 'bilabial_closed',
+    phoneticSound: 'أَمْ',
+    en: {
+      title: 'Makhraj of Meem (م)',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Gentle Closure)',
+      desc: 'Shafawiyyah — Between both lips (closing together gently).',
+      sifah: 'Light (Nasal)'
+    },
+    ar: {
+      title: 'مخرج حرف الميم (م)',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين بانطباق',
+      desc: 'شفوية — بين الشفتين بانطباقهما مع الغنة.',
+      sifah: 'مرقق (غنة وتوسط)'
+    },
+    ml: {
+      title: 'മീം (م)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. ഇഖ്ഫാഅ് ചെയ്യപ്പെടുമ്പോൾ തരിമൂക്കിൽ നിന്നും അല്ലാത്തപ്പോൾ മീം ചുണ്ടിൽ നിന്നും പുറപ്പെടുന്നു.',
+      sifah: 'തവസ്സുത്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 12, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.02, z: 1.05, rx: 0.0 }
+  },
+  // 22. Waw (و)
+  {
+    id: 'waw',
+    tag: 'Waw (و)',
+    letter: 'و',
+    sukoonText: 'وْ',
+    isHeavy: false,
+    dorsalMode: 'neutral',
+    showLips: true,
+    lipMode: 'rounded_waw',
+    phoneticSound: 'أَوْ',
+    en: {
+      title: 'Makhraj of Non-Madd Waw (و)',
+      category: 'Shafawiyyah (Both Lips)',
+      zoneLabel: 'Between Both Lips (Open/Rounded)',
+      desc: 'Shafawiyyah — Between both lips (rounded with an opening).',
+      sifah: 'Light (Soft)'
+    },
+    ar: {
+      title: 'مخرج حرف الواو غير المدية (و)',
+      category: 'شفوية',
+      zoneLabel: 'بين الشفتين مع الانضمام',
+      desc: 'شفوية — بين الشفتين بانضمامهما مع بقاء فرجة.',
+      sifah: 'مرقق (رخاوة ولين)'
+    },
+    ml: {
+      title: 'വാവ് (و)',
+      category: 'ശഫവിയ്യത്ത് (شفوية)',
+      zoneLabel: 'രണ്ട് ചുണ്ടുകളുടെ ഇട',
+      desc: 'ശഫവിയ്യത്ത് (شفوية) — രണ്ട് ചുണ്ടുകളുടെ ഇട. വാവിൽ ചുണ്ട് തുറന്നിരിക്കേണ്ടതാണ്. മദ്ദക്ഷരമാകുമ്പോൾ ജൗഫിൽ നിന്നും അല്ലാത്ത അവസരത്തിൽ വാവ് ചുണ്ടിൽ നിന്നും പുറപ്പെടുന്നു.',
+      sifah: 'രിഖ്വ്, ജഹ്ർ'
+    },
+    gears: { jawOpen: 20, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15, greenPointPos: 4, upperOpacity: 56 },
+    greenCoords: { x: 0.0, y: 0.02, z: 1.08, rx: 0.0 }
   }
+];
+
+// Resting pose for Alif simulation
+export const findPresetByLetter = (ltr: string): LetterPreset | undefined => {
+  let target = ltr;
+  if (['أ', 'ء', 'ئ', 'ا', 'ؤ'].includes(ltr)) target = 'ء';
+  if (['ه', 'ة'].includes(ltr)) target = 'ه';
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white p-4">
-      <div className="max-w-md w-full bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center">
-        <h1 className="text-4xl font-extrabold mb-3 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent tracking-tight">
-          Quiz Companion
-        </h1>
-        <p className="text-gray-400 text-center mb-8">
-          Welcome to the ultimate learning experience. Please log in to your account to continue.
-        </p>
-        
-        <Link 
-          href="/login" 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
-        >
-          Login to Continue
-          <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Link>
+    LETTER_PRESETS.find(p => p.letter === target) ||
+    LETTER_PRESETS.find(p => p.letter === ltr)
+  );
+};
+
+const ALIF_MAKHRAJ_GEARS: Record<string, number> = {
+  jawOpen: 36, tipElevation: -5, tipForward: -10, backIstila: 0, middleArch: 0, lateralSpread: 15
+};
+
+// ----------------------------------------------------------------------------
+// 3. ANATOMY LABELS DATA
+// ----------------------------------------------------------------------------
+interface AnatomyLabelItem {
+  id: string;
+  group: 'tongue';
+  ar: string;
+  en: string;
+  ml: string;
+  hex: string;
+  lightTextHex?: string;
+  rgb: [number, number, number];
+  letters: string[];
+}
+
+interface MakhrajItem17 {
+  num: number;
+  letters: string;
+  nameEn: string;
+  nameAr: string;
+  nameMl: string;
+  makhrajEn: string;
+  makhrajAr: string;
+  makhrajMl: string;
+}
+
+const MAKHARIJ_17_DATA: MakhrajItem17[] = [
+  { num: 1, letters: 'ا و ي', nameEn: 'Jawfiyyah (Empty Space)', nameAr: 'جوفية', nameMl: 'ജൗഫിയ്യത്ത് (جوفية)', makhrajEn: 'Open space in mouth and throat', makhrajAr: 'الجوف (تجويف الحلق والفم)', makhrajMl: 'വായയുടെ അന്തരീക്ഷം' },
+  { num: 2, letters: 'ء ه', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Bottom of the throat (deepest part)', makhrajAr: 'أقصى الحلق (أسفله)', makhrajMl: 'ഹൽഖിന്റെ താഴെ അറ്റം' },
+  { num: 3, letters: 'ع ح', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Middle of the throat', makhrajAr: 'وسط الحلق', makhrajMl: 'ഹൽഖിന്റെ മധ്യം' },
+  { num: 4, letters: 'غ خ', nameEn: 'Halqiyyah (Throat)', nameAr: 'حلقية', nameMl: 'ഹൽഖിയ്യത്ത് (حلقية)', makhrajEn: 'Top of the throat (nearest mouth)', makhrajAr: 'أدنى الحلق (أعلاه)', makhrajMl: 'ഹൽഖിന്റെ മേലെ അറ്റം' },
+  { num: 5, letters: 'ق', nameEn: 'Lahwiyyah (Uvular)', nameAr: 'لهوية', nameMl: 'ലഹവിയ്യത്ത് (لهوية)', makhrajEn: 'Deep tongue root & upper soft palate', makhrajAr: 'أصل اللسان مع الحنك الأعلى', makhrajMl: 'നാവിന്റെ മുരടും മേലെ അണ്ണാക്കും' },
+  { num: 6, letters: 'ك', nameEn: 'Lahwiyyah (Uvular)', nameAr: 'لهوية', nameMl: 'ലഹവിയ്യത്ത് (لهوية)', makhrajEn: 'Just below Qaaf towards mouth', makhrajAr: 'أسفل من القاف قليلاً باتجاه الفم', makhrajMl: 'ഖാഫോടടുത്ത അൽപ്പം താഴെ' },
+  { num: 7, letters: 'ج ش ي', nameEn: 'Shajariyyah (Middle Tongue)', nameAr: 'شجرية', nameMl: 'ശജരിയ്യത്ത് (شجرية)', makhrajEn: 'Middle of tongue & hard palate', makhrajAr: 'وسط اللسان مع الحنك الأعلى', makhrajMl: 'നാവിന്റെ മധ്യവും അണ്ണാക്കും' },
+  { num: 8, letters: 'ض', nameEn: 'Dhirsiyyah (Molar)', nameAr: 'ضرسية', nameMl: 'ളർസിയ്യത്ത് (ضرسية)', makhrajEn: 'Side edge of tongue & upper molars', makhrajAr: 'حافة اللسان مع الأضراس العليا', makhrajMl: 'നാവിന്റെ അരുവും മേലെ അണപ്പല്ലുകളും' },
+  { num: 9, letters: 'ل', nameEn: 'Dhalqiyyah (Tongue Edge)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Side of tongue tip & upper front gums', makhrajAr: 'حافة طرف اللسان مع لثة الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയുടെ അരുവും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 10, letters: 'ن', nameEn: 'Dhalqiyyah (Tongue Tip)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Tip of tongue & upper front gums', makhrajAr: 'طرف اللسان مع لثة الأسنان العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലിന്റെ ഊനും' },
+  { num: 11, letters: 'ر', nameEn: 'Dhalqiyyah (Tongue Back Tip)', nameAr: 'ذلقية', nameMl: 'ദലഖിയ്യത്ത് (ذلقية)', makhrajEn: 'Back of tongue tip & upper front gums', makhrajAr: 'ظهر طرف اللسان مع لثة الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയുടെ മുതുകും മേലെ മുൻപല്ലുകളുടെ ഊനും' },
+  { num: 12, letters: 'ط د ت', nameEn: "Nit\'iyyah", nameAr: 'نطعية', nameMl: 'നിത്ഇയ്യത്ത് (نطعية)', makhrajEn: 'Tip of tongue & roots of upper teeth', makhrajAr: 'طرف اللسان مع أصول الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ മുരടും' },
+  { num: 13, letters: 'ص ز س', nameEn: 'Asaliyyah (Whistling)', nameAr: 'أسلية', nameMl: 'അസലിയ്യത്ത് (اسلية)', makhrajEn: 'Tip of tongue between front teeth', makhrajAr: 'رأس اللسان بين الثنايا العليا والسفلى', makhrajMl: 'നാവിന്റെ അറ്റവും രണ്ട് വരിയിൽ മുൻപല്ലുകളുടെ ഇടയും' },
+  { num: 14, letters: 'ظ ذ ث', nameEn: 'Lithawiyyah', nameAr: 'لثوية', nameMl: 'ലിസവിയ്യത്ത് (لثوية)', makhrajEn: 'Tip of tongue & edges of upper teeth', makhrajAr: 'طرف اللسان مع أطراف الثنايا العليا', makhrajMl: 'നാവിന്റെ തലയും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 15, letters: 'ف', nameEn: 'Shafawiyyah (Lip)', nameAr: 'شفوية', nameMl: 'ശഫവിയ്യത്ത് (شفوية)', makhrajEn: 'Inside lower lip & upper teeth edges', makhrajAr: 'باطن الشفة السفلى مع أطراف الثنايا العليا', makhrajMl: 'താഴെ ചുണ്ടും മേലെ മുൻപല്ലുകളുടെ തലയും' },
+  { num: 16, letters: 'و ب م', nameEn: 'Shafawiyyah (Both Lips)', nameAr: 'شفوية', nameMl: 'ശഫവിയ്യത്ത് (شفوية)', makhrajEn: 'Between both lips', makhrajAr: 'بين الشفتين', makhrajMl: 'രണ്ട് ചുണ്ടുകളുടെ ഇട' },
+  { num: 17, letters: '(م ن)', nameEn: 'Ghunnah (Nasal Cavity)', nameAr: 'غنة', nameMl: 'ഗുന്നത്ത് (غُنَّةٌ)', makhrajEn: 'Nasal cavity (Khayshoom)', makhrajAr: 'الخيشوم (التجويف الأنفي)', makhrajMl: 'തരിമൂക്ക്' }
+];
+
+const ANATOMY_LABELS_DATA: AnatomyLabelItem[] = [
+  // 4 Tongue Anatomy Parts based on Tajweed rules
+  {
+    id: 'aqsa_lisaan',
+    group: 'tongue',
+    ar: 'أقصى اللسان (الجذر)',
+    en: 'Tongue Root',
+    ml: 'നാവിന്റെ മുരട്',
+    hex: '#7c3aed',
+    rgb: [0.49, 0.23, 0.93],
+    letters: ['ق', 'ك']
+  },
+  {
+    id: 'wasat_lisaan',
+    group: 'tongue',
+    ar: 'وسط اللسان',
+    en: 'Middle Tongue',
+    ml: 'നാവിന്റെ മധ്യമം',
+    hex: '#2563eb',
+    rgb: [0.15, 0.39, 0.92],
+    letters: ['ج', 'ش', 'ي']
+  },
+  {
+    id: 'haafah_lisaan',
+    group: 'tongue',
+    ar: 'حافتا اللسان',
+    en: 'Tongue Sides / Edges',
+    ml: 'നാവിന്റെ അരിക്',
+    hex: '#d97706',
+    rgb: [0.85, 0.47, 0.02],
+    letters: ['ض', 'ل']
+  },
+  {
+    id: 'taraf_lisaan',
+    group: 'tongue',
+    ar: 'طرف اللسان',
+    en: 'Tongue Tip',
+    ml: 'നാവിന്റെ തുമ്പ്',
+    hex: '#059669',
+    rgb: [0.02, 0.59, 0.41],
+    letters: ['ن', 'ر', 'ط', 'د', 'ت', 'ص', 'ز', 'س', 'ظ', 'ذ', 'ث']
+  }
+];
+
+// ----------------------------------------------------------------------------
+// 3.1 SIFAAT AL-HUROOF DATA (Characteristics of Arabic Letters)
+// ----------------------------------------------------------------------------
+export interface SifahItem {
+  id: string;
+  order: number;
+  category: 'opposite' | 'non_opposite';
+  oppositeId?: string;
+  oppositeNameEn?: string;
+  oppositeNameAr?: string;
+  oppositeNameMl?: string;
+  pairGroupEn?: string;
+  pairGroupAr?: string;
+  pairGroupMl?: string;
+  tonguePartEn?: string;
+  tonguePartAr?: string;
+  tonguePartMl?: string;
+  ar: string;
+  en: string;
+  ml: string;
+  literalAr: string;
+  literalEn: string;
+  literalMl: string;
+  technicalAr: string;
+  technicalEn: string;
+  technicalMl: string;
+  mnemonic?: string;
+  letters: string[];
+  chipClass: string;
+  badgeHex: string;
+}
+
+export const SIFAAT_DATA: SifahItem[] = [
+  // 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ)
+  {
+    id: 'jahr',
+    order: 1,
+    category: 'opposite',
+    oppositeId: 'hams',
+    oppositeNameEn: 'Hams (هَمْس)',
+    oppositeNameAr: 'الهمس',
+    oppositeNameMl: 'ഹംസ് (هَمْسْ)',
+    pairGroupEn: 'Breath (النفس)',
+    pairGroupAr: 'جريان النفس وانحباسه',
+    pairGroupMl: 'കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
+    ar: 'جَهْر',
+    en: 'Jahr',
+    ml: 'ജഹ്ർ (جَهْرْ)',
+    literalAr: 'الوضوح والظهور',
+    literalEn: 'Clarity / Loudness',
+    literalMl: 'വെളിവാക്കൽ',
+    technicalAr: 'انحباس جريان النفس عند النطق بالحرف لقوة الاعتماد على المخرج.',
+    technicalEn: 'Stopping the flow of breath due to strong reliance on the articulation point (Makhraj).',
+    technicalMl: 'മഖ്റജിൽ ശക്തിയായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കാതിരിക്കൽ',
+    mnemonic: 'عظم وزن قارئ ذى غضّ جدّ طلب',
+    letters: ['ع', 'ظ', 'م', 'و', 'ز', 'ن', 'ق', 'ا', 'ر', 'ئ', 'ذ', 'ي', 'غ', 'ض', 'ج', 'د', 'ط', 'ل', 'ب', 'أ', 'ء'],
+    chipClass: 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800',
+    badgeHex: '#0284c7'
+  },
+  {
+    id: 'hams',
+    order: 2,
+    category: 'opposite',
+    oppositeId: 'jahr',
+    oppositeNameEn: 'Jahr (جَهْر)',
+    oppositeNameAr: 'الجهر',
+    oppositeNameMl: 'ജഹ്ർ (جَهْرْ)',
+    pairGroupEn: 'Breath (النفس)',
+    pairGroupAr: 'جريان النفس وانحباسه',
+    pairGroupMl: 'കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
+    ar: 'هَمْس',
+    en: 'Hams',
+    ml: 'ഹംസ് (هَمْسْ)',
+    literalAr: 'الخفاء والصوت الخفي',
+    literalEn: 'Whispering / Concealment',
+    literalMl: 'മറക്കൽ',
+    technicalAr: 'جريان النفس عند النطق بالحرف لضعف الاعتماد على المخرج.',
+    technicalEn: 'Continuation of the breath due to weak reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ബലഹീനമായി ഉച്ചരിക്കുന്നതിനാൽ കാറ്റ് നടക്കൽ',
+    mnemonic: 'فَحَثَّهُ شَخْصٌ سَكَتَ',
+    letters: ['ف', 'ح', 'ث', 'ه', 'ش', 'خ', 'ص', 'س', 'ك', 'ت'],
+    chipClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
+    badgeHex: '#0891b2'
+  },
+  {
+    id: 'shiddah',
+    order: 3,
+    category: 'opposite',
+    oppositeId: 'rikhwah',
+    oppositeNameEn: 'Rikhwah & Tawassut (الرخاوة والتوسط)',
+    oppositeNameAr: 'الرخاوة والتوسط',
+    oppositeNameMl: 'രിഖ്‌വും തവസ്സുത്വും',
+    pairGroupEn: 'Sound (الصوت)',
+    pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
+    ar: 'شِدَّة',
+    en: 'Shiddah',
+    ml: 'ശിദ്ദത്ത് (شِدَّةْ)',
+    literalAr: 'القوة والصلابة',
+    literalEn: 'Strength',
+    literalMl: 'ശക്തി',
+    technicalAr: 'انحباس جريان الصوت لقوة الاعتماد على المخرج.',
+    technicalEn: 'Stopping the flow of sound due to strong, firm reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ശക്തിയായി അമർത്തി ഉച്ചരിക്കുന്നതിനാൽ ശബ്ദം നടക്കാതിരിക്കൽ',
+    mnemonic: 'أَجِدْ قَطٍ بَكَتَ',
+    letters: ['أ', 'ج', 'د', 'ق', 'ط', 'ب', 'ك', 'ت'],
+    chipClass: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
+    badgeHex: '#e11d48'
+  },
+  {
+    id: 'rikhwah',
+    order: 4,
+    category: 'opposite',
+    oppositeId: 'shiddah',
+    oppositeNameEn: 'Shiddah & Tawassut (الشدة والتوسط)',
+    oppositeNameAr: 'الشدة والتوسط',
+    oppositeNameMl: 'ശിദ്ദത്തും തവസ്സുത്വും',
+    pairGroupEn: 'Sound (الصوت)',
+    pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
+    ar: 'رِخْو',
+    en: 'Rikhwah',
+    ml: 'രിഖ്വ് (رِخْوْ)',
+    literalAr: 'اللين والرخاوة',
+    literalEn: 'Softness / Looseness',
+    literalMl: 'പതം',
+    technicalAr: 'جريان تام للصوت مع الحرف لضعف الاعتماد على المخرج.',
+    technicalEn: 'Easy flow of sound due to weak reliance on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ ബലഹീനമായി സ്ഥിതി ചെയ്യുന്നതിനാൽ ശബ്ദം നടക്കൽ മൃദുവാകൽ',
+    mnemonic: 'خذ غث حصّ فظّ شوص زيّ ساهٍ',
+    letters: ['خ', 'ذ', 'غ', 'ث', 'ح', 'ض', 'ف', 'ظ', 'ش', 'و', 'ص', 'ز', 'ي', 'س', 'ا', 'ه'],
+    chipClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+    badgeHex: '#059669'
+  },
+  {
+    id: 'tawassut',
+    order: 5,
+    category: 'opposite',
+    oppositeId: 'shiddah',
+    oppositeNameEn: 'Between Shiddah & Rikhwah',
+    oppositeNameAr: 'بين الشدة والرخاوة',
+    oppositeNameMl: 'ശിദ്ദത്തിനും രിഖ്‌വിനുമിടയിൽ',
+    pairGroupEn: 'Sound (الصوت)',
+    pairGroupAr: 'جريان الصوت وانحباسه',
+    pairGroupMl: 'ശബ്ദത്തിന്റെ ഒഴുക്ക്',
+    ar: 'تَوَسُّط',
+    en: 'Tawassut',
+    ml: 'തവസ്സുത്വ് (تَوَسُّطْ)',
+    literalAr: 'الاعتدال والتوسط',
+    literalEn: 'Moderation',
+    literalMl: 'മധ്യം',
+    technicalAr: 'اعتدال الصوت بين كمال الانحباس وكمال الجريان.',
+    technicalEn: 'Moderate flow of sound between softness and strength.',
+    technicalMl: 'മൃദു കഠോരത്തിനിടയിൽ ശബ്ദം നടക്കൽ',
+    mnemonic: 'لن عمر',
+    letters: ['ل', 'ن', 'ع', 'م', 'ر'],
+    chipClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800',
+    badgeHex: '#d97706'
+  },
+  {
+    id: 'istila',
+    order: 6,
+    category: 'opposite',
+    oppositeId: 'istifal',
+    oppositeNameEn: 'Istifal (اِسْتِفَال)',
+    oppositeNameAr: 'الاستفال',
+    oppositeNameMl: 'ഇസ്തിഫാൽ',
+    pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
+    pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    pairGroupMl: 'ഉയരൽ — നാവിന്റെ മുരട്',
+    tonguePartEn: 'Root of Tongue (أقصى اللسان)',
+    tonguePartAr: 'أقصى اللسان (الجذر)',
+    tonguePartMl: 'നാവിന്റെ മുരട്',
+    ar: 'اِسْتِعْلَاء',
+    en: 'Isti\'la\'',
+    ml: 'ഇസ്തിഅ്‌ലാഅ്',
+    literalAr: 'الارتفاع والعلو',
+    literalEn: 'Elevation',
+    literalMl: 'ഉയരൽ',
+    technicalAr: 'ارتفاع أقصى اللسان (جذره) إلى الحنك الأعلى فيرتفع معه الصوت بالتفخيم.',
+    technicalEn: 'Raising the root / back of the tongue (أقصى اللسان) towards the upper palate, directing sound upwards (Tafkheem).',
+    technicalMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയർന്നിരിക്കൽ',
+    mnemonic: 'خُصَّ ضَغْطٍ قِظْ',
+    letters: ['خ', 'ص', 'ض', 'غ', 'ط', 'ق', 'ظ'],
+    chipClass: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800',
+    badgeHex: '#7c3aed'
+  },
+  {
+    id: 'istifal',
+    order: 7,
+    category: 'opposite',
+    oppositeId: 'istila',
+    oppositeNameEn: 'Isti\'la\' (اِسْتِعْلَاء)',
+    oppositeNameAr: 'الاستعلاء',
+    oppositeNameMl: 'ഇസ്തിഅ്‌ലാഅ്',
+    pairGroupEn: 'Elevation — Root of Tongue (أقصى اللسان)',
+    pairGroupAr: 'الاستعلاء — أقصى اللسان',
+    pairGroupMl: 'താഴുക — നാവിന്റെ മുരട്',
+    tonguePartEn: 'Root of Tongue (أقصى اللسان)',
+    tonguePartAr: 'أقصى اللسان (الجذر)',
+    tonguePartMl: 'നാവിന്റെ മുരട്',
+    ar: 'اِسْتِفَال',
+    en: 'Istifal',
+    ml: 'ഇസ്തിഫാൽ',
+    literalAr: 'الانخفاض والهبوط',
+    literalEn: 'Lowering',
+    literalMl: 'താഴുക',
+    technicalAr: 'انخفاض أقصى اللسان (جذره) عن الحنك الأعلى إلى قاع الفم فينحدر الصوت بالترقيق.',
+    technicalEn: 'Lowering the root of the tongue (أقصى اللسان) to the mouth floor away from the palate, keeping sound flat (Tarqeeq).',
+    technicalMl: 'നാവ് വായയുടെ അടിഭാഗത്തേക്ക് താഴ്ന്നിരിക്കൽ',
+    letters: ['ث', 'ب', 'ت', 'ع', 'ز', 'م', 'ن', 'ي', 'ج', 'و', 'د', 'ح', 'ر', 'ف', 'ه', 'ا', 'ذ', 'س', 'ل', 'ش', 'ك', 'أ', 'ء'],
+    chipClass: 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800',
+    badgeHex: '#2563eb'
+  },
+  {
+    id: 'itbaq',
+    order: 8,
+    category: 'opposite',
+    oppositeId: 'infitah',
+    oppositeNameEn: 'Infitah (اِنْفِتَاح)',
+    oppositeNameAr: 'الانفتاح',
+    oppositeNameMl: 'ഇൻഫിതാഹ്',
+    pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
+    pairGroupAr: 'الإطباق — وسط اللسان',
+    pairGroupMl: 'ചേരൽ — നാവിന്റെ മധ്യമം',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം',
+    ar: 'إِطْبَاق',
+    en: 'Itbaq',
+    ml: 'ഇത്വ്ബാഖ്',
+    literalAr: 'الإلصاق والتطابق',
+    literalEn: 'Adhesion / Closing',
+    literalMl: 'ചേരൽ',
+    technicalAr: 'إلصاق وسط اللسان وطائفة منه بالحنك الأعلى وانحصار الصوت بينهما بأعلى درجات التفخيم.',
+    technicalEn: 'Adhering the middle of the tongue (وسط اللسان) to the upper palate, trapping and confining sound (strongest heaviness).',
+    technicalMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ',
+    letters: ['ط', 'ص', 'ض', 'ظ'],
+    chipClass: 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-800',
+    badgeHex: '#6d28d9'
+  },
+  {
+    id: 'infitah',
+    order: 9,
+    category: 'opposite',
+    oppositeId: 'itbaq',
+    oppositeNameEn: 'Itbaq (إِطْبَاق)',
+    oppositeNameAr: 'الإطباق',
+    oppositeNameMl: 'ഇത്വ്ബാഖ്',
+    pairGroupEn: 'Adhesion — Middle of Tongue (وسط اللسان)',
+    pairGroupAr: 'الإطباق — وسط اللسان',
+    pairGroupMl: 'അകന്നിരിക്കൽ — നാവിന്റെ മധ്യമം',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം',
+    ar: 'اِنْفِتَاح',
+    en: 'Infitah',
+    ml: 'ഇൻഫിതാഹ്',
+    literalAr: 'الافتراق والانفراج',
+    literalEn: 'Opening / Separation',
+    literalMl: 'അകന്നിരിക്കൽ',
+    technicalAr: 'تجافي وسط اللسان وتباعده عن الحنك الأعلى فلا ينحصر الصوت بينهما.',
+    technicalEn: 'Keeping the middle of the tongue (وسط اللسان) separated from the upper palate, allowing sound to escape unconfined.',
+    technicalMl: 'അണ്ണാക്കുമായി നാവ് അകന്നിരിക്കൽ',
+    letters: ['م', 'ن', 'أ', 'ء', 'خ', 'ذ', 'و', 'ج', 'د', 'س', 'ع', 'ة', 'ف', 'ز', 'ك', 'ا', 'ح', 'ق', 'ل', 'ه', 'ش', 'ر', 'ب', 'غ', 'ي', 'ث'],
+    chipClass: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
+    badgeHex: '#4f46e5'
+  },
+
+  // 2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ)
+  {
+    id: 'safeer',
+    order: 10,
+    category: 'non_opposite',
+    tonguePartEn: 'Tip of Tongue (طرف اللسان)',
+    tonguePartAr: 'طرف اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പ്',
+    ar: 'صَفِير',
+    en: 'Safeer',
+    ml: 'സ്വഫീറ്',
+    literalAr: 'صوت يشبه صفير الطائر',
+    literalEn: 'Bird\'s chirp / Whistle',
+    literalMl: 'പക്ഷി സ്വരം',
+    technicalAr: 'صوت زائد يخرج من بين الثنايا وطرف اللسان بصفير حاد ناصع.',
+    technicalEn: 'A sharp sound resembling the chirping of a bird.',
+    technicalMl: 'പക്ഷി സ്വരത്തോട് തുല്യമായ ശബ്ദം',
+    letters: ['ص', 'ز', 'س'],
+    chipClass: 'bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border-pink-300 dark:border-pink-800',
+    badgeHex: '#db2777'
+  },
+  {
+    id: 'qalqalah',
+    order: 11,
+    category: 'non_opposite',
+    ar: 'قَلْقَلَة',
+    en: 'Qalqalah',
+    ml: 'ഖൽഖലത്ത്',
+    literalAr: 'التحريك والاضطراب',
+    literalEn: 'Shaking / Echoing',
+    literalMl: 'ചലിക്കുക',
+    technicalAr: 'اضطراب المخرج عند النطق بالحرف ساكناً حتى يُسمع له نبرة قوية.',
+    technicalEn: 'An echoing or vibrating sound produced by pressing firmly on the articulation point.',
+    technicalMl: 'മഖ്റജിൽ അമർത്തി ഉച്ചരിക്കുന്നത് കൊണ്ട് ശബ്ദത്തിന് മുഴക്കമുണ്ടാവൽ',
+    mnemonic: 'قُطْبُ جَدٍّ',
+    letters: ['ق', 'ط', 'ب', 'ج', 'د'],
+    chipClass: 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800',
+    badgeHex: '#ea580c'
+  },
+  {
+    id: 'leen',
+    order: 12,
+    category: 'non_opposite',
+    ar: 'لِين',
+    en: 'Leen',
+    ml: 'ലീൻ',
+    literalAr: 'السهولة واليسر',
+    literalEn: 'Gentleness / Ease',
+    literalMl: 'മയം',
+    technicalAr: 'إخراج الحرف بسهولة ويسر من غير كلفة على اللسان (إذا سكنا وانفتح ما قبلهما).',
+    technicalEn: 'Pronouncing the letter effortlessly without any strain on the tongue (when saakin preceded by fathah).',
+    technicalMl: 'നാവിന് വിഷമം കൂടാതെ പുറപ്പെടൽ',
+    mnemonic: 'الواو والياء الساكنتان المفتوح ما قبلهما',
+    letters: ['و', 'ي'],
+    chipClass: 'bg-lime-50 dark:bg-lime-950/60 text-lime-700 dark:text-lime-300 border-lime-300 dark:border-lime-800',
+    badgeHex: '#65a30d'
+  },
+  {
+    id: 'inhiraf',
+    order: 13,
+    category: 'non_opposite',
+    tonguePartEn: 'Tongue Tip & Sides (طرف وحافتي اللسان)',
+    tonguePartAr: 'طرف وحافتي اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പും അരികും',
+    ar: 'اِنْحِرَاف',
+    en: 'Inhiraf',
+    ml: 'ഇൻഹിറാഫ്',
+    literalAr: 'الميل والعدول',
+    literalEn: 'Inclination / Drifting',
+    literalMl: 'തെറ്റൽ',
+    technicalAr: 'ميل الحرف عن مخرجه (الراء تميل للسان واللام تميل للحافة والضاد).',
+    technicalEn: 'Drifting from its own articulation point to another (ر inclines towards ل, and ل inclines towards ض).',
+    technicalMl: 'സ്വന്തം മഖ്റജിൽ നിന്ന് മറ്റു മഖ്റജിലേക്ക് ചായൽ (റാഅ് ലാമിലേക്കും ലാം ളാദിലേക്കും)',
+    letters: ['ر', 'ل'],
+    chipClass: 'bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-300 dark:border-fuchsia-800',
+    badgeHex: '#c026d3'
+  },
+  {
+    id: 'takreer',
+    order: 14,
+    category: 'non_opposite',
+    tonguePartEn: 'Tip of Tongue (طرف اللسان)',
+    tonguePartAr: 'طرف/رأس اللسان',
+    tonguePartMl: 'നാവിന്റെ തുമ്പ്',
+    ar: 'تَكْرِير',
+    en: 'Takreer',
+    ml: 'തക്രീറ്',
+    literalAr: 'إعادة الشيء مرة بعد أخرى',
+    literalEn: 'Repetition / Trilling',
+    literalMl: 'വിറക്കൽ',
+    technicalAr: 'ارتعاد رأس اللسان عند النطق بالحرف، وتُعرف هذه الصفة لتُجتنب ولا يُبالغ فيها.',
+    technicalEn: 'Shivering or trilling of the tip of the tongue (this trait is taught so that excessive trilling is avoided).',
+    technicalMl: 'നാവിന്റെ തല വിറക്കൽ (അത് ഒഴിവാക്കേണ്ടതാണ്)',
+    letters: ['ر'],
+    chipClass: 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800',
+    badgeHex: '#dc2626'
+  },
+  {
+    id: 'tafashshi',
+    order: 15,
+    category: 'non_opposite',
+    tonguePartEn: 'Middle of Tongue (وسط اللسان)',
+    tonguePartAr: 'وسط اللسان',
+    tonguePartMl: 'നാവിന്റെ മധ്യമം',
+    ar: 'تَفَشِّي',
+    en: 'Tafashshi',
+    ml: 'തഫശ്ശീ (تَفَشِّى)',
+    literalAr: 'الاتساع والانتشار',
+    literalEn: 'Spreading',
+    literalMl: 'പരക്കൽ',
+    technicalAr: 'انتشار خروج الريح بين اللسان والحنك الأعلى حتى يتصل بمخرج الظاء.',
+    technicalEn: 'Spreading of breath inside the mouth until it reaches the articulation point of ظ.',
+    technicalMl: 'ളാഇന്റെ മഖ്റജ് വരെ കാറ്റ് പരക്കൽ',
+    letters: ['ش'],
+    chipClass: 'bg-amber-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+    badgeHex: '#ca8a04'
+  },
+  {
+    id: 'istitalah',
+    order: 16,
+    category: 'non_opposite',
+    tonguePartEn: 'Side of Tongue (حافة اللسان)',
+    tonguePartAr: 'إحدى حافتي اللسان',
+    tonguePartMl: 'നാവിന്റെ അരിക്',
+    ar: 'اِسْتِطَالَة',
+    en: 'Istitalah',
+    ml: 'ഇസ്തിത്വാലത്ത് (اِسْتِطَالَةٌ)',
+    literalAr: 'الامتداد والطول',
+    literalEn: 'Elongation',
+    literalMl: 'നീളൽ',
+    technicalAr: 'امتداد الصوت من أول إحدى حافتي اللسان إلى آخرها حتى يتصل بمخرج اللام.',
+    technicalEn: 'Stretching of the sound along the entire length of the side of the tongue.',
+    technicalMl: 'നാവിന്റെ അരിക് നീളത്തിൽ ശബ്ദം നീളൽ',
+    letters: ['ض'],
+    chipClass: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700',
+    badgeHex: '#047857'
+  }
+];
+
+export interface SifahPairDef {
+  id: string;
+  pairNo: number;
+  titleEn: string;
+  titleAr: string;
+  titleMl: string;
+  descEn: string;
+  descAr: string;
+  descMl: string;
+  itemIds: string[];
+}
+
+export const OPPOSITE_PAIRS: SifahPairDef[] = [
+  {
+    id: 'breath',
+    pairNo: 1,
+    titleEn: '1. Flow of Breath',
+    titleAr: '١. جريان النفس وانحباسه (الهمس والجهر)',
+    titleMl: '1. കാറ്റിന്റെ ഒഴുക്ക് (ശ്വാസം നടക്കലും നടക്കാതിരിക്കലും)',
+    descEn: 'Whether breath continues or is stopped during pronunciation.',
+    descAr: 'جريان النفس لضعف الاعتماد على المخرج (همس) أو انحباسه لقوته (جهر).',
+    descMl: 'ശ്വാസം നടക്കൽ vs ശ്വാസം നടക്കാതിരിക്കൽ.',
+    itemIds: ['hams', 'jahr']
+  },
+  {
+    id: 'sound',
+    pairNo: 2,
+    titleEn: '2. Flow of Sound',
+    titleAr: '٢. جريان الصوت وانحباسه (الشدة والتوسط والرخاوة)',
+    titleMl: '2. ശബ്ദത്തിന്റെ ഒഴുക്ക് (ശബ്ദം നടക്കലും നടക്കാതിരിക്കലും)',
+    descEn: 'Degree of sound flow: stopping, moderate, or continuing.',
+    descAr: 'انحباس الصوت تماماً (شدة)، أو اعتداله (توسط)، أو كمال جريانه (رخاوة).',
+    descMl: 'ശബ്ദം നിൽക്കൽ, മധ്യമം, ശബ്ദം ഒഴുകൽ.',
+    itemIds: ['shiddah', 'tawassut', 'rikhwah']
+  },
+  {
+    id: 'elevation',
+    pairNo: 3,
+    titleEn: '3. Elevation & Lowering — Root of Tongue',
+    titleAr: '٣. استعلاء اللسان وانخفاضه — أقصى اللسان (جذره)',
+    titleMl: '3. നാവിന്റെ മുരട് ഉയരലും താഴലും',
+    descEn: 'Focus: Root of Tongue — Raising the root towards the upper palate vs Lowering it to mouth floor.',
+    descAr: 'الموضع: أقصى اللسان (الجذر) — ارتفاع جذر اللسان إلى الحنك الأعلى بالتفخيم أو انخفاضه بالترقيق.',
+    descMl: 'നാവിന്റെ മുരട് മേൽപ്പാക്കിലേക്ക് ഉയരൽ vs അടിഭാഗത്തേക്ക് താഴൽ.',
+    itemIds: ['istila', 'istifal']
+  },
+  {
+    id: 'adhesion',
+    pairNo: 4,
+    titleEn: '4. Adhesion & Opening — Middle of Tongue',
+    titleAr: '٤. انحصار الصوت وانفتاحه — وسط اللسان (الإطباق والانفتاح)',
+    titleMl: '4. നാവിന്റെ മധ്യമം ചേരലും അകലലും',
+    descEn: 'Focus: Middle of Tongue — Adhering the middle of the tongue to the upper palate vs Separating it.',
+    descAr: 'الموضع: وسط اللسان — إلصاق وسط اللسان بالحنك وانحصار الصوت (إطباق) أو تجافيه عنه (انفتاح).',
+    descMl: 'നാവിന്റെ മധ്യമം മേൽപ്പാക്കിലേക്ക് ചേരൽ vs അകന്നിരിക്കൽ.',
+    itemIds: ['itbaq', 'infitah']
+  }
+];
+
+export const getSifaatForLetter = (letterChar: string): SifahItem[] => {
+  return SIFAAT_DATA.filter(s => s.letters.includes(letterChar));
+};
+
+export default function TajweedStudioPage() {
+  const { resolvedTheme } = useTheme();
+  const [lang, setLang] = useState<'en' | 'ar' | 'ml'>('en');
+
+  // Load language preference from localStorage if saved
+  useEffect(() => {
+    try {
+      const savedLang = localStorage.getItem('tajweed_language');
+      if (savedLang === 'ar' || savedLang === 'en' || savedLang === 'ml') {
+        setLang(savedLang);
+      }
+    } catch {}
+  }, []);
+
+  const changeLanguage = (nextLang: 'en' | 'ar' | 'ml') => {
+    setLang(nextLang);
+    try {
+      localStorage.setItem('tajweed_language', nextLang);
+    } catch {}
+  };
+
+  // Default starting letter: Qaaf (ق)
+  const [currentLetter, setCurrentLetter] = useState<LetterPreset>(LETTER_PRESETS[0]);
+  const [dhaadMode, setDhaadMode] = useState<'right' | 'left' | 'both'>('right');
+  const [showAnatomy, setShowAnatomy] = useState<boolean>(false);
+  const [isGearsOpen, setIsGearsOpen] = useState<boolean>(false);
+
+  // Main navigation tab: 'makharij' (3D mouth) or 'sifaat' (phonetic rules)
+  const [activeMainTab, setActiveMainTab] = useState<'makharij' | 'sifaat'>('makharij');
+  const [selectedSifah, setSelectedSifah] = useState<SifahItem | null>(null);
+  const [sifaat3DOpen, setSifaat3DOpen] = useState<boolean>(false);
+  const [sifaatWindowPos, setSifaatWindowPos] = useState<{ x: number; y: number } | null>(null);
+  const [sifaatWindowSize, setSifaatWindowSize] = useState<{ width: number; height: number }>({ width: 335, height: 260 });
+  const sifaatWindowRef = useRef<HTMLDivElement | null>(null);
+
+  // Resizing state for floating 3D window in Sifaat tab
+  const isResizingRef = useRef<{
+    active: boolean;
+    edge: 'left' | 'bottom' | 'corner' | null;
+    startX: number;
+    startY: number;
+    startW: number;
+    startH: number;
+    startLeft: number;
+  }>({
+    active: false,
+    edge: null,
+    startX: 0,
+    startY: 0,
+    startW: 335,
+    startH: 260,
+    startLeft: 0
+  });
+
+  const handleResizePointerDown = (edge: 'left' | 'bottom' | 'corner', e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const rect = sifaatWindowRef.current?.getBoundingClientRect();
+    isResizingRef.current = {
+      active: true,
+      edge,
+      startX: e.clientX,
+      startY: e.clientY,
+      startW: rect ? rect.width : sifaatWindowSize.width,
+      startH: rect ? rect.height : sifaatWindowSize.height,
+      startLeft: rect ? rect.left : 0
+    };
+  };
+
+  const handleResizePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current.active) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const { edge, startX, startY, startW, startH, startLeft } = isResizingRef.current;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    let newW = startW;
+    let newH = startH;
+
+    if (edge === 'left' || edge === 'corner') {
+      newW = Math.max(240, Math.min(window.innerWidth - 24, startW - dx));
+      const widthDiff = newW - startW;
+      setSifaatWindowPos(prev => prev ? { ...prev, x: startLeft - widthDiff } : prev);
+    }
+    if (edge === 'bottom' || edge === 'corner') {
+      newH = Math.max(180, Math.min(window.innerHeight * 0.85, startH + dy));
+    }
+
+    setSifaatWindowSize({ width: newW, height: newH });
+  };
+
+  const handleResizePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current.active) return;
+    isResizingRef.current.active = false;
+    isResizingRef.current.edge = null;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Camera elevation adjustment (pedestal/crane vertical rising and lowering)
+  const adjustCameraElevation = (deltaY: number) => {
+    if (!sceneElementsRef.current) return;
+    const { spherical } = sceneElementsRef.current;
+    spherical.target.y = Math.max(-0.95, Math.min(0.70, spherical.target.y + deltaY));
+    camPoseRef.current.target.copy(spherical.target);
+    const { camera, scene, renderer, markDirty } = sceneElementsRef.current;
+    if (camera) {
+      camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(spherical.target);
+    }
+    if (markDirty) {
+      markDirty(2);
+    }
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
+    }
+  };
+
+  const elevationAnimRef = useRef<number | null>(null);
+  const elevationDirRef = useRef<number>(0);
+
+  const startElevation = (dir: number) => {
+    elevationDirRef.current = dir;
+    adjustCameraElevation(dir * 0.04);
+    if (elevationAnimRef.current === null) {
+      let lastAnimTime = performance.now();
+      const step = (now: number) => {
+        if (elevationDirRef.current !== 0) {
+          const dt = Math.min(0.05, (now - lastAnimTime) / 1000);
+          lastAnimTime = now;
+          adjustCameraElevation(elevationDirRef.current * 0.55 * dt);
+          elevationAnimRef.current = requestAnimationFrame(step);
+        } else {
+          elevationAnimRef.current = null;
+        }
+      };
+      elevationAnimRef.current = requestAnimationFrame(step);
+    }
+  };
+
+  const stopElevation = () => {
+    elevationDirRef.current = 0;
+    if (elevationAnimRef.current !== null) {
+      cancelAnimationFrame(elevationAnimRef.current);
+      elevationAnimRef.current = null;
+    }
+  };
+
+  // Keyboard shortcut listener: Space to rise up, Shift to lower down
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        adjustCameraElevation(0.035);
+      } else if (e.key === 'Shift') {
+        adjustCameraElevation(-0.035);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  const isDraggingWindowRef = useRef(false);
+  const dragStartPointerRef = useRef({ x: 0, y: 0 });
+  const dragStartWindowRef = useRef({ x: 0, y: 0 });
+
+  const handleWindowDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!sifaatWindowRef.current) return;
+    const rect = sifaatWindowRef.current.getBoundingClientRect();
+    isDraggingWindowRef.current = true;
+    dragStartPointerRef.current = { x: e.clientX, y: e.clientY };
+    dragStartWindowRef.current = { x: rect.left, y: rect.top };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleWindowDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingWindowRef.current || !sifaatWindowRef.current) return;
+    const dx = e.clientX - dragStartPointerRef.current.x;
+    const dy = e.clientY - dragStartPointerRef.current.y;
+    const rect = sifaatWindowRef.current.getBoundingClientRect();
+    const maxX = Math.max(0, window.innerWidth - rect.width - 8);
+    const maxY = Math.max(0, window.innerHeight - rect.height - 8);
+    const newX = Math.max(8, Math.min(maxX, dragStartWindowRef.current.x + dx));
+    const newY = Math.max(8, Math.min(maxY, dragStartWindowRef.current.y + dy));
+    setSifaatWindowPos({ x: newX, y: newY });
+  };
+
+  const handleWindowDragEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingWindowRef.current) {
+      isDraggingWindowRef.current = false;
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  };
+  const sifaat3DOpenRef = useRef<boolean>(false);
+
+  // Toggles
+  const [showMakhrajColors, setShowMakhrajColors] = useState<boolean>(true);
+  const [showPalate, setShowPalate] = useState<boolean>(true);
+  const [showUpperTeeth, setShowUpperTeeth] = useState<boolean>(true);
+  const [upperTeethOpacity, setUpperTeethOpacity] = useState<number>(56);
+  const [showLowerTeeth, setShowLowerTeeth] = useState<boolean>(true);
+  const [gears, setGears] = useState<Record<string, number>>(() => ({ ...currentLetter.gears }));
+
+  // Motion simulation state
+  const isSimulatingRef = useRef(false);
+  const simulationStartTimeRef = useRef(0);
+  const morphProgressRef = useRef(1.0);
+  const isRestingAtAlifRef = useRef(false);
+  const [isPlayingSimulation, setIsPlayingSimulation] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+
+  // Preload letter audio blob into memory on mount and whenever letter changes (strictly 1 network call)
+  useEffect(() => {
+    setIsAudioLoading(true);
+    preloadLetterAudio(currentLetter.letter)
+      .catch(() => {})
+      .finally(() => {
+        setIsAudioLoading(false);
+      });
+  }, [currentLetter.letter]);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      stopLetterAudio();
+    };
+  }, []);
+
+  // Default camera viewpoint (3/4 dental perspective)
+  const DEFAULT_CAM = useMemo(() => ({
+    radius: 3.28,
+    theta: -1.36,
+    phi: 1.48,
+    target: new THREE.Vector3(0.0, -0.04, 0.06)
+  }), []);
+
+  const camPoseRef = useRef({
+    radius: 3.28,
+    theta: -1.36,
+    phi: 1.48,
+    target: new THREE.Vector3(0.0, -0.04, 0.06)
+  });
+
+  const currentLetterRef = useRef(currentLetter);
+  const dhaadModeRef = useRef(dhaadMode);
+  const showAnatomyRef = useRef(showAnatomy);
+  const showMakhrajColorsRef = useRef(showMakhrajColors);
+  const activeMainTabRef = useRef(activeMainTab);
+  const forceDeformRef = useRef(true);
+
+  useEffect(() => {
+    currentLetterRef.current = currentLetter;
+    dhaadModeRef.current = dhaadMode;
+    showAnatomyRef.current = showAnatomy;
+    showMakhrajColorsRef.current = showMakhrajColors;
+    activeMainTabRef.current = activeMainTab;
+    sifaat3DOpenRef.current = sifaat3DOpen;
+    forceDeformRef.current = true;
+  }, [currentLetter, dhaadMode, showAnatomy, showMakhrajColors, activeMainTab, sifaat3DOpen]);
+
+  const camAnimRef = useRef<{
+    startRadius: number;
+    targetRadius?: number;
+    startTheta: number;
+    targetTheta: number;
+    startPhi: number;
+    targetPhi?: number;
+    startTarget?: THREE.Vector3;
+    targetTarget?: THREE.Vector3;
+    startTime: number;
+    duration: number;
+  } | null>(null);
+
+  // Three.js and Gear targets
+  const targetGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
+  const currentGearsRef = useRef<Record<string, number>>({ ...currentLetter.gears });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Virtual Joystick State for Mobile 3D Camera Control
+  const [joystickKnob, setJoystickKnob] = useState({ x: 0, y: 0 });
+  const [isJoystickActive, setIsJoystickActive] = useState(false);
+  const joystickCenterRef = useRef({ x: 0, y: 0 });
+  const joystickActiveRef = useRef(false);
+  const joystickDeltaRef = useRef<{ x: number; y: number } | null>(null);
+
+  const JOYSTICK_MAX_R = 22;
+
+  const updateJoystickDelta = (clientX: number, clientY: number) => {
+    const dx = clientX - joystickCenterRef.current.x;
+    const dy = clientY - joystickCenterRef.current.y;
+    const dist = Math.hypot(dx, dy);
+    const clampedDist = Math.min(JOYSTICK_MAX_R, dist);
+    const angle = Math.atan2(dy, dx);
+    const kx = dist === 0 ? 0 : Math.cos(angle) * clampedDist;
+    const ky = dist === 0 ? 0 : Math.sin(angle) * clampedDist;
+
+    setJoystickKnob({ x: kx, y: ky });
+    joystickDeltaRef.current = {
+      x: kx / JOYSTICK_MAX_R,
+      y: ky / JOYSTICK_MAX_R
+    };
+  };
+
+  const handleJoystickPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = true;
+    setIsJoystickActive(true);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    joystickCenterRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+
+    updateJoystickDelta(e.clientX, e.clientY);
+
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleJoystickPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    updateJoystickDelta(e.clientX, e.clientY);
+  };
+
+  const handleJoystickPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = false;
+    setIsJoystickActive(false);
+    setJoystickKnob({ x: 0, y: 0 });
+    joystickDeltaRef.current = null;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = true;
+    setIsJoystickActive(true);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    joystickCenterRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+
+    if (e.touches.length > 0) {
+      updateJoystickDelta(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!joystickActiveRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length > 0) {
+      updateJoystickDelta(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    joystickActiveRef.current = false;
+    setIsJoystickActive(false);
+    setJoystickKnob({ x: 0, y: 0 });
+    joystickDeltaRef.current = null;
+  };
+
+  useEffect(() => {
+    const handleGlobalRelease = () => {
+      if (joystickActiveRef.current) {
+        joystickActiveRef.current = false;
+        setIsJoystickActive(false);
+        setJoystickKnob({ x: 0, y: 0 });
+        joystickDeltaRef.current = null;
+      }
+    };
+    window.addEventListener('pointerup', handleGlobalRelease);
+    window.addEventListener('pointercancel', handleGlobalRelease);
+    window.addEventListener('touchend', handleGlobalRelease);
+    window.addEventListener('touchcancel', handleGlobalRelease);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalRelease);
+      window.removeEventListener('pointercancel', handleGlobalRelease);
+      window.removeEventListener('touchend', handleGlobalRelease);
+      window.removeEventListener('touchcancel', handleGlobalRelease);
+    };
+  }, []);
+
+  // Simulate Motion (Alif -> Makhraj -> Alif) and optional letter audio
+  const triggerSimulation = (playAudioOption: boolean | React.MouseEvent = true) => {
+    const playAudio = typeof playAudioOption === 'boolean' ? playAudioOption : true;
+    // Guard: if already simulating, OR audio is playing, OR an API call is currently PENDING:
+    // "even one API call is pending, shouldnt call another API when click on the button."
+    if (
+      isSimulatingRef.current ||
+      (playAudio && (isLetterAudioPlaying(currentLetter.letter) || isAudioFetchPending(currentLetter.letter) || isAudioLoading))
+    ) {
+      return;
+    }
+    isSimulatingRef.current = true;
+    setIsPlayingSimulation(true);
+    isRestingAtAlifRef.current = false;
+    morphProgressRef.current = 0.0;
+    Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
+      currentGearsRef.current[k] = ALIF_MAKHRAJ_GEARS[k];
+    });
+    forceDeformRef.current = true;
+    simulationStartTimeRef.current = performance.now();
+
+    if (playAudio) {
+      playLetterAudio(currentLetter.letter, () => {
+        setIsPlayingSimulation(false);
+      });
+    } else {
+      setTimeout(() => {
+        setIsPlayingSimulation(false);
+      }, 1000);
+    }
+  };
+
+  // Three.js scene refs
+  const sceneElementsRef = useRef<{
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    renderer: THREE.WebGLRenderer;
+    spherical: { radius: number; theta: number; phi: number; target: THREE.Vector3 };
+    hardPalateMesh: THREE.Mesh;
+    softPalateMesh: THREE.Mesh;
+    alveolarArcMesh: THREE.Mesh;
+    upperTeethGroup: THREE.Group;
+    lowerTeethGroup: THREE.Group;
+    lowerJawPivot: THREE.Group;
+    tongueMesh: THREE.Mesh;
+    lipsGroup: THREE.Group;
+    upperLipMesh: THREE.Mesh;
+    lowerLipMesh: THREE.Mesh;
+    throatRoot?: THREE.Group;
+    pharynxMesh?: THREE.Mesh;
+    epiglottisPivot?: THREE.Group;
+    epiglottisMesh?: THREE.Mesh;
+    leftVocalCord?: THREE.Mesh;
+    rightVocalCord?: THREE.Mesh;
+    airwayParticles?: THREE.Points;
+    particlePointsData?: { t: number; laneX: number; laneZ: number; speedOffset: number }[];
+    animFrameId: number;
+    upperToothMaterial?: THREE.MeshLambertMaterial;
+    markDirty: (frames?: number) => void;
+  } | null>(null);
+
+  // Reset camera viewpoint to default perspective
+  const resetCameraToDefault = (smooth = true) => {
+    if (!sceneElementsRef.current) return;
+    const { spherical, camera, scene, renderer, markDirty } = sceneElementsRef.current;
+    if (!smooth) {
+      camAnimRef.current = null;
+      spherical.radius = DEFAULT_CAM.radius;
+      spherical.theta = DEFAULT_CAM.theta;
+      spherical.phi = DEFAULT_CAM.phi;
+      spherical.target.copy(DEFAULT_CAM.target);
+      camPoseRef.current.radius = spherical.radius;
+      camPoseRef.current.theta = spherical.theta;
+      camPoseRef.current.phi = spherical.phi;
+      camPoseRef.current.target.copy(spherical.target);
+      camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(spherical.target);
+      if (markDirty) markDirty(2);
+      if (renderer && scene && camera) renderer.render(scene, camera);
+      return;
+    }
+
+    // Shortest angular difference
+    let diffTheta = (DEFAULT_CAM.theta - (spherical.theta % (Math.PI * 2)));
+    while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
+    while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
+
+    camAnimRef.current = {
+      startRadius: spherical.radius,
+      startTheta: spherical.theta,
+      targetTheta: spherical.theta + diffTheta,
+      startPhi: spherical.phi,
+      startTime: performance.now(),
+      duration: 380
+    };
+  };
+
+  // Change active letter: maintains current camera perspective without resetting
+  const selectLetter = (preset: LetterPreset) => {
+    stopLetterAudio();
+    setIsPlayingSimulation(false);
+    setCurrentLetter(preset);
+    isSimulatingRef.current = false;
+    isRestingAtAlifRef.current = false;
+    morphProgressRef.current = 1.0;
+    const nextGears = { ...preset.gears, upperOpacity: upperTeethOpacity };
+    forceDeformRef.current = true;
+    targetGearsRef.current = { ...nextGears };
+    setGears(nextGears);
+  };
+
+  // Adjust gear slider
+  const handleGearChange = (key: string, value: number) => {
+    isSimulatingRef.current = false;
+    isRestingAtAlifRef.current = false;
+    morphProgressRef.current = 1.0;
+    forceDeformRef.current = true;
+    targetGearsRef.current[key] = value;
+    setGears(prev => ({ ...prev, [key]: value }));
+    if (key === 'upperOpacity') {
+      setUpperTeethOpacity(value);
+    }
+  };
+
+  const handleResetGears = () => {
+    const neutral: Record<string, number> = {
+      jawOpen: 20, tipElevation: 0, tipForward: 0, backIstila: 0, middleArch: 0, lateralSpread: 10, greenPointPos: 18, upperOpacity: 56
+    };
+    forceDeformRef.current = true;
+    targetGearsRef.current = { ...neutral };
+    setGears({ ...neutral });
+    setUpperTeethOpacity(56);
+  };
+
+  // ----------------------------------------------------------------------------
+  // 4. MAIN THREE.JS MOUNT & LIFECYCLE
+  // ----------------------------------------------------------------------------
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+
+    const width = container.clientWidth || 640;
+    const height = container.clientHeight || 420;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(resolvedTheme === 'dark' ? 0x070c18 : 0xebedf1);
+
+    const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 100);
+    const spherical = {
+      radius: camPoseRef.current.radius,
+      theta: camPoseRef.current.theta,
+      phi: camPoseRef.current.phi,
+      target: camPoseRef.current.target.clone()
+    };
+    const updateCamPos = () => {
+      camera.position.x = spherical.target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.target.y + spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(spherical.target);
+      camPoseRef.current.radius = spherical.radius;
+      camPoseRef.current.theta = spherical.theta;
+      camPoseRef.current.phi = spherical.phi;
+      camPoseRef.current.target.copy(spherical.target);
+    };
+    updateCamPos();
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(width, height);
+    container.appendChild(renderer.domElement);
+
+    // Lights (Brightened for clear anatomical visualization)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.92);
+    scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x9ca3af, 0.52);
+    hemiLight.position.set(0, 2.4, 0.8);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff8f5, 0.68);
+    dirLight.position.set(-2.2, 1.2, 1.4);
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.38);
+    fillLight.position.set(2.2, 1.0, 1.6);
+    scene.add(fillLight);
+
+    const bounceLight = new THREE.DirectionalLight(0xfff1e6, 0.24);
+    bounceLight.position.set(0.0, -1.8, 0.8);
+    scene.add(bounceLight);
+
+    const mouthRoot = new THREE.Group();
+    scene.add(mouthRoot);
+
+    // Palate math
+    const getPalateFrontArchZ = (signedTx: number) => 0.90 - 0.18 * signedTx * signedTx;
+    const getPalateHalfWidth = (u: number) => 0.32 + 0.36 * Math.pow(Math.max(0.0, Math.min(1.0, u)), 0.60);
+
+    const invertPalateXZ = (x: number, z: number) => {
+      if (z < -0.19) {
+        const v = Math.max(0.0, Math.min(1.0, (-0.19 - z) / 0.52));
+        const halfW = 0.68 * (1.0 - 0.42 * Math.pow(v, 1.35));
+        const signedTx = Math.max(-1.0, Math.min(1.0, x / Math.max(0.08, halfW)));
+        return { isSoft: true, u: 1.0, v, tx: Math.abs(signedTx), signedTx };
+      }
+      let signedTx = Math.max(-1.0, Math.min(1.0, x / 0.32));
+      let zFront = getPalateFrontArchZ(signedTx);
+      let u = Math.max(0.0, Math.min(1.0, (zFront - z) / (zFront + 0.19)));
+      for (let i = 0; i < 6; i++) {
+        const halfW = getPalateHalfWidth(u);
+        signedTx = Math.max(-1.0, Math.min(1.0, x / halfW));
+        zFront = getPalateFrontArchZ(signedTx);
+        u = Math.max(0.0, Math.min(1.0, (zFront - z) / (zFront + 0.19)));
+      }
+      return { isSoft: false, u, v: 0.0, tx: Math.abs(signedTx), signedTx };
+    };
+
+    const getPalateCeilingY = (x: number, z: number) => {
+      const { isSoft, u, v, tx } = invertPalateXZ(x, z);
+      let edgeY: number, domePeakY: number;
+      if (!isSoft) {
+        const gingivalCollarDip = -0.014 * Math.exp(-Math.pow(u / 0.032, 2));
+        edgeY = 0.232 + 0.046 * Math.sin(u * Math.PI * 0.85) + gingivalCollarDip * 0.6;
+        if (u <= BIO_ALVEOLAR_SHELF_U) {
+          const tShelf = u / BIO_ALVEOLAR_SHELF_U;
+          const boundaryCrease = -0.008 * Math.exp(-Math.pow((u - BIO_ALVEOLAR_SHELF_U) / 0.012, 2));
+          domePeakY = 0.232 + 0.042 * tShelf + gingivalCollarDip + boundaryCrease;
+        } else {
+          const uVault = (u - BIO_ALVEOLAR_SHELF_U) / (1.0 - BIO_ALVEOLAR_SHELF_U);
+          const boundaryCrease = -0.008 * Math.exp(-Math.pow((u - BIO_ALVEOLAR_SHELF_U) / 0.012, 2));
+          const mainVault = 0.042 + 0.212 * Math.sin(Math.pow(uVault, 0.68) * Math.PI * 0.80) + boundaryCrease;
+          domePeakY = 0.232 + mainVault;
+        }
+      } else {
+        const startPeak = 0.232 + 0.042 + 0.212 * Math.sin(Math.PI * 0.80);
+        edgeY = 0.268 - 0.055 * Math.pow(v, 1.25);
+        domePeakY = startPeak - 0.105 * Math.pow(v, 1.25);
+      }
+      const crossExp = (!isSoft && u <= BIO_ALVEOLAR_SHELF_U) ? 0.72 : 1.15;
+      const domeProfile = Math.pow(Math.cos(tx * Math.PI * 0.48), crossExp);
+      return edgeY + domeProfile * (domePeakY - edgeY);
+    };
+
+    const createPalateSectionGeometry = (tzStart: number, tzEnd: number, segsZ = 44, segsX = 44) => {
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const uArray: number[] = [];
+      const isSoftArray: number[] = [];
+      const indices: number[] = [];
+      const ringSize = segsX + 1;
+      const isSoftSection = (tzStart >= BIO_HARD_PALATE_RATIO - 0.005);
+
+      for (let iz = 0; iz <= segsZ; iz++) {
+        const tz = tzStart + (iz / segsZ) * (tzEnd - tzStart);
+        for (let ix = 0; ix <= segsX; ix++) {
+          const signedTx = (ix / segsX) * 2 - 1;
+          let x = 0, z = 0, u = 1.0;
+          if (!isSoftSection) {
+            u = Math.max(0.0, Math.min(1.0, tz / BIO_HARD_PALATE_RATIO));
+            const halfW = getPalateHalfWidth(u);
+            x = signedTx * halfW;
+            const zFront = getPalateFrontArchZ(signedTx);
+            z = zFront * (1.0 - u) + (-0.19) * u;
+          } else {
+            const v = Math.max(0.0, Math.min(1.0, (tz - BIO_HARD_PALATE_RATIO) / (1.0 - BIO_HARD_PALATE_RATIO)));
+            const halfW = 0.68 * (1.0 - 0.42 * Math.pow(v, 1.35));
+            x = signedTx * halfW;
+            z = -0.19 - v * 0.52 * (1.0 - 0.18 * signedTx * signedTx);
+          }
+
+          const y = getPalateCeilingY(x, z);
+          positions.push(x, y, z);
+          uArray.push(u);
+          isSoftArray.push(isSoftSection ? 1 : 0);
+
+          let rCol: number, gCol: number, bCol: number;
+          if (!isSoftSection && u <= BIO_ALVEOLAR_SHELF_U) {
+            const fineStriation = 0.035 * Math.cos((u / BIO_ALVEOLAR_SHELF_U) * Math.PI * 6.0);
+            const boundaryGlow = Math.exp(-Math.pow((u - BIO_ALVEOLAR_SHELF_U) / 0.012, 2)) * 0.12;
+            const archEdgeShade = Math.pow(Math.abs(signedTx), 2.2) * 0.10;
+            rCol = Math.min(1.0, 0.92 + fineStriation + boundaryGlow - archEdgeShade * 0.4);
+            gCol = Math.min(1.0, 0.72 + fineStriation * 0.8 + boundaryGlow - archEdgeShade * 0.35);
+            bCol = Math.min(1.0, 0.42 + fineStriation * 0.5 + boundaryGlow * 1.2 - archEdgeShade * 0.25);
+          } else {
+            const domeCrestShade = Math.pow(Math.max(0.0, Math.min(1.0, (y - 0.24) / 0.22)), 1.5) * 0.18;
+            const endEdgeShade = Math.pow(Math.max(0.0, (tz - 0.86) / 0.14), 1.5) * 0.18;
+            const archRimShade = Math.pow(Math.abs(signedTx), 2.2) * 0.12;
+            const rimShade = Math.min(0.36, domeCrestShade + endEdgeShade + archRimShade);
+            rCol = 0.78 - 0.16 * rimShade;
+            gCol = 0.40 - 0.08 * rimShade;
+            bCol = 0.46 - 0.10 * rimShade;
+          }
+          colors.push(rCol, gCol, bCol);
+        }
+      }
+
+      for (let iz = 0; iz < segsZ; iz++) {
+        for (let ix = 0; ix < segsX; ix++) {
+          const a = iz * ringSize + ix;
+          const b = a + 1;
+          const c = (iz + 1) * ringSize + ix;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = {
+        baseColors: new Float32Array(colors),
+        uArray: new Float32Array(uArray),
+        isSoftArray: new Uint8Array(isSoftArray)
+      };
+      return geom;
+    };
+
+    // Dental arch builders
+    const buildArchLookupTable = (isUpper: boolean) => {
+      const N = 360;
+      const wMax = isUpper ? 0.74 : 0.69;
+      const zFront = isUpper ? 0.96 : 0.90;
+      const zBack = isUpper ? -0.56 : -0.54;
+      const pts: Array<{ t: number; x: number; z: number; arcLen: number; uArc?: number }> = [];
+      let cumLen = 0;
+
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const angle = t * (Math.PI * 0.48);
+        const x = wMax * Math.sin(angle);
+        const z = zFront - (1 - Math.cos(angle)) * (zFront - zBack) * 0.72 - Math.pow(t, 1.35) * (zFront - zBack) * 0.30;
+        if (i > 0) {
+          cumLen += Math.hypot(x - pts[i - 1].x, z - pts[i - 1].z);
+        }
+        pts.push({ t, x, z, arcLen: cumLen });
+      }
+      pts.forEach(p => { p.uArc = p.arcLen / cumLen; });
+      return pts as Array<{ t: number; x: number; z: number; arcLen: number; uArc: number }>;
+    };
+
+    const upperArchTable = buildArchLookupTable(true);
+    const lowerArchTable = buildArchLookupTable(false);
+
+    const sampleArchByArcFraction = (f: number, side: number, isUpper: boolean) => {
+      const table = isUpper ? upperArchTable : lowerArchTable;
+      const clampedF = Math.max(0, Math.min(1, f));
+      let idx = Math.floor(clampedF * (table.length - 1));
+      while (idx < table.length - 1 && table[idx + 1].uArc < clampedF) idx++;
+      while (idx > 0 && table[idx].uArc > clampedF) idx--;
+
+      const p0 = table[idx];
+      const p1 = table[Math.min(table.length - 1, idx + 1)];
+      const span = (p1.uArc - p0.uArc) || 0.0001;
+      const alpha = Math.max(0, Math.min(1, (clampedF - p0.uArc) / span));
+
+      const xAbs = p0.x + (p1.x - p0.x) * alpha;
+      const z = p0.z + (p1.z - p0.z) * alpha;
+      const x = side * xAbs;
+
+      const iPrev = Math.max(0, idx - 1);
+      const iNext = Math.min(table.length - 1, idx + 2);
+      const tx = side * (table[iNext].x - table[iPrev].x);
+      const tz = table[iNext].z - table[iPrev].z;
+      const tLen = Math.hypot(tx, tz) || 1;
+
+      const nx = (side > 0) ? -tz / tLen : tz / tLen;
+      const nz = (side > 0) ? tx / tLen : -tx / tLen;
+      const speeLift = isUpper ? (Math.pow(clampedF, 1.6) * 0.05) : (Math.pow(clampedF, 1.55) * 0.14);
+
+      return { x, z, nx, nz, speeLift };
+    };
+
+    const createToothMesh = (spec: any, side: number, isUpper: boolean, mat: THREE.Material) => {
+      const segsU = 26;
+      const segsV = 16;
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      const fCenter = (spec.fStart + spec.fEnd) * 0.5;
+      const fHalfSpan = (spec.fEnd - spec.fStart) * 0.508;
+      const halfD = spec.depth * 0.5;
+      const height = spec.height;
+      const dirY = isUpper ? -1 : 1;
+      const baseRootY = isUpper ? 0.24 : -0.22;
+
+      for (let iv = 0; iv <= segsV; iv++) {
+        const isRootCap = (iv === 0);
+        const isOcclusalCap = (iv >= segsV - 1);
+        const v = isRootCap ? 0.0 : Math.min(1.0, iv / (segsV - 2));
+
+        let widthEnv: number;
+        if (spec.type === 'incisor') {
+          widthEnv = (v < 0.28) ? (0.72 + (v / 0.28) * 0.25) : (0.97 - 0.04 * Math.pow((v - 0.28) / 0.72, 1.6));
+        } else if (spec.type === 'canine') {
+          widthEnv = (v < 0.30) ? (0.74 + (v / 0.30) * 0.24) : (0.98 * (1.0 - 0.20 * Math.pow((v - 0.30) / 0.70, 1.4)));
+        } else {
+          widthEnv = (v < 0.26) ? (0.75 + (v / 0.26) * 0.23) : (0.98 + 0.04 * Math.sin(((v - 0.26) / 0.74) * Math.PI * 0.82));
+        }
+
+        const depthEnv = (spec.type === 'incisor')
+          ? (0.86 * (1.0 - 0.68 * Math.pow(v, 1.25)))
+          : (0.78 + 0.24 * Math.sin(v * Math.PI * 0.78));
+
+        const cervicalGumBridge = (isUpper && fCenter < 0.35 && v < 0.36)
+          ? (-0.048 * Math.pow((0.36 - v) / 0.36, 1.35) * Math.cos((fCenter / 0.35) * Math.PI * 0.5))
+          : 0.0;
+
+        for (let iu = 0; iu <= segsU; iu++) {
+          const theta = (iu / segsU) * Math.PI * 2;
+          const cosT = Math.cos(theta);
+          const sinT = Math.sin(theta);
+
+          let localS = Math.sign(cosT) * Math.pow(Math.abs(cosT), 0.74) * widthEnv;
+          let localN = Math.sign(sinT) * Math.pow(Math.abs(sinT), 0.82) * halfD * depthEnv + cervicalGumBridge;
+          let y = v * height;
+
+          if (v > 0.55) {
+            const topFactor = (v - 0.55) / 0.45;
+            if (spec.type === 'incisor') {
+              y -= Math.pow(Math.abs(cosT), 3.2) * 0.020 * topFactor;
+            } else if (spec.type === 'canine') {
+              y += (Math.pow(Math.max(0.0, 1.0 - cosT * cosT), 1.3) - 0.32) * 0.030 * topFactor;
+            } else {
+              const twoLobesMD = Math.sin(Math.abs(cosT) * Math.PI);
+              const twoLobesBL = Math.pow(Math.abs(sinT), 1.1);
+              y += (twoLobesMD * twoLobesBL * 0.026 - Math.exp(-Math.pow(sinT / 0.30, 2)) * 0.010) * topFactor;
+            }
+          }
+
+          if (isRootCap) { localS = 0; localN = 0; }
+          else if (isOcclusalCap) {
+            const rScale = (iv === segsV) ? 0.0 : 0.48;
+            localS *= rScale;
+            localN *= rScale;
+          }
+
+          const fPos = fCenter + localS * fHalfSpan;
+          const archSample = sampleArchByArcFraction(fPos, side, isUpper);
+          const wx = archSample.x + archSample.nx * localN;
+          const wz = archSample.z + archSample.nz * localN;
+          const wy = baseRootY + archSample.speeLift + dirY * y;
+          positions.push(wx, wy, wz);
+
+          const capFactor = isOcclusalCap ? 0.30 : 1.0;
+          const interdentalCrevice = Math.pow(Math.abs(cosT), 2.5) * 0.44 * capFactor;
+          const cervicalShadow = (v < 0.28) ? Math.pow((0.28 - v) / 0.28, 1.35) * 0.28 : 0.0;
+          const anteriorCurveShadow = Math.pow(Math.max(0.0, 1.0 - fPos / 0.32), 1.5) * 0.16 * capFactor;
+          const lingualShadow = (sinT < 0) ? (-sinT * 0.16 * capFactor) : 0.0;
+          const buccalHighlight = (sinT > 0.15) ? (Math.pow(sinT, 1.4) * (1.0 - cosT * cosT) * 0.06) : 0.0;
+          const baseBrightness = isUpper ? 0.84 : 0.88;
+          const shade = Math.max(0.40, Math.min(0.92, baseBrightness + buccalHighlight - interdentalCrevice - cervicalShadow - anteriorCurveShadow - lingualShadow));
+          colors.push(shade * 0.98, shade * 0.99, shade * 1.01);
+        }
+      }
+
+      for (let iv = 0; iv < segsV; iv++) {
+        for (let iu = 0; iu < segsU; iu++) {
+          const a = iv * (segsU + 1) + iu;
+          const b = a + 1;
+          const c = (iv + 1) * (segsU + 1) + iu;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.name = `${isUpper ? 'Upper' : 'Lower'}_Tooth_${side}_${spec.type}_${spec.index}`;
+      mesh.userData = { isUpper, side, toothIndex: spec.index, baseColors: new Float32Array(colors) };
+      return mesh;
+    };
+
+    const buildDentalArch = (isUpper: boolean, mat: THREE.Material) => {
+      const group = new THREE.Group();
+      const intervals = [
+        { index: 0, fStart: 0.000, fEnd: 0.102, height: 0.24, depth: 0.100, type: 'incisor' },
+        { index: 1, fStart: 0.100, fEnd: 0.196, height: 0.23, depth: 0.102, type: 'incisor' },
+        { index: 2, fStart: 0.194, fEnd: 0.298, height: 0.25, depth: 0.122, type: 'canine' },
+        { index: 3, fStart: 0.296, fEnd: 0.412, height: 0.22, depth: 0.148, type: 'premolar' },
+        { index: 4, fStart: 0.410, fEnd: 0.534, height: 0.21, depth: 0.162, type: 'premolar' },
+        { index: 5, fStart: 0.532, fEnd: 0.686, height: 0.20, depth: 0.196, type: 'molar' },
+        { index: 6, fStart: 0.684, fEnd: 0.840, height: 0.195, depth: 0.196, type: 'molar' },
+        { index: 7, fStart: 0.838, fEnd: 0.988, height: 0.188, depth: 0.190, type: 'molar' }
+      ];
+      [-1, 1].forEach(side => {
+        intervals.forEach(spec => group.add(createToothMesh(spec, side, isUpper, mat)));
+      });
+      return group;
+    };
+
+    const createLowerMandibleGumGeometry = () => {
+      const segsArc = 64;
+      const segsCross = 20;
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      for (let ia = 0; ia <= segsArc; ia++) {
+        const s = (ia / segsArc) * 2 - 1;
+        const f = Math.abs(s);
+        const side = s >= 0 ? 1 : -1;
+        const archPt = sampleArchByArcFraction(f, side, false);
+        const toothWave = Math.cos(f * 7.0 * Math.PI * 2);
+        const jawBottomY = -0.58 + Math.pow(f, 2.0) * 0.18;
+        const jawCrestY = -0.15 + archPt.speeLift;
+
+        for (let ic = 0; ic <= segsCross; ic++) {
+          const tc = ic / segsCross;
+          const angleC = tc * Math.PI * 2;
+          const cosC = Math.cos(angleC);
+          const sinC = Math.sin(angleC);
+
+          const halfThick = 0.118 + 0.036 * Math.max(0, sinC) + (f > 0.5 ? 0.022 : 0);
+          const normalOffset = -cosC * halfThick;
+          const neckScallop = (sinC > 0) ? (Math.pow(sinC, 2.2) * 0.028 * toothWave) : 0.0;
+          const y = (sinC >= 0) ? (jawBottomY + sinC * (jawCrestY - jawBottomY) + neckScallop) : (jawBottomY + sinC * 0.022);
+
+          const isLabialWall = (sinC > 0 && cosC < -0.15);
+          const rootBulge = isLabialWall ? ((toothWave * 0.5 + 0.5) * 0.022 * sinC * (1.1 - 0.35 * f)) : 0.0;
+
+          const px = archPt.x + archPt.nx * (normalOffset + rootBulge);
+          const pz = archPt.z + archPt.nz * (normalOffset + rootBulge);
+          positions.push(px, y, pz);
+
+          const buccalFacing = Math.max(0.0, -cosC);
+          const verticalLight = (sinC >= 0) ? (0.48 + 0.52 * Math.sin(sinC * Math.PI * 0.78)) : Math.max(0.22, 0.45 + sinC * 0.35);
+          const antCurveShadow = 1.0 - 0.50 * Math.pow(Math.max(0.0, (0.34 - f) / 0.34), 1.45);
+          const backEndShadow = 1.0 - 0.44 * Math.pow(Math.max(0.0, (f - 0.80) / 0.20), 1.5);
+          const lingualDarken = 0.36 + 0.64 * Math.pow(buccalFacing, 0.65);
+          const waveHighlight = isLabialWall ? (0.04 * toothWave) : 0.0;
+          const gShade = Math.max(0.22, Math.min(1.0, verticalLight * antCurveShadow * backEndShadow * lingualDarken + waveHighlight));
+          colors.push(0.75 * gShade, 0.19 * gShade, 0.24 * gShade);
+        }
+      }
+
+      const ringStride = segsCross + 1;
+      for (let ia = 0; ia < segsArc; ia++) {
+        for (let ic = 0; ic < segsCross; ic++) {
+          const a = ia * ringStride + ic;
+          const b = a + 1;
+          const c = (ia + 1) * ringStride + ic;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      return geom;
+    };
+
+    // Materials
+    const hardPalateMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.54, side: THREE.DoubleSide, depthWrite: false
+    });
+    const softPalateMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.54, side: THREE.DoubleSide, depthWrite: false
+    });
+    const upperToothMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.56, side: THREE.DoubleSide, depthWrite: true
+    });
+    const lowerGumMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, depthWrite: true
+    });
+    const lowerToothMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, depthWrite: true
+    });
+    const tongueMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, depthWrite: true
+    });
+
+    // Upper jaw assembly
+    const upperJawGroup = new THREE.Group();
+    mouthRoot.add(upperJawGroup);
+
+    const hardPalateMesh = new THREE.Mesh(createPalateSectionGeometry(0.00, BIO_HARD_PALATE_RATIO, 44, 44), hardPalateMaterial);
+    hardPalateMesh.renderOrder = 1;
+    upperJawGroup.add(hardPalateMesh);
+
+    const softPalateMesh = new THREE.Mesh(createPalateSectionGeometry(BIO_HARD_PALATE_RATIO, 1.00, 28, 44), softPalateMaterial);
+    softPalateMesh.renderOrder = 1;
+    upperJawGroup.add(softPalateMesh);
+
+    // Alveolar Boundary Arc
+    const createAlveolarArcMesh = () => {
+      const uBorder = BIO_ALVEOLAR_SHELF_U;
+      const halfW = getPalateHalfWidth(uBorder);
+      const curvePts: THREE.Vector3[] = [];
+      const steps = 48;
+      for (let i = 0; i <= steps; i++) {
+        const signedTx = (i / steps) * 2 - 1;
+        const x = signedTx * halfW;
+        const zFront = getPalateFrontArchZ(signedTx);
+        const z = zFront * (1.0 - uBorder) + (-0.19) * uBorder;
+        const y = getPalateCeilingY(x, z) - 0.002;
+        curvePts.push(new THREE.Vector3(x, y, z));
+      }
+      const path = new THREE.CatmullRomCurve3(curvePts);
+      const tubeGeom = new THREE.TubeGeometry(path, 48, 0.0065, 8, false);
+      const tubeMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.92 });
+      const mesh = new THREE.Mesh(tubeGeom, tubeMat);
+      mesh.renderOrder = 2;
+      return mesh;
+    };
+    const alveolarArcMesh = createAlveolarArcMesh();
+    upperJawGroup.add(alveolarArcMesh);
+
+    const upperTeethGroup = buildDentalArch(true, upperToothMaterial);
+    upperTeethGroup.renderOrder = 2;
+    upperJawGroup.add(upperTeethGroup);
+
+    // Lower jaw assembly
+    const lowerJawPivot = new THREE.Group();
+    lowerJawPivot.position.set(0, 0.0, -0.68);
+    mouthRoot.add(lowerJawPivot);
+
+    const lowerJawContent = new THREE.Group();
+    lowerJawContent.position.set(0, 0.0, 0.68);
+    lowerJawPivot.add(lowerJawContent);
+
+    const lowerGumMesh = new THREE.Mesh(createLowerMandibleGumGeometry(), lowerGumMaterial);
+    lowerJawContent.add(lowerGumMesh);
+
+    const lowerTeethGroup = buildDentalArch(false, lowerToothMaterial);
+    lowerJawContent.add(lowerTeethGroup);
+
+    // Tongue mesh
+    const TONGUE_SEGS_Z = 56;
+    const TONGUE_SEGS_U = 36;
+    const tongueGeom = new THREE.BufferGeometry();
+    const tonguePositions = new Float32Array((TONGUE_SEGS_Z + 1) * (TONGUE_SEGS_U + 1) * 3);
+    const tongueColors = new Float32Array((TONGUE_SEGS_Z + 1) * (TONGUE_SEGS_U + 1) * 3);
+    const tongueIndices: number[] = [];
+
+    for (let iz = 0; iz < TONGUE_SEGS_Z; iz++) {
+      for (let iu = 0; iu < TONGUE_SEGS_U; iu++) {
+        const a = iz * (TONGUE_SEGS_U + 1) + iu;
+        const b = a + 1;
+        const c = (iz + 1) * (TONGUE_SEGS_U + 1) + iu;
+        const d = c + 1;
+        tongueIndices.push(a, b, c, b, d, c);
+      }
+    }
+    tongueGeom.setAttribute('position', new THREE.BufferAttribute(tonguePositions, 3));
+    tongueGeom.setAttribute('color', new THREE.BufferAttribute(tongueColors, 3));
+    tongueGeom.setIndex(tongueIndices);
+
+    const tongueMesh = new THREE.Mesh(tongueGeom, tongueMaterial);
+    mouthRoot.add(tongueMesh);
+
+    const tongueSmoothTmp = new Float32Array(tonguePositions.length);
+    const smoothTongueGrid = (arr: Float32Array, passes: number, lambda: number) => {
+      const W = TONGUE_SEGS_U + 1;
+      const mid = Math.floor(TONGUE_SEGS_Z / 2) * W * 3;
+      // is the cross-section ring closed? (first and last column coincide)
+      const closed = Math.hypot(
+        arr[mid] - arr[mid + TONGUE_SEGS_U * 3],
+        arr[mid + 1] - arr[mid + TONGUE_SEGS_U * 3 + 1],
+        arr[mid + 2] - arr[mid + TONGUE_SEGS_U * 3 + 2]
+      ) < 1e-4;
+      for (let p = 0; p < passes; p++) {
+        for (let iz = 0; iz <= TONGUE_SEGS_Z; iz++) {
+          for (let iu = 0; iu <= TONGUE_SEGS_U; iu++) {
+            const i = (iz * W + iu) * 3;
+            let sx = 0, sy = 0, sz = 0, n = 0;
+            const ju0 = iu > 0 ? iu - 1 : (closed ? TONGUE_SEGS_U - 1 : -1);
+            const ju1 = iu < TONGUE_SEGS_U ? iu + 1 : (closed ? 1 : -1);
+            if (ju0 >= 0) { const j = (iz * W + ju0) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (ju1 >= 0) { const j = (iz * W + ju1) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (iz > 0) { const j = ((iz - 1) * W + iu) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            if (iz < TONGUE_SEGS_Z) { const j = ((iz + 1) * W + iu) * 3; sx += arr[j]; sy += arr[j + 1]; sz += arr[j + 2]; n++; }
+            tongueSmoothTmp[i]     = arr[i]     + lambda * (sx / n - arr[i]);
+            tongueSmoothTmp[i + 1] = arr[i + 1] + lambda * (sy / n - arr[i + 1]);
+            tongueSmoothTmp[i + 2] = arr[i + 2] + lambda * (sz / n - arr[i + 2]);
+          }
+        }
+        arr.set(tongueSmoothTmp);
+      }
+    };
+
+    // Lips group
+    const lipsGroup = new THREE.Group();
+    lipsGroup.visible = false;
+    mouthRoot.add(lipsGroup);
+
+    const LIP_SEGS_U = 44;
+    const LIP_SEGS_V = 20;
+    const realLipMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, depthWrite: true });
+
+    const createLipMesh = () => {
+      const geom = new THREE.BufferGeometry();
+      const vCount = (LIP_SEGS_U + 1) * (LIP_SEGS_V + 1);
+      const pos = new Float32Array(vCount * 3);
+      const col = new Float32Array(vCount * 3);
+      const ind: number[] = [];
+      for (let iu = 0; iu < LIP_SEGS_U; iu++) {
+        for (let iv = 0; iv < LIP_SEGS_V; iv++) {
+          const a = iu * (LIP_SEGS_V + 1) + iv;
+          const b = (iu + 1) * (LIP_SEGS_V + 1) + iv;
+          const c = (iu + 1) * (LIP_SEGS_V + 1) + (iv + 1);
+          const d = iu * (LIP_SEGS_V + 1) + (iv + 1);
+          ind.push(a, b, d);
+          ind.push(b, c, d);
+        }
+      }
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geom.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      geom.setIndex(ind);
+      return new THREE.Mesh(geom, realLipMaterial);
+    };
+    const upperLipMesh = createLipMesh();
+    const lowerLipMesh = createLipMesh();
+    lipsGroup.add(upperLipMesh);
+    lipsGroup.add(lowerLipMesh);
+
+    const updateRealLipsGeometry = (lipMode: string) => {
+      const activeLetter = currentLetterRef.current;
+      const showMarker = showMakhrajColorsRef.current && !showAnatomyRef.current;
+      const makhrajMorphProgress = morphProgressRef.current;
+      [
+        { mesh: upperLipMesh, isUpper: true },
+        { mesh: lowerLipMesh, isUpper: false }
+      ].forEach(({ mesh, isUpper }) => {
+        const posArr = mesh.geometry.attributes.position.array as Float32Array;
+        const colArr = mesh.geometry.attributes.color.array as Float32Array;
+        let pPtr = 0, cPtr = 0;
+
+        for (let iu = 0; iu <= LIP_SEGS_U; iu++) {
+          const u = (iu / LIP_SEGS_U) * 2 - 1;
+          const isEnd = (iu === 0 || iu === LIP_SEGS_U);
+          const cornerTaper = isEnd ? 0.0 : Math.pow(Math.max(0.0, 1.0 - u * u), 0.55);
+
+          const archAngle = u * (Math.PI * 0.36);
+          const baseArchX = Math.sin(archAngle) * 0.48;
+          const baseArchZ = 0.60 + Math.cos(archAngle) * 0.40;
+          const cornerY = 0.01;
+          const halfThickZ = isEnd ? 0.0 : (0.008 + 0.050 * cornerTaper);
+          const halfHeightY = isEnd ? 0.0 : (0.008 + 0.052 * cornerTaper);
+
+          if (lipMode === 'rounded_waw') {
+            // Previous circular rounded lip makhraj position (انضمام الشفتين)
+            const ringAngle = u * (Math.PI * 0.5);
+            const ringRadius = 0.148;
+            const cx = Math.sin(ringAngle) * ringRadius;
+            const cyDir = isUpper ? Math.cos(ringAngle) : -Math.cos(ringAngle);
+            const cy = 0.015 + cyDir * ringRadius;
+            const cz = 1.04 + Math.cos(ringAngle) * 0.085;
+            const tubeR = isEnd ? 0.0 : (0.024 + 0.042 * (0.35 + 0.65 * Math.cos(ringAngle)));
+            const radX = Math.sin(ringAngle);
+            const radY = cyDir;
+
+            const alifCenterY = isUpper ? (cornerY + 0.14 * cornerTaper) : (cornerY - 0.14 * cornerTaper);
+            const alifCenterZ = baseArchZ + 0.015 * cornerTaper;
+
+            for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
+              const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
+              const cosT = Math.cos(theta), sinT = Math.sin(theta);
+              const rOffset = sinT * tubeR;
+              const zOffset = cosT * tubeR * 1.15;
+
+              // In normal position (Alif/resting pose), use the same plump 3D lip shape as meem & baa
+              const alifX = baseArchX;
+              const alifY = alifCenterY + sinT * halfHeightY;
+              const alifZ = alifCenterZ + cosT * halfThickZ;
+
+              // In Waw makhraj position, use the original circular rounded lip position
+              const targetX = cx + radX * rOffset;
+              const targetY = cy + radY * rOffset;
+              const targetZ = cz + zOffset;
+
+              posArr[pPtr++] = alifX + (targetX - alifX) * makhrajMorphProgress;
+              posArr[pPtr++] = alifY + (targetY - alifY) * makhrajMorphProgress;
+              posArr[pPtr++] = alifZ + (targetZ - alifZ) * makhrajMorphProgress;
+
+              let rL = 0.72, gL = 0.25, bL = 0.30;
+              if (showMarker && activeLetter && activeLetter.id === 'waw') {
+                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.72, 2));
+                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.78, 2));
+                const pW = Math.min(0.85, innerRim * 0.88) * makhrajMorphProgress;
+                const sW = Math.min(0.68, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
+                rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+                gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+                bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+              }
+              colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
+            }
+            continue;
+          }
+
+          for (let iv = 0; iv <= LIP_SEGS_V; iv++) {
+            const theta = (iv / LIP_SEGS_V) * Math.PI * 2;
+            const cosT = Math.cos(theta), sinT = Math.sin(theta);
+            let centerY = isUpper ? (0.018 + halfHeightY * 0.88) : (0.018 - halfHeightY * 0.88);
+            let centerZ = baseArchZ + 0.034 * cornerTaper;
+            let localY = sinT * halfHeightY;
+            let localZ = cosT * halfThickZ;
+
+            if (lipMode === 'faa_labiodental') {
+              centerY = isUpper ? (cornerY + 0.22 * cornerTaper) : (cornerY - 0.036 * cornerTaper);
+              centerZ = isUpper ? (baseArchZ + 0.028 * cornerTaper) : (baseArchZ - 0.024 * cornerTaper);
+              if (!isUpper && sinT > 0 && cosT < 0.25) {
+                localZ -= 0.020 * sinT * cornerTaper * makhrajMorphProgress;
+                localY += 0.015 * sinT * cornerTaper * makhrajMorphProgress;
+              }
+            }
+
+            const alifCenterY = isUpper ? (cornerY + 0.14 * cornerTaper) : (cornerY - 0.14 * cornerTaper);
+            const alifCenterZ = baseArchZ + 0.015 * cornerTaper;
+            const curCenterY = alifCenterY + (centerY - alifCenterY) * makhrajMorphProgress;
+            const curCenterZ = alifCenterZ + (centerZ - alifCenterZ) * makhrajMorphProgress;
+
+            posArr[pPtr++] = baseArchX;
+            posArr[pPtr++] = curCenterY + localY;
+            posArr[pPtr++] = curCenterZ + localZ;
+
+            let rL = 0.72;
+            let gL = 0.25;
+            let bL = 0.30;
+            if (showMarker && activeLetter) {
+              const lid = activeLetter.id;
+              let pW = 0.0, sW = 0.0;
+              if (lid === 'waw') {
+                const innerRim = Math.max(0.0, -sinT) * Math.max(0.0, 1.0 - Math.pow(u / 0.55, 2));
+                const outerRing = Math.max(0.0, cosT) * Math.max(0.0, 1.0 - Math.pow(u / 0.65, 2));
+                pW = Math.min(0.85, innerRim * 0.90) * makhrajMorphProgress;
+                sW = Math.min(0.65, outerRing * 0.65 * (1.0 - pW)) * makhrajMorphProgress;
+              } else if (lid === 'faa' && !isUpper) {
+                const centerZone = Math.exp(-Math.pow(u / 0.28, 2));
+                const topBelly = Math.max(0.0, sinT);
+                pW = Math.min(0.88, centerZone * topBelly * 1.05) * makhrajMorphProgress;
+                sW = Math.min(0.65, Math.exp(-Math.pow(u / 0.45, 2)) * topBelly * 0.75 * (1.0 - pW)) * makhrajMorphProgress;
+              } else if (lid === 'baa' || lid === 'meem') {
+                const seamContact = isUpper ? Math.max(0.0, -sinT) : Math.max(0.0, sinT);
+                const centerSpan = Math.exp(-Math.pow(u / 0.44, 2));
+                pW = Math.min(0.86, seamContact * centerSpan * (lid === 'baa' ? 1.08 : 0.88)) * makhrajMorphProgress;
+                sW = Math.min(0.64, Math.max(0.0, cosT) * centerSpan * 0.60 * (1.0 - pW)) * makhrajMorphProgress;
+              }
+              rL = rL * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+              gL = gL * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+              bL = bL * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+            }
+            colArr[cPtr++] = rL; colArr[cPtr++] = gL; colArr[cPtr++] = bL;
+          }
+        }
+        mesh.geometry.attributes.position.needsUpdate = true;
+        mesh.geometry.attributes.color.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+      });
+    };
+
+    // Helpers
+    const getUpperMolarInnerWallAtZ = (z: number) => {
+      let bestPt = { f: 0.5, inX: 0.48, inZ: z, speeLift: 0.02 };
+      let minDiff = 999;
+      for (let i = 0; i <= 120; i++) {
+        const f = i / 120;
+        const s = sampleArchByArcFraction(f, 1, true);
+        const lingualPad = 0.056 + 0.026 * Math.pow(f, 0.75);
+        const inZ = s.z - s.nz * lingualPad;
+        const d = Math.abs(inZ - z);
+        if (d < minDiff) {
+          minDiff = d;
+          bestPt = { f, inX: Math.max(0.0, s.x - s.nx * lingualPad), inZ, speeLift: s.speeLift };
+        }
+      }
+      return bestPt;
+    };
+
+    const smoothMin = (a: number, b: number, k = 0.024) => {
+      const h = Math.max(0.0, Math.min(1.0, 0.5 + 0.5 * (b - a) / k));
+      return a * h + b * (1.0 - h) - k * h * (1.0 - h);
+    };
+
+    // ------------------------------------------------------------------------
+    // 3D REALISTIC THROAT ANATOMY (Al-Halq - Pharynx Wall, Epiglottis, Vocal Cords)
+    // No confusing artificial rings or symbols; pure anatomical tissue with dynamic vertex colors
+    // ------------------------------------------------------------------------
+    const throatRoot = new THREE.Group();
+    throatRoot.name = 'throatRoot';
+    mouthRoot.add(throatRoot);
+
+    // 1. Posterior & Lateral Pharyngeal Wall (الجدار الخلفي للحلق - Open crescent anatomical cavity)
+    const createPharyngealWallGeometry = () => {
+      const segsY = 36;
+      const segsU = 28;
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      for (let iy = 0; iy <= segsY; iy++) {
+        const v = iy / segsY;
+        // Y extends smoothly from behind soft palate (+0.08) down to larynx (-0.88)
+        const y = 0.08 - v * 0.96;
+        // Smooth anatomical curvature of posterior wall
+        const zCenter = -0.58 - Math.sin(v * Math.PI * 0.9) * 0.08;
+        // Half-width: wider at oropharynx (0.33), tapering gently to larynx (0.19)
+        const halfWidth = 0.33 - v * 0.14;
+        const archDepth = 0.16 + (1.0 - v) * 0.08;
+
+        for (let iu = 0; iu <= segsU; iu++) {
+          const u = (iu / segsU) * 2.0 - 1.0;
+          const theta = u * (Math.PI * 0.48);
+
+          const x = Math.sin(theta) * halfWidth;
+          const z = zCenter + (1.0 - Math.cos(theta)) * archDepth;
+          positions.push(x, y, z);
+
+          // Natural mucosal tissue tone matching oral cavity
+          const shade = 0.82 + Math.cos(theta) * 0.18 - v * 0.10;
+          const rBase = 0.74 * shade;
+          const gBase = 0.32 * shade;
+          const bBase = 0.36 * shade;
+          colors.push(rBase, gBase, bBase);
+        }
+      }
+
+      const ringStride = segsU + 1;
+      for (let iy = 0; iy < segsY; iy++) {
+        for (let iu = 0; iu < segsU; iu++) {
+          const a = iy * ringStride + iu;
+          const b = a + 1;
+          const c = (iy + 1) * ringStride + iu;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
+      return geom;
+    };
+
+    const pharynxMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.82,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const pharynxMesh = new THREE.Mesh(createPharyngealWallGeometry(), pharynxMaterial);
+    pharynxMesh.renderOrder = 0;
+    throatRoot.add(pharynxMesh);
+
+    // 2. Anatomical Epiglottis Leaf Valve (لسان المزمار - Station 2: Middle Throat)
+    const epiglottisPivot = new THREE.Group();
+    epiglottisPivot.position.set(0.0, -0.34, -0.50);
+    throatRoot.add(epiglottisPivot);
+
+    const createEpiglottisGeometry = () => {
+      const geom = new THREE.BufferGeometry();
+      const segsY = 24;
+      const segsX = 18;
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      const height = 0.22;
+      const maxWidth = 0.16;
+
+      for (let iy = 0; iy <= segsY; iy++) {
+        const v = iy / segsY;
+        const y = v * height;
+        const leafWidth = maxWidth * Math.sin(v * Math.PI * 0.82 + 0.18);
+        const thickness = 0.024 * (1.0 - v * 0.65);
+        const concaveCurve = Math.sin(v * Math.PI) * 0.020;
+
+        for (let ix = 0; ix <= segsX; ix++) {
+          const u = (ix / segsX) * 2.0 - 1.0;
+          const x = u * leafWidth * 0.5;
+          const z = (1.0 - u * u) * thickness - concaveCurve;
+          positions.push(x, y, z);
+
+          // Mucosal tissue tone matching tongue base
+          const rimHighlight = (1.0 - Math.abs(u)) * 0.10 + v * 0.08;
+          const shade = 0.88 + rimHighlight;
+          const rBase = 0.77 * shade;
+          const gBase = 0.35 * shade;
+          const bBase = 0.39 * shade;
+          colors.push(rBase, gBase, bBase);
+        }
+      }
+
+      const ringStride = segsX + 1;
+      for (let iy = 0; iy < segsY; iy++) {
+        for (let ix = 0; ix < segsX; ix++) {
+          const a = iy * ringStride + ix;
+          const b = a + 1;
+          const c = (iy + 1) * ringStride + ix;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
+      return geom;
+    };
+
+    const epiglottisMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      depthWrite: true
+    });
+    const epiglottisMesh = new THREE.Mesh(createEpiglottisGeometry(), epiglottisMat);
+    epiglottisMesh.renderOrder = 2;
+    epiglottisPivot.add(epiglottisMesh);
+
+    // 3. Anatomical True Vocal Cords (الأوتار الصوتية الحقيقية - Station 1: Bottom Throat)
+    const vocalCordsPivot = new THREE.Group();
+    vocalCordsPivot.position.set(0.0, -0.72, -0.58);
+    throatRoot.add(vocalCordsPivot);
+
+    const createVocalCordGeometry = (isLeft: boolean) => {
+      const segsZ = 22;
+      const segsCross = 12;
+      const geom = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      const cordLength = 0.16;
+      const maxHalfWidth = 0.055;
+      const sideSign = isLeft ? -1 : 1;
+
+      for (let iz = 0; iz <= segsZ; iz++) {
+        const vz = iz / segsZ;
+        const lz = 0.08 - vz * cordLength;
+        const lateralSpan = vz * maxHalfWidth;
+        const foldThickness = 0.026 * (1.0 - vz * 0.30);
+
+        for (let ic = 0; ic <= segsCross; ic++) {
+          const uCross = ic / segsCross;
+          const lx = sideSign * (uCross * lateralSpan);
+          const ly = Math.sin((1.0 - uCross) * Math.PI * 0.5) * foldThickness;
+          positions.push(lx, ly, lz);
+
+          // Pearly white at medial vibratory margin (uCross ~ 0), pink mucosa at base
+          const pearlyFactor = Math.pow(1.0 - uCross, 1.8);
+          const rBase = 0.76 * (1.0 - pearlyFactor) + 0.96 * pearlyFactor;
+          const gBase = 0.36 * (1.0 - pearlyFactor) + 0.94 * pearlyFactor;
+          const bBase = 0.40 * (1.0 - pearlyFactor) + 0.90 * pearlyFactor;
+          colors.push(rBase, gBase, bBase);
+        }
+      }
+
+      const ringStride = segsCross + 1;
+      for (let iz = 0; iz < segsZ; iz++) {
+        for (let ic = 0; ic < segsCross; ic++) {
+          const a = iz * ringStride + ic;
+          const b = a + 1;
+          const c = (iz + 1) * ringStride + ic;
+          const d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+      geom.userData = { baseColors: new Float32Array(colors) };
+      return geom;
+    };
+
+    const vocalCordMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      depthWrite: true
+    });
+    const leftVocalCord = new THREE.Mesh(createVocalCordGeometry(true), vocalCordMat);
+    vocalCordsPivot.add(leftVocalCord);
+
+    const rightVocalCord = new THREE.Mesh(createVocalCordGeometry(false), vocalCordMat);
+    vocalCordsPivot.add(rightVocalCord);
+
+    // 4. Acoustic Airflow Particles (Flowing 3D stream showing where air touches)
+    const PARTICLE_COUNT = 64;
+    const particlePointsData: { t: number; laneX: number; laneZ: number; speedOffset: number }[] = [];
+    const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const particleColors = new Float32Array(PARTICLE_COUNT * 3);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particlePointsData.push({
+        t: i / PARTICLE_COUNT,
+        laneX: (Math.random() - 0.5) * 0.08,
+        laneZ: (Math.random() - 0.5) * 0.08,
+        speedOffset: 0.85 + Math.random() * 0.3
+      });
+    }
+
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeom.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.038,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.90,
+      depthWrite: false
+    });
+    const airwayParticles = new THREE.Points(particleGeom, particleMat);
+    airwayParticles.renderOrder = 3;
+    throatRoot.add(airwayParticles);
+
+    // Orbit pointer events & render dirty state
+    let isDragging = false;
+    let cameraDirty = true;
+    let settleFrames = 4;
+    let prevPointer = { x: 0, y: 0 };
+
+    const markDirty = (frames = 1) => {
+      cameraDirty = true;
+      settleFrames = Math.max(settleFrames, frames);
+    };
+
+    // Store refs
+    sceneElementsRef.current = {
+      scene,
+      camera,
+      renderer,
+      spherical,
+      hardPalateMesh,
+      softPalateMesh,
+      alveolarArcMesh,
+      upperTeethGroup,
+      lowerTeethGroup,
+      lowerJawPivot,
+      tongueMesh,
+      lipsGroup,
+      upperLipMesh,
+      lowerLipMesh,
+      throatRoot,
+      pharynxMesh,
+      epiglottisPivot,
+      epiglottisMesh,
+      leftVocalCord,
+      rightVocalCord,
+      airwayParticles,
+      particlePointsData,
+      animFrameId: 0,
+      upperToothMaterial,
+      markDirty
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      // Touch events on mobile shouldn't change viewpoint outside the joystick button
+      if (e.pointerType === 'touch') return;
+      camAnimRef.current = null;
+      isDragging = true;
+      prevPointer = { x: e.clientX, y: e.clientY };
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevPointer.x;
+      const dy = e.clientY - prevPointer.y;
+      prevPointer = { x: e.clientX, y: e.clientY };
+      spherical.theta -= dx * 0.0085;
+      spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi - dy * 0.0085));
+      cameraDirty = true;
+      updateCamPos();
+    };
+
+    const onPointerUp = () => { isDragging = false; };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      camAnimRef.current = null;
+      spherical.radius = Math.max(1.8, Math.min(6.5, spherical.radius + e.deltaY * 0.0025));
+      cameraDirty = true;
+      updateCamPos();
+    };
+
+    const domEl = renderer.domElement;
+    domEl.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    domEl.addEventListener('wheel', onWheel, { passive: false });
+
+    // Touch controls
+    let prevTouchDist = 0;
+    const onTouchMove = (e: TouchEvent) => {
+      camAnimRef.current = null;
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        if (prevTouchDist > 0) {
+          const diff = prevTouchDist - dist;
+          spherical.radius = Math.max(1.8, Math.min(6.5, spherical.radius + diff * 0.005));
+          cameraDirty = true;
+          updateCamPos();
+        }
+        prevTouchDist = dist;
+      }
+    };
+    const onTouchEnd = () => { prevTouchDist = 0; };
+    domEl.addEventListener('touchmove', onTouchMove);
+    domEl.addEventListener('touchend', onTouchEnd);
+
+    // Resize handler with ResizeObserver for fluid docking and mobile adjustments
+    const onResize = () => {
+      if (!containerRef.current) return;
+      const w = containerRef.current.clientWidth || 640;
+      const h = containerRef.current.clientHeight || 420;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        forceDeformRef.current = true;
+      }
+    };
+    window.addEventListener('resize', onResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            onResize();
+          }
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
+    const TEETH_ANATOMY_RGB: Record<number, [number, number, number]> = {
+      0: [0.02, 0.71, 0.83],
+      1: [0.06, 0.73, 0.51],
+      2: [0.96, 0.62, 0.04],
+      3: [0.66, 0.33, 0.97],
+      4: [0.98, 0.45, 0.09],
+      5: [0.98, 0.45, 0.09],
+      6: [0.98, 0.45, 0.09],
+      7: [0.93, 0.28, 0.60]
+    };
+
+    let lastTeethAnat: boolean | null = null;
+    const updateTeethAnatomyColors = (isAnat: boolean) => {
+      if (isAnat === lastTeethAnat) return;
+      lastTeethAnat = isAnat;
+
+      [upperTeethGroup, lowerTeethGroup].forEach(group => {
+        group.children.forEach(child => {
+          const mesh = child as THREE.Mesh;
+          const colAttr = mesh.geometry?.attributes?.color;
+          const base = mesh.userData?.baseColors as Float32Array | undefined;
+          if (!colAttr || !base) return;
+          const arr = colAttr.array as Float32Array;
+          if (!isAnat) {
+            arr.set(base);
+          } else {
+            const tRGB = TEETH_ANATOMY_RGB[mesh.userData.toothIndex] || [0.9, 0.9, 0.9];
+            for (let i = 0; i < base.length; i += 3) {
+              const lum = (base[i] + base[i + 1] + base[i + 2]) / 3.0;
+              const shade = 0.36 + 0.84 * lum;
+              arr[i] = tRGB[0] * shade;
+              arr[i + 1] = tRGB[1] * shade;
+              arr[i + 2] = tRGB[2] * shade;
+            }
+          }
+          colAttr.needsUpdate = true;
+        });
+      });
+    };
+
+    // Highlight palate zones: either vibrant Anatomy divisions or Makhraj contact spots
+    let lastPalateProg = -1;
+    let lastPalateKey = '';
+    const updatePalateMakhrajColors = (mProg: number) => {
+      const lid = currentLetterRef.current.id;
+      const isAnat = showAnatomyRef.current;
+      const showMarker = showMakhrajColorsRef.current && !isAnat;
+      const stateKey = `${lid}|${showMarker}|${isAnat}`;
+      const isMiddleLetter = (lid === 'jeem' || lid === 'sheen' || lid === 'yaa_cons');
+      const isSafirLetter = (lid === 'saad' || lid === 'zaay' || lid === 'seen');
+      const targetProg = (!isAnat && (isMiddleLetter || isSafirLetter) && showMarker) ? mProg : 0;
+      if (stateKey === lastPalateKey && (isAnat || Math.abs(targetProg - lastPalateProg) < 0.002)) return;
+
+      const wasAnat = lastPalateKey.endsWith('|true');
+      lastPalateKey = stateKey;
+      lastPalateProg = targetProg;
+
+      const palateOp = isAnat ? 0.68 : 0.54;
+      hardPalateMaterial.opacity = palateOp;
+      softPalateMaterial.opacity = palateOp;
+
+      if (isAnat) {
+        [hardPalateMesh, softPalateMesh].forEach(pMesh => {
+          const geom = pMesh.geometry;
+          const base = geom.userData.baseColors as Float32Array | undefined;
+          const uArr = geom.userData.uArray as Float32Array | undefined;
+          const isSoftArr = geom.userData.isSoftArray as Uint8Array | undefined;
+          if (!base || !uArr) return;
+          const colArr = geom.attributes.color.array as Float32Array;
+          for (let i = 0, vi = 0; i < base.length; i += 3, vi++) {
+            const isSoft = isSoftArr ? isSoftArr[vi] === 1 : false;
+            const u = uArr[vi];
+            const pRGB = !isSoft
+              ? (u <= BIO_ALVEOLAR_SHELF_U ? [0.92, 0.72, 0.42] : [0.22, 0.74, 0.97])
+              : [0.75, 0.52, 0.99];
+            const lum = (base[i] + base[i + 1] + base[i + 2]) / 3.0;
+            const shade = 0.56 + 0.68 * lum;
+            colArr[i] = pRGB[0] * shade;
+            colArr[i + 1] = pRGB[1] * shade;
+            colArr[i + 2] = pRGB[2] * shade;
+          }
+          geom.attributes.color.needsUpdate = true;
+        });
+        return;
+      }
+
+      if (wasAnat) {
+        const sBase = softPalateMesh.geometry.userData.baseColors as Float32Array | undefined;
+        if (sBase) {
+          (softPalateMesh.geometry.attributes.color.array as Float32Array).set(sBase);
+          softPalateMesh.geometry.attributes.color.needsUpdate = true;
+        }
+        const hBase = hardPalateMesh.geometry.userData.baseColors as Float32Array | undefined;
+        if (hBase) {
+          (hardPalateMesh.geometry.attributes.color.array as Float32Array).set(hBase);
+          hardPalateMesh.geometry.attributes.color.needsUpdate = true;
+        }
+      }
+
+      // Update soft palate contact colors for top throat letters (Ghayn غ & Khaa خ)
+      const sGeom = softPalateMesh.geometry;
+      const sBase = sGeom.userData.baseColors as Float32Array | undefined;
+      if (sBase) {
+        const sPosArr = sGeom.attributes.position.array as Float32Array;
+        const sColArr = sGeom.attributes.color.array as Float32Array;
+        if (lid === 'ghayn' || lid === 'khaa') {
+          for (let i = 0; i < sBase.length; i += 3) {
+            const wx = sPosArr[i];
+            const wz = sPosArr[i + 2];
+            let pW = 0.0, sW = 0.0;
+            const uvulaDist = Math.hypot(wx / 0.22, (wz - (-0.56)) / 0.16);
+            if (uvulaDist < 1.0) {
+              const falloff = Math.cos(uvulaDist * Math.PI * 0.5);
+              if (lid === 'ghayn') {
+                pW = 0.88 * falloff * targetProg;
+                sW = 0.70 * falloff * (1.0 - pW) * targetProg;
+              } else {
+                pW = 0.35 * falloff * targetProg;
+                sW = 0.85 * falloff * (1.0 - pW) * targetProg;
+              }
+            }
+            sColArr[i] = sBase[i] * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+            sColArr[i + 1] = sBase[i + 1] * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+            sColArr[i + 2] = sBase[i + 2] * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+          }
+          sGeom.attributes.color.needsUpdate = true;
+        } else if (!wasAnat) {
+          sColArr.set(sBase);
+          sGeom.attributes.color.needsUpdate = true;
+        }
+      }
+
+      const geom = hardPalateMesh.geometry;
+      const base = geom.userData.baseColors as Float32Array | undefined;
+      const uArr = geom.userData.uArray as Float32Array | undefined;
+      if (!base || !uArr) return;
+      const posArr = geom.attributes.position.array as Float32Array;
+      const colArr = geom.attributes.color.array as Float32Array;
+
+      if (targetProg <= 0.001) {
+        colArr.set(base);
+        geom.attributes.color.needsUpdate = true;
+        return;
+      }
+
+      for (let i = 0, vi = 0; i < base.length; i += 3, vi++) {
+        const u = uArr[vi];
+        let r = base[i];
+        let g = base[i + 1];
+        let b = base[i + 2];
+
+        if (u > BIO_ALVEOLAR_SHELF_U + 0.02) {
+          const wx = posArr[i];
+          const wz = posArr[i + 2];
+          const absX = Math.abs(wx);
+          let pW = 0.0;
+          let sW = 0.0;
+
+          if (lid === 'jeem') {
+            const d = Math.hypot(wx / 0.22, (wz - 0.58) / 0.10);
+            if (d < 1.0) {
+              const w = Math.cos(d * Math.PI * 0.5);
+              const press = 0.40 + 0.60 * w;
+              const blend = 0.80 * w;
+              pW = blend * press;
+              sW = blend * (1.0 - press);
+            }
+          } else if (lid === 'sheen' || lid === 'yaa_cons') {
+            const zEnv = Math.exp(-Math.pow((wz - 0.20) / 0.20, 2));
+            const latBrace = Math.exp(-Math.pow((absX - 0.20) / 0.08, 2)) * zEnv;
+            const centerChan = Math.exp(-Math.pow(absX / 0.12, 2)) * zEnv;
+            if (latBrace > 0.05 || centerChan > 0.05) {
+              pW = Math.min(0.76, latBrace * 0.76);
+              sW = Math.min(0.58, centerChan * 0.58) * Math.max(0.0, 1.0 - latBrace);
+            }
+          } else if (isSafirLetter) {
+            const zLat = Math.exp(-Math.pow((wz - 0.22) / 0.16, 2));
+            const xLatPeak = (lid === 'saad') ? 0.31 : 0.24;
+            const latBrace = Math.exp(-Math.pow((absX - xLatPeak) / 0.085, 2)) * zLat;
+            const antWhistle = (wz > 0.36)
+              ? (Math.exp(-Math.pow(absX / 0.08, 2)) * Math.min(1.0, (wz - 0.36) / 0.25))
+              : 0.0;
+            if (latBrace > 0.05 || antWhistle > 0.05) {
+              pW = Math.min(0.75, latBrace * 0.75);
+              sW = Math.min(0.55, antWhistle * 0.55) * Math.max(0.0, 1.0 - latBrace);
+            }
+          }
+
+          pW *= targetProg;
+          sW *= targetProg;
+          const wSum = pW + sW;
+          if (wSum > 0.82) {
+            const scale = 0.82 / wSum;
+            pW *= scale;
+            sW *= scale;
+          }
+          const rem = 1.0 - pW - sW;
+          if (pW + sW > 0.0) {
+            r = r * rem + 0.04 * pW + 0.48 * sW;
+            g = g * rem + 0.46 * pW + 0.92 * sW;
+            b = b * rem + 0.16 * pW + 0.60 * sW;
+          }
+        }
+
+        colArr[i] = r;
+        colArr[i + 1] = g;
+        colArr[i + 2] = b;
+      }
+      geom.attributes.color.needsUpdate = true;
+    };
+
+    // ------------------------------------------------------------------------
+    // RENDER / ANIMATION LOOP (Optimized for minimal CPU & low FOT)
+    // ------------------------------------------------------------------------
+    let lastTime = performance.now();
+
+    const animate = (now: number) => {
+      const animId = requestAnimationFrame(animate);
+      if (sceneElementsRef.current) {
+        sceneElementsRef.current.animFrameId = animId;
+      }
+
+      // When on Sifaat tab and 3D preview is closed, skip render calculations completely (0% CPU)
+      if (activeMainTabRef.current !== 'makharij' && !sifaat3DOpenRef.current) {
+        return;
+      }
+
+      const delta = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      let gearDelta = 0;
+
+      // Simulation interpolation
+      if (isSimulatingRef.current) {
+        const elapsed = (now - simulationStartTimeRef.current) / 1000;
+        const duration = 1.0;
+        if (elapsed >= duration) {
+          isSimulatingRef.current = false;
+          isRestingAtAlifRef.current = true;
+          morphProgressRef.current = 0.0;
+          Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
+            currentGearsRef.current[k] = ALIF_MAKHRAJ_GEARS[k];
+          });
+          settleFrames = 3;
+        } else {
+          const tNorm = Math.max(0.0, Math.min(1.0, elapsed / duration));
+          const env = 0.5 * (1.0 - Math.cos(2.0 * Math.PI * tNorm));
+          morphProgressRef.current = env;
+          const simGears = currentLetterRef.current.gears;
+          Object.keys(simGears).forEach(k => {
+            if (k !== 'upperOpacity' && k !== 'greenPointPos') {
+              const alifBase = ALIF_MAKHRAJ_GEARS[k] ?? 0;
+              currentGearsRef.current[k] = alifBase + (simGears[k] - alifBase) * env;
+            }
+          });
+          settleFrames = 3;
+        }
+      } else if (!isRestingAtAlifRef.current) {
+        const morphDiff = Math.abs(1.0 - morphProgressRef.current);
+        if (morphDiff > 0.002) {
+          gearDelta += morphDiff;
+          morphProgressRef.current += (1.0 - morphProgressRef.current) * Math.min(1, delta * 12);
+        } else {
+          morphProgressRef.current = 1.0;
+        }
+        Object.keys(targetGearsRef.current).forEach(k => {
+          const diff = targetGearsRef.current[k] - currentGearsRef.current[k];
+          if (Math.abs(diff) > 0.005) {
+            gearDelta += Math.abs(diff);
+            currentGearsRef.current[k] += diff * Math.min(1, delta * 10);
+          } else {
+            currentGearsRef.current[k] = targetGearsRef.current[k];
+          }
+        });
+      }
+
+      if (forceDeformRef.current || gearDelta > 0.001) {
+        settleFrames = 3;
+        forceDeformRef.current = false;
+      }
+
+      // Only recompute vertex deformation and normals when actively morphing or settling
+      if (settleFrames > 0) {
+        settleFrames--;
+        cameraDirty = true;
+
+      // Deform geometries
+      const jawOpenFactor = currentGearsRef.current.jawOpen / 100;
+      const tipElevFactor = currentGearsRef.current.tipElevation / 100;
+      const tipFwdFactor = currentGearsRef.current.tipForward / 100;
+      const istilaFactor = currentGearsRef.current.backIstila / 100;
+      const midArchFactor = currentGearsRef.current.middleArch / 100;
+      const spreadFactor = currentGearsRef.current.lateralSpread / 100;
+      const opacityVal = currentGearsRef.current.upperOpacity / 100;
+
+      upperToothMaterial.opacity = Math.max(0.0, Math.min(1.0, opacityVal));
+      upperToothMaterial.transparent = upperToothMaterial.opacity < 0.995;
+
+      lowerJawPivot.rotation.x = jawOpenFactor * 0.30;
+      lowerJawPivot.position.y = -jawOpenFactor * 0.04;
+
+      const activeLetter = currentLetterRef.current;
+      lipsGroup.visible = Boolean(activeLetter.showLips);
+      realLipMaterial.transparent = false;
+      realLipMaterial.opacity = 1.0;
+      realLipMaterial.depthWrite = true;
+      if (lipsGroup.visible) {
+        updateRealLipsGeometry(activeLetter.lipMode || 'bilabial_closed');
+      }
+
+      // Tongue vertices deformation
+      const dorsalMode = activeLetter.dorsalMode || 'istila_cup';
+      const isWideLateral = (activeLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
+      const isNatiyyah = activeLetter.id === 'taa_heavy' || activeLetter.id === 'daal' || activeLetter.id === 'taa_light';
+      const isAlveolar = activeLetter.id === 'laam' || activeLetter.id === 'noon' || activeLetter.id === 'raa';
+      const isAlveolarOrNatiyyah = isNatiyyah || isAlveolar;
+
+      const zBack = -0.60;
+      const zTipTarget = (dorsalMode === 'dhaad_lateral')
+        ? Math.min(0.905, 0.80 + tipFwdFactor * 0.24)
+        : (0.78 + tipFwdFactor * 0.25);
+      const yTipTopTarget = 0.00 + tipElevFactor * 0.42;
+
+      const posArr = tongueGeom.attributes.position.array as Float32Array;
+      const colArr = tongueGeom.attributes.color.array as Float32Array;
+      let ptr = 0, cPtr = 0;
+
+      for (let iz = 0; iz <= TONGUE_SEGS_Z; iz++) {
+        const s = iz / TONGUE_SEGS_Z;
+        const sZ = (s < 0.68) ? s : (0.68 + 0.32 * Math.sin(((s - 0.68) / 0.32) * Math.PI * 0.5));
+        const zCenter = zBack + sZ * (zTipTarget - zBack);
+        const molarWall = getUpperMolarInnerWallAtZ(zCenter);
+        let yTopTarget = 0, yBotTarget = 0;
+
+        if (dorsalMode === 'dhaad_lateral') {
+          const backDome = Math.exp(-Math.pow((s - 0.28) / 0.28, 2));
+          const midMolarArch = Math.sin(Math.pow(s, 0.58) * Math.PI);
+          const frontCurveDrop = 0.052 * Math.pow(Math.max(0.0, (s - 0.56) / 0.44), 1.55);
+          yTopTarget = 0.242 + molarWall.speeLift + 0.032 * midMolarArch + 0.056 * istilaFactor * backDome - frontCurveDrop;
+
+          const backRootDrop = -0.37 * Math.pow(Math.max(0.0, (0.36 - s) / 0.36), 1.45);
+          const midFloorAttach = -0.26 * Math.exp(-Math.pow((s - 0.34) / 0.22, 2));
+          const sublingualArchRecess = 0.115 * Math.exp(-Math.pow((s - 0.72) / 0.14, 2));
+          const tipPlumpBottom = (yTopTarget - 0.108) * Math.pow(Math.max(0.0, (s - 0.54) / 0.46), 1.25);
+          const baseUnderCurve = -0.095 + backRootDrop + midFloorAttach + sublingualArchRecess - jawOpenFactor * 0.04 * (1.0 - s * 0.6);
+          const tipBlend = Math.pow(Math.max(0.0, (s - 0.58) / 0.42), 1.35);
+          yBotTarget = baseUnderCurve * (1.0 - tipBlend) + tipPlumpBottom * tipBlend;
+        } else if (dorsalMode === 'safir_hook') {
+          const wHook = Math.pow(Math.max(0.0, (s - 0.70) / 0.30), 1.65);
+          const bladeArch = (0.27 + Math.max(0.0, midArchFactor) * 0.07) * Math.exp(-Math.pow((s - 0.60) / 0.27, 2));
+          const backIstilaArch = istilaFactor * 0.31 * Math.exp(-Math.pow((s - 0.24) / 0.26, 2));
+          yTopTarget = (0.06 + bladeArch + backIstilaArch * 0.78) * (1.0 - wHook) + yTipTopTarget * wHook;
+          const backRootDrop = -0.22 * Math.pow(Math.max(0.0, (0.38 - s) / 0.38), 1.4);
+          yBotTarget = (-0.16 + backRootDrop + 0.10 * yTopTarget) * (1.0 - wHook) + (yTipTopTarget - 0.115) * wHook;
+        } else {
+          const uTipRaw = Math.max(0.0, (s - 0.36) / 0.64);
+          const wTip = uTipRaw * uTipRaw * (3.0 - 2.0 * uTipRaw);
+          const tipApexRoundDrop = isAlveolarOrNatiyyah ? (0.026 * Math.pow(Math.max(0.0, (s - 0.86) / 0.14), 1.85)) : 0.0;
+          const natiyyahCushionLift = isNatiyyah ? (0.022 * Math.exp(-Math.pow((s - 0.83) / 0.10, 2))) : 0.0;
+          const effectiveYTipTarget = (dorsalMode === 'jeem_touch') ? 0.00 : yTipTopTarget;
+          const yBaseLine = 0.04 * (1.0 - wTip) + (effectiveYTipTarget + natiyyahCushionLift - tipApexRoundDrop) * wTip;
+
+          let dorsalArch = 0;
+          if (dorsalMode === 'qaaf_posterior') {
+            dorsalArch = istilaFactor * 0.46 * Math.exp(-Math.pow((s - 0.18) / 0.25, 2));
+          } else if (dorsalMode === 'kaaf_velar') {
+            dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
+          } else if (dorsalMode === 'jeem_touch') {
+            const sContact = 0.91;
+            const TIP_KEEP = 0.45;   // fraction of arch height still kept at the very tip (higher = gentler tip)
+            let archSlope = 0;
+            if (s <= sContact) {
+              archSlope = Math.pow(s / sContact, 2.0);   // low through the middle, rises near the front
+            } else {
+              const tDrop = (s - sContact) / (1.0 - sContact);
+              const ease = 0.5 * (1.0 + Math.cos(Math.PI * tDrop));  // 1 -> 0, smooth
+              archSlope = TIP_KEEP + (1.0 - TIP_KEEP) * ease;         // never drops below TIP_KEEP
+            }
+            dorsalArch = Math.max(0, midArchFactor) * 0.58 * archSlope + istilaFactor * 0.08 * Math.sin(s * Math.PI);
+          } else if (dorsalMode === 'middle_dome') {
+            dorsalArch = Math.max(0, midArchFactor) * 0.52 * Math.exp(-Math.pow((s - 0.56) / 0.26, 2)) + istilaFactor * 0.10 * Math.sin(s * Math.PI);
+          } else if (dorsalMode === 'neutral') {
+            dorsalArch = -0.045 * (1.0 - wTip) + istilaFactor * 0.32 * Math.exp(-Math.pow((s - 0.26) / 0.28, 2));
+          } else {
+            dorsalArch = istilaFactor * 0.38 * Math.exp(-Math.pow((s - 0.26) / 0.28, 2)) + midArchFactor * 0.15 * Math.sin(s * Math.PI);
+          }
+          yTopTarget = yBaseLine + dorsalArch;
+          const backRootDrop = -0.24 * Math.pow(Math.max(0.0, (0.40 - s) / 0.40), 1.4);
+          const sublingualRecess = 0.075 * Math.exp(-Math.pow((s - 0.70) / 0.15, 2));
+          yBotTarget = (-0.17 + backRootDrop + sublingualRecess + 0.10 * yTopTarget) * (1.0 - wTip) + (yTipTopTarget - 0.118) * wTip - jawOpenFactor * 0.03;
+          if (dorsalMode === 'jeem_touch' && s > 0.65) {
+            const uFront = Math.pow((s - 0.65) / 0.35, 1.2);
+            const jeemTipBottom = yTopTarget - 0.115;
+            yBotTarget = yBotTarget * (1.0 - uFront) + jeemTipBottom * uFront;
+          }
+        }
+
+        const capBack = (iz === 0) ? 0.0 : ((s < 0.07) ? Math.sqrt(Math.max(0.0, 1.0 - Math.pow((0.07 - s) / 0.07, 2))) : 1.0);
+        const capTip = (iz === TONGUE_SEGS_Z) ? 0.0 : ((s > 0.85) ? Math.sqrt(Math.max(0.0, 1.0 - Math.pow((s - 0.85) / 0.15, 2.0))) : 1.0);
+        const rawHalfThick = Math.max(0.052, 0.5 * (yTopTarget - yBotTarget));
+        const halfThick = rawHalfThick * capBack * capTip;
+        const yCenter = 0.5 * (yTopTarget + yBotTarget);
+
+        let baseW = (s <= 0.65)
+          ? ((0.20 + 0.24 * Math.sin(Math.pow(s / 0.65, 0.65) * Math.PI * 0.65)) * Math.pow(capBack, 0.55))
+          : (0.42 * Math.sqrt(Math.max(0.0, 1.0 - Math.pow((s - 0.65) / 0.35, 2.0))));
+
+        if (isAlveolarOrNatiyyah && s > 0.62 && iz < TONGUE_SEGS_Z) {
+          const uFront = (s - 0.62) / 0.38;
+          const archFitW = isNatiyyah ? 0.31 : 0.34;
+          const roundedFrontU = archFitW * Math.sqrt(Math.max(0.0, 1.0 - Math.pow(uFront, 1.95)));
+          const blendU = Math.sin(uFront * Math.PI * 0.5);
+          baseW = baseW * (1.0 - blendU * 0.55) + Math.max(baseW, roundedFrontU) * (blendU * 0.55);
+        }
+
+        let dhaadFrontRoundW = molarWall.inX;
+        if (dorsalMode === 'dhaad_lateral') {
+          const uAnt = Math.max(0.0, (s - 0.58) / 0.42);
+          const horseshoeUWidth = 0.52 * Math.pow(Math.max(0.0, 1.0 - Math.pow(uAnt, 2.15)), 0.44);
+          dhaadFrontRoundW = (s <= 0.58)
+            ? molarWall.inX
+            : Math.max(molarWall.inX, horseshoeUWidth) * (iz === TONGUE_SEGS_Z ? 0.0 : 1.0);
+        }
+
+        const halfWidth = (dorsalMode === 'dhaad_lateral')
+          ? ((iz === 0 || iz === TONGUE_SEGS_Z) ? 0.0 : (baseW * (1.0 - spreadFactor) + dhaadFrontRoundW * capBack * spreadFactor))
+          : ((iz === 0 || iz === TONGUE_SEGS_Z) ? 0.0 : (baseW + spreadFactor * 0.10 * Math.exp(-Math.pow((s - 0.48) / 0.26, 2)) * capTip));
+
+        let dhaadMolarEnv = 0.0;
+        if (dorsalMode === 'dhaad_lateral' && s > 0.06 && s < 0.76) {
+          const rampIn = Math.min(1.0, (s - 0.06) / 0.08);
+          const rampOut = Math.min(1.0, (0.76 - s) / 0.16);
+          dhaadMolarEnv = Math.sin(rampIn * Math.PI * 0.5) * Math.sin(rampOut * Math.PI * 0.5) * spreadFactor;
+        }
+
+        for (let iu = 0; iu <= TONGUE_SEGS_U; iu++) {
+          const theta = (iu / TONGUE_SEGS_U) * Math.PI * 2;
+          const cosT = Math.cos(theta);
+          const sinT = Math.sin(theta);
+
+          let x = cosT * halfWidth;
+          let yOffset = sinT * halfThick;
+          let zHorseshoeOffset = 0.0;
+          let pressMeatFactor = 0.0;
+
+          if (dorsalMode === 'dhaad_lateral') {
+            const isRightSide = (cosT < 0);
+            const isLeftSide = (cosT > 0);
+            const activeDhaadMode = dhaadModeRef.current;
+            const isPressedSide = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRightSide) || (activeDhaadMode === 'left' && isLeftSide);
+
+            const tipSmoothBlend = Math.pow(Math.max(0.0, (s - 0.62) / 0.38), 1.35);
+            const molarExtraReach = isPressedSide ? (0.042 * dhaadMolarEnv * (1.0 - tipSmoothBlend)) : (0.006 * dhaadMolarEnv);
+            const sideReach = halfWidth + molarExtraReach;
+
+            const molarEdgePower = isPressedSide ? 0.58 : 0.84;
+            const frontUArchPower = 0.82;
+            const edgePower = (1.0 - tipSmoothBlend) * molarEdgePower + tipSmoothBlend * frontUArchPower;
+            const shapedCos = Math.sign(cosT) * Math.pow(Math.abs(cosT), edgePower);
+            x = shapedCos * sideReach;
+
+            const latBody = Math.pow(Math.abs(cosT), 0.72) * dhaadMolarEnv * (1.0 - tipSmoothBlend);
+            if (isPressedSide) {
+              yOffset *= (1.0 + 0.58 * latBody);
+              const dorsalSwell = (sinT > -0.30)
+                ? (0.028 * Math.sin(Math.max(0.0, (sinT + 0.30) / 1.30) * Math.PI) * latBody)
+                : (-0.010 * latBody);
+              yOffset += dorsalSwell;
+              pressMeatFactor = latBody;
+            }
+
+            const frontCurveEnv = Math.pow(Math.max(0.0, (s - 0.52) / 0.48), 1.15);
+            yOffset -= 0.018 * frontCurveEnv * (cosT * cosT);
+            zHorseshoeOffset = -0.105 * frontCurveEnv * Math.pow(Math.abs(cosT), 1.65) * (0.35 + 0.65 * capTip);
+
+            if (sinT < 0.0) {
+              const freeTipSubArch = Math.pow(Math.max(0.0, (s - 0.55) / 0.45), 1.2);
+              const midSubRecess = Math.exp(-Math.pow((s - 0.52) / 0.24, 2));
+              const underNarrow = 1.0 - (0.22 + 0.18 * midSubRecess + 0.14 * freeTipSubArch) * Math.pow(-sinT, 0.75);
+              x *= underNarrow;
+              const vaultIndent = 0.038 * Math.sin(Math.max(0.0, (s - 0.42) / 0.58) * Math.PI) * (1.0 - 0.45 * cosT * cosT) * (-sinT);
+              yOffset += vaultIndent;
+            }
+          } else {
+            const allowMidConcavity = (dorsalMode === 'safir_hook' || dorsalMode === 'middle_dome');
+            const grooveEndS = (dorsalMode === 'safir_hook') ? 0.86 : 0.68;
+            const archPresence = (dorsalMode === 'middle_dome')
+              ? Math.min(1.0, Math.max(0.0, midArchFactor / 0.85))
+              : Math.min(1.0, Math.max(0.0, (midArchFactor + spreadFactor) / 0.90));
+            const grooveEnv = (allowMidConcavity && s > 0.10 && s < grooveEndS)
+              ? Math.sin(((s - 0.10) / (grooveEndS - 0.10)) * Math.PI) * archPresence
+              : 0.0;
+            if (sinT > 0.0 && grooveEnv > 0.0) {
+              const vWidth = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.42 : 0.32;
+              const vSharp = Math.exp(-Math.pow(Math.abs(cosT) / vWidth, 1.45));
+              const dipBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.16 : 0.105)
+                : 0.075;
+              const centerDip = Math.min(halfThick * 0.72, dipBase * grooveEnv) * vSharp;
+              const shoulderPeak = (dorsalMode === 'safir_hook' && isWideLateral) ? 0.64 : 0.50;
+              const liftBase = (dorsalMode === 'safir_hook')
+                ? (isWideLateral ? 0.15 : 0.155)
+                : 0.13;
+              const shoulderLift = liftBase * grooveEnv * Math.exp(-Math.pow((Math.abs(cosT) - shoulderPeak) / 0.30, 2));
+              yOffset += (-centerDip + shoulderLift) * sinT;
+            }
+
+            if (isAlveolarOrNatiyyah && s > 0.62) {
+              const tipZone = Math.sin(((s - 0.62) / 0.38) * Math.PI * 0.5);
+              yOffset -= 0.016 * tipZone * (cosT * cosT) * capTip;
+              zHorseshoeOffset = -0.052 * tipZone * Math.pow(Math.abs(cosT), 1.80) * capTip;
+
+              if (isNatiyyah && sinT > 0.0) {
+                const pressZone = Math.exp(-Math.pow((s - 0.84) / 0.09, 2)) * (1.0 - 0.55 * cosT * cosT);
+                x *= (1.0 + 0.065 * pressZone * Math.sin(sinT * Math.PI));
+                yOffset += 0.012 * pressZone * Math.sin(sinT * Math.PI * 0.85) * capTip;
+                pressMeatFactor = pressZone * 0.75;
+              }
+            }
+
+            if (sinT < 0.0) {
+              const midSubRecess = Math.exp(-Math.pow((s - 0.50) / 0.26, 2));
+              const tipRoundRelease = Math.pow(Math.max(0.0, (s - 0.76) / 0.24), 1.4);
+              const narrowAmt = (0.20 + 0.16 * midSubRecess) * (1.0 - 0.72 * tipRoundRelease);
+              x *= (1.0 - narrowAmt * Math.pow(-sinT, 0.75));
+            }
+          }
+
+          let targetWy = yCenter + yOffset;
+
+          if (sinT < -0.15 && s < 0.64 && iz > 0 && iz < TONGUE_SEGS_Z) {
+            const rootAttachEnv = Math.pow(Math.max(0.0, (0.64 - s) / 0.64), 1.35);
+            const downWeight = Math.pow((-sinT - 0.15) / 0.85, 0.85) * rootAttachEnv;
+            const deepFloorY = (-0.38 - jawOpenFactor * 0.05 + 0.08 * s) * capBack;
+            if (deepFloorY < targetWy) {
+              targetWy = targetWy * (1.0 - downWeight * 0.65) + deepFloorY * (downWeight * 0.65);
+            }
+            const maxRootHalfW = Math.min(halfWidth * 0.82, molarWall.inX * 0.84);
+            if (Math.abs(x) > maxRootHalfW) {
+              const rootClamp = Math.pow(-sinT, 0.6);
+              x = x * (1.0 - rootClamp) + Math.sign(x) * maxRootHalfW * rootClamp;
+            }
+          }
+
+          let wz = zCenter + zHorseshoeOffset;
+
+          if (dorsalMode === 'dhaad_lateral' && iz > 0 && iz < TONGUE_SEGS_Z) {
+            const wallAtVertexZ = getUpperMolarInnerWallAtZ(wz);
+            const isRightSide = (cosT < 0);
+            const isLeftSide = (cosT > 0);
+            const activeDhaadMode = dhaadModeRef.current;
+            const isPressedSide = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRightSide) || (activeDhaadMode === 'left' && isLeftSide);
+            const tipSmoothBlend = Math.pow(Math.max(0.0, (s - 0.62) / 0.38), 1.35);
+            const allowedArchX = wallAtVertexZ.inX + (isPressedSide ? 0.036 * (1.0 - tipSmoothBlend) : 0.004);
+            if (Math.abs(x) > allowedArchX) {
+              x = Math.sign(x) * allowedArchX;
+            }
+          }
+
+          if (dorsalMode !== 'dhaad_lateral' && targetWy > 0.06 && s > 0.52 && iz < TONGUE_SEGS_Z) {
+            const elevLock = Math.min(1.0, (targetWy - 0.06) / 0.14);
+            const wallAtZ = getUpperMolarInnerWallAtZ(wz);
+            const maxAlveolarX = Math.max(0.015, (wallAtZ.inX - 0.006) * (0.25 + 0.75 * capTip));
+            const softX = Math.sign(x) * smoothMin(Math.abs(x), maxAlveolarX, 0.028);
+            x = x * (1.0 - elevLock) + softX * elevLock;
+
+            const signedTxShelf = Math.max(-1.0, Math.min(1.0, x / 0.32));
+            const frontTargetZ = isNatiyyah ? 0.912 : 0.885;
+            const maxAlveolarZ = frontTargetZ - 0.175 * (signedTxShelf * signedTxShelf) - (1.0 - capTip) * 0.008;
+            const softZ = smoothMin(wz, maxAlveolarZ, 0.022);
+            wz = wz * (1.0 - elevLock) + softZ * elevLock;
+          }
+
+          // Alif Resting Pose morph
+          const zTipAlif = 0.78 + (ALIF_MAKHRAJ_GEARS.tipForward / 100) * 0.25;
+          const yTipAlif = (ALIF_MAKHRAJ_GEARS.tipElevation / 100) * 0.42;
+          const zAlif = zBack + sZ * (zTipAlif - zBack);
+          const uTipAlif = Math.max(0.0, (s - 0.36) / 0.64);
+          const wTipAlif = uTipAlif * uTipAlif * (3.0 - 2.0 * uTipAlif);
+          const yTopAlif = 0.04 * (1.0 - wTipAlif) + yTipAlif * wTipAlif - 0.045 * (1.0 - wTipAlif);
+          const backRootDropAlif = -0.24 * Math.pow(Math.max(0.0, (0.40 - s) / 0.40), 1.4);
+          const sublingualRecessAlif = 0.075 * Math.exp(-Math.pow((s - 0.70) / 0.15, 2));
+          const yBotAlif = (-0.17 + backRootDropAlif + sublingualRecessAlif + 0.10 * yTopAlif) * (1.0 - wTipAlif) + (yTipAlif - 0.118) * wTipAlif - (ALIF_MAKHRAJ_GEARS.jawOpen / 100) * 0.03;
+          const halfThickAlif = Math.max(0.052, 0.5 * (yTopAlif - yBotAlif)) * capBack * capTip;
+          const yCenterAlif = 0.5 * (yTopAlif + yBotAlif);
+          const halfWidthAlif = (iz === 0 || iz === TONGUE_SEGS_Z) ? 0.0 : (baseW + 0.15 * 0.10 * Math.exp(-Math.pow((s - 0.48) / 0.26, 2)) * capTip);
+          let xAlif = cosT * halfWidthAlif;
+          if (sinT < 0.0) {
+            const midSubRecessAlif = Math.exp(-Math.pow((s - 0.50) / 0.26, 2));
+            const tipRoundReleaseAlif = Math.pow(Math.max(0.0, (s - 0.76) / 0.24), 1.4);
+            xAlif *= (1.0 - (0.20 + 0.16 * midSubRecessAlif) * (1.0 - 0.72 * tipRoundReleaseAlif) * Math.pow(-sinT, 0.75));
+          }
+          let wyAlif = yCenterAlif + sinT * halfThickAlif;
+
+          const mProg = morphProgressRef.current;
+          x = xAlif + (x - xAlif) * mProg;
+          wz = zAlif + (wz - zAlif) * mProg;
+          targetWy = wyAlif + (targetWy - wyAlif) * mProg;
+
+          const tipEdgeRoundOff = (s > 0.88 && sinT > 0.0) ? (0.010 * Math.pow((s - 0.88) / 0.12, 1.6) * sinT) : 0.0;
+          const palateClearance = (dorsalMode === 'jeem_touch')
+            ? 0.001
+            : ((dorsalMode === 'middle_dome' || dorsalMode === 'safir_hook') ? 0.002 : 0.005);
+          const ceilingY = getPalateCeilingY(x, wz) - palateClearance - tipEdgeRoundOff;
+          const clampRadius = (dorsalMode === 'jeem_touch' && s > 0.78 && s < 0.96) ? 0.035 : 0.024;
+          const wy = smoothMin(targetWy, ceilingY, clampRadius);
+
+          // --- jeem tip shaping (post-clamp, jeem only) ---
+          let tipHook = 0, tipUndercut = 0, tipTaper = 1;
+          if (dorsalMode === 'jeem_touch') {
+            const tipT = Math.max(0, Math.min(1, (s - 0.88) / 0.12));
+            const tipE = tipT * tipT * (3 - 2 * tipT);          // smoothstep 0 -> 1 over the last 12%
+            const topM = Math.max(0.0, Math.min(1.0, (sinT + 0.18) / 0.55));
+            const under = 1.0 - topM;                          // 1 on the underside, 0 on the top surface
+            tipHook = 0.06 * tipE * tipE;                         // front of the tip curls down a little
+            tipUndercut = 0.16 * tipE * under;                    // underside slopes back (diagonal)
+            tipTaper = 1.0 - 0.20 * tipE;                         // tip narrows -> rounded front
+          }
+
+          posArr[ptr++] = x * tipTaper;
+          posArr[ptr++] = wy - tipHook;
+          posArr[ptr++] = wz - tipUndercut;
+
+          // Tongue Coloring
+          const dorsalLight = (sinT >= 0.0) ? (0.84 + 0.18 * Math.pow(sinT, 0.75)) : Math.max(0.34, 0.84 + sinT * 0.48);
+          const sublingualArchShadow = (sinT < -0.05) ? (Math.pow(Math.min(1.0, (-0.05 - sinT) / 0.95), 1.1) * (0.30 + 0.14 * Math.sin(s * Math.PI))) : 0.0;
+          const molarCushionWave = (s > 0.18 && s < 0.74 && Math.abs(cosT) > 0.45 && sinT > -0.25)
+            ? (0.045 * Math.cos(s * 6.5 * Math.PI * 2) * Math.pow((Math.abs(cosT) - 0.45) / 0.55, 0.8)) : 0.0;
+          const backSlopeShadow = Math.pow(Math.max(0.0, (0.28 - s) / 0.28), 1.4) * 0.15;
+          const shadeT = Math.max(0.30, Math.min(1.06, dorsalLight - sublingualArchShadow - backSlopeShadow + molarCushionWave + pressMeatFactor * 0.05));
+
+          let rT = 0.80 * shadeT;
+          let gT = 0.26 * shadeT;
+          let bT = 0.30 * shadeT;
+
+          if (showAnatomyRef.current) {
+            const absC = Math.abs(cosT);
+            let zoneRGB = [0.49, 0.23, 0.93]; // Root: നാവിന്റെ മുരട് (#7c3aed)
+            if (s > 0.68 && absC < 0.66) zoneRGB = [0.02, 0.59, 0.41]; // Tip: നാവിന്റെ തുമ്പ് (#059669)
+            else if (absC >= 0.58 && s >= 0.16 && s <= 0.84 && sinT > -0.45) zoneRGB = [0.85, 0.47, 0.02]; // Sides: നാവിന്റെ അരിക് (#d97706)
+            else if (s >= 0.36 && s <= 0.68) zoneRGB = [0.15, 0.39, 0.92]; // Middle: നാവിന്റെ മധ്യമം (#2563eb)
+
+            const anatShade = Math.max(0.34, Math.min(1.06, shadeT * 1.08));
+            rT = zoneRGB[0] * anatShade;
+            gT = zoneRGB[1] * anatShade;
+            bT = zoneRGB[2] * anatShade;
+          } else if (showMakhrajColorsRef.current) {
+            const lid = currentLetterRef.current.id;
+            const absCos = Math.abs(cosT);
+            const topMask = Math.max(0.0, Math.min(1.0, (sinT + 0.18) / 0.55));
+            const edgeMask = Math.max(0.0, Math.min(1.0, (sinT + 0.38) / 0.55));
+            let pW = 0.0, sW = 0.0;
+
+            if (lid === 'dhaad') {
+              const isRight = (cosT < 0);
+              const isLeft = (cosT > 0);
+              const activeDhaadMode = dhaadModeRef.current;
+              const isPressed = (activeDhaadMode === 'both') || (activeDhaadMode === 'right' && isRight) || (activeDhaadMode === 'left' && isLeft);
+              const latRim = Math.pow(Math.max(0.0, (absCos - 0.46) / 0.54), 1.15) * dhaadMolarEnv * edgeMask;
+              const frontSmoothTip = Math.pow(Math.max(0.0, (s - 0.78) / 0.22), 1.2) * Math.pow(Math.max(0.0, absCos * 0.5 + 0.5), 0.6) * edgeMask;
+              const backIstila = Math.exp(-Math.pow((s - 0.32) / 0.16, 2)) * Math.exp(-Math.pow(absCos / 0.45, 2)) * topMask;
+
+              if (isPressed) {
+                pW = Math.min(0.92, latRim * 1.15);
+                sW = Math.min(0.72, (frontSmoothTip * 0.78 + backIstila * 0.45) * (1.0 - pW));
+              } else {
+                pW = 0.0;
+                sW = Math.min(0.80, latRim * 0.85 + frontSmoothTip * 0.78 + backIstila * 0.45);
+              }
+            } else if (lid === 'laam') {
+              pW = Math.pow(Math.max(0.0, (s - 0.64) / 0.36), 0.85) * edgeMask * 0.90;
+            } else if (lid === 'qaaf' || lid === 'kaaf') {
+              pW = Math.exp(-Math.pow((s - 0.22) / 0.12, 2)) * topMask * 0.90;
+            } else if (lid === 'ghayn') {
+              // Ghayn: Root of tongue touches soft palate (أقصى وجذر اللسان)
+              const rootCore = Math.exp(-Math.pow((s - 0.18) / 0.11, 2)) * topMask;
+              pW = rootCore * 0.88;
+              sW = Math.exp(-Math.pow((s - 0.24) / 0.14, 2)) * topMask * 0.70 * (1.0 - pW);
+            } else if (lid === 'khaa') {
+              // Khaa: Root of tongue creates unvoiced air friction scrape
+              const rootFric = Math.exp(-Math.pow((s - 0.18) / 0.12, 2)) * topMask;
+              pW = rootFric * 0.35;
+              sW = rootFric * 0.85 * (1.0 - pW);
+            } else if (lid === 'jeem') {
+              const zEnv = Math.exp(-Math.pow((s - 0.91) / 0.05, 2));
+              const xCenter = Math.exp(-Math.pow(absCos / 0.62, 2));
+              pW = zEnv * xCenter * topMask * 0.95;
+              sW = zEnv * (1.0 - xCenter * 0.7) * topMask * 0.55;
+            } else if (lid === 'sheen') {
+              const zEnv = Math.exp(-Math.pow((s - 0.56) / 0.14, 2));
+              const latShoulders = Math.exp(-Math.pow((absCos - 0.62) / 0.22, 2));
+              const centerChannel = Math.exp(-Math.pow((s - 0.62) / 0.18, 2)) * Math.exp(-Math.pow(absCos / 0.36, 2));
+              pW = zEnv * latShoulders * topMask * 0.88;
+              sW = centerChannel * topMask * 0.78 * (1.0 - pW);
+            } else if (lid === 'yaa_cons') {
+              const zEnv = Math.exp(-Math.pow((s - 0.55) / 0.12, 2));
+              const latShoulders = Math.exp(-Math.pow((absCos - 0.58) / 0.22, 2));
+              const centerChannel = zEnv * Math.exp(-Math.pow(absCos / 0.30, 2));
+              pW = zEnv * latShoulders * topMask * 0.86;
+              sW = centerChannel * topMask * 0.74 * (1.0 - pW);
+            } else if (isNatiyyah) {
+              const pressCore = Math.exp(-Math.pow((s - 0.86) / 0.11, 2)) * Math.exp(-Math.pow(absCos / 0.72, 2));
+              pW = pressCore * topMask * 0.92;
+              const cushionHalo = Math.pow(Math.max(0.0, (s - 0.72) / 0.28), 0.9) * edgeMask * 0.65;
+              sW = cushionHalo * (1.0 - pW);
+            } else if (lid === 'saad' || lid === 'zaay' || lid === 'seen') {
+              const tipApex = Math.pow(Math.max(0.0, (s - 0.89) / 0.11), 1.1) * Math.exp(-Math.pow(absCos / 0.56, 2));
+              const shoulderCenter = (lid === 'saad') ? 0.62 : 0.52;
+              const bladeShoulders = Math.exp(-Math.pow((s - 0.60) / 0.14, 2)) * Math.exp(-Math.pow((absCos - shoulderCenter) / 0.20, 2));
+              const whistleGroove = Math.exp(-Math.pow((s - 0.68) / 0.20, 2)) * Math.exp(-Math.pow(absCos / 0.32, 2));
+              const backIstila = (lid === 'saad') ? (Math.exp(-Math.pow((s - 0.25) / 0.14, 2)) * topMask * 0.65) : 0.0;
+              pW = Math.min(0.90, (tipApex + bladeShoulders) * topMask * 0.90);
+              sW = Math.min(0.82, (whistleGroove * topMask * 0.82 + backIstila) * (1.0 - pW));
+            } else if (lid === 'thaa_heavy' || lid === 'dhaal_zaa' || lid === 'thaa_light') {
+              const pressCore = Math.exp(-Math.pow((s - 0.88) / 0.09, 2)) * Math.exp(-Math.pow(absCos / 0.68, 2));
+              pW = pressCore * topMask * 0.90;
+              const cushionHalo = Math.pow(Math.max(0.0, (s - 0.76) / 0.24), 0.95) * edgeMask * 0.62;
+              sW = cushionHalo * (1.0 - pW);
+            }
+
+            pW *= mProg;
+            sW *= mProg;
+            rT = rT * (1.0 - pW - sW) + 0.04 * pW + 0.48 * sW;
+            gT = gT * (1.0 - pW - sW) + 0.46 * pW + 0.92 * sW;
+            bT = bT * (1.0 - pW - sW) + 0.16 * pW + 0.60 * sW;
+          }
+
+          colArr[cPtr++] = rT;
+          colArr[cPtr++] = gT;
+          colArr[cPtr++] = bT;
+        }
+      }
+
+        if (activeLetter.dorsalMode === 'jeem_touch') {
+          smoothTongueGrid(posArr, 3, 0.5);   // passes, strength
+        }
+
+        tongueGeom.attributes.position.needsUpdate = true;
+        tongueGeom.attributes.color.needsUpdate = true;
+        updatePalateMakhrajColors(morphProgressRef.current);
+        updateTeethAnatomyColors(showAnatomyRef.current);
+        tongueGeom.computeVertexNormals();
+      }
+
+      // Smooth camera transition if animating (between oral dental view and throat stations)
+      if (camAnimRef.current) {
+        const elapsed = performance.now() - camAnimRef.current.startTime;
+        const tNorm = Math.min(1.0, elapsed / camAnimRef.current.duration);
+        const ease = tNorm < 0.5 ? 2 * tNorm * tNorm : -1 + (4 - 2 * tNorm) * tNorm;
+        const targetR = camAnimRef.current.targetRadius ?? DEFAULT_CAM.radius;
+        const targetP = camAnimRef.current.targetPhi ?? DEFAULT_CAM.phi;
+        spherical.radius = camAnimRef.current.startRadius + (targetR - camAnimRef.current.startRadius) * ease;
+        spherical.theta = camAnimRef.current.startTheta + (camAnimRef.current.targetTheta - camAnimRef.current.startTheta) * ease;
+        spherical.phi = camAnimRef.current.startPhi + (targetP - camAnimRef.current.startPhi) * ease;
+        if (camAnimRef.current.startTarget && camAnimRef.current.targetTarget) {
+          spherical.target.lerpVectors(camAnimRef.current.startTarget, camAnimRef.current.targetTarget, ease);
+        } else {
+          spherical.target.copy(DEFAULT_CAM.target);
+        }
+        updateCamPos();
+
+        if (tNorm >= 1.0) {
+          camAnimRef.current = null;
+          updateCamPos();
+        }
+        cameraDirty = true;
+      }
+
+      // ----------------------------------------------------------------------
+      // 3D REALISTIC THROAT ANATOMY & DYNAMIC GREEN/YELLOW CONTACT SPREADING
+      // Spreads green (firm pressing) and yellow (air touch & pressure glow) on tissue based on power of pressing
+      // ----------------------------------------------------------------------
+      const epiglottisPivot = sceneElementsRef.current?.epiglottisPivot;
+      const epiglottisMesh = sceneElementsRef.current?.epiglottisMesh;
+      const pharynxMesh = sceneElementsRef.current?.pharynxMesh;
+      const leftVocalCord = sceneElementsRef.current?.leftVocalCord;
+      const rightVocalCord = sceneElementsRef.current?.rightVocalCord;
+      const airwayParticles = sceneElementsRef.current?.airwayParticles;
+      const particlePointsData = sceneElementsRef.current?.particlePointsData;
+      const curPreset = currentLetterRef.current;
+      const isThroatActive = Boolean(curPreset.isThroat);
+      const mProg = morphProgressRef.current;
+
+      if (epiglottisPivot && epiglottisMesh && pharynxMesh && leftVocalCord && rightVocalCord && airwayParticles && particlePointsData) {
+        const epiTilt = (currentGearsRef.current.epiglottisTilt || 0) / 100;
+        epiglottisPivot.rotation.x = -0.16 - epiTilt * 0.84;
+
+        const cordConstrict = (currentGearsRef.current.vocalCordsConstriction || 0) / 100;
+        const isHamzah = curPreset.id === 'hamzah';
+        const isHaaLight = curPreset.id === 'haa_light';
+        const isAyn = curPreset.id === 'ayn';
+        const isHaaPharyngeal = curPreset.id === 'haa_pharyngeal';
+        const isGhayn = curPreset.id === 'ghayn';
+        const isKhaa = curPreset.id === 'khaa';
+        const isVoicedThroat = isAyn || isGhayn;
+        const isHamzahShut = isHamzah && cordConstrict > 0.82;
+
+        const cordGap = (1.0 - cordConstrict) * 0.045;
+        const cordFlutter = isVoicedThroat ? Math.sin(now * 0.05) * 0.003 : 0;
+        leftVocalCord.position.x = -cordGap + cordFlutter;
+        rightVocalCord.position.x = cordGap - cordFlutter;
+
+        // 1. SPREAD GREEN & YELLOW ON VOCAL CORDS (Station 1: أقصى الحلق - ء ، هـ)
+        [leftVocalCord, rightVocalCord].forEach(cordMesh => {
+          const geom = cordMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const lx = Math.abs(pos[idx]);
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isHamzah) {
+                // Hamzah: Strongest pressing! (الشدة وانحباس الصوت)
+                // Medial contact seam presses tight: intense emerald green
+                const medialPress = Math.exp(-Math.pow(lx / 0.016, 2));
+                pW = Math.min(0.95, medialPress * 1.15 * cordConstrict) * mProg;
+                // Yellow pressure heat spreading across folds based on pressing power
+                const foldHeat = Math.exp(-Math.pow(lx / 0.045, 2));
+                sW = Math.min(0.85, foldHeat * 0.85 * (1.0 - pW) * cordConstrict) * mProg;
+              } else if (isHaaLight) {
+                // Haa Light: Open vocal slit, gentle breath flow (رخاوة وهمس)
+                // Zero green pressing. Soft yellow breath outline where air glides
+                const marginGlow = Math.exp(-Math.pow(lx / 0.024, 2));
+                sW = Math.min(0.72, marginGlow * 0.75) * mProg;
+              } else if (isVoicedThroat) {
+                const voiceRes = Math.exp(-Math.pow(lx / 0.035, 2));
+                sW = Math.min(0.40, voiceRes * 0.40) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
+        });
+
+        // 2. SPREAD GREEN & YELLOW ON EPIGLOTTIS (Station 2: وسط الحلق - ع ، ح)
+        if (epiglottisMesh) {
+          const geom = epiglottisMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const ly = pos[idx + 1];
+            const apexFactor = Math.max(0.0, Math.min(1.0, (ly - 0.08) / 0.14));
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isAyn) {
+                // Ayn: Strong backward pressing against posterior wall (توسط وجهر)
+                // Emerald green at the pressing apex
+                pW = Math.min(0.92, Math.pow(apexFactor, 1.25) * 1.10 * (epiTilt / 0.85)) * mProg;
+                // Yellow spreading downward reflecting pressing power
+                const spreadHeat = Math.pow(Math.max(0.0, (ly - 0.04) / 0.18), 1.1);
+                sW = Math.min(0.80, spreadHeat * 0.80 * (1.0 - pW)) * mProg;
+              } else if (isHaaPharyngeal) {
+                // Haa pharyngeal: Breath friction through narrow channel (همس ورخاوة)
+                // Predominantly glowing yellow breath friction touching apex
+                const fricApex = Math.pow(apexFactor, 1.2);
+                pW = Math.min(0.30, fricApex * 0.30) * mProg;
+                sW = Math.min(0.85, fricApex * 0.85 * (1.0 - pW)) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
+        }
+
+        // 3. SPREAD GREEN & YELLOW ON POSTERIOR PHARYNGEAL WALL (الجدار الخلفي للحلق)
+        if (pharynxMesh) {
+          const geom = pharynxMesh.geometry;
+          const colAttr = geom.attributes.color as THREE.BufferAttribute;
+          const posAttr = geom.attributes.position as THREE.BufferAttribute;
+          const cols = colAttr.array as Float32Array;
+          const pos = posAttr.array as Float32Array;
+          const base = geom.userData.baseColors as Float32Array;
+          const count = posAttr.count;
+
+          for (let vi = 0; vi < count; vi++) {
+            const idx = vi * 3;
+            const px = pos[idx];
+            const py = pos[idx + 1];
+            const rB = base[idx];
+            const gB = base[idx + 1];
+            const bB = base[idx + 2];
+
+            let pW = 0.0;
+            let sW = 0.0;
+
+            if (showMakhrajColorsRef.current) {
+              if (isAyn) {
+                // Direct contact area opposite epiglottis tip at Y ~ -0.34
+                const dist = Math.hypot(px, (py - (-0.34)) * 1.4);
+                const contactCore = Math.exp(-Math.pow(dist / 0.08, 2));
+                const contactSpread = Math.exp(-Math.pow(dist / 0.16, 2));
+                pW = Math.min(0.90, contactCore * 1.10 * (epiTilt / 0.85)) * mProg;
+                sW = Math.min(0.78, contactSpread * 0.80 * (1.0 - pW)) * mProg;
+              } else if (isHaaPharyngeal) {
+                // Air friction channel where air touches the back wall
+                const dist = Math.hypot(px, (py - (-0.34)) * 1.3);
+                const fricSpread = Math.exp(-Math.pow(dist / 0.15, 2));
+                pW = Math.min(0.20, fricSpread * 0.25) * mProg;
+                sW = Math.min(0.84, fricSpread * 0.85 * (1.0 - pW)) * mProg;
+              }
+            }
+
+            cols[idx] = rB * (1.0 - pW - sW) + 0.04 * pW + 0.90 * sW;
+            cols[idx + 1] = gB * (1.0 - pW - sW) + 0.52 * pW + 0.86 * sW;
+            cols[idx + 2] = bB * (1.0 - pW - sW) + 0.18 * pW + 0.16 * sW;
+          }
+          colAttr.needsUpdate = true;
+        }
+
+        // 4. ACOUSTIC AIRFLOW STREAM (Where the Air Touches)
+        if (isSimulatingRef.current || isThroatActive) {
+          cameraDirty = true;
+          const posAttr = airwayParticles.geometry.attributes.position as THREE.BufferAttribute;
+          const colAttr = airwayParticles.geometry.attributes.color as THREE.BufferAttribute;
+          const posArray = posAttr.array as Float32Array;
+          const colArray = colAttr.array as Float32Array;
+
+          for (let pi = 0; pi < particlePointsData.length; pi++) {
+            const p = particlePointsData[pi];
+            p.t = (p.t + delta * 0.36 * p.speedOffset) % 1.0;
+
+            let activeT = p.t;
+            if (isHamzahShut) {
+              // Air trapped completely below closed vocal cords (شدة وانحباس)
+              activeT = p.t * 0.18;
+            }
+
+            // Continuous curved airway from trachea (-0.88) through throat into mouth (+0.02)
+            const py = -0.88 + activeT * 0.90;
+            const pz = -0.62 + Math.sin(activeT * Math.PI * 0.48) * 0.36;
+            const px = p.laneX * (1.0 - activeT * 0.3);
+
+            const pIdx = pi * 3;
+            posArray[pIdx] = px;
+            posArray[pIdx + 1] = py;
+            posArray[pIdx + 2] = pz + p.laneZ;
+
+            if (isHamzahShut) {
+              // Crimson/amber pooling below closed vocal cords
+              colArray[pIdx] = 0.96;
+              colArray[pIdx + 1] = 0.25;
+              colArray[pIdx + 2] = 0.22;
+            } else if (isVoicedThroat || isAyn) {
+              // Golden buzzing acoustic waves for Voiced letters (جهر)
+              colArray[pIdx] = 0.98;
+              colArray[pIdx + 1] = 0.78;
+              colArray[pIdx + 2] = 0.16;
+            } else {
+              // Sky-blue smooth breath flow for Unvoiced letters (همس)
+              colArray[pIdx] = 0.26;
+              colArray[pIdx + 1] = 0.78;
+              colArray[pIdx + 2] = 0.98;
+            }
+          }
+          posAttr.needsUpdate = true;
+          colAttr.needsUpdate = true;
+        }
+      }
+
+      // Virtual joystick camera rotation (analog control with flipped left/right direction and smooth sensitivity)
+      if (joystickDeltaRef.current && (joystickDeltaRef.current.x !== 0 || joystickDeltaRef.current.y !== 0)) {
+        const speed = 1.15 * delta;
+        spherical.theta -= joystickDeltaRef.current.x * speed; // Flipped left/right as requested
+        spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi - joystickDeltaRef.current.y * speed));
+        cameraDirty = true;
+        updateCamPos();
+      }
+
+      if (isDragging) {
+        cameraDirty = true;
+      }
+
+      // Only render when scene is dirty (during morphing, dragging, settling, or camera animation)
+      if (cameraDirty) {
+        renderer.render(scene, camera);
+        cameraDirty = false;
+      }
+    };
+
+    const animId = requestAnimationFrame(animate);
+
+    // Cleanup
+    return () => {
+      cancelAnimationFrame(animId);
+      domEl.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      domEl.removeEventListener('wheel', onWheel);
+      domEl.removeEventListener('touchmove', onTouchMove);
+      domEl.removeEventListener('touchend', onTouchEnd);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener('resize', onResize);
+      if (domEl.parentNode) {
+        domEl.parentNode.removeChild(domEl);
+      }
+      renderer.dispose();
+    };
+  }, [resolvedTheme]);
+
+  // Sync mesh visibilities
+  useEffect(() => {
+    if (!sceneElementsRef.current) return;
+    const { hardPalateMesh, softPalateMesh, alveolarArcMesh, upperTeethGroup, lowerTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+    hardPalateMesh.visible = showPalate;
+    softPalateMesh.visible = showPalate;
+    alveolarArcMesh.visible = showPalate;
+    upperTeethGroup.visible = showUpperTeeth;
+    lowerTeethGroup.visible = showLowerTeeth;
+    if (markDirty) markDirty(2);
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  }, [showPalate, showUpperTeeth, showLowerTeeth]);
+
+  // Opacity slider sync
+  useEffect(() => {
+    targetGearsRef.current.upperOpacity = upperTeethOpacity;
+    currentGearsRef.current.upperOpacity = upperTeethOpacity;
+    setGears(prev => (prev.upperOpacity === upperTeethOpacity ? prev : { ...prev, upperOpacity: upperTeethOpacity }));
+    if (sceneElementsRef.current) {
+      const { upperToothMaterial, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+      if (upperToothMaterial) {
+        const val = upperTeethOpacity / 100;
+        upperToothMaterial.opacity = Math.max(0.0, Math.min(1.0, val));
+        upperToothMaterial.transparent = upperToothMaterial.opacity < 0.995;
+        upperToothMaterial.needsUpdate = true;
+      }
+      if (markDirty) markDirty(2);
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    }
+  }, [upperTeethOpacity]);
+
+  // Translations object
+  const t = useMemo(() => {
+    if (lang === 'ar') {
+      return {
+        studioTitle: 'استوديو التجويد ثلاثي الأبعاد',
+        anatomy: 'أقسام الفم',
+        anatomyPartCol: 'العضو',
+        anatomyLettersCol: 'حروف المخرج',
+        selectLetter: 'اختر الحرف:',
+        simulate: 'تشغيل',
+        simulateTitle: 'تشغيل الحركة والصوت (ألف ← المخرج)',
+        resetView: 'إعادة العرض',
+        makhrajColors: 'ألوان المخرج',
+        palate: 'الحنك',
+        upperTeeth: 'الأسنان العليا',
+        lowerTeeth: 'الأسنان السفلى',
+        dhaadVariants: 'أوجه نطق الضاد الثلاثة:',
+        dhaadRight: '١. ضغط الأضراس اليمنى',
+        dhaadLeft: '٢. ضغط الأضراس اليسرى',
+        dhaadBoth: '٣. ضغط الأضراس معاً',
+        shajariyyahNotice: 'الحروف الشجرية (وسط اللسان):',
+        jeemLabel: '١. الجيم (قفل تام)',
+        sheenLabel: '٢. الشين (فرجة التفشي)',
+        yaaLabel: '٣. الياء (تضيق المخرج)',
+        controls: 'التحكم الحركي في أعضاء النطق',
+        reset: 'وضع السكون',
+        firmPress: 'ضغط قوي',
+        gentleTouch: 'تلامس لطيف',
+        gumShelfBadge: 'اللثة ومقدم الحنك',
+        tongueBadge: 'اللسان',
+        toggleLanguage: 'English',
+        makharijTab: 'مخارج',
+        sifaatTab: 'صفات',
+        sifaatSectionTitle: 'صفات الحروف (أحكام التجويد الصوتية)',
+        sifaatSectionDesc: 'الصفات الصوتية اللازمة التي تميز الحروف المشتركة في المخرج الواحد وتحدد كيفيات خروجها.',
+        withOppositesTitle: '١. الصفات المتضادة (ٱلصِّفَاتُ الْمُتَضَادَّةُ — ٤ أزواج)',
+        withoutOppositesTitle: '٢. الصفات التي لا ضد لها (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ — ٧ صفات)',
+        characteristicCol: 'الصفة',
+        literalCol: 'المعنى اللغوي (مَعْنًى)',
+        technicalCol: 'المعنى الاصطلاحي (سَانْكِيتِكَ أَرْتَهَمْ)',
+        lettersCol: 'الحروف (حَرْفُكَلْ)',
+        mnemonicCol: 'العبارة المجمِّعة',
+        modalLettersTitle: 'الحروف المشتركة في هذه الصفة:',
+        openIn3D: 'عرض في المخرج ثلاثي الأبعاد',
+        close: 'إغلاق',
+        letterSifaatTitle: 'صفات الحرف:',
+        clickToExplain: 'انقر للشرح',
+        filterAll: 'الكل (١٦)',
+        filterOpposite: 'المتضادة (٤ أزواج)',
+        filterNonOpposite: 'غير المتضادة (٧)'
+      };
+    }
+    if (lang === 'ml') {
+      return {
+        studioTitle: '3D തജ്‌വീദ് സ്റ്റുഡിയോ',
+        anatomy: 'അൽമഖാരിജ് (17)',
+        anatomyPartCol: 'ക്രമം / പേര്',
+        anatomyLettersCol: 'ഹർഫുകൾ',
+        selectLetter: 'ഹർഫ് (الحرف):',
+        simulate: 'പ്ലേ',
+        simulateTitle: 'ഉച്ചാരണ ചലനവും ശബ്ദവും പ്ലേ ചെയ്യുക',
+        resetView: 'റീസെറ്റ്',
+        makhrajColors: 'മഖ്റജ് അടയാളങ്ങൾ',
+        palate: 'അണ്ണാക്ക്',
+        upperTeeth: 'മേൽപല്ലുകൾ',
+        lowerTeeth: 'കീഴ്‌പല്ലുകൾ',
+        dhaadVariants: 'ളാദ് (ض) — ളർസിയ്യത്ത്:',
+        dhaadRight: '1. വലതുഭാഗത്തെ അണപ്പല്ലുകൾ',
+        dhaadLeft: '2. ഇടതുഭാഗത്തെ അണപ്പല്ലുകൾ',
+        dhaadBoth: '3. ഇരുഭാഗത്തെയും അണപ്പല്ലുകൾ',
+        shajariyyahNotice: 'ശജരിയ്യത്ത് അക്ഷരങ്ങൾ:',
+        jeemLabel: '1. ജീം (ج)',
+        sheenLabel: '2. ശീൻ (ش)',
+        yaaLabel: '3. യാഅ് (ي)',
+        controls: 'ഉച്ചാരണ നിയന്ത്രണം',
+        reset: 'യഥാർത്ഥ അവസ്ഥ',
+        firmPress: 'ശക്തിയായി അമർത്തൽ',
+        gentleTouch: 'നേർത്ത സ്പർശനം',
+        gumShelfBadge: 'മോണ',
+        tongueBadge: 'നാവ്',
+        toggleLanguage: 'English',
+        makharijTab: 'മഖാരിജ്',
+        sifaatTab: 'സിഫാത്ത്',
+        sifaatSectionTitle: 'സിഫാതുൽ ഹുറൂഫ്',
+        sifaatSectionDesc: 'തജ്വീദിന്റെ ഫന്നിൽ മഖ്റജ് പോലെത്തന്നെ സിഫാതിനെ കുറിച്ചും അറിയൽ വളരെ പ്രധാനപ്പെട്ടതാകുന്നു.',
+        withOppositesTitle: 'അസ്സിഫാതുൽ മുതളാദ്ദത്ത്',
+        withoutOppositesTitle: 'വിപരീതമില്ലാത്ത സിഫതുകൾ (ളിദ്ദല്ലാത്തവ)',
+        characteristicCol: 'സിഫത്ത്',
+        literalCol: 'മഅ്ന',
+        technicalCol: 'സാങ്കേതിക അർത്ഥവും ഹർഫുകളും',
+        lettersCol: 'ഹർഫുകൾ',
+        mnemonicCol: 'സൂചന വാക്യം',
+        modalLettersTitle: 'ഈ സിഫത്തുള്ള ഹർഫുകൾ:',
+        openIn3D: 'മഖ്റജിൽ കാണുക',
+        close: 'അടയ്ക്കുക',
+        letterSifaatTitle: 'സിഫാത്തുകൾ (صفات الحرف):',
+        clickToExplain: 'വിശദീകരണത്തിന് ക്ലിക്ക് ചെയ്യുക',
+        filterAll: 'എല്ലാം',
+        filterOpposite: 'മുതളാദ്ദത്ത്',
+        filterNonOpposite: 'ളിദ്ദല്ലാത്തവ'
+      };
+    }
+    return {
+      studioTitle: '3D Tajweed Studio',
+      anatomy: 'Anatomy Parts (أقسام الفم)',
+      anatomyPartCol: 'Part',
+      anatomyLettersCol: 'Letters',
+      selectLetter: 'Letter (الحرف):',
+      simulate: 'Play',
+      simulateTitle: 'Play Motion & Sound (ألف ← المخرج)',
+      resetView: 'Reset View',
+      makhrajColors: 'Makhraj Marks',
+      palate: 'Palate',
+      upperTeeth: 'Upper Teeth',
+      lowerTeeth: 'Lower Teeth',
+      dhaadVariants: 'Letter Zad / Dhaad (ض) — 3 Articulation Variants:',
+      dhaadRight: '1. Press Right Molars (يمين)',
+      dhaadLeft: '2. Press Left Molars (يسار)',
+      dhaadBoth: '3. Press Both Molars (كلاهما)',
+      shajariyyahNotice: 'Middle Tongue Letters (الحروف الشجرية):',
+      jeemLabel: '1. Jeem (ج) — 0.0 mm Seal (قفل تام)',
+      sheenLabel: '2. Sheen (ش) — ~3.2 mm Gap (تفشٍّ)',
+      yaaLabel: '3. Yaa (ي) — ~1.6 mm Arch (رخاوة)',
+      controls: 'Mechanical Articulation Controls (التحكم بالمخرج)',
+      reset: 'Neutral Pose',
+      firmPress: 'Firm Press (ضغط)',
+      gentleTouch: 'Gentle Touch (تلامس لطيف)',
+      gumShelfBadge: 'Gum Shelf (اللثة)',
+      tongueBadge: 'Tongue (اللسان)',
+      toggleLanguage: 'عربي',
+      makharijTab: 'Makharij',
+      sifaatTab: 'Sifaat',
+      sifaatSectionTitle: 'Sifaat al-Huroof (Characteristics of Arabic Letters)',
+      sifaatSectionDesc: 'The essential phonetic attributes that distinguish letters sharing the same Makhraj.',
+      withOppositesTitle: '1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs)',
+      withoutOppositesTitle: '2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ — 7 Sifaat)',
+      characteristicCol: 'Characteristic (الصفة)',
+      literalCol: 'Literal Meaning (المعنى اللغوي)',
+      technicalCol: 'Technical Meaning (المعنى الاصطلاحي)',
+      lettersCol: 'Letters (الحروف)',
+      mnemonicCol: 'Mnemonic (العبارة)',
+      modalLettersTitle: 'Letters with this characteristic:',
+      openIn3D: 'View in 3D Makhraj',
+      close: 'Close',
+      letterSifaatTitle: 'Letter Sifaat (صفات الحرف):',
+      clickToExplain: 'Click for details',
+      filterAll: 'All (16)',
+      filterOpposite: 'With Opposites (4 Pairs)',
+      filterNonOpposite: 'Without Opposites (7)'
+    };
+  }, [lang]);
+
+  const selectLetterByArabic = (ltr: string) => {
+    const preset = findPresetByLetter(ltr);
+    if (preset) selectLetter(preset);
+  };
+
+  // Click handler for letters in Sifaat tab: displays held static makhraj at top-right without audio, without simulating/resetting to Alif, and without redirecting
+  const handleSifaatLetterClick = (ltr: string) => {
+    const preset = findPresetByLetter(ltr);
+    if (preset) {
+      selectLetter(preset);
+      setSifaat3DOpen(true);
+      // Stays in place holding the articulated makhraj position with contact colors and airflow
+    }
+  };
+
+  const renderAnatomyRows = (items: AnatomyLabelItem[]) =>
+    items.map(item => {
+      const partColor = resolvedTheme === 'dark' ? item.hex : (item.lightTextHex || item.hex);
+      return (
+        <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-gray-800/40 transition-colors">
+          <td className="py-1.5 px-2.5 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1.5 font-bold text-xs" style={{ color: partColor }}>
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/10 dark:ring-white/20" style={{ backgroundColor: item.hex }} />
+              <span>{lang === 'ar' ? item.ar : lang === 'ml' ? item.ml : item.en}</span>
+            </span>
+          </td>
+          <td className="py-1 px-2">
+            <div className="flex flex-wrap items-center gap-1">
+              {item.letters.map(ltr => {
+                const isActive = currentLetter.letter === ltr;
+                return (
+                  <button
+                    key={ltr}
+                    type="button"
+                    onClick={() => selectLetterByArabic(ltr)}
+                    className={`arabic-font text-sm font-bold min-w-[24px] h-6 px-1.5 rounded-lg border transition-all leading-none flex items-center justify-center active:scale-95 ${
+                      isActive
+                        ? 'text-white shadow-sm'
+                        : 'bg-slate-50 dark:bg-gray-800/80 hover:scale-105'
+                    }`}
+                    style={
+                      isActive
+                        ? { backgroundColor: item.hex, borderColor: item.hex }
+                        : { color: partColor, borderColor: `${item.hex}45` }
+                    }
+                  >
+                    {ltr}
+                  </button>
+                );
+              })}
+            </div>
+          </td>
+        </tr>
+      );
+    });
+
+  return (
+    <div className={`min-h-screen bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-gray-100 flex flex-col relative selection:bg-emerald-500 selection:text-white ${lang === 'ar' ? 'font-serif lang-ar' : lang === 'ml' ? 'lang-ml' : 'lang-en'}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <Navbar />
+
+      {/* Ambient background glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-200/40 dark:bg-emerald-950/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-sky-200/30 dark:bg-sky-950/20 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-indigo-200/30 dark:bg-indigo-950/20 rounded-full blur-[140px]" />
       </div>
+
+      <main className="flex-1 max-w-[1500px] w-full mx-auto px-3 sm:px-5 py-4 flex flex-col gap-3 relative z-10">
+
+        {/* Clean Studio Header */}
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3 sm:p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{t.studioTitle}</span>
+            </h1>
+
+            {/* Navigation Tabs near Headline: Makharijul Huroof & Sifaat al-Huroof */}
+            <div className="flex items-center p-1 bg-slate-100/90 dark:bg-gray-800/90 rounded-2xl border border-slate-200/80 dark:border-gray-700/80 text-xs font-bold shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveMainTab('makharij');
+                  setSifaat3DOpen(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+                  activeMainTab === 'makharij'
+                    ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span>{t.makharijTab}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMainTab('sifaat')}
+                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+                  activeMainTab === 'sifaat'
+                    ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>{t.sifaatTab}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Language Selector: English | العربية | മലയാളം */}
+          <div className="flex items-center p-1 bg-slate-100/90 dark:bg-gray-800/90 rounded-2xl border border-slate-200/80 dark:border-gray-700/80 text-xs font-bold shadow-inner">
+            <button
+              type="button"
+              onClick={() => changeLanguage('en')}
+              className={`px-2.5 py-1 rounded-xl transition-all ${
+                lang === 'en'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              onClick={() => changeLanguage('ar')}
+              className={`px-2.5 py-1 rounded-xl transition-all arabic-font ${
+                lang === 'ar'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              العربية
+            </button>
+            <button
+              type="button"
+              onClick={() => changeLanguage('ml')}
+              className={`px-2.5 py-1 rounded-xl transition-all ${
+                lang === 'ml'
+                  ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-gray-700 font-black'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              മലയാളം
+            </button>
+          </div>
+        </div>
+
+                {/* Desktop 2-Column Layout (Makharijul Huroof: 3D Simulator & Letter Controls) */}
+        <div className={activeMainTab === 'makharij' ? "grid grid-cols-1 lg:grid-cols-12 gap-3 items-start" : sifaat3DOpen ? "contents" : "hidden"}>
+
+          {/* Left Column (Desktop): Letter Selection + 3D Viewport + 2 Divs under 3D */}
+          <div className={activeMainTab === 'makharij' ? "lg:col-span-7 flex flex-col gap-3" : sifaat3DOpen ? "contents" : "hidden"}>
+
+            {/* All 28 Arabic Letters Bar (in Anatomical Order: 6 Throat + 22 Oral) */}
+            <section className={activeMainTab === 'makharij' ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-2.5 sm:p-3 shadow-sm flex flex-col gap-2" : "hidden"}>
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
+                  {lang === 'ar' ? 'حروف الهجاء حسب ترتيب المخارج (من أقصى الحلق إلى الشفتين):' : lang === 'ml' ? 'അക്ഷരങ്ങൾ മഖ്റജ് ക്രമത്തിൽ (തൊണ്ട മുതൽ ചുണ്ട് വരെ):' : 'Letters in Anatomical Order (Bottom Throat → Lips):'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                {LETTER_PRESETS.map((preset, pIdx) => {
+                  const isSelected = preset.id === currentLetter.id;
+                  const isFirstThroatAqsa = pIdx === 0;
+                  const isFirstThroatWasat = pIdx === 2;
+                  const isFirstThroatAdna = pIdx === 4;
+                  const isFirstBackRoot = pIdx === 6;
+                  const isFirstMidTongue = pIdx === 8;
+                  const isFirstTongueEdge = pIdx === 11;
+                  const isFirstTongueTip = pIdx === 13;
+                  const isFirstLips = pIdx === 24;
+                  
+                  return (
+                    <div key={preset.id} className="flex items-center gap-1.5 shrink-0">
+                      {isFirstThroatAqsa && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أقصى الحلق' : lang === 'ml' ? 'അടിത്തൊണ്ട' : 'Bottom Throat'}
+                        </span>
+                      )}
+                      {isFirstThroatWasat && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'وسط الحلق' : lang === 'ml' ? 'നടു തൊണ്ട' : 'Mid Throat'}
+                        </span>
+                      )}
+                      {isFirstThroatAdna && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أدنى الحلق' : lang === 'ml' ? 'മേൽതൊണ്ട' : 'Top Throat'}
+                        </span>
+                      )}
+                      {isFirstBackRoot && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'أقصى اللسان' : lang === 'ml' ? 'നാവിന്റെ മുരട്' : 'Back Root'}
+                        </span>
+                      )}
+                      {isFirstMidTongue && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'وسط اللسان' : lang === 'ml' ? 'നാവിന്റെ മധ്യം' : 'Middle Tongue'}
+                        </span>
+                      )}
+                      {isFirstTongueEdge && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'حافة اللسان' : lang === 'ml' ? 'നാവിന്റെ അരിക്' : 'Tongue Edge'}
+                        </span>
+                      )}
+                      {isFirstTongueTip && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'طرف اللسان' : lang === 'ml' ? 'നാവിന്റെ തുമ്പ്' : 'Tongue Tip'}
+                        </span>
+                      )}
+                      {isFirstLips && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60 whitespace-nowrap select-none">
+                          {lang === 'ar' ? 'الشفتان' : lang === 'ml' ? 'ചുണ്ടുകൾ' : 'Lips'}
+                        </span>
+                      )}
+
+                      <button
+                        onClick={() => selectLetter(preset)}
+                        className={`min-w-[3.25rem] h-12 sm:h-14 px-3.5 py-1 rounded-2xl font-bold transition-all flex items-center justify-center shrink-0 border active:scale-95 ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105'
+                            : 'bg-slate-100/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-300 border-slate-200/60 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className="arabic-font text-3xl sm:text-4xl leading-none font-bold">{preset.letter}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* 3D Viewport Section: Ultra-minimal draggable floating in Sifaat tab, embedded in Makharij tab */}
+            <section
+              ref={sifaatWindowRef}
+              style={
+                activeMainTab === 'sifaat'
+                  ? {
+                      top: sifaatWindowPos ? `${sifaatWindowPos.y}px` : undefined,
+                      left: sifaatWindowPos ? `${sifaatWindowPos.x}px` : undefined,
+                      right: sifaatWindowPos ? 'auto' : undefined,
+                      bottom: sifaatWindowPos ? 'auto' : undefined,
+                      width: `${sifaatWindowSize.width}px`
+                    }
+                  : undefined
+              }
+              className={
+                activeMainTab === 'makharij'
+                  ? "flex flex-col gap-2"
+                  : sifaat3DOpen
+                  ? "fixed top-20 right-3 sm:right-6 z-40 max-w-[calc(100vw-1.5rem)] bg-slate-900/95 dark:bg-black/95 backdrop-blur-xl border border-slate-700/80 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 select-none group ring-1 ring-white/10"
+                  : "hidden"
+              }
+            >
+              {/* Sifaat Mode Overlays: Drag Handle, Resizable Borders, Translucent Watermark, Minimal Play & Close Buttons */}
+              {activeMainTab === 'sifaat' && (
+                <>
+                  {/* Top Drag Handle (allows dragging floating 3D window anywhere on screen) */}
+                  <div
+                    onPointerDown={handleWindowDragStart}
+                    onPointerMove={handleWindowDragMove}
+                    onPointerUp={handleWindowDragEnd}
+                    onPointerCancel={handleWindowDragEnd}
+                    title={lang === 'ar' ? 'اسحب لتحريك النافذة' : lang === 'ml' ? 'വിൻഡോ നീക്കാൻ ഡ്രാഗ് ചെയ്യുക' : 'Drag to reposition'}
+                    className="absolute top-0 inset-x-0 h-7 z-30 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none bg-gradient-to-b from-black/50 to-transparent"
+                  >
+                    <div className="w-10 h-1 rounded-full bg-white/40 group-hover:bg-white/70 transition-colors" />
+                  </div>
+
+                  {/* Resizable Border Handles (expand/collapse by dragging side borders) */}
+                  {/* Left Border */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('left', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير العرض' : lang === 'ml' ? 'വീതി മാറ്റാൻ വലിക്കുക' : 'Drag to resize width'}
+                    className="absolute inset-y-0 left-0 w-2.5 z-40 cursor-ew-resize hover:bg-emerald-500/30 transition-colors touch-none"
+                  />
+                  {/* Bottom Border */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('bottom', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير الارتفاع' : lang === 'ml' ? 'ഉയരം മാറ്റാൻ വലിക്കുക' : 'Drag to resize height'}
+                    className="absolute inset-x-0 bottom-0 h-2.5 z-40 cursor-ns-resize hover:bg-emerald-500/30 transition-colors touch-none"
+                  />
+                  {/* Bottom-Left Corner */}
+                  <div
+                    onPointerDown={(e) => handleResizePointerDown('corner', e)}
+                    onPointerMove={handleResizePointerMove}
+                    onPointerUp={handleResizePointerUp}
+                    title={lang === 'ar' ? 'اسحب لتغيير الحجم' : lang === 'ml' ? 'വലുപ്പം മാറ്റാൻ വലിക്കുക' : 'Drag to resize'}
+                    className="absolute bottom-0 left-0 w-4 h-4 z-50 cursor-nesw-resize hover:bg-emerald-500/50 flex items-end justify-start p-0.5 touch-none"
+                  >
+                    <div className="w-2 h-2 border-b-2 border-l-2 border-white/60 rounded-bl-xs" />
+                  </div>
+
+                  {/* Subtle Translucent Letter Watermark in Top-Left Corner */}
+                  <div className="absolute top-2.5 left-3.5 z-20 pointer-events-none select-none">
+                    <span className="arabic-font text-2xl font-bold text-white/85 bg-black/45 backdrop-blur-xs px-2.5 py-0.5 rounded-xl border border-white/20 shadow-xs leading-none">
+                      {currentLetter.letter}
+                    </span>
+                  </div>
+
+                  {/* Minimal Top-Right Action Buttons: Play (Icon only) & Close */}
+                  <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5">
+                    {/* Small Play Icon button (audio + simulation) */}
+                    <button
+                      type="button"
+                      onClick={() => triggerSimulation(true)}
+                      disabled={isPlayingSimulation || isAudioLoading}
+                      title={t.simulateTitle}
+                      aria-label={t.simulateTitle}
+                      className="p-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-xs border border-emerald-400/30 transition-all shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                    {/* Small Close (X) Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSifaat3DOpen(false)}
+                      title={lang === 'ar' ? 'إغلاق' : lang === 'ml' ? 'അടയ്ക്കുക' : 'Close'}
+                      className="p-1.5 rounded-xl bg-black/45 hover:bg-rose-600/90 text-white/80 hover:text-white backdrop-blur-xs border border-white/20 transition-all shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* 3D Canvas Container */}
+              <div
+                style={activeMainTab === 'sifaat' ? { height: `${sifaatWindowSize.height}px` } : undefined}
+                className={`bg-slate-100 dark:bg-gray-950 overflow-hidden shadow-inner relative w-full ${
+                  activeMainTab === 'makharij'
+                    ? "rounded-3xl border border-slate-200/80 dark:border-gray-800 h-[360px] sm:h-[420px] lg:h-[460px]"
+                    : ""
+                }`}
+              >
+                <div
+                  ref={containerRef}
+                  className="w-full h-full relative cursor-grab active:cursor-grabbing overflow-hidden"
+                />
+
+                {/* 3D Camera Controls: Elevation (Rising Up/Down) Buttons + Joystick */}
+                <div
+                  className="flex flex-col items-center gap-1.5 absolute bottom-1.5 right-1.5 z-20 select-none pointer-events-auto"
+                  title={lang === 'ar' ? 'التحكم في المنظور والكاميرا' : lang === 'ml' ? 'ക്യാമറ നിയന്ത്രണം' : 'Camera Controls'}
+                >
+                  {/* Up & Down Camera Elevation (Pedestal / Crane Rising) Buttons */}
+                  <div className="flex flex-col gap-1 items-center bg-slate-900/65 dark:bg-black/75 backdrop-blur-md p-1 rounded-2xl border border-white/25 dark:border-white/15 shadow-xl">
+                    {/* Up Button (▲ Rise Camera Up - Spacebar) */}
+                    <button
+                      type="button"
+                      title={lang === 'ar' ? 'رفع الكاميرا لأعلى (المسافة Space)' : lang === 'ml' ? 'ക്യാമറ ഉയർത്തുക (Space)' : 'Rise Camera Up (Space)'}
+                      aria-label="Rise Camera Up"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        startElevation(1);
+                      }}
+                      onPointerUp={stopElevation}
+                      onPointerLeave={stopElevation}
+                      onPointerCancel={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 touch-none select-none"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                    {/* Down Button (▼ Lower Camera Down - Shift) */}
+                    <button
+                      type="button"
+                      title={lang === 'ar' ? 'خفض الكاميرا لأسفل (Shift)' : lang === 'ml' ? 'ക്യാമറ താഴ്ത്തുക (Shift)' : 'Lower Camera Down (Shift)'}
+                      aria-label="Lower Camera Down"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        startElevation(-1);
+                      }}
+                      onPointerUp={stopElevation}
+                      onPointerLeave={stopElevation}
+                      onPointerCancel={stopElevation}
+                      className="w-6 h-6 rounded-xl bg-white/15 hover:bg-emerald-500/80 active:bg-emerald-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 touch-none select-none"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                  </div>
+
+                  {/* Circular Camera Joystick (rotates camera angle - desktop & mobile) */}
+                  <div
+                    onPointerDown={handleJoystickPointerDown}
+                    onPointerMove={handleJoystickPointerMove}
+                    onPointerUp={handleJoystickPointerUp}
+                    onPointerCancel={handleJoystickPointerUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                    className={`relative w-14 h-14 rounded-full backdrop-blur-md border shadow-xl flex items-center justify-center touch-none transition-all cursor-pointer ${
+                      isJoystickActive
+                        ? 'bg-slate-900/85 dark:bg-black/90 border-emerald-400 scale-105 shadow-emerald-500/30 ring-2 ring-emerald-400/30'
+                        : 'bg-slate-900/55 dark:bg-black/65 border-white/35 dark:border-white/20 hover:border-white/60'
+                    }`}
+                    style={{ touchAction: 'none' }}
+                  >
+                    {/* Direction Indicators */}
+                    <span className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 rounded-full bg-white/40" />
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 rounded-full bg-white/40" />
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 rounded-full bg-white/40" />
+                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 rounded-full bg-white/40" />
+
+                    {/* Joystick Inner Knob */}
+                    <div
+                      className={`w-6.5 h-6.5 rounded-full shadow-md flex items-center justify-center border transition-transform ${
+                        isJoystickActive
+                          ? 'bg-emerald-400 text-slate-950 border-white shadow-emerald-400/50 scale-110'
+                          : 'bg-white/95 dark:bg-gray-200 text-slate-700 border-white/70'
+                      }`}
+                      style={{
+                        transform: `translate(${joystickKnob.x}px, ${joystickKnob.y}px)`,
+                        willChange: 'transform'
+                      }}
+                    >
+                      <Compass className="w-3.5 h-3.5 opacity-90" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Div 1 & Div 2 under 3D Section (Only visible when on Makharij tab) */}
+              {activeMainTab === 'makharij' && (
+                <>
+                  {/* Div 1 under 3D Section: Viewport Toggles Toolbar */}
+                  <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 shadow-sm flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+                    {/* Anatomy Parts Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showAnatomy;
+                        setShowAnatomy(next);
+                        showAnatomyRef.current = next;
+                        forceDeformRef.current = true;
+                        sceneElementsRef.current?.markDirty(4);
+                      }}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showAnatomy
+                          ? 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                          : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                      }`}
+                      title={t.anatomy}
+                    >
+                      <Layers className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {lang === 'en' ? (
+                          <>
+                            <span>Anatomy Parts</span>
+                            <span className="hidden md:inline"> (أقسام الفم)</span>
+                          </>
+                        ) : (
+                          t.anatomy
+                        )}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showMakhrajColors;
+                        setShowMakhrajColors(next);
+                        showMakhrajColorsRef.current = next;
+                        forceDeformRef.current = true;
+                        sceneElementsRef.current?.markDirty(4);
+                      }}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showMakhrajColors
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700'
+                      }`}
+                      title={t.makhrajColors}
+                    >
+                      <Palette className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t.makhrajColors}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showPalate;
+                        setShowPalate(next);
+                        if (sceneElementsRef.current) {
+                          const { hardPalateMesh, softPalateMesh, alveolarArcMesh, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                          hardPalateMesh.visible = next;
+                          softPalateMesh.visible = next;
+                          alveolarArcMesh.visible = next;
+                          if (markDirty) markDirty(2);
+                          if (renderer && scene && camera) renderer.render(scene, camera);
+                        }
+                      }}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showPalate
+                          ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
+                          : 'opacity-50 border-transparent text-slate-400 hover:opacity-80'
+                      }`}
+                      title={t.palate}
+                    >
+                      <span>{t.palate}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-100 dark:bg-gray-800 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-gray-700 shrink-0 select-none">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !showUpperTeeth;
+                          setShowUpperTeeth(next);
+                          if (sceneElementsRef.current) {
+                            const { upperTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                            upperTeethGroup.visible = next;
+                            if (markDirty) markDirty(2);
+                            if (renderer && scene && camera) renderer.render(scene, camera);
+                          }
+                        }}
+                        className="font-bold flex items-center gap-1 text-slate-700 dark:text-gray-300 whitespace-nowrap cursor-pointer"
+                        title={t.upperTeeth}
+                      >
+                        <Eye className="w-3.5 h-3.5 shrink-0" />
+                        <span className="hidden sm:inline">{t.upperTeeth}</span>
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={upperTeethOpacity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setUpperTeethOpacity(val);
+                          targetGearsRef.current.upperOpacity = val;
+                          currentGearsRef.current.upperOpacity = val;
+                          if (sceneElementsRef.current) {
+                            const { upperToothMaterial, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                            if (upperToothMaterial) {
+                              const op = val / 100;
+                              upperToothMaterial.opacity = Math.max(0.0, Math.min(1.0, op));
+                              upperToothMaterial.transparent = upperToothMaterial.opacity < 0.995;
+                              upperToothMaterial.needsUpdate = true;
+                            }
+                            if (markDirty) markDirty(2);
+                            if (renderer && scene && camera) renderer.render(scene, camera);
+                          }
+                        }}
+                        className="w-12 sm:w-16 accent-emerald-500 cursor-pointer"
+                        title={`${t.upperTeeth} Opacity`}
+                      />
+                      <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 min-w-[26px] text-end">{upperTeethOpacity}%</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showLowerTeeth;
+                        setShowLowerTeeth(next);
+                        if (sceneElementsRef.current) {
+                          const { lowerTeethGroup, scene, camera, renderer, markDirty } = sceneElementsRef.current;
+                          lowerTeethGroup.visible = next;
+                          if (markDirty) markDirty(2);
+                          if (renderer && scene && camera) renderer.render(scene, camera);
+                        }
+                      }}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0 ${
+                        showLowerTeeth
+                          ? 'bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-white border-slate-300 dark:border-gray-700 shadow-sm'
+                          : 'opacity-50 border-transparent text-slate-400 hover:opacity-80'
+                      }`}
+                      title={t.lowerTeeth}
+                    >
+                      <span>{t.lowerTeeth}</span>
+                    </button>
+
+                    {/* Viewport Actions: Play (Minimal Icon-only Button) */}
+                    <button
+                      type="button"
+                      onClick={() => triggerSimulation(true)}
+                      disabled={isPlayingSimulation || isAudioLoading}
+                      title={t.simulateTitle}
+                      aria-label={t.simulateTitle}
+                      className={`ms-auto p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 ${
+                        isPlayingSimulation || isAudioLoading
+                          ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95 cursor-pointer'
+                      }`}
+                    >
+                      <Play className={`w-4 h-4 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
+                    </button>
+                  </div>
+
+                  {/* Div 2 under 3D Section: 17 Makharij Reference Table */}
+                  {showAnatomy ? (
+                    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+                      <div className="p-3 border-b border-slate-200/80 dark:border-gray-800 flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800 dark:text-white">
+                          {lang === 'ar' ? 'جدول المخارج الـ ١٧' : lang === 'ml' ? 'അൽമഖാരിജ് (17)' : 'The 17 Makharij'}
+                        </span>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50/90 dark:bg-gray-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 border-b border-slate-200/80 dark:border-gray-800 sticky top-0">
+                              <th className="py-1.5 px-2.5 text-start w-10">{lang === 'ar' ? 'رقم' : lang === 'ml' ? 'ക്രമം' : 'No.'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'الحروف' : lang === 'ml' ? 'അക്ഷരങ്ങൾ' : 'Letters'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'الاسم' : lang === 'ml' ? 'പേര്' : 'Name'}</th>
+                              <th className="py-1.5 px-2 text-start">{lang === 'ar' ? 'المخرج' : lang === 'ml' ? 'മഖ്റജ്' : 'Exit Spot'}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+                            {MAKHARIJ_17_DATA.map(row => (
+                              <tr key={row.num} className="hover:bg-slate-50/70 dark:hover:bg-gray-800/40 transition-colors">
+                                <td className="py-1.5 px-2.5 font-bold text-slate-400">{row.num}</td>
+                                <td className="py-1.5 px-2 font-bold arabic-font text-sm text-emerald-600 dark:text-emerald-400">{row.letters}</td>
+                                <td className="py-1.5 px-2 text-slate-700 dark:text-gray-300 font-medium">
+                                  {lang === 'ar' ? row.nameAr : lang === 'ml' ? row.nameMl : row.nameEn}
+                                </td>
+                                <td className="py-1.5 px-2 text-slate-600 dark:text-gray-400">
+                                  {lang === 'ar' ? row.makhrajAr : lang === 'ml' ? row.makhrajMl : row.makhrajEn}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-gray-300 shadow-sm">
+                      <div className="flex flex-wrap items-center gap-3 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#0d6828] border border-emerald-400"></span>
+                          <span>{t.firmPress}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#7be89a] border border-emerald-200"></span>
+                          <span>{t.gentleTouch}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#eab368] border border-yellow-200"></span>
+                          <span>{t.gumShelfBadge}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#8c3246]"></span>
+                          <span>{t.palate}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-md bg-[#b83b44]"></span>
+                          <span>{t.tongueBadge}</span>
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {lang === 'ar' ? 'سحب للتدوير • عجلة للتقريب' : lang === 'ml' ? 'തിരിക്കാൻ ഡ്രാഗ് ചെയ്യുക • സൂം ചെയ്യാൻ വീൽ തിരിക്കുക' : 'Drag to rotate • Wheel to zoom'}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+            </section>
+
+          </div>
+
+          {/* Right Column (Desktop): Selected Letter Info & Controls */}
+          <div className={activeMainTab === 'makharij' ? "lg:col-span-5 flex flex-col gap-3" : "hidden"}>
+
+            {/* Selected Letter Information (Small, Compact Space) */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm flex flex-col gap-2.5">
+              <div className="flex flex-col items-center justify-center text-center gap-2 py-1">
+                <div
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-center select-none shadow-sm overflow-hidden"
+                >
+                  <span
+                    className="arabic-font !text-5xl sm:!text-6xl font-bold text-indigo-600 dark:text-indigo-400 !leading-none flex items-center justify-center text-center w-full h-full select-none pointer-events-none"
+                  >
+                    {currentLetter.letter}
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  {lang === 'ar' ? currentLetter.ar.title : lang === 'ml' ? (currentLetter.ml?.title || currentLetter.ar.title) : currentLetter.en.title}
+                </h2>
+              </div>
+
+              {/* Makhraj Articulation Description */}
+              <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-gray-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-gray-700/60 text-center">
+                {lang === 'ar' ? currentLetter.ar.desc : lang === 'ml' ? (currentLetter.ml?.desc || currentLetter.en.desc) : currentLetter.en.desc}
+              </p>
+
+              {/* Sifaat al-Huroof of Active Letter (Clickable Chips) */}
+              <div className="bg-slate-50/80 dark:bg-gray-800/40 rounded-2xl p-2.5 border border-slate-100 dark:border-gray-700/60 flex flex-col gap-1.5">
+                <span className="font-bold text-[11px] text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{t.letterSifaatTitle}</span>
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {getSifaatForLetter(currentLetter.letter).map(sifah => (
+                    <button
+                      key={sifah.id}
+                      type="button"
+                      onClick={() => setSelectedSifah(sifah)}
+                      title={`${lang === 'ar' ? sifah.ar : lang === 'ml' ? sifah.literalMl : sifah.literalEn} (${sifah.ar})`}
+                      className={`text-xs font-bold px-3.5 py-1.5 rounded-xl border transition-all flex items-center justify-center active:scale-95 hover:scale-105 shadow-sm ${sifah.chipClass}`}
+                    >
+                      <span className="arabic-font text-xl sm:text-2xl font-bold leading-none">{sifah.ar}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+
+
+              {/* Throat Letter Student Learning Aids: Twin Comparison + Feel It on Neck */}
+              {lang !== 'ml' && currentLetter.isThroat && (
+                <div className="flex flex-col gap-2.5">
+                  {/* Same Spot, Different Sound! (Twin Comparison Box) */}
+                  {currentLetter.throatTwinId && (() => {
+                    const twin = LETTER_PRESETS.find(p => p.id === currentLetter.throatTwinId);
+                    if (!twin) return null;
+                    return (
+                      <div className="bg-slate-50/90 dark:bg-gray-800/60 border border-slate-200/80 dark:border-gray-700/80 rounded-2xl p-3 flex flex-col gap-2 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{lang === 'ar' ? 'الفرق بين التوأمين (نفس المخرج)' : 'Same Spot, Different Sound!'}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => selectLetter(twin)}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
+                          >
+                            {lang === 'ar' ? `مقارنة ${twin.letter} ←` : `Compare ${twin.letter} →`}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {/* Active Letter Box */}
+                          <div className="rounded-xl p-2 bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="arabic-font text-2xl font-bold text-emerald-700 dark:text-emerald-300 leading-none">{currentLetter.letter}</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
+                                {currentLetter.isHeavy ? (lang === 'ar' ? 'مفخم' : 'Heavy') : (lang === 'ar' ? 'مرقق' : 'Light')}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-700 dark:text-gray-200 leading-tight">
+                              {lang === 'ar' ? currentLetter.twinSummary?.ar : currentLetter.twinSummary?.en}
+                            </span>
+                          </div>
+                          {/* Twin Letter Box */}
+                          <div
+                            onClick={() => selectLetter(twin)}
+                            className="rounded-xl p-2 bg-white dark:bg-gray-900/80 border border-slate-200 dark:border-gray-700 hover:border-emerald-400 transition-all cursor-pointer flex flex-col gap-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="arabic-font text-2xl font-bold text-slate-700 dark:text-gray-300 leading-none">{twin.letter}</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400">
+                                {twin.isHeavy ? (lang === 'ar' ? 'مفخم' : 'Heavy') : (lang === 'ar' ? 'مرقق' : 'Light')}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-600 dark:text-gray-400 leading-tight">
+                              {lang === 'ar' ? twin.twinSummary?.ar : twin.twinSummary?.en}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Feel It On Your Own Neck! (2-Finger Touch Guide) */}
+                  <div className="bg-gradient-to-br from-slate-50 to-emerald-50/50 dark:from-gray-900 dark:to-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-2xl p-3 flex items-start gap-2.5 shadow-xs">
+                    <span className="text-xl select-none shrink-0 mt-0.5">✌️</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
+                        {lang === 'ar' ? 'جرّب بيدك الآن (اللمس الحسي)' : 'Try It With 2 Fingers! (Feel It On Neck)'}
+                      </span>
+                      <p className="text-[11px] text-slate-700 dark:text-gray-300 leading-relaxed font-medium">
+                        {lang === 'ar' ? currentLetter.fingerGuide?.ar : currentLetter.fingerGuide?.en}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Zad (ض) 3 Variants Pill Switcher */}
+              {lang !== 'ml' && currentLetter.id === 'dhaad' && (
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-2xl p-2 flex flex-col gap-1.5 shadow-sm">
+                  <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{t.dhaadVariants}</span>
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => setDhaadMode('right')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'right'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadRight}
+                    </button>
+                    <button
+                      onClick={() => setDhaadMode('left')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'left'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadLeft}
+                    </button>
+                    <button
+                      onClick={() => setDhaadMode('both')}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all ${
+                        dhaadMode === 'both'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white/80 dark:bg-gray-900/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800'
+                      }`}
+                    >
+                      {t.dhaadBoth}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Collapsible Mechanical Controls Accordion */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden transition-all">
+              <div
+                onClick={() => setIsGearsOpen(!isGearsOpen)}
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800/40 transition-colors select-none"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <SlidersHorizontal className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {t.controls}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResetGears();
+                    }}
+                    className="px-3 py-1 rounded-xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-300 text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{t.reset}</span>
+                  </button>
+                  <div className="text-slate-400">
+                    {isGearsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </div>
+              </div>
+
+              {isGearsOpen && (
+                <div className="p-4 pt-1 border-t border-slate-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {GEAR_DEFINITIONS.map(def => {
+                    const val = Math.round(gears[def.key] ?? 0);
+                    return (
+                      <div key={def.key} className="bg-slate-50 dark:bg-gray-800/60 border border-slate-200/60 dark:border-gray-700 p-2.5 rounded-2xl flex flex-col justify-between gap-1.5 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
+                            {lang === 'ar' ? def.ar : def.en}
+                          </span>
+                          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 text-slate-800 dark:text-white">
+                            {val}{def.unit}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleGearChange(def.key, Math.max(def.min, val - def.step))}
+                            className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="range"
+                            min={def.min}
+                            max={def.max}
+                            step={def.step}
+                            value={val}
+                            onChange={(e) => handleGearChange(def.key, parseInt(e.target.value, 10))}
+                            className="flex-1 accent-emerald-500 cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleGearChange(def.key, Math.min(def.max, val + def.step))}
+                            className="w-7 h-7 rounded-xl bg-white dark:bg-gray-900 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-gray-300 font-black text-xs border border-slate-200 dark:border-gray-700 flex items-center justify-center transition-all"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+          </div>
+
+        </div>
+
+        {/* Tab 2: Sifaat View (Phonetic Rules) */}
+        {activeMainTab === 'sifaat' && (
+          <div className="flex flex-col gap-4 animate-in fade-in duration-150">
+            {/* Malayalam Curriculum Lesson 6: Sifaatul Huroof Introduction */}
+            {lang === 'ml' && (
+              <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    സിഫാതുൽ ഹുറൂഫ്
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+                  തജ്വീദിന്റെ ഫന്നിൽ മഖ്റജ് പോലെത്തന്നെ സിഫാതിനെ കുറിച്ചും അറിയൽ വളരെ പ്രധാനപ്പെട്ടതാകുന്നു. മഖ്റജ് ഒത്തിരിക്കുന്ന വിവിധ അക്ഷരങ്ങൾ വ്യത്യസ്ത രൂപം പ്രാപിക്കുന്നത് സിഫത്ത് കൊണ്ടാകുന്നു. അപ്രകാരം സിഫതുകളിൽ യോജിപ്പുള്ള ഹർഫുകൾ വേർതിരിയുന്നത് മഖ്റജ് കൊണ്ടുമാകുന്നു.
+                </p>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-normal">
+                  ഹർഫുകൾ ഉച്ചരിക്കുമ്പോൾ മഖ്റജിൽ നിന്നുണ്ടാകുന്ന വിവിധങ്ങളായ ശബ്ദ രൂപങ്ങൾക്കാണ് ഇവിടെ സിഫത്ത് എന്ന് പറയപ്പെടുന്നത്. സിഫതുകളുടെ എണ്ണത്തിൽ അഭിപ്രായ വ്യത്യാസമുണ്ട്. പതിനാലാണെന്നും പതിനേഴാണെന്നും നാൽപ്പത്തി നാലാണെന്നും മൂന്ന് അഭിപ്രായമുള്ളതിൽ ഇമാമു ഇബ്നുൽ ജസരി റഹിമഹുള്ളാഹു മുഅ്തമദാക്കിയത് പതിനേഴാണാകുന്നു. പക്ഷെ ശിദ്ദതിന്റെ മാറം രിഖ്വ്, തവസ്സുത്വ് എന്നിങ്ങനെ രണ്ടിനം വരുന്നത് കൊണ്ട് ആകെ സിഫതുകൾ പതിനെട്ടാകുന്നതാണ്. സിഫതുകൾ പരസ്പരം വൈരുധ്യമുള്ളതും ഇല്ലാത്തതും എന്നിങ്ങനെ രണ്ടു വിധമുണ്ട്. വൈരുധ്യമുള്ളവ തവസ്സുത്വ് അടക്കം പതിനൊന്നും ളിദ്ദല്ലാത്തവ ഏഴുമാകുന്നു. ളിദ്ദുള്ള സിഫതുകളിൽ നിന്ന് അഞ്ചെണ്ണം ഒരേ അവസരത്തിൽ എല്ലാ ഹർഫുകൾക്കും ഉണ്ടായിരിക്കുന്നതാണ്.
+                </p>
+              </section>
+            )}
+
+            {/* 1. Characteristics with Opposites (ٱلصِّفَاتُ الْمُتَضَادَّةُ — 4 Pairs) */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                    <span>{t.withOppositesTitle}</span>
+                  </h3>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {lang === 'ar' ? '٤ أزواج متقابلة (٩ صفات)' : lang === 'ml' ? '4 ജോടികൾ (9 സ്വിഫത്തുകൾ)' : '4 Opposite Pairs (9 Sifaat)'}
+                  </span>
+                </div>
+
+                {/* 4 Pairs Cards Stack */}
+                <div className="flex flex-col gap-4">
+                  {OPPOSITE_PAIRS.map(pair => {
+                    const items = pair.itemIds
+                      .map(id => SIFAAT_DATA.find(s => s.id === id))
+                      .filter((s): s is SifahItem => Boolean(s));
+
+                    return (
+                      <div
+                        key={pair.id}
+                        className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 dark:bg-gray-800/40 border border-slate-200/70 dark:border-gray-800 flex flex-col gap-3"
+                      >
+                        {/* Pair Header Banner */}
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-slate-200/60 dark:border-gray-700/60">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                              {pair.pairNo}
+                            </span>
+                            <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                              {lang === 'ar' ? pair.titleAr : lang === 'ml' ? pair.titleMl : pair.titleEn}
+                            </h4>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-gray-400">
+                            {lang === 'ar' ? pair.descAr : lang === 'ml' ? pair.descMl : pair.descEn}
+                          </span>
+                        </div>
+
+                        {/* Side-by-side Opposing Cards Grid */}
+                        <div className={`grid grid-cols-1 ${items.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3 items-stretch`}>
+                          {items.map(item => (
+                            <div
+                              key={item.id}
+                              className="group p-3 sm:p-3.5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-700/80 shadow-sm flex flex-col justify-between gap-2.5 text-start"
+                            >
+                              <div className="flex flex-col gap-2">
+                                {/* Card Header: Chip + Meaning */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                                    <span className="arabic-font text-2xl sm:text-3xl font-bold leading-none">{item.ar}</span>
+                                  </span>
+                                  <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
+                                    {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
+                                  </span>
+                                </div>
+
+                                {item.tonguePartEn && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                      <span>👅</span>
+                                      <span>{lang === 'ar' ? item.tonguePartAr : lang === 'ml' ? (item.tonguePartMl || item.tonguePartEn) : item.tonguePartEn}</span>
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Rule / Technical Definition */}
+                                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
+                                  {lang === 'ar' ? item.technicalAr : lang === 'ml' ? item.technicalMl : item.technicalEn}
+                                </p>
+                              </div>
+
+                              {/* Letters & Mnemonic */}
+                              <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 dark:border-gray-800">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                  {item.letters.map((ltr, lIdx) => (
+                                    <button
+                                      key={lIdx}
+                                      type="button"
+                                      onClick={() => handleSifaatLetterClick(ltr)}
+                                      className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
+                                      title={lang === 'ar' ? `عرض مخرج حرف ${ltr}` : lang === 'ml' ? `${ltr} ന്റെ മഖ്റജ് കാണുക` : `View Makhraj of ${ltr}`}
+                                    >
+                                      {ltr}
+                                    </button>
+                                  ))}
+                                </div>
+                                {item.mnemonic && (
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <span className="text-xs font-semibold text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
+                                    <span className="arabic-font text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800/60 leading-none">
+                                      ({item.mnemonic})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+            {/* 2. Characteristics without Opposites (ٱلصِّفَاتُ الَّتِى لَيْسَ لَهَا الْأَضْدَادُ) */}
+            <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-slate-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span>{t.withoutOppositesTitle}</span>
+                  </h3>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {lang === 'ar' ? '٧ صفات فردية لازمة' : lang === 'ml' ? '7 ഒറ്റപ്പെട്ട സ്വിഫത്തുകൾ' : '7 Individual Sifaat'}
+                  </span>
+                </div>
+
+                {/* 7 Non-Opposite Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {SIFAAT_DATA.filter(s => s.category === 'non_opposite').map(item => (
+                    <div
+                      key={item.id}
+                      className="group p-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between gap-2.5 text-start"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {/* Header */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-xl border font-bold text-xs shadow-sm ${item.chipClass}`}>
+                            <span className="arabic-font text-2xl sm:text-3xl font-bold leading-none">{item.ar}</span>
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-gray-700">
+                            {lang === 'ar' ? item.literalAr : lang === 'ml' ? item.literalMl : item.literalEn}
+                          </span>
+                        </div>
+
+                        {item.tonguePartEn && (
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                              <span>👅</span>
+                              <span>{lang === 'ar' ? item.tonguePartAr : lang === 'ml' ? (item.tonguePartMl || item.tonguePartEn) : item.tonguePartEn}</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Meaning */}
+                        <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
+                          {lang === 'ar' ? item.technicalAr : lang === 'ml' ? item.technicalMl : item.technicalEn}
+                        </p>
+                      </div>
+
+                      {/* Letters & Mnemonic */}
+                      <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-gray-800">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          {item.letters.map((ltr, lIdx) => (
+                            <button
+                              key={lIdx}
+                              type="button"
+                              onClick={() => handleSifaatLetterClick(ltr)}
+                              className="arabic-font text-2xl sm:text-3xl font-bold min-w-[2.75rem] h-11 sm:min-w-[3.25rem] sm:h-12 px-2 rounded-xl bg-slate-100 hover:bg-emerald-600 dark:bg-gray-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-gray-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-gray-700 flex items-center justify-center shrink-0 transition-all shadow-sm active:scale-95 cursor-pointer leading-none"
+                              title={lang === 'ar' ? `عرض مخرج حرف ${ltr}` : lang === 'ml' ? `${ltr} ന്റെ മഖ്റജ് കാണുക` : `View Makhraj of ${ltr}`}
+                            >
+                              {ltr}
+                            </button>
+                          ))}
+                        </div>
+                        {item.mnemonic && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-xs font-semibold text-slate-400">{lang === 'ar' ? 'الضابط:' : lang === 'ml' ? 'സൂചന വാക്യം:' : 'Mnemonic:'}</span>
+                            <span className="arabic-font text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800/60 leading-none">
+                              ({item.mnemonic})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+          </div>
+        )}
+
+        {/* Sifah Explanation Modal (Ultra-Clean, Zero Repetition) */}
+        {selectedSifah && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150"
+            onClick={() => setSelectedSifah(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-3xl p-5 sm:p-6 shadow-2xl max-w-md w-full flex flex-col gap-4 relative animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto custom-scrollbar"
+              onClick={e => e.stopPropagation()}
+              dir={lang === 'ar' ? 'rtl' : 'ltr'}
+            >
+              {/* Header: Sifah Name + Literal Meaning + Meta & Close */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="arabic-font text-4xl sm:text-5xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {selectedSifah.ar}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-600 dark:text-gray-300">
+                      ({lang === 'ar' ? selectedSifah.literalAr : lang === 'ml' ? selectedSifah.literalMl : selectedSifah.literalEn})
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
+                    {selectedSifah.category === 'opposite' ? (
+                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                        {lang === 'ar'
+                          ? `ضدها: ${selectedSifah.oppositeNameAr || ''}`
+                          : lang === 'ml'
+                          ? `എതിർ ഗുണം: ${selectedSifah.oppositeNameMl || selectedSifah.oppositeNameEn || ''}`
+                          : `Opposite: ${selectedSifah.oppositeNameEn || ''}`}
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {lang === 'ar' ? 'لا ضد لها' : lang === 'ml' ? 'വിപരീതമില്ലാത്തത്' : 'No opposite'}
+                      </span>
+                    )}
+                    {selectedSifah.tonguePartEn && (
+                      <>
+                        <span>•</span>
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">
+                          {lang === 'ar' ? selectedSifah.tonguePartAr : lang === 'ml' ? (selectedSifah.tonguePartMl || selectedSifah.tonguePartEn) : selectedSifah.tonguePartEn}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedSifah(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-slate-500 dark:text-gray-400 transition-colors shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Single Technical Rule Card (with integrated Mnemonic if available) */}
+              <div className="bg-slate-50 dark:bg-gray-800/60 rounded-2xl p-4 border border-slate-200/70 dark:border-gray-800 flex flex-col gap-2.5">
+                <p className="text-sm text-slate-700 dark:text-gray-200 leading-relaxed font-normal">
+                  {lang === 'ar' ? selectedSifah.technicalAr : lang === 'ml' ? selectedSifah.technicalMl : selectedSifah.technicalEn}
+                </p>
+
+                {selectedSifah.mnemonic && (
+                  <div className="pt-2.5 border-t border-slate-200/80 dark:border-gray-700/80 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">
+                      {lang === 'ar' ? 'العبارة:' : lang === 'ml' ? 'സൂചന:' : 'Mnemonic:'}
+                    </span>
+                    <span className="arabic-font text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+                      {selectedSifah.mnemonic}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Letters */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-bold text-slate-600 dark:text-gray-400">
+                  {lang === 'ar' ? 'الحروف' : lang === 'ml' ? 'ഹർഫുകൾ' : 'Letters'} ({selectedSifah.letters.length})
+                </span>
+
+                <div className="flex flex-wrap items-center gap-1.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-gray-800/40 border border-slate-200/70 dark:border-gray-800">
+                  {selectedSifah.letters.map((ltr, idx) => {
+                    const isCurrent = currentLetter.letter === ltr;
+                    const preset = LETTER_PRESETS.find(p => p.letter === ltr);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          handleSifaatLetterClick(ltr);
+                          setSelectedSifah(null);
+                        }}
+                        className={`w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 ${
+                          isCurrent
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-2 ring-emerald-400/30'
+                            : preset
+                            ? 'bg-white dark:bg-gray-900 text-slate-800 dark:text-gray-200 border-slate-200 dark:border-gray-700 hover:border-emerald-400 hover:scale-105'
+                            : 'bg-slate-100 dark:bg-gray-800 text-slate-400 border-transparent cursor-default'
+                        }`}
+                        title={ltr}
+                      >
+                        <span className="arabic-font text-3xl font-bold leading-none select-none pointer-events-none">
+                          {ltr}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </main>
     </div>
   );
 }
