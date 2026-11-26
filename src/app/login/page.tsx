@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlayCircle, ShieldCheck, User, Sun, Moon, Monitor } from "lucide-react";
+import Image from "next/image";
+import { ShieldCheck, User, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 export default function Login() {
@@ -74,8 +75,8 @@ export default function Login() {
 
       <div className="w-full max-w-md bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-gray-800 rounded-3xl shadow-xl p-8 sm:p-10 transition-colors">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-indigo-600 p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 mb-4">
-            <PlayCircle className="w-10 h-10 text-white" />
+          <div className="bg-white p-2 rounded-2xl shadow-lg border border-slate-200/80 dark:border-gray-700 mb-4 flex items-center justify-center">
+            <Image src="/logo.png" alt="QuizCompanion" width={56} height={56} className="w-14 h-14 object-contain" priority />
           </div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">QuizCompanion</h1>
           <p className="text-slate-400 dark:text-gray-400 font-bold mt-1 text-sm">Sign in to continue</p>

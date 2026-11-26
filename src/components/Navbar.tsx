@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
   Settings, 
-  PlayCircle, 
   LogOut, 
   Menu, 
   X, 
@@ -64,8 +64,8 @@ export default function Navbar() {
     return (
       <nav className="flex items-center justify-between px-4 md:px-6 py-3.5 bg-white/90 dark:bg-gray-950/90 border-b border-slate-200/80 dark:border-gray-800 text-slate-800 dark:text-white backdrop-blur-md relative z-50">
         <div className="flex items-center gap-2.5">
-          <div className="bg-indigo-600 p-2 rounded-xl shadow-md shadow-indigo-500/20">
-            <PlayCircle className="w-5 h-5 text-white" />
+          <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200/80 dark:border-gray-700 flex items-center justify-center">
+            <Image src="/logo.png" alt="QuizCompanion" width={28} height={28} className="w-7 h-7 object-contain" priority />
           </div>
           <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">QuizCompanion</h1>
         </div>
@@ -131,8 +131,8 @@ export default function Navbar() {
       <div className="flex items-center justify-between px-4 md:px-6 py-3">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="bg-indigo-600 p-2 rounded-xl shadow-md shadow-indigo-500/20">
-            <PlayCircle className="w-5 h-5 text-white" />
+          <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200/80 dark:border-gray-700 flex items-center justify-center">
+            <Image src="/logo.png" alt="QuizCompanion" width={28} height={28} className="w-7 h-7 object-contain" priority />
           </div>
           <h1 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">QuizCompanion</h1>
           <span className="ml-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 border border-slate-200 dark:border-gray-700">
