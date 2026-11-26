@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Sun, Moon, Monitor, Check, Volume2 } from "lucide-react";
+import Image from "next/image";
+import { Sun, Moon, Monitor, Check } from "lucide-react";
 import { useTheme, ThemeMode } from "@/context/ThemeContext";
 
 export default function Navbar() {
@@ -37,8 +38,15 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between px-4 md:px-6 py-3.5 bg-white/90 dark:bg-gray-950/90 border-b border-slate-200/80 dark:border-gray-800 text-slate-800 dark:text-white backdrop-blur-md relative z-50">
       <Link href="/" className="flex items-center gap-2.5 group">
-        <div className="bg-emerald-600 p-2 rounded-xl shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-          <Volume2 className="w-5 h-5 text-white" />
+        <div className="bg-white dark:bg-slate-100 px-1.5 py-1 rounded-xl shadow-sm border border-slate-200/80 dark:border-white/15 group-hover:scale-105 transition-transform flex items-center justify-center">
+          <Image
+            src="/logo.png"
+            alt="Tajweed Studio Logo"
+            width={36}
+            height={28}
+            className="w-8 h-6 object-contain"
+            priority
+          />
         </div>
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
