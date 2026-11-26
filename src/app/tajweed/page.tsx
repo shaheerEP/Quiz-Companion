@@ -3672,6 +3672,10 @@ export default function TajweedStudioPage() {
 
       // Tongue vertices deformation
       const dorsalMode = activeLetter.dorsalMode || 'istila_cup';
+      // 0 at neutral gears, 1 at full jeem pose (drives ALL jeem-only shaping)
+      const jeemEngRaw = (dorsalMode === 'jeem_touch')
+        ? Math.min(1, Math.max(0, (midArchFactor - 0.15) / 0.75)) : 0;
+      const jeemEng = jeemEngRaw * jeemEngRaw * (3 - 2 * jeemEngRaw);
       const isWideLateral = (activeLetter.id === 'saad' || (istilaFactor > 0.55 && dorsalMode === 'safir_hook'));
       const isNatiyyah = activeLetter.id === 'taa_heavy' || activeLetter.id === 'daal' || activeLetter.id === 'taa_light';
       const isAlveolar = activeLetter.id === 'laam' || activeLetter.id === 'noon' || activeLetter.id === 'raa';
@@ -3719,8 +3723,7 @@ export default function TajweedStudioPage() {
           const wTip = uTipRaw * uTipRaw * (3.0 - 2.0 * uTipRaw);
           const tipApexRoundDrop = isAlveolarOrNatiyyah ? (0.026 * Math.pow(Math.max(0.0, (s - 0.86) / 0.14), 1.85)) : 0.0;
           const natiyyahCushionLift = isNatiyyah ? (0.022 * Math.exp(-Math.pow((s - 0.83) / 0.10, 2))) : 0.0;
-          const effectiveYTipTarget = (dorsalMode === 'jeem_touch') ? 0.00 : yTipTopTarget;
-          const yBaseLine = 0.04 * (1.0 - wTip) + (effectiveYTipTarget + natiyyahCushionLift - tipApexRoundDrop) * wTip;
+          const yBaseLine = 0.04 * (1.0 - wTip) + (yTipTopTarget + natiyyahCushionLift - tipApexRoundDrop) * wTip;
 
           let dorsalArch = 0;
           if (dorsalMode === 'qaaf_posterior') {
@@ -3729,7 +3732,7 @@ export default function TajweedStudioPage() {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
           } else if (dorsalMode === 'jeem_touch') {
             const sContact = 0.91;
-            const TIP_KEEP = 0.45;   // fraction of arch height still kept at the very tip (higher = gentler tip)
+            const TIP_KEEP = 0.30;   // fraction of arch height still kept at the very tip (higher = gentler tip)
             let archSlope = 0;
             if (s <= sContact) {
               archSlope = Math.pow(s / sContact, 2.0);   // low through the middle, rises near the front
@@ -3750,11 +3753,6 @@ export default function TajweedStudioPage() {
           const backRootDrop = -0.24 * Math.pow(Math.max(0.0, (0.40 - s) / 0.40), 1.4);
           const sublingualRecess = 0.075 * Math.exp(-Math.pow((s - 0.70) / 0.15, 2));
           yBotTarget = (-0.17 + backRootDrop + sublingualRecess + 0.10 * yTopTarget) * (1.0 - wTip) + (yTipTopTarget - 0.118) * wTip - jawOpenFactor * 0.03;
-          if (dorsalMode === 'jeem_touch' && s > 0.65) {
-            const uFront = Math.pow((s - 0.65) / 0.35, 1.2);
-            const jeemTipBottom = yTopTarget - 0.115;
-            yBotTarget = yBotTarget * (1.0 - uFront) + jeemTipBottom * uFront;
-          }
         }
 
         const capBack = (iz === 0) ? 0.0 : ((s < 0.07) ? Math.sqrt(Math.max(0.0, 1.0 - Math.pow((0.07 - s) / 0.07, 2))) : 1.0);
@@ -3968,20 +3966,19 @@ export default function TajweedStudioPage() {
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           // --- jeem tip shaping (post-clamp, jeem only) ---
-          let tipHook = 0, tipUndercut = 0, tipTaper = 1;
-          if (dorsalMode === 'jeem_touch') {
-            const tipT = Math.max(0, Math.min(1, (s - 0.88) / 0.12));
-            const tipE = tipT * tipT * (3 - 2 * tipT);          // smoothstep 0 -> 1 over the last 12%
-            const topM = Math.max(0.0, Math.min(1.0, (sinT + 0.18) / 0.55));
-            const under = 1.0 - topM;                          // 1 on the underside, 0 on the top surface
-            tipHook = 0.06 * tipE * tipE;                         // front of the tip curls down a little
-            tipUndercut = 0.16 * tipE * under;                    // underside slopes back (diagonal)
-            tipTaper = 1.0 - 0.20 * tipE;                         // tip narrows -> rounded front
+          let tipHook = 0, tipBack = 0, tipTaper = 1;
+          if (jeemEng > 0.001) {
+            const tipT = Math.max(0, Math.min(1, (s - 0.84) / 0.16));
+            const tipE = tipT * tipT * (3 - 2 * tipT);
+            const depthN = Math.min(1, Math.max(0, (ceilingY - wy) / 0.35)); // 0 at the contact surface, 1 at the underside
+            tipHook  = jeemEng * 0.04 * tipE * tipE;                  // front shoulder rolls down a little
+            tipBack  = jeemEng * 0.14 * tipE * Math.pow(depthN, 1.2); // lower vertices move BACK -> slanted front face
+            tipTaper = 1.0 - jeemEng * 0.12 * tipE;                   // slightly narrower, rounded front
           }
 
           posArr[ptr++] = x * tipTaper;
           posArr[ptr++] = wy - tipHook;
-          posArr[ptr++] = wz - tipUndercut;
+          posArr[ptr++] = wz - tipBack;
 
           // Tongue Coloring
           const dorsalLight = (sinT >= 0.0) ? (0.84 + 0.18 * Math.pow(sinT, 0.75)) : Math.max(0.34, 0.84 + sinT * 0.48);
@@ -4093,8 +4090,8 @@ export default function TajweedStudioPage() {
         }
       }
 
-        if (activeLetter.dorsalMode === 'jeem_touch') {
-          smoothTongueGrid(posArr, 3, 0.5);   // passes, strength
+        if (jeemEng > 0.02) {
+          smoothTongueGrid(posArr, 3, 0.5 * jeemEng);
         }
 
         tongueGeom.attributes.position.needsUpdate = true;
