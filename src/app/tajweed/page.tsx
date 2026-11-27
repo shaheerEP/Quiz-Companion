@@ -1923,6 +1923,7 @@ export default function TajweedStudioPage() {
   const morphProgressRef = useRef(1.0);
   const isRestingAtAlifRef = useRef(false);
   const [isPlayingSimulation, setIsPlayingSimulation] = useState(false);
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
 
   // Preload letter audio blob into memory on mount and whenever letter changes (strictly 1 network call)
@@ -2125,6 +2126,7 @@ export default function TajweedStudioPage() {
     }
     isSimulatingRef.current = true;
     setIsPlayingSimulation(true);
+    setHasPlayedOnce(true);
     isRestingAtAlifRef.current = false;
     morphProgressRef.current = 0.0;
     Object.keys(ALIF_MAKHRAJ_GEARS).forEach(k => {
@@ -2142,6 +2144,21 @@ export default function TajweedStudioPage() {
         setIsPlayingSimulation(false);
       }, 1000);
     }
+  };
+
+  // Restore 3D model to the active letter's Makhraj posture (not neutral pose)
+  const handleResetToMakhraj = () => {
+    stopLetterAudio();
+    setIsPlayingSimulation(false);
+    isSimulatingRef.current = false;
+    isRestingAtAlifRef.current = false;
+    morphProgressRef.current = 1.0;
+    const nextGears = { ...currentLetter.gears, upperOpacity: upperTeethOpacity };
+    currentGearsRef.current = { ...nextGears };
+    targetGearsRef.current = { ...nextGears };
+    setGears(nextGears);
+    forceDeformRef.current = true;
+    sceneElementsRef.current?.markDirty(3);
   };
 
   // Three.js scene refs
@@ -4439,6 +4456,7 @@ export default function TajweedStudioPage() {
         selectLetter: 'اختر الحرف:',
         simulate: 'تشغيل',
         simulateTitle: 'تشغيل الحركة والصوت (ألف ← المخرج)',
+        resetMakhrajTitle: 'إعادة لموضع المخرج',
         resetView: 'إعادة العرض',
         makhrajColors: 'ألوان المخرج',
         palate: 'الحنك',
@@ -4489,6 +4507,7 @@ export default function TajweedStudioPage() {
         selectLetter: 'ഹർഫ് (الحرف):',
         simulate: 'പ്ലേ',
         simulateTitle: 'ഉച്ചാരണ ചലനവും ശബ്ദവും പ്ലേ ചെയ്യുക',
+        resetMakhrajTitle: 'മഖ്റജ് വീണ്ടും കാണിക്കുക',
         resetView: 'റീസെറ്റ്',
         makhrajColors: 'മഖ്റജ് അടയാളങ്ങൾ',
         palate: 'അണ്ണാക്ക്',
@@ -4538,6 +4557,7 @@ export default function TajweedStudioPage() {
       selectLetter: 'Letter (الحرف):',
       simulate: 'Play',
       simulateTitle: 'Play Motion & Sound (ألف ← المخرج)',
+      resetMakhrajTitle: 'Show Makhraj Position',
       resetView: 'Reset View',
       makhrajColors: 'Makhraj Marks',
       palate: 'Palate',
@@ -4882,8 +4902,19 @@ export default function TajweedStudioPage() {
                     </span>
                   </div>
 
-                  {/* Minimal Top-Right Action Buttons: Play (Icon only) & Close */}
+                  {/* Minimal Top-Right Action Buttons: Reset (after Play), Play (Icon only) & Close */}
                   <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5">
+                    {hasPlayedOnce && (
+                      <button
+                        type="button"
+                        onClick={handleResetToMakhraj}
+                        title={t.resetMakhrajTitle}
+                        aria-label={t.resetMakhrajTitle}
+                        className="p-1.5 rounded-xl bg-black/45 hover:bg-slate-800 text-white/90 hover:text-white backdrop-blur-xs border border-white/20 transition-all shadow-xs active:scale-95 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {/* Small Play Icon button (audio + simulation) */}
                     <button
                       type="button"
@@ -5152,21 +5183,34 @@ export default function TajweedStudioPage() {
                       <span>{t.lowerTeeth}</span>
                     </button>
 
-                    {/* Viewport Actions: Play (Minimal Icon-only Button) */}
-                    <button
-                      type="button"
-                      onClick={() => triggerSimulation(true)}
-                      disabled={isPlayingSimulation || isAudioLoading}
-                      title={t.simulateTitle}
-                      aria-label={t.simulateTitle}
-                      className={`ms-auto p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 ${
-                        isPlayingSimulation || isAudioLoading
-                          ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95 cursor-pointer'
-                      }`}
-                    >
-                      <Play className={`w-4 h-4 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
-                    </button>
+                    {/* Viewport Actions: Reset to Makhraj (after Play) & Play */}
+                    <div className="ms-auto flex items-center gap-1.5 shrink-0">
+                      {hasPlayedOnce && (
+                        <button
+                          type="button"
+                          onClick={handleResetToMakhraj}
+                          title={t.resetMakhrajTitle}
+                          aria-label={t.resetMakhrajTitle}
+                          className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-gray-700 active:scale-95 cursor-pointer"
+                        >
+                          <RotateCcw className="w-4 h-4 shrink-0" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => triggerSimulation(true)}
+                        disabled={isPlayingSimulation || isAudioLoading}
+                        title={t.simulateTitle}
+                        aria-label={t.simulateTitle}
+                        className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 ${
+                          isPlayingSimulation || isAudioLoading
+                            ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95 cursor-pointer'
+                        }`}
+                      >
+                        <Play className={`w-4 h-4 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Div 2 under 3D Section: 17 Makharij Reference Table */}
