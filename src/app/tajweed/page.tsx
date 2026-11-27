@@ -3998,27 +3998,31 @@ export default function TajweedStudioPage() {
           const wy = smoothMin(targetWy, ceilingY, clampRadius);
 
           // --- jeem tip shaping (post-clamp, jeem only) ---
-          let tipHook = 0, tipBack = 0, tipTaper = 1;
+          let tipHook = 0, tipBack = 0, tipTaper = 1, tipLift = 0;
           if (jeemEng > 0.001) {
             const tipT = Math.max(0, Math.min(1, (s - 0.84) / 0.16));
             const tipE = tipT * tipT * (3 - 2 * tipT);
             const depthN = Math.min(1, Math.max(0, (ceilingY - wy) / 0.35)); // 0 = contact surface, 1 = underside
 
-            // upper ~30% of the front face stays vertical, the lower part sweeps back in an S
             const lowT = Math.min(1, Math.max(0, (depthN - 0.30) / 0.70));
             const lowE = lowT * lowT * (3 - 2 * lowT);
-            // slight forward belly just under the contact patch
             const belly = Math.sin(Math.PI * Math.min(1, depthN / 0.45));
-            // rounds the top-front corner (pulls the very top vertices back a little)
             const topRoll = Math.pow(1.0 - depthN, 4.0);
 
-            tipHook  = jeemEng * 0.04 * tipE * tipE;   // unchanged: front shoulder rolls down
-            tipBack  = jeemEng * tipE * (0.16 * lowE + 0.03 * topRoll - 0.025 * belly); // negative part = forward
+            // lower-front edge: curl up + back so the corner becomes a round
+            const botT = Math.min(1, Math.max(0, (depthN - 0.60) / 0.40));
+            const botE = botT * botT * (3 - 2 * botT);   // 0 above depth 0.6, 1 at the very bottom
+            const edgeW = tipE * tipE;                   // strongest right at the front
+
+            tipHook  = jeemEng * 0.04 * tipE * tipE * (1.0 - botE);   // don't drag the bottom edge down
+            tipBack  = jeemEng * tipE * (0.12 * lowE + 0.03 * topRoll - 0.025 * belly)  // was 0.16 * lowE
+                     + jeemEng * 0.03 * edgeW * botE;                                   // bottom edge curls back
+            tipLift  = jeemEng * 0.05 * edgeW * botE;                                   // bottom edge curls up
             tipTaper = 1.0 - jeemEng * 0.12 * tipE;
           }
 
           posArr[ptr++] = x * tipTaper;
-          posArr[ptr++] = wy - tipHook;
+          posArr[ptr++] = wy - tipHook + tipLift;   // <- added + tipLift
           posArr[ptr++] = wz - tipBack;
 
           // Tongue Coloring
@@ -4132,7 +4136,7 @@ export default function TajweedStudioPage() {
       }
 
         if (jeemEng > 0.02) {
-          smoothTongueGrid(posArr, 2, 0.4 * jeemEng);
+          smoothTongueGrid(posArr, 4, 0.5 * jeemEng);
         }
 
         tongueGeom.attributes.position.needsUpdate = true;
