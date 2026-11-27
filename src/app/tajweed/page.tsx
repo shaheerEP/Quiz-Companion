@@ -7,6 +7,8 @@ import { playLetterAudio, stopLetterAudio, preloadLetterAudio, isLetterAudioPlay
 import * as THREE from "three";
 import {
   Play,
+  Volume2,
+  Loader2,
   RotateCcw,
   Eye,
   Palette,
@@ -1920,6 +1922,7 @@ export default function TajweedStudioPage() {
   // Motion simulation state
   const isSimulatingRef = useRef(false);
   const simulationStartTimeRef = useRef(0);
+  const simRunIdRef = useRef(0);
   const morphProgressRef = useRef(1.0);
   const isRestingAtAlifRef = useRef(false);
   const [isPlayingSimulation, setIsPlayingSimulation] = useState(false);
@@ -2135,19 +2138,30 @@ export default function TajweedStudioPage() {
     forceDeformRef.current = true;
     simulationStartTimeRef.current = performance.now();
 
+    const runId = ++simRunIdRef.current;
+    let audioDone = !playAudio;
+    let animDone = false;
+    const finishIfReady = () => {
+      if (simRunIdRef.current === runId && audioDone && animDone) {
+        setIsPlayingSimulation(false);
+      }
+    };
+    setTimeout(() => {
+      animDone = true;
+      finishIfReady();
+    }, 1000);
+
     if (playAudio) {
       playLetterAudio(currentLetter.letter, () => {
-        setIsPlayingSimulation(false);
+        audioDone = true;
+        finishIfReady();
       });
-    } else {
-      setTimeout(() => {
-        setIsPlayingSimulation(false);
-      }, 1000);
     }
   };
 
   // Restore 3D model to the active letter's Makhraj posture (not neutral pose)
   const handleResetToMakhraj = () => {
+    simRunIdRef.current++;
     stopLetterAudio();
     setIsPlayingSimulation(false);
     isSimulatingRef.current = false;
@@ -2230,6 +2244,7 @@ export default function TajweedStudioPage() {
 
   // Change active letter: maintains current camera perspective without resetting
   const selectLetter = (preset: LetterPreset) => {
+    simRunIdRef.current++;
     stopLetterAudio();
     setIsPlayingSimulation(false);
     setCurrentLetter(preset);
@@ -4922,9 +4937,19 @@ export default function TajweedStudioPage() {
                       disabled={isPlayingSimulation || isAudioLoading}
                       title={t.simulateTitle}
                       aria-label={t.simulateTitle}
-                      className="p-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-xs border border-emerald-400/30 transition-all shadow-xs active:scale-95 cursor-pointer"
+                      className={`p-1.5 rounded-xl text-white backdrop-blur-xs border transition-all shadow-xs ${
+                        isPlayingSimulation || isAudioLoading
+                          ? 'bg-emerald-700/90 border-emerald-400/50 cursor-not-allowed'
+                          : 'bg-emerald-600/90 hover:bg-emerald-600 border-emerald-400/30 active:scale-95 cursor-pointer'
+                      }`}
                     >
-                      <Play className="w-3.5 h-3.5 fill-current" />
+                      {isPlayingSimulation ? (
+                        <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                      ) : isAudioLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                      )}
                     </button>
                     {/* Small Close (X) Button */}
                     <button
@@ -5204,11 +5229,17 @@ export default function TajweedStudioPage() {
                         aria-label={t.simulateTitle}
                         className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all flex items-center justify-center select-none shrink-0 ${
                           isPlayingSimulation || isAudioLoading
-                            ? 'bg-emerald-700/80 text-white/80 shadow-emerald-700/20 cursor-not-allowed opacity-90'
+                            ? 'bg-emerald-700/80 text-white shadow-emerald-700/20 cursor-not-allowed opacity-90'
                             : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 active:scale-95 cursor-pointer'
                         }`}
                       >
-                        <Play className={`w-4 h-4 fill-current shrink-0 ${isPlayingSimulation || isAudioLoading ? 'animate-pulse' : ''}`} />
+                        {isPlayingSimulation ? (
+                          <Volume2 className="w-4 h-4 shrink-0 animate-pulse" />
+                        ) : isAudioLoading ? (
+                          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-current shrink-0" />
+                        )}
                       </button>
                     </div>
                   </div>
