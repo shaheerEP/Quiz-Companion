@@ -3731,15 +3731,15 @@ export default function TajweedStudioPage() {
           } else if (dorsalMode === 'kaaf_velar') {
             dorsalArch = (istilaFactor * 0.39 + Math.max(0, midArchFactor) * 0.20) * Math.exp(-Math.pow((s - 0.28) / 0.25, 2));
           } else if (dorsalMode === 'jeem_touch') {
-            const sContact = 0.91;
-            const TIP_KEEP = 0.30;   // fraction of arch height still kept at the very tip (higher = gentler tip)
+            const sContact = 0.91;   // keep: green patch is centred here
+            const TIP_KEEP = 0.50;   // was 0.30 -> taller, blunter front wall
             let archSlope = 0;
             if (s <= sContact) {
-              archSlope = Math.pow(s / sContact, 2.0);   // low through the middle, rises near the front
+              archSlope = Math.pow(s / sContact, 1.5);   // was 2.0 -> diagonal ramp, high at front, low at back
             } else {
               const tDrop = (s - sContact) / (1.0 - sContact);
-              const ease = 0.5 * (1.0 + Math.cos(Math.PI * tDrop));  // 1 -> 0, smooth
-              archSlope = TIP_KEEP + (1.0 - TIP_KEEP) * ease;         // never drops below TIP_KEEP
+              const ease = 0.5 * (1.0 + Math.cos(Math.PI * tDrop));
+              archSlope = TIP_KEEP + (1.0 - TIP_KEEP) * ease;
             }
             dorsalArch = Math.max(0, midArchFactor) * 0.58 * archSlope + istilaFactor * 0.08 * Math.sin(s * Math.PI);
           } else if (dorsalMode === 'middle_dome') {
@@ -3970,10 +3970,19 @@ export default function TajweedStudioPage() {
           if (jeemEng > 0.001) {
             const tipT = Math.max(0, Math.min(1, (s - 0.84) / 0.16));
             const tipE = tipT * tipT * (3 - 2 * tipT);
-            const depthN = Math.min(1, Math.max(0, (ceilingY - wy) / 0.35)); // 0 at the contact surface, 1 at the underside
-            tipHook  = jeemEng * 0.04 * tipE * tipE;                  // front shoulder rolls down a little
-            tipBack  = jeemEng * 0.14 * tipE * Math.pow(depthN, 1.2); // lower vertices move BACK -> slanted front face
-            tipTaper = 1.0 - jeemEng * 0.12 * tipE;                   // slightly narrower, rounded front
+            const depthN = Math.min(1, Math.max(0, (ceilingY - wy) / 0.35)); // 0 = contact surface, 1 = underside
+
+            // upper ~30% of the front face stays vertical, the lower part sweeps back in an S
+            const lowT = Math.min(1, Math.max(0, (depthN - 0.30) / 0.70));
+            const lowE = lowT * lowT * (3 - 2 * lowT);
+            // slight forward belly just under the contact patch
+            const belly = Math.sin(Math.PI * Math.min(1, depthN / 0.45));
+            // rounds the top-front corner (pulls the very top vertices back a little)
+            const topRoll = Math.pow(1.0 - depthN, 4.0);
+
+            tipHook  = jeemEng * 0.04 * tipE * tipE;   // unchanged: front shoulder rolls down
+            tipBack  = jeemEng * tipE * (0.16 * lowE + 0.03 * topRoll - 0.025 * belly); // negative part = forward
+            tipTaper = 1.0 - jeemEng * 0.12 * tipE;
           }
 
           posArr[ptr++] = x * tipTaper;
@@ -4091,7 +4100,7 @@ export default function TajweedStudioPage() {
       }
 
         if (jeemEng > 0.02) {
-          smoothTongueGrid(posArr, 3, 0.5 * jeemEng);
+          smoothTongueGrid(posArr, 2, 0.4 * jeemEng);
         }
 
         tongueGeom.attributes.position.needsUpdate = true;
